@@ -3,12 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import {
   ArrowRight,
-  Award,
   Eye,
   EyeOff,
   LockKeyhole,
   Mail,
   Phone,
+  Smartphone,
   ShieldCheck,
   Truck,
   UserRound,
@@ -99,10 +99,10 @@ function Register() {
               <span className="h-px flex-1 bg-primary-light/70" />
             </div>
             <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-text-primary">
-              Create Your <span className="text-primary">Account</span>
+              Join Our <span className="text-primary">Tech World</span>
             </h1>
             <p className="mt-1 text-sm text-text-secondary">
-              Join us for the latest in tech and gadgets
+              Create an account and find your next favorite gadget
             </p>
           </header>
 
@@ -245,7 +245,7 @@ function Register() {
               disabled={submitting}
               className="group flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary-dark via-primary to-gradient-middle py-3 font-bold text-surface shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/25 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting ? "Creating Account..." : "Create Account"}
+              {submitting ? "Setting Up Your Account..." : "Create My Account"}
               {!submitting && (
                 <ArrowRight
                   size={19}
@@ -275,32 +275,32 @@ function Register() {
         />
         <div className="login-promo-content relative z-10 mx-auto max-w-[600px] px-8 text-center">
           <h2 className="text-4xl font-black italic leading-[1.08] text-surface xl:text-5xl">
-            Upgrade Your
+            Discover Your
             <br />
             <span className="bg-gradient-to-r from-surface via-secondary-light to-accent bg-clip-text text-transparent">
-              Tech Lifestyle
+              Next Tech Upgrade
             </span>
           </h2>
           <div className="mx-auto my-4 h-1 w-20 rounded-full bg-gradient-to-r from-secondary-light to-gradient-middle" />
           <p className="mx-auto max-w-sm text-sm leading-relaxed text-surface/90 xl:text-base">
-            Discover the latest gadgets, laptops, accessories and more at great
-            prices.
+            Sign up to explore the latest gadgets, compare your favorites, and
+            shop trusted tech with confidence.
           </p>
 
           <div className="mx-auto mt-7 flex max-w-md items-center justify-center">
             <div className="flex flex-1 flex-col items-center gap-1.5 text-surface">
-              <Truck size={30} strokeWidth={1.7} />
-              <span className="text-xs font-medium">Fast Delivery</span>
+              <Smartphone size={30} strokeWidth={1.7} />
+              <span className="text-xs font-medium">Latest Gadgets</span>
             </div>
             <span className="h-12 w-px bg-surface/20" />
             <div className="flex flex-1 flex-col items-center gap-1.5 text-surface">
               <ShieldCheck size={30} strokeWidth={1.7} />
-              <span className="text-xs font-medium">Secure Payments</span>
+              <span className="text-xs font-medium">Secure Checkout</span>
             </div>
             <span className="h-12 w-px bg-surface/20" />
             <div className="flex flex-1 flex-col items-center gap-1.5 text-surface">
-              <Award size={30} strokeWidth={1.7} />
-              <span className="text-xs font-medium">Trusted Quality</span>
+              <Truck size={30} strokeWidth={1.7} />
+              <span className="text-xs font-medium">Fast Delivery</span>
             </div>
           </div>
         </div>
