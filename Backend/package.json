@@ -6,13 +6,8 @@
   "scripts": {
     "test": "node --test",
     "dev": "node --watch index.js",
-<<<<<<< Updated upstream
     "start": "node index.js",
-    "seed:demo": "node scripts/seedDemoProducts.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-=======
-    "start": "node index.js"
->>>>>>> Stashed changes
+    "seed:demo": "node scripts/seedDemoProducts.js"
   },
   "keywords": [],
   "author": "",
