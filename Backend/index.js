@@ -7,8 +7,13 @@ const { createPool, initializeDatabase } = require("./modules/db");
 const { createAuthService } = require("./modules/authService");
 const { createAuthController } = require("./controllers/authController");
 const { createAdminContentController } = require("./controllers/adminContentController");
+<<<<<<< Updated upstream
 const { createBannerController } = require("./controllers/bannerController");
+=======
+const { createDashboardController } = require("./controllers/dashboardController");
+>>>>>>> Stashed changes
 const createAuthRouter = require("./routers/authRouter");
+const createDashboardRouter = require("./routers/dashboardRouter");
 const createAdminContentRouter = require("./routers/adminContentRouter");
 const createBannersRouter = require("./routers/bannersRouter");
 const createPublicBannersRouter = require("./routers/publicBannersRouter");
@@ -27,7 +32,11 @@ const app = express();
 const authService = createAuthService(pool);
 const authController = createAuthController(authService);
 const adminContentController = createAdminContentController(pool);
+<<<<<<< Updated upstream
 const bannerController = createBannerController(pool);
+=======
+const dashboardController = createDashboardController(pool);
+>>>>>>> Stashed changes
 
 app.use(cors());
 app.use(express.json({ limit: "12mb" }));
@@ -42,6 +51,7 @@ app.get("/api/health", async (request, response) => {
 });
 
 app.use("/api/auth", createAuthRouter(authController));
+app.use("/api/dashboard", createDashboardRouter(dashboardController));
 app.use("/api/admin/content", createAdminContentRouter(adminContentController));
 app.use("/api/admin/banners", createBannersRouter(bannerController));
 app.use("/api/banners", createPublicBannersRouter(bannerController));

@@ -15,6 +15,9 @@ import {
   UserRound,
 } from "lucide-react";
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim() || "";
+const hasValidGoogleClientId = /^[0-9]+-[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test(googleClientId);
+
 function Login() {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
@@ -208,21 +211,27 @@ function Login() {
               <span className="h-px flex-1 bg-gradient-to-l from-transparent via-secondary-light/50 to-secondary-light/50" />
             </div>
 
-            <div className="flex w-full justify-center [&>div]:w-full [&>div]:!max-w-full [&>div]:!justify-center">
-              <GoogleLogin
-                onSuccess={handleSuccess}
-                onError={() =>
-                  toast.error("Google sign-in could not be completed.")
-                }
-                type="standard"
-                theme="outline"
-                size="large"
-                shape="pill"
-                text="continue_with"
-                width={String(googleButtonWidth)}
-                logo_alignment="center"
-              />
-            </div>
+            {hasValidGoogleClientId ? (
+              <div className="flex w-full justify-center [&>div]:w-full [&>div]:!max-w-full [&>div]:!justify-center">
+                <GoogleLogin
+                  onSuccess={handleSuccess}
+                  onError={() =>
+                    toast.error("Google sign-in could not be completed.")
+                  }
+                  type="standard"
+                  theme="outline"
+                  size="large"
+                  shape="pill"
+                  text="continue_with"
+                  width={String(googleButtonWidth)}
+                  logo_alignment="center"
+                />
+              </div>
+            ) : (
+              <p className="rounded-xl bg-amber-50 px-3 py-2 text-center text-xs leading-5 text-amber-800">
+                Google sign-in is unavailable. Use your account credentials or ask your administrator to configure Google OAuth.
+              </p>
+            )}
 
             <p className="pt-1 text-center text-sm text-text-secondary">
               Don&apos;t have an account?{" "}
