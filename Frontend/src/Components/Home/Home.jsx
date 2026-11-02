@@ -1,10 +1,11 @@
 import React from 'react'
+import TechBanner from './TechBanner'
 
 
 const Home = () => {
   return (
     <div>
-     <h1>hello </h1>
+      <TechBanner/>
     </div>
   )
 }
