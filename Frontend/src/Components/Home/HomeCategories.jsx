@@ -74,6 +74,7 @@ function HomeCategories() {
         if (active) {
           const activeCategories = Array.isArray(response.data)
             ? response.data.filter((category) => (category.status || "Active") === "Active")
+              .sort((first, second) => Number(first.id) - Number(second.id))
             : [];
           setCategories(activeCategories);
         }
@@ -94,12 +95,12 @@ function HomeCategories() {
   const slideCopies = categories.length > 1
     ? Math.max(2, Math.ceil(16 / categories.length))
     : 1;
-  const slides = categories.flatMap((category) =>
-    Array.from({ length: slideCopies }, (_, copy) => ({
+  const slides = Array.from({ length: slideCopies }, (_, copy) =>
+    categories.map((category) => ({
       ...category,
       slideKey: `${category.catId || category.id || category.name}-${copy}`,
     })),
-  );
+  ).flat();
 
   return (
     <section
@@ -115,7 +116,7 @@ function HomeCategories() {
           <span className="h-5 w-1 rounded-full bg-primary" aria-hidden="true" />
           Shop by Category
         </h2>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="mr-20 flex shrink-0 items-center gap-2">
           {!loading && categories.length > 1 && !showAll && (
             <div className="flex items-center gap-1">
               <button
@@ -150,7 +151,7 @@ function HomeCategories() {
       </div>
 
       {loading ? (
-        <div className="flex gap-2 overflow-hidden sm:gap-3" aria-label="Loading categories">
+        <div className="flex gap-2 overflow-hidden pr-20 sm:gap-3" aria-label="Loading categories">
           {Array.from({ length: 8 }, (_, index) => (
             <div
               key={index}
@@ -167,7 +168,7 @@ function HomeCategories() {
           No categories are available right now.
         </p>
       ) : showAll ? (
-        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
+        <div className="grid grid-cols-3 gap-2 pr-20 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
           {categories.map((category) => (
             <CategoryCard
               key={category.catId || category.id || category.name}
@@ -176,35 +177,37 @@ function HomeCategories() {
           ))}
         </div>
       ) : (
-        <Swiper
-          modules={[Autoplay]}
-          onSwiper={(swiper) => {
-            swiperRef.current = swiper;
-          }}
-          slidesPerView="auto"
-          slidesPerGroup={1}
-          spaceBetween={8}
-          loop={categories.length > 1}
-          loopAddBlankSlides={false}
-          speed={550}
-          autoplay={
-            categories.length > 1
-              ? { delay: 2200, disableOnInteraction: false, pauseOnMouseEnter: true }
-              : false
-          }
-          navigation={false}
-          className="home-category-swiper"
-          aria-label="Shop by category"
-        >
-          {slides.map((category) => (
-            <SwiperSlide
-              key={category.slideKey}
-              className="!w-[96px] sm:!w-[112px]"
-            >
-              <CategoryCard category={category} />
-            </SwiperSlide>
-          ))}
-        </Swiper>
+        <div style={{ paddingRight: "80px" }}>
+          <Swiper
+            modules={[Autoplay]}
+            onSwiper={(swiper) => {
+              swiperRef.current = swiper;
+            }}
+            slidesPerView="auto"
+            slidesPerGroup={1}
+            spaceBetween={8}
+            loop={categories.length > 1}
+            loopAddBlankSlides={false}
+            speed={550}
+            autoplay={
+              categories.length > 1
+                ? { delay: 2200, disableOnInteraction: false, pauseOnMouseEnter: true }
+                : false
+            }
+            navigation={false}
+            className="home-category-swiper"
+            aria-label="Shop by category"
+          >
+            {slides.map((category) => (
+              <SwiperSlide
+                key={category.slideKey}
+                className="!w-[96px] sm:!w-[112px]"
+              >
+                <CategoryCard category={category} />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
       )}
     </section>
   );
