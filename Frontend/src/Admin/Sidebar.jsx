@@ -183,8 +183,14 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
        <div className="relative overflow-hidden px-4 pt-5 pb-5 border-b border-white/10">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500/15 via-transparent to-cyan-500/5" />
           <div className="relative flex items-center gap-3">
-            <div className="w-11 h-11 rounded-3xl bg-white border border-emerald-300/10 flex items-center justify-center shadow-2xl shadow-emerald-500/10 overflow-hidden">
-              <ShoppingBag className="w-6 h-6 text-primary-dark" aria-hidden="true" />
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary-light via-secondary-light to-accent p-[2px] shadow-lg shadow-primary/30">
+              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[14px] bg-white">
+                <img
+                  src="/images/logo.jpeg"
+                  alt="Our Tech Tamil"
+                  className="h-full w-full object-cover"
+                />
+              </div>
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
