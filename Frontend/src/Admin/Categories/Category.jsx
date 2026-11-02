@@ -31,6 +31,14 @@ const CATEGORY_TYPES = [
     "Clothing & Fashion",
 ];
 
+const resolveCategoryImageUrl = (image) => {
+    if (!image || typeof image !== "string") return "";
+    if (/^(https?:|data:|blob:)/i.test(image)) return image;
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
+    const cleanPath = image.replace(/\\/g, "/");
+    return `${backendUrl}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
+};
+
 const Category = () => {
     const { user } = useAuth();
     // ---- Global State ----
@@ -63,6 +71,7 @@ const Category = () => {
     // ---- Modal State ----
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isImageUploading, setIsImageUploading] = useState(false);
     const [formData, setFormData] = useState({
         catId: "",
         name: "",
@@ -132,18 +141,30 @@ const Category = () => {
         e.target.value = "";
         if (!file) return;
 
+        if (!file.type.startsWith("image/")) {
+            toast.error("Choose an image file for the category.");
+            return;
+        }
+
+        setIsImageUploading(true);
         try {
             const compressed = await imageCompression(file, {
                 maxSizeMB: 0.2,
                 maxWidthOrHeight: 600,
             });
-            const image = await imageCompression.getDataUrlFromFile(compressed);
-
-            setFormData(p => ({ ...p, images: [image] }));
+            const uploadData = new FormData();
+            uploadData.append("image", compressed);
+            const response = await api.post("/categories/upload", uploadData);
+            if (!response.data?.image) {
+                throw new Error("The category image URL was not returned by the server.");
+            }
+            setFormData(p => ({ ...p, images: [response.data.image] }));
             toast.success("Category image updated!");
         } catch (error) {
             console.error("Image upload failed:", error);
-            toast.error("Image upload failed");
+            toast.error(error.response?.data?.message || error.message || "Image upload failed.");
+        } finally {
+            setIsImageUploading(false);
         }
     };
 
@@ -374,7 +395,7 @@ const Category = () => {
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 border border-gray-200">
                                                         {cat.images && cat.images.length > 0 ? (
-                                                            <img src={Array.isArray(cat.images) ? cat.images[0] : cat.images} alt={cat.name} className="w-full h-full object-cover" />
+                                                            <img src={resolveCategoryImageUrl(Array.isArray(cat.images) ? cat.images[0] : cat.images)} alt={cat.name} className="w-full h-full object-cover" />
                                                         ) : (
                                                             <div className="w-full h-full flex items-center justify-center"><FiImage className="text-gray-400" /></div>
                                                         )}
@@ -431,7 +452,7 @@ const Category = () => {
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="w-14 h-14 rounded-xl overflow-hidden border border-gray-100 bg-gray-50 flex items-center justify-center shrink-0">
                                         {cat.images && cat.images.length > 0 ? (
-                                            <img src={Array.isArray(cat.images) ? cat.images[0] : cat.images} alt={cat.name} className="w-full h-full object-cover" />
+                                            <img src={resolveCategoryImageUrl(Array.isArray(cat.images) ? cat.images[0] : cat.images)} alt={cat.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <FiImage className="text-gray-400 text-xl" />
                                         )}
@@ -627,7 +648,7 @@ const Category = () => {
                                         {formData.images && formData.images.length > 0 ? (
                                             <div className="flex items-center gap-3">
                                                 <img
-                                                    src={formData.images[0]}
+                                                    src={resolveCategoryImageUrl(formData.images[0])}
                                                     alt="Category"
                                                     className="h-20 w-20 rounded-xl border border-gray-200 object-cover"
                                                 />
@@ -668,10 +689,10 @@ const Category = () => {
                             </button>
                             <button
                                 onClick={handleSaveCategory}
-                                disabled={!formData.name}
+                                disabled={!formData.name || isImageUploading}
                                 className="admin-button-primary px-6 py-2.5 text-sm font-bold rounded-xl shadow-md active:scale-95 flex items-center gap-2"
                             >
-                                {isEditing ? 'Update Category' : 'Save Category'}
+                                {isImageUploading ? 'Uploading image...' : isEditing ? 'Update Category' : 'Save Category'}
                             </button>
                         </div>
                     </div>

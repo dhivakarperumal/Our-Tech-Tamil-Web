@@ -60,8 +60,8 @@ function parseArray(value, field, maxItems) {
 
 function parseSpecifications(value) {
   const parsed = parseJson(value, []);
-  if (!Array.isArray(parsed) || parsed.length > 50) {
-    const error = new Error("Specifications must be a list of up to 50 key-value pairs.");
+  if (!Array.isArray(parsed)) {
+    const error = new Error("Specifications must be a list of key-value pairs.");
     error.status = 400;
     throw error;
   }
@@ -311,7 +311,7 @@ function createProductsRouter(pool) {
     try {
       const [rows] = await pool.execute("SELECT id FROM products ORDER BY id DESC LIMIT 1");
       const nextId = (Number(rows[0]?.id) || 0) + 1;
-      return response.json({ latestCode: `PRD${String(nextId).padStart(6, "0")}` });
+      return response.json({ latestCode: `OTP${String(nextId).padStart(4, "0")}` });
     } catch (error) {
       return next(error);
     }

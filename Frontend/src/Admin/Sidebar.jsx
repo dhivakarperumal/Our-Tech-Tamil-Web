@@ -175,7 +175,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         flex flex-col transition-all duration-300
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0
-        ${collapsed ? "lg:w-20 w-full" : "w-full lg:w-72"}
+        ${collapsed ? "lg:w-20 w-full" : "w-full lg:w-80"}
       `}
       >
         <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_10%_0%,rgba(168,85,247,0.16),transparent_38%),radial-gradient(ellipse_at_100%_100%,rgba(126,34,206,0.14),transparent_35%)]" />
@@ -230,10 +230,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     aria-expanded={isMenuOpen}
                     title={collapsed ? item.label : undefined}
                     className={`
-                      group w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                      group w-full flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                       ${isMenuOpen || isAnyChildActive
-                        ? "border-fuchsia-300/25 bg-white/[0.09] text-white shadow-[0_8px_24px_rgba(8,0,20,0.12)]"
-                        : "border-white/[0.08] bg-white/[0.035] text-white/75 hover:border-fuchsia-300/25 hover:bg-white/[0.07] hover:text-white"
+                        ? "bg-white/[0.09] text-white shadow-[0_3px_10px_rgba(8,0,20,0.12)]"
+                        : "bg-white/[0.035] text-white/75 hover:bg-white/[0.07] hover:text-white"
                       }
                     `}
                   >
@@ -262,7 +262,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   {/* ===== SUB MENU ===== */}
                   {!collapsed && (
                     <div
-                      className={`ml-4 space-y-1 overflow-y-auto border-l border-fuchsia-300/20 pl-3 hide-scrollbar transition-all duration-300
+                      className={`ml-4 space-y-1 overflow-y-auto pl-3 hide-scrollbar transition-all duration-300
                       ${isMenuOpen ? "max-h-60 py-1 opacity-100" : "max-h-0 opacity-0"}`}
                     >
                       {item.children.map((sub) => {
@@ -285,7 +285,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             className={`
                               flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium tracking-wide transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                               ${isActive
-                                ? "bg-[#FFC928] text-[#210839] shadow-md shadow-amber-400/20"
+                                ? "bg-[#FFC928] text-[#210839] shadow-sm shadow-amber-400/20"
                                 : "text-white/65 hover:bg-white/[0.07] hover:text-white"
                               }
                             `}
@@ -309,11 +309,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             /* ===== NORMAL ITEM ===== */
             const isActive = isActiveRoute(item);
 
-            const sectionLabel = item.path === "/admin"
-              ? "Main Menu"
-              : item.path === "/"
-                ? "Navigation"
-                : null;
+            const sectionLabel = item.path === "/" ? "Navigation" : null;
 
             return (
               <div key={item.path} className="space-y-2">
@@ -335,11 +331,11 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     if (isOpen) onClose();
                   }}
                   className={`
-                    group flex items-center gap-3 rounded-xl border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                    group flex items-center gap-3 rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                     ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2.5"}
                     ${isActive
-                      ? "border-amber-200/70 bg-gradient-to-r from-[#FFD52E] via-[#FFC928] to-[#FFB900] text-[#210839] shadow-[0_8px_22px_rgba(255,185,0,0.2)]"
-                      : "border-white/[0.08] bg-white/[0.035] text-white/75 hover:border-fuchsia-300/25 hover:bg-white/[0.07] hover:text-white"
+                      ? "bg-gradient-to-r from-[#FFD52E] via-[#FFC928] to-[#FFB900] text-[#210839] shadow-[0_3px_10px_rgba(255,185,0,0.2)]"
+                      : "bg-white/[0.035] text-white/75 hover:bg-white/[0.07] hover:text-white"
                     }
                   `}
                 >

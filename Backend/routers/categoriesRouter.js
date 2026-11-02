@@ -1,5 +1,36 @@
+const crypto = require("node:crypto");
+const fs = require("node:fs");
+const path = require("node:path");
 const express = require("express");
+const multer = require("multer");
 const requireAdmin = require("../middleware/requireAdmin");
+
+const uploadDirectory = path.join(__dirname, "..", "uploads", "categories");
+const imageExtensions = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+};
+fs.mkdirSync(uploadDirectory, { recursive: true });
+
+const uploadCategoryImage = multer({
+  storage: multer.diskStorage({
+    destination: uploadDirectory,
+    filename(request, file, callback) {
+      callback(null, `${crypto.randomUUID()}${imageExtensions[file.mimetype]}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter(request, file, callback) {
+    if (!imageExtensions[file.mimetype]) {
+      const error = new Error("Upload a JPG, PNG, WebP, or GIF category image.");
+      error.status = 400;
+      return callback(error);
+    }
+    return callback(null, true);
+  },
+});
 
 function parseStringArray(value, field, maxItems) {
   if (value === undefined || value === null) return [];
@@ -77,6 +108,13 @@ function toCategory(row) {
 
 function createCategoriesRouter(pool) {
   const router = express.Router();
+
+  router.post("/upload", requireAdmin, uploadCategoryImage.single("image"), (request, response) => {
+    if (!request.file) {
+      return response.status(400).json({ message: "Choose a category image to upload." });
+    }
+    return response.status(201).json({ image: `/uploads/categories/${request.file.filename}` });
+  });
 
   router.get("/", async (request, response, next) => {
     try {
