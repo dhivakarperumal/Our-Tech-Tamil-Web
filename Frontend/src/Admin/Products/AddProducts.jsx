@@ -874,7 +874,7 @@ const AddProducts = () => {
                             <h2 className="text-sm font-bold text-[#1F0A3C]">Pricing & Stock</h2>
                         </div>
                         <div className="p-5">
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div className={`grid grid-cols-2 gap-4 ${isNaturalCategory ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
                                 <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">MRP *</label>
                                     <div className="relative">
@@ -908,6 +908,19 @@ const AddProducts = () => {
                                         <input type="number" name="total_stock" min="0" value={formData.total_stock} onChange={handleFormChange} readOnly={isClothingCategory} className={`w-full pl-7 pr-3 py-2.5 border rounded-lg outline-none transition-all text-sm font-bold ${isStockManuallyEdited ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-[#1F0A3C]/5 border-[#1F0A3C]/20 text-[#1F0A3C]'} ${isClothingCategory ? "cursor-not-allowed" : ""}`} />
                                     </div>
                                 </div>
+                                {isNaturalCategory && (
+                                    <div className="space-y-1">
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Unit</label>
+                                        <select name="unit" value={formData.unit} onChange={handleFormChange} className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-semibold text-gray-800">
+                                            {["Piece", "Kilogram (kg)", "Gram (g)", "Litre (L)", "Millilitre (ml)", "Pack", "Bottle", "Box"].map(unit => (
+                                                <option key={unit} value={unit}>{unit}</option>
+                                            ))}
+                                            {formData.unit && !["Piece", "Kilogram (kg)", "Gram (g)", "Litre (L)", "Millilitre (ml)", "Pack", "Bottle", "Box"].includes(formData.unit) && (
+                                                <option value={formData.unit}>{formData.unit}</option>
+                                            )}
+                                        </select>
+                                    </div>
+                                )}
                             </div>
                             <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-gray-500">
                                 <span>Stock Status:</span>
