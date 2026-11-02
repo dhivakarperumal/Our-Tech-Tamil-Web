@@ -5,6 +5,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import api from "../../api";
+import PageContainer from "../CommenComponents/PageContainer";
 
 function getCategoryImage(images) {
   let parsedImages = images;
@@ -103,12 +104,13 @@ function HomeCategories() {
   ).flat();
 
   return (
-    <section
-      id="shop-by-category"
-      aria-labelledby="shop-by-category-heading"
-      className="mx-auto w-full max-w-[1450px] px-3 py-3 sm:px-4 sm:py-4"
-    >
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <PageContainer className="py-3 sm:py-4">
+      <section
+        id="shop-by-category"
+        aria-labelledby="shop-by-category-heading"
+        className="w-full"
+      >
+        <div className="mb-3 flex items-center justify-between gap-3">
         <h2
           id="shop-by-category-heading"
           className="flex items-center gap-2 text-base font-extrabold tracking-tight text-text-primary sm:text-lg"
@@ -148,9 +150,9 @@ function HomeCategories() {
             </button>
           )}
         </div>
-      </div>
+        </div>
 
-      {loading ? (
+        {loading ? (
         <div className="flex gap-2 overflow-hidden pr-20 sm:gap-3" aria-label="Loading categories">
           {Array.from({ length: 8 }, (_, index) => (
             <div
@@ -208,8 +210,9 @@ function HomeCategories() {
             ))}
           </Swiper>
         </div>
-      )}
-    </section>
+        )}
+      </section>
+    </PageContainer>
   );
 }
 
