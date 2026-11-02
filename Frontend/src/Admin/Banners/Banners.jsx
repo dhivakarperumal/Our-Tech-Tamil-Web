@@ -1,17 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
+  CheckCircle2,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  FileImage,
   Image,
   ImagePlus,
+  LayoutGrid,
   Link as LinkIcon,
   Loader2,
   Megaphone,
   Monitor,
+  Pencil,
   Plus,
+  Search,
   Smartphone,
   Trash2,
   UploadCloud,
   X,
+  List,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api";
@@ -361,6 +370,11 @@ function Banners() {
   const [deletingId, setDeletingId] = useState(null);
   const [activeBanner, setActiveBanner] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [viewMode, setViewMode] = useState("table");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     let active = true;
@@ -423,6 +437,10 @@ function Banners() {
     try {
       await api.delete(`/admin/banners/${banner.id}`);
       setBanners((current) => current.filter((entry) => entry.id !== banner.id));
+      setCurrentPage((page) => Math.min(
+        page,
+        Math.max(1, Math.ceil((banners.length - 1) / itemsPerPage)),
+      ));
       toast.success("Promotion deleted.");
     } catch (error) {
       console.error("Failed to delete banner:", error);
@@ -432,172 +450,373 @@ function Banners() {
     }
   };
 
+  const publishedCount = banners.filter((banner) =>
+    getPublishedValue(banner.is_published),
+  ).length;
+  const draftCount = banners.length - publishedCount;
+  const filteredBanners = banners.filter((banner) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query || [
+      banner.title,
+      banner.subtitle,
+      banner.description,
+      banner.target_section,
+      String(banner.id),
+    ].some((value) => String(value || "").toLowerCase().includes(query));
+    const isPublished = getPublishedValue(banner.is_published);
+    const matchesStatus = statusFilter === "All" ||
+      (statusFilter === "Published" && isPublished) ||
+      (statusFilter === "Draft" && !isPublished);
+    return matchesSearch && matchesStatus;
+  });
+  const totalPages = Math.max(1, Math.ceil(filteredBanners.length / itemsPerPage));
+  const visibleBanners = filteredBanners.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+
+  const renderBannerActions = (banner) => (
+    <div className="flex items-center justify-center gap-2">
+      <button
+        type="button"
+        onClick={() => openEditModal(banner)}
+        aria-label={`Edit ${banner.title}`}
+        title="Edit"
+        className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-100 text-primary transition hover:bg-primary/10"
+      >
+        <Pencil size={14} />
+      </button>
+      <button
+        type="button"
+        onClick={() => deleteBanner(banner)}
+        disabled={deletingId === banner.id}
+        aria-label={`Delete ${banner.title}`}
+        title="Delete"
+        className="flex h-8 w-8 items-center justify-center rounded-full border border-rose-100 text-rose-500 transition hover:bg-rose-50 disabled:opacity-50"
+      >
+        {deletingId === banner.id
+          ? <Loader2 size={14} className="animate-spin" />
+          : <Trash2 size={14} />}
+      </button>
+    </div>
+  );
+
+  const renderBannerImage = (banner, className) => banner.desktop_image
+    ? (
+      <img
+        src={getImageUrl(banner.desktop_image)}
+        alt={banner.title}
+        className={className}
+      />
+    )
+    : (
+      <div className="flex h-full w-full items-center justify-center bg-gray-50 text-gray-300">
+        <FileImage size={24} />
+      </div>
+    );
+
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-10 sm:space-y-7">
-      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-dark via-primary to-gradient-middle p-5 text-white shadow-xl shadow-primary-dark/20 sm:p-8">
-        <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
-        <div className="relative flex flex-wrap items-center gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-accent sm:h-14 sm:w-14">
-            <Megaphone className="h-6 w-6 sm:h-7 sm:w-7" />
+    <div className="min-h-screen space-y-6 pb-20 font-sans">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+        <div className="flex items-center gap-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-[#8B5CF6] text-white shadow-lg shadow-purple-200 sm:h-16 sm:w-16">
+            <Image size={25} />
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent sm:text-xs">
-              Marketing management
-            </p>
-            <h1 className="mt-1 text-xl font-bold sm:text-3xl">Promotion banners</h1>
-            <p className="mt-1 text-xs text-white/70 sm:text-sm">
-              Create desktop and mobile promotions for your store.
-            </p>
+          <div>
+            <p className="mb-1 text-xs font-bold text-gray-400">Total Banners</p>
+            <h3 className="mb-1 text-3xl font-black leading-none text-slate-800">{banners.length}</h3>
+            <p className="text-[11px] font-medium text-gray-400">All promotional banners</p>
           </div>
-          <div className="flex w-full items-center gap-3 sm:ml-auto sm:w-auto">
-            <div className="hidden rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-center sm:block">
-              <p className="text-xl font-bold">{banners.length}</p>
-              <p className="text-[10px] text-white/65">Total banners</p>
+        </div>
+        <div className="flex items-center gap-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-[#10B981] text-white shadow-lg shadow-emerald-200 sm:h-16 sm:w-16">
+            <CheckCircle2 size={25} />
+          </div>
+          <div>
+            <p className="mb-1 text-xs font-bold text-gray-400">Published</p>
+            <h3 className="mb-1 text-3xl font-black leading-none text-slate-800">{publishedCount}</h3>
+            <p className="text-[11px] font-medium text-gray-400">Visible on website</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] bg-[#F59E0B] text-white shadow-lg shadow-orange-200 sm:h-16 sm:w-16">
+            <Megaphone size={25} />
+          </div>
+          <div>
+            <p className="mb-1 text-xs font-bold text-gray-400">Drafts</p>
+            <h3 className="mb-1 text-3xl font-black leading-none text-slate-800">{draftCount}</h3>
+            <p className="text-[11px] font-medium text-gray-400">Not published yet</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="relative w-full flex-1 sm:min-w-[220px] sm:max-w-md">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-lg text-gray-400" size={18} />
+          <input
+            type="search"
+            placeholder="Search banners by headline, subtitle..."
+            value={searchQuery}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full rounded-xl border border-gray-100 bg-gray-50 py-2.5 pl-11 pr-4 text-sm font-medium text-gray-700 outline-none transition-all placeholder:text-gray-400 focus:border-purple-300 focus:ring-2 focus:ring-purple-100"
+          />
+        </div>
+
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+          <div className="relative flex-1 sm:flex-none">
+            <select
+              value={statusFilter}
+              onChange={(event) => {
+                setStatusFilter(event.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full cursor-pointer appearance-none rounded-xl border border-gray-200 bg-white py-2.5 pl-4 pr-10 text-sm font-bold text-gray-600 outline-none focus:border-purple-300 sm:w-auto"
+            >
+              <option value="All">Select Status</option>
+              <option value="Published">Published</option>
+              <option value="Draft">Draft</option>
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className="flex rounded-xl border border-gray-200 bg-white p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                aria-label="Table view"
+                aria-pressed={viewMode === "table"}
+                className={`rounded-lg p-2 transition-all ${viewMode === "table" ? "admin-button-toggle-active" : "admin-button-toggle-inactive"}`}
+              >
+                <List size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                aria-label="Card view"
+                aria-pressed={viewMode === "grid"}
+                className={`rounded-lg p-2 transition-all ${viewMode === "grid" ? "admin-button-toggle-active" : "admin-button-toggle-inactive"}`}
+              >
+                <LayoutGrid size={18} />
+              </button>
             </div>
             <button
               type="button"
               onClick={openCreateModal}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-primary-dark shadow-lg shadow-primary-dark/20 transition hover:-translate-y-0.5 hover:bg-accent-light sm:flex-none"
+              className="admin-button-primary flex items-center gap-2 rounded-md px-4 py-3 text-sm font-bold shadow-md active:scale-95 sm:px-5"
             >
-              <Plus size={17} />
-              New promotion
+              <Plus size={18} />
+              <span className="hidden sm:inline">Add New Banner</span>
+              <span className="sm:hidden">Add Banner</span>
             </button>
           </div>
         </div>
-      </header>
+      </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="font-bold text-slate-900">Your promotions</h2>
-            <p className="mt-1 text-xs text-slate-500">Manage creative, destination, and visibility.</p>
-          </div>
-          <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-            {banners.filter((banner) => getPublishedValue(banner.is_published)).length} published
-          </span>
+      {loading ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-12">
+          <div className="mb-4 h-10 w-10 animate-spin rounded-full border-4 border-purple-100 border-t-purple-600" />
+          <p className="font-bold text-gray-500">Loading Banners...</p>
         </div>
-
-        {loading ? (
-          <div className="flex min-h-48 items-center justify-center text-primary">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="ml-2 text-sm text-slate-500">Loading promotions...</span>
+      ) : visibleBanners.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-gray-200 bg-white p-12 text-center sm:p-16">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-50 text-gray-300">
+            <Search size={30} />
           </div>
-        ) : banners.length === 0 ? (
-          <div className="flex min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-5 text-center">
-            <Image className="h-9 w-9 text-primary-light" />
-            <p className="mt-3 font-semibold text-slate-700">No promotions yet</p>
-            <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">
-              Add desktop and mobile visuals, choose where the banner belongs, and publish it when ready.
-            </p>
+          <h3 className="text-lg font-bold text-slate-800">
+            {banners.length ? "No banners found" : "No promotions yet"}
+          </h3>
+          <p className="mt-1 text-sm text-gray-400">
+            {banners.length
+              ? "Adjust your search or filter to find what you're looking for."
+              : "Add a banner to promote your store's offers and collections."}
+          </p>
+          {!banners.length && (
             <button
               type="button"
               onClick={openCreateModal}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-dark via-primary to-gradient-middle px-4 py-2.5 text-xs font-bold text-white transition hover:brightness-110"
+              className="admin-button-primary mt-5 flex items-center gap-2 rounded-md px-5 py-3 text-sm font-bold shadow-md"
             >
-              <Plus size={15} />
-              Create your first promotion
+              <Plus size={17} />
+              Add New Banner
             </button>
+          )}
+        </div>
+      ) : viewMode === "table" ? (
+        <div className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full whitespace-nowrap text-left">
+              <thead>
+                <tr className="admin-table-header border-b border-[#3c096c]">
+                  <th className="w-12 px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider text-[#FCD34D]">S.No.</th>
+                  <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[#FCD34D]">Banner</th>
+                  <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[#FCD34D]">Description</th>
+                  <th className="px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider text-[#FCD34D]">Target section</th>
+                  <th className="px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider text-[#FCD34D]">Status</th>
+                  <th className="px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-[#FCD34D]">Updated</th>
+                  <th className="px-4 py-4 text-center text-[10px] font-bold uppercase tracking-wider text-[#FCD34D]">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {visibleBanners.map((banner, index) => (
+                  <tr key={banner.id} className="group transition-colors hover:bg-gray-50/50">
+                    <td className="px-4 py-4 text-center text-sm font-bold text-gray-500">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-16 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
+                          {renderBannerImage(banner, "h-full w-full object-cover")}
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="max-w-[220px] truncate text-sm font-bold text-slate-800">{banner.title}</h4>
+                          {banner.subtitle && (
+                            <p className="max-w-[220px] truncate text-[11px] text-gray-400">{banner.subtitle}</p>
+                          )}
+                          <p className="mt-0.5 text-[10px] font-medium text-gray-400">ID: {banner.id}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="max-w-[220px] truncate px-4 py-4 text-sm font-medium text-gray-500">
+                      {banner.description || "No description"}
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      <span className="inline-block rounded-lg bg-violet-50 px-3 py-1 text-[11px] font-bold text-violet-700">
+                        {banner.target_section === "offers" ? "Offers" : "Hero section"}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-center">
+                      {getPublishedValue(banner.is_published) ? (
+                        <span className="inline-block rounded-lg bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-600">Published</span>
+                      ) : (
+                        <span className="inline-block rounded-lg bg-orange-50 px-3 py-1 text-[11px] font-bold text-orange-600">Draft</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-4 text-xs font-medium text-gray-500">{formatDate(banner.updated_at)}</td>
+                    <td className="px-4 py-4">{renderBannerActions(banner)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            {banners.map((banner) => (
-              <article
-                key={banner.id}
-                className="overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-primary-light/40 hover:shadow-md hover:shadow-primary/5"
-              >
-                <div className="relative h-40 bg-slate-100 sm:h-48">
-                  {banner.desktop_image ? (
-                    <img
-                      src={getImageUrl(banner.desktop_image)}
-                      alt={banner.title}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-slate-300">
-                      <Image size={34} />
-                    </div>
-                  )}
-                  <span className={`absolute left-3 top-3 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wide ${
-                    getPublishedValue(banner.is_published)
-                      ? "bg-emerald-500 text-white"
-                      : "bg-slate-900/70 text-white"
-                  }`}>
-                    {getPublishedValue(banner.is_published) ? "Published" : "Draft"}
-                  </span>
-                  <span className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-700">
-                    {banner.target_section === "offers" ? "Offers" : "Hero section"}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-4 py-3 text-xs text-gray-500">
+            <span>
+              Showing {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredBanners.length)} of {filteredBanners.length} banners
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((page) => page - 1)}
+                  aria-label="Previous page"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 disabled:opacity-40"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <span className="font-bold text-slate-700">{currentPage} / {totalPages}</span>
+                <button
+                  type="button"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((page) => page + 1)}
+                  aria-label="Next page"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 disabled:opacity-40"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="mb-6">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            {visibleBanners.map((banner) => (
+              <article key={banner.id} className="flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition-all hover:shadow-md">
+                <div className="mb-4 flex items-start justify-between gap-3">
+                  <div className="h-14 w-20 shrink-0 overflow-hidden rounded-xl border border-gray-100 bg-gray-50">
+                    {renderBannerImage(banner, "h-full w-full object-cover")}
+                  </div>
+                  <span className="rounded bg-gray-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                    ID: {banner.id}
                   </span>
                 </div>
-                <div className="space-y-4 p-4 sm:p-5">
-                  <div className="flex items-start gap-3">
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-bold text-slate-900">{banner.title}</h3>
-                      {banner.subtitle && (
-                        <p className="mt-1 truncate text-sm text-slate-500">{banner.subtitle}</p>
-                      )}
-                      {banner.description && (
-                        <p className="mt-2 line-clamp-2 text-xs leading-5 text-slate-500">{banner.description}</p>
-                      )}
+
+                <div className="flex-1">
+                  <h3 className="mb-1 text-sm font-bold text-slate-800">{banner.title}</h3>
+                  {banner.subtitle && (
+                    <p className="mb-2 line-clamp-1 text-xs font-semibold text-violet-700">{banner.subtitle}</p>
+                  )}
+                  <p className="mb-4 line-clamp-2 text-xs text-gray-500">
+                    {banner.description || "No description provided."}
+                  </p>
+
+                  <div className="mb-4 flex flex-wrap items-center gap-4">
+                    <div>
+                      <p className="text-[10px] font-medium text-gray-400">Target section</p>
+                      <span className="mt-0.5 inline-block rounded bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-700">
+                        {banner.target_section === "offers" ? "Offers" : "Hero"}
+                      </span>
                     </div>
-                    {banner.destination_link && (
-                      <a
-                        href={banner.destination_link}
-                        target={/^https?:\/\//i.test(banner.destination_link) ? "_blank" : undefined}
-                        rel="noreferrer"
-                        aria-label="Open banner destination"
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition hover:bg-primary/15"
-                      >
-                        <ArrowUpRight size={17} />
-                      </a>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-2 border-t border-slate-100 pt-3 text-[10px] text-slate-500 sm:grid-cols-2">
-                    <span>Created: {formatDate(banner.created_at)}</span>
-                    <span>Updated: {formatDate(banner.updated_at)}</span>
-                  </div>
-
-                  <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-                    <div className="flex items-center gap-2 text-[10px] font-medium text-slate-500">
-                      {banner.mobile_image ? (
-                        <>
-                          <Smartphone size={14} className="text-slate-400" />
-                          Mobile visual added
-                        </>
+                    <div>
+                      <p className="text-[10px] font-medium text-gray-400">Status</p>
+                      {getPublishedValue(banner.is_published) ? (
+                        <span className="mt-0.5 inline-block rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-600">Published</span>
                       ) : (
-                        <>
-                          <Monitor size={14} className="text-slate-400" />
-                          Desktop visual only
-                        </>
+                        <span className="mt-0.5 inline-block rounded bg-orange-50 px-2 py-0.5 text-[10px] font-bold uppercase text-orange-600">Draft</span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(banner)}
-                        className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-primary-light/40 hover:bg-primary/5 hover:text-primary"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteBanner(banner)}
-                        disabled={deletingId === banner.id}
-                        aria-label={`Delete ${banner.title}`}
-                        className="flex h-9 w-9 items-center justify-center rounded-lg border border-rose-100 text-rose-500 transition hover:bg-rose-50 disabled:opacity-50"
-                      >
-                        {deletingId === banner.id
-                          ? <Loader2 size={15} className="animate-spin" />
-                          : <Trash2 size={15} />}
-                      </button>
-                    </div>
                   </div>
+                </div>
+
+                <div className="mb-4 flex items-center justify-between gap-2 border-t border-gray-100 pt-3 text-[10px] text-gray-400">
+                  <span>Created: {formatDate(banner.created_at)}</span>
+                  <span>{banner.mobile_image ? "Desktop + mobile" : "Desktop only"}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+                  {banner.destination_link ? (
+                    <a
+                      href={banner.destination_link}
+                      target={/^https?:\/\//i.test(banner.destination_link) ? "_blank" : undefined}
+                      rel="noreferrer"
+                      className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                      Destination <ArrowUpRight size={14} />
+                    </a>
+                  ) : <span />}
+                  {renderBannerActions(banner)}
                 </div>
               </article>
             ))}
           </div>
-        )}
-      </section>
+          {totalPages > 1 && (
+            <div className="mt-5 flex items-center justify-center gap-3 text-xs text-gray-500">
+              <button
+                type="button"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((page) => page - 1)}
+                aria-label="Previous page"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 disabled:opacity-40"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className="font-bold text-slate-700">{currentPage} / {totalPages}</span>
+              <button
+                type="button"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((page) => page + 1)}
+                aria-label="Next page"
+                className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 disabled:opacity-40"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {modalOpen && (
         <BannerModal
