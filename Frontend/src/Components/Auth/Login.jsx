@@ -97,9 +97,9 @@ function Login() {
         <div className="w-full max-w-[460px] rounded-[30px] border border-surface/80 bg-surface/95 px-6 py-7 shadow-[0_24px_80px_rgba(40,0,120,0.2)] backdrop-blur-xl sm:px-10 sm:py-8 lg:ml-[5.7vw] lg:px-9 lg:py-7">
           <div className="mb-6 text-center lg:mb-7">
             <img
-              src="/images/logo1.png"
+              src="/images/logo.jpeg"
               alt="Our Tech Tamil logo"
-              className="mx-auto mb-1 h-11 w-11 object-contain"
+              className="mx-auto mb-1 h-11 w-11 object-contain mix-blend-multiply"
             />
             <p className="text-[26px] font-extrabold leading-none tracking-tight text-text-primary">
               Our Tech <span className="text-gradient-middle">Tamil</span>
