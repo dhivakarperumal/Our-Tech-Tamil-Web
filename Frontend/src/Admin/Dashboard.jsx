@@ -237,7 +237,94 @@ const Dashboard = () => {
     ];
 
     return (
-        <div className="space-y-6 pb-12 bg-slate-50 min-h-screen">
+        <div className="ott-dashboard-background relative isolate min-h-screen space-y-6 bg-gradient-to-br from-[#f7f1ff] via-[#f2f8ff] to-[#fff7e8] pb-12">
+            <style>{`
+                @keyframes ottDashboardColorDrift {
+                    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+                    50% { transform: translate3d(28px, 22px, 0) scale(1.12); }
+                }
+                @keyframes ottDashboardColorDriftReverse {
+                    0%, 100% { transform: translate3d(0, 0, 0) scale(1.08); }
+                    50% { transform: translate3d(-24px, -20px, 0) scale(.94); }
+                }
+                @keyframes ottDashboardColorGrid {
+                    from { background-position: 0 0; }
+                    to { background-position: 36px 36px; }
+                }
+                .ott-dashboard-color-layer {
+                    position: absolute;
+                    z-index: -1;
+                    inset: 0;
+                    overflow: hidden;
+                    border-radius: inherit;
+                    pointer-events: none;
+                    isolation: isolate;
+                    contain: paint;
+                }
+                .ott-dashboard-color-layer::before {
+                    content: "";
+                    position: absolute;
+                    z-index: 0;
+                    inset: 0;
+                    background:
+                        radial-gradient(ellipse at 8% 12%, rgb(196 181 253 / .7), transparent 28%),
+                        radial-gradient(ellipse at 92% 18%, rgb(251 207 232 / .68), transparent 27%),
+                        radial-gradient(ellipse at 77% 73%, rgb(253 230 138 / .52), transparent 30%),
+                        radial-gradient(ellipse at 15% 84%, rgb(165 243 252 / .58), transparent 32%);
+                }
+                .ott-dashboard-color-orb {
+                    position: absolute;
+                    z-index: 0;
+                    width: clamp(16rem, 34vw, 34rem);
+                    aspect-ratio: 1;
+                    border-radius: 9999px;
+                    filter: blur(72px);
+                    opacity: .42;
+                    pointer-events: none;
+                    will-change: transform;
+                }
+                .ott-dashboard-color-orb-violet {
+                    top: 8rem;
+                    left: -12rem;
+                    background: radial-gradient(circle, #a78bfa 0%, #c4b5fd 38%, transparent 72%);
+                    animation: ottDashboardColorDrift 19s ease-in-out infinite;
+                }
+                .ott-dashboard-color-orb-pink {
+                    top: 34%;
+                    right: -14rem;
+                    background: radial-gradient(circle, #f9a8d4 0%, #fbcfe8 38%, transparent 72%);
+                    animation: ottDashboardColorDriftReverse 22s ease-in-out infinite;
+                }
+                .ott-dashboard-color-orb-gold {
+                    bottom: -14rem;
+                    left: 28%;
+                    background: radial-gradient(circle, #fcd34d 0%, #fde68a 35%, transparent 72%);
+                    animation: ottDashboardColorDrift 25s ease-in-out infinite reverse;
+                }
+                .ott-dashboard-color-layer::after {
+                    content: "";
+                    position: absolute;
+                    z-index: 0;
+                    inset: 0;
+                    opacity: .16;
+                    background-image: radial-gradient(rgb(109 40 217 / .55) .75px, transparent .75px);
+                    background-size: 36px 36px;
+                    mask-image: linear-gradient(to bottom, black, transparent 96%);
+                    animation: ottDashboardColorGrid 28s linear infinite;
+                }
+                @media (prefers-reduced-motion: reduce) {
+                    .ott-dashboard-color-layer::after,
+                    .ott-dashboard-color-orb {
+                        animation: none !important;
+                        will-change: auto;
+                    }
+                }
+            `}</style>
+            <div aria-hidden="true" className="ott-dashboard-color-layer">
+                <div className="ott-dashboard-color-orb ott-dashboard-color-orb-violet" />
+                <div className="ott-dashboard-color-orb ott-dashboard-color-orb-pink" />
+                <div className="ott-dashboard-color-orb ott-dashboard-color-orb-gold" />
+            </div>
             <Toaster position="top-right" />
 
             {/* Top Stats Grid */}
