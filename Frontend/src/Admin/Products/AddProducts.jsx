@@ -164,7 +164,6 @@ const AddProducts = () => {
     const [subcategories, setSubcategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(isEdit);
-    const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
     const [pendingUploads, setPendingUploads] = useState(0);
     const [productDates, setProductDates] = useState({ created_at: "", updated_at: "" });
 
@@ -355,7 +354,6 @@ const AddProducts = () => {
                     });
                     setProductDates({ created_at: p.created_at || "", updated_at: p.updated_at || "" });
                     setVariants(Array.isArray(p.variants) ? p.variants : p.variants ? JSON.parse(p.variants) : []);
-                    setSlugManuallyEdited(false);
                     setIsStockManuallyEdited(false);
                     setFetching(false);
                 } else {
@@ -376,7 +374,7 @@ const AddProducts = () => {
                         cat_type: initialTypeCategory ? initialType : "",
                         category: initialTypeCategory?.name || "",
                         subcategory: initialTypeCategory?.subcategory?.[0] || "",
-                        product_code: codeRes.data.latestCode || "PRD000001"
+                        product_code: codeRes.data.latestCode || "OTP0001"
                     }));
                     setVariants([]);
                     setFetching(false);
@@ -406,7 +404,7 @@ const AddProducts = () => {
         setFormData(prev => ({
             ...prev,
             [name]: value,
-            ...(name === "name" && !slugManuallyEdited ? { slug: createSlug(value) } : {}),
+            ...(name === "name" ? { slug: createSlug(value) } : {}),
         }));
     };
 
@@ -813,22 +811,7 @@ const AddProducts = () => {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Code / SKU *</label>
-                                    <input type="text" name="product_code" value={formData.product_code} onChange={handleFormChange} placeholder="PRD000001" className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm font-semibold text-gray-800" required />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-1">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Slug *</label>
-                                    <input type="text" name="slug" value={formData.slug} onChange={(e) => { setSlugManuallyEdited(true); handleFormChange(e); }} placeholder="product-url-slug" className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm font-semibold text-gray-800" required />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Brand</label>
-                                    <input type="text" name="brand" value={formData.brand} onChange={handleFormChange} placeholder="Brand name" className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm font-semibold text-gray-800" />
-                                </div>
-                                <div className="space-y-1">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Model Number</label>
-                                    <input type="text" name="model_number" value={formData.model_number} onChange={handleFormChange} placeholder="Model number" className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm font-semibold text-gray-800" />
+                                    <input type="text" name="product_code" value={formData.product_code} placeholder="Generating..." className="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-sm font-semibold text-gray-500 cursor-not-allowed" readOnly required />
                                 </div>
                             </div>
 
@@ -993,6 +976,16 @@ const AddProducts = () => {
                                         <option value="Active">Active</option>
                                         <option value="Inactive">Inactive</option>
                                     </select>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Brand</label>
+                                    <input type="text" name="brand" value={formData.brand} onChange={handleFormChange} placeholder="Brand name" className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm font-semibold text-gray-800" />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Model Number</label>
+                                    <input type="text" name="model_number" value={formData.model_number} onChange={handleFormChange} placeholder="Model number" className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm font-semibold text-gray-800" />
                                 </div>
                             </div>
                             <div className="space-y-1">
