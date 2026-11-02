@@ -103,6 +103,14 @@ const sampleDashboardData = {
         cancelled: 7,
         delivery: 31,
     },
+    revenueSummary: {
+        total: 485000,
+        today: 12500,
+    },
+    contentSummary: {
+        services: 0,
+        youtubeVideos: 0,
+    },
     dataAvailability: { orders: true, sales: true },
 };
 
@@ -236,6 +244,8 @@ const Dashboard = () => {
     const ordersAvailable = dataAvailability.orders !== false;
     const salesAvailable = dataAvailability.sales !== false;
     const orderSummary = visibleDashboardData.orderSummary || sampleDashboardData.orderSummary;
+    const revenueSummary = visibleDashboardData.revenueSummary || sampleDashboardData.revenueSummary;
+    const contentSummary = visibleDashboardData.contentSummary || sampleDashboardData.contentSummary;
 
     // ── Bar Chart: Real Revenue Trends ──────────────────────────────
     const barChartData = {
@@ -350,16 +360,16 @@ const Dashboard = () => {
     }));
 
     const cardStyles = [
-        { icon_bg: "bg-gradient-to-br from-violet-100 to-fuchsia-100", icon_color: "text-violet-700", accent: "bg-gradient-to-b from-fuchsia-500 to-violet-700", stroke: "#7c3aed", glow: "from-violet-200/70" },
-        { icon_bg: "bg-gradient-to-br from-amber-100 to-orange-100", icon_color: "text-amber-700", accent: "bg-gradient-to-b from-yellow-400 to-orange-500", stroke: "#d97706", glow: "from-amber-200/70" },
-        { icon_bg: "bg-gradient-to-br from-emerald-100 to-teal-100", icon_color: "text-emerald-700", accent: "bg-gradient-to-b from-emerald-400 to-teal-600", stroke: "#059669", glow: "from-emerald-200/70" },
-        { icon_bg: "bg-gradient-to-br from-rose-100 to-pink-100", icon_color: "text-rose-700", accent: "bg-gradient-to-b from-rose-400 to-pink-600", stroke: "#e11d48", glow: "from-rose-200/70" },
+        { surface: "bg-violet-50/90", icon_bg: "bg-gradient-to-br from-violet-100 to-fuchsia-100", icon_color: "text-violet-700", accent: "bg-gradient-to-b from-fuchsia-500 to-violet-700", stroke: "#7c3aed", glow: "from-violet-200/70" },
+        { surface: "bg-amber-50/90", icon_bg: "bg-gradient-to-br from-amber-100 to-orange-100", icon_color: "text-amber-700", accent: "bg-gradient-to-b from-yellow-400 to-orange-500", stroke: "#d97706", glow: "from-amber-200/70" },
+        { surface: "bg-emerald-50/90", icon_bg: "bg-gradient-to-br from-emerald-100 to-teal-100", icon_color: "text-emerald-700", accent: "bg-gradient-to-b from-emerald-400 to-teal-600", stroke: "#059669", glow: "from-emerald-200/70" },
+        { surface: "bg-rose-50/90", icon_bg: "bg-gradient-to-br from-rose-100 to-pink-100", icon_color: "text-rose-700", accent: "bg-gradient-to-b from-rose-400 to-pink-600", stroke: "#e11d48", glow: "from-rose-200/70" },
     ];
     const orderCardStyles = [
-        { icon_bg: "bg-gradient-to-br from-violet-100 to-fuchsia-100", icon_color: "text-violet-700", accent: "bg-gradient-to-b from-fuchsia-500 to-violet-700", glow: "from-violet-200/70" },
-        { icon_bg: "bg-gradient-to-br from-sky-100 to-cyan-100", icon_color: "text-sky-700", accent: "bg-gradient-to-b from-sky-400 to-cyan-600", glow: "from-sky-200/70" },
-        { icon_bg: "bg-gradient-to-br from-rose-100 to-pink-100", icon_color: "text-rose-700", accent: "bg-gradient-to-b from-rose-400 to-red-600", glow: "from-rose-200/70" },
-        { icon_bg: "bg-gradient-to-br from-emerald-100 to-teal-100", icon_color: "text-emerald-700", accent: "bg-gradient-to-b from-emerald-400 to-teal-600", glow: "from-emerald-200/70" },
+        { surface: "bg-blue-50/90", icon_bg: "bg-gradient-to-br from-blue-100 to-indigo-100", icon_color: "text-blue-700", accent: "bg-gradient-to-b from-blue-400 to-indigo-600", glow: "from-blue-200/70" },
+        { surface: "bg-lime-50/90", icon_bg: "bg-gradient-to-br from-lime-100 to-yellow-100", icon_color: "text-lime-800", accent: "bg-gradient-to-b from-lime-400 to-yellow-500", glow: "from-lime-200/70" },
+        { surface: "bg-slate-50/90", icon_bg: "bg-gradient-to-br from-slate-100 to-gray-200", icon_color: "text-slate-700", accent: "bg-gradient-to-b from-slate-400 to-gray-600", glow: "from-slate-200/70" },
+        { surface: "bg-teal-50/90", icon_bg: "bg-gradient-to-br from-teal-100 to-cyan-100", icon_color: "text-teal-700", accent: "bg-gradient-to-b from-teal-400 to-cyan-600", glow: "from-teal-200/70" },
     ];
 
     return (
@@ -585,13 +595,41 @@ const Dashboard = () => {
                 </div>
             )}
 
+            <section className="space-y-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    {[
+                        { label: "Total Revenue", value: `₹${Number(revenueSummary.total || 0).toLocaleString("en-IN")}`, icon: <FaRupeeSign size={21} />, style: { surface: "bg-orange-50/90", icon_bg: "bg-gradient-to-br from-amber-100 to-orange-100", icon_color: "text-amber-700", accent: "bg-gradient-to-b from-amber-400 to-orange-600", glow: "from-amber-200/70" } },
+                        { label: "Today Revenue", value: `₹${Number(revenueSummary.today || 0).toLocaleString("en-IN")}`, icon: <CalendarDays size={21} />, style: { surface: "bg-cyan-50/90", icon_bg: "bg-gradient-to-br from-cyan-100 to-sky-100", icon_color: "text-cyan-700", accent: "bg-gradient-to-b from-cyan-400 to-sky-600", glow: "from-cyan-200/70" } },
+                        { label: "Services", value: Number(contentSummary.services || 0).toLocaleString("en-IN"), icon: <FiCheckCircle size={21} />, style: { surface: "bg-indigo-50/90", icon_bg: "bg-gradient-to-br from-indigo-100 to-violet-100", icon_color: "text-indigo-700", accent: "bg-gradient-to-b from-indigo-400 to-violet-600", glow: "from-indigo-200/70" } },
+                        { label: "YouTube Videos", value: Number(contentSummary.youtubeVideos || 0).toLocaleString("en-IN"), icon: <Video size={21} />, style: { surface: "bg-red-50/90", icon_bg: "bg-gradient-to-br from-red-100 to-rose-100", icon_color: "text-red-700", accent: "bg-gradient-to-b from-red-400 to-rose-600", glow: "from-rose-200/70" } },
+                    ].map((stat) => (
+                        <article key={stat.label} className={`group relative overflow-hidden rounded-2xl border border-white/80 ${stat.style.surface} p-5 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.45)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_36px_-22px_rgba(76,29,149,0.3)]`}>
+                            <div aria-hidden="true" className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${stat.style.glow} to-transparent opacity-60 transition duration-500 group-hover:scale-150 group-hover:opacity-100`} />
+                            <div className={`absolute inset-y-0 left-0 w-1.5 ${stat.style.accent}`} />
+                            <div className="relative flex items-start justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-500">{stat.label}</p>
+                                    <p className="mt-2 text-3xl font-black tracking-tight text-slate-900 sm:text-[2rem]">{stat.value}</p>
+                                </div>
+                                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${stat.style.icon_bg} ${stat.style.icon_color} shadow-sm ring-1 ring-white/80`}>
+                                    {stat.icon}
+                                </div>
+                            </div>
+                            <div className="relative mt-4 border-t border-slate-100 pt-3 text-xs font-medium text-slate-400">
+                                Current total
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            </section>
+
             {/* Top Stats Grid */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {dashboardStats.map((stat, i) => {
                     const style = cardStyles[i % cardStyles.length];
                     const trend = String(stat.trend || "");
                     return (
-                        <article key={stat.label || i} style={{ animationDelay: `${i * 90}ms` }} className="ott-dashboard-enter group relative overflow-hidden rounded-2xl border border-white/80 bg-white/90 p-5 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.45)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-[0_18px_36px_-22px_rgba(76,29,149,0.3)]">
+                        <article key={stat.label || i} style={{ animationDelay: `${i * 90}ms` }} className={`ott-dashboard-enter group relative overflow-hidden rounded-2xl border border-white/80 ${style.surface} p-5 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.45)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-[0_18px_36px_-22px_rgba(76,29,149,0.3)]`}>
                             <div aria-hidden="true" className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${style.glow} to-transparent opacity-60 transition duration-500 group-hover:scale-150 group-hover:opacity-100`} />
                             <div className={`absolute inset-y-0 left-0 w-1.5 ${style.accent}`} />
                             <div className="flex items-start justify-between gap-3">
@@ -648,7 +686,7 @@ const Dashboard = () => {
                     ].map((stat, index) => {
                         const style = orderCardStyles[index];
                         return (
-                            <article key={stat.label} className="group relative overflow-hidden rounded-2xl border border-white/80 bg-white/90 p-5 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.45)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-[0_18px_36px_-22px_rgba(76,29,149,0.3)]">
+                            <article key={stat.label} className={`group relative overflow-hidden rounded-2xl border border-white/80 ${style.surface} p-5 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.45)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-[0_18px_36px_-22px_rgba(76,29,149,0.3)]`}>
                                 <div aria-hidden="true" className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${style.glow} to-transparent opacity-60 transition duration-500 group-hover:scale-150 group-hover:opacity-100`} />
                                 <div className={`absolute inset-y-0 left-0 w-1.5 ${style.accent}`} />
                                 <div className="relative flex items-start justify-between gap-3">

@@ -1,13 +1,15 @@
 import HomeBanners from "./HomeBanners";
 import HomeCategories from "./HomeCategories";
-import TechBanner from './TechBanner'
-import OfferBanner from './OfferBanner'
+import HomeProducts from "./HomeProducts";
+import TechBanner from "./TechBanner";
+import OfferBanner from "./OfferBanner";
 
 const Home = () => {
   return (
     <div>
-      <HomeBanners/>
+      <HomeBanners />
       <HomeCategories />
+      <HomeProducts />
       <TechBanner />
       <OfferBanner />
     </div>

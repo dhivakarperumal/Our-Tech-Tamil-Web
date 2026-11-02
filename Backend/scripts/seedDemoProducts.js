@@ -10,46 +10,58 @@ const demoCatalog = [
     categoryType: "Gadgets & Electronics",
     products: [
       {
-        name: "USB-C Fast Charger",
+        name: "Nova X5 5G Smartphone",
         product_code: "DEMO-GADGET-001",
-        slug: "demo-usb-c-fast-charger",
-        subcategory: "Chargers",
-        description: "Compact fast charger for compatible USB-C phones and devices.",
-        mrp: 1299,
-        offer: 15,
-        total_stock: 24,
-        quantity: 24,
-        color: "White",
-        colorHex: "#FFFFFF",
-        specifications: [{ key: "Connector", value: "USB-C" }, { key: "Output", value: "Fast charging" }],
-      },
-      {
-        name: "Wireless Bluetooth Earbuds",
-        product_code: "DEMO-GADGET-002",
-        slug: "demo-wireless-bluetooth-earbuds",
-        subcategory: "Audio",
-        description: "Lightweight wireless earbuds for calls, music, and everyday listening.",
-        mrp: 2499,
-        offer: 20,
-        total_stock: 18,
-        quantity: 18,
-        color: "Black",
-        colorHex: "#171717",
-        specifications: [{ key: "Connectivity", value: "Bluetooth" }, { key: "Use", value: "Calls and music" }],
-      },
-      {
-        name: "Smart LED Bulb",
-        product_code: "DEMO-GADGET-003",
-        slug: "demo-smart-led-bulb",
-        subcategory: "Lighting",
-        description: "Energy-saving smart LED bulb for convenient home lighting.",
-        mrp: 999,
+        slug: "demo-nova-x5-5g-smartphone",
+        subcategory: "Smartphones",
+        description: "A stylish 5G smartphone with a vibrant display, reliable performance, and a long-lasting battery.",
+        mrp: 24999,
         offer: 10,
-        total_stock: 30,
-        quantity: 30,
-        color: "Warm White",
-        colorHex: "#FFF1C1",
-        specifications: [{ key: "Type", value: "LED bulb" }, { key: "Usage", value: "Home lighting" }],
+        total_stock: 25,
+        quantity: 25,
+        color: "Jet Black",
+        colorHex: "#000000",
+        specifications: [
+          { key: "Display", value: "6.6-inch FHD+" },
+          { key: "Storage", value: "128 GB" },
+          { key: "RAM", value: "8 GB" },
+        ],
+      },
+      {
+        name: "AeroBook 15 Laptop",
+        product_code: "DEMO-GADGET-002",
+        slug: "demo-aerobook-15-laptop",
+        subcategory: "Laptops & Computers",
+        description: "A lightweight everyday laptop designed for office tasks, online learning, browsing, and productivity.",
+        mrp: 58999,
+        offer: 8,
+        total_stock: 12,
+        quantity: 12,
+        color: "Silver",
+        colorHex: "#C0C0C0",
+        specifications: [
+          { key: "Processor", value: "Intel Core i5" },
+          { key: "RAM", value: "16 GB" },
+          { key: "Storage", value: "512 GB SSD" },
+        ],
+      },
+      {
+        name: "SonicBeat Wireless Headphones",
+        product_code: "DEMO-GADGET-003",
+        slug: "demo-sonicbeat-wireless-headphones",
+        subcategory: "Headphones & Speakers",
+        description: "Comfortable wireless headphones with clear audio, cushioned ear cups, and Bluetooth connectivity.",
+        mrp: 3999,
+        offer: 15,
+        total_stock: 40,
+        quantity: 40,
+        color: "Jet Black",
+        colorHex: "#000000",
+        specifications: [
+          { key: "Driver Size", value: "40 mm" },
+          { key: "Connectivity", value: "Bluetooth 5.3" },
+          { key: "Battery", value: "Up to 30 Hours Playback" },
+        ],
       },
     ],
   },
@@ -59,52 +71,64 @@ const demoCatalog = [
     categoryType: "Natural Products",
     products: [
       {
-        name: "Cold-Pressed Sesame Oil",
+        name: "Premium California Almonds",
         product_code: "DEMO-NATURAL-001",
-        slug: "demo-cold-pressed-sesame-oil",
-        subcategory: "Oils",
-        description: "Traditional cold-pressed sesame oil for everyday cooking.",
-        mrp: 450,
+        slug: "demo-premium-california-almonds",
+        subcategory: "Dry Fruits & Nuts",
+        description: "Carefully selected whole almonds with a naturally rich, nutty taste for snacking and cooking.",
+        mrp: 499,
         offer: 10,
-        total_stock: 20,
-        unit: "Bottle",
-        naturalProductType: "Oil",
-        ingredients: "100% sesame oil",
-        netQuantity: 1,
-        quantityUnit: "L",
-        specifications: [{ key: "Ingredients", value: "100% sesame oil" }, { key: "Origin", value: "India" }],
-      },
-      {
-        name: "Raw Forest Honey",
-        product_code: "DEMO-NATURAL-002",
-        slug: "demo-raw-forest-honey",
-        subcategory: "Honey",
-        description: "Naturally sourced raw forest honey, packed for freshness.",
-        mrp: 550,
-        offer: 5,
-        total_stock: 16,
-        unit: "Bottle",
-        naturalProductType: "Honey",
-        ingredients: "100% honey",
+        total_stock: 60,
+        unit: "Pack",
+        naturalProductType: "Dry Fruit",
+        ingredients: "100% Almonds",
         netQuantity: 500,
         quantityUnit: "g",
-        specifications: [{ key: "Ingredients", value: "100% honey" }, { key: "Storage", value: "Store in a cool, dry place" }],
+        specifications: [
+          { key: "Net Weight", value: "500 g" },
+          { key: "Form", value: "Whole almonds" },
+          { key: "Origin", value: "United States" },
+        ],
       },
       {
-        name: "Turmeric Powder",
-        product_code: "DEMO-NATURAL-003",
-        slug: "demo-turmeric-powder",
-        subcategory: "Spices",
-        description: "Aromatic ground turmeric for cooking and seasoning.",
-        mrp: 180,
-        offer: 10,
-        total_stock: 40,
-        unit: "Pack",
-        naturalProductType: "Spice",
-        ingredients: "100% turmeric",
-        netQuantity: 200,
+        name: "Wild Forest Honey",
+        product_code: "DEMO-NATURAL-002",
+        slug: "demo-wild-forest-honey",
+        subcategory: "Organic Honey",
+        description: "Naturally rich forest honey with a distinctive floral taste for drinks and everyday recipes.",
+        mrp: 349,
+        offer: 5,
+        total_stock: 35,
+        unit: "Bottle",
+        naturalProductType: "Honey",
+        ingredients: "100% Honey",
+        netQuantity: 500,
         quantityUnit: "g",
-        specifications: [{ key: "Ingredients", value: "100% turmeric" }, { key: "Country of Origin", value: "India" }],
+        specifications: [
+          { key: "Net Quantity", value: "500 g" },
+          { key: "Texture", value: "Thick and smooth" },
+          { key: "Origin", value: "India" },
+        ],
+      },
+      {
+        name: "Cold Pressed Coconut Oil",
+        product_code: "DEMO-NATURAL-003",
+        slug: "demo-cold-pressed-coconut-oil",
+        subcategory: "Natural Oils",
+        description: "Coconut oil extracted using a traditional cold-press process for cooking and household use.",
+        mrp: 599,
+        offer: 12,
+        total_stock: 28,
+        unit: "Bottle",
+        naturalProductType: "Edible Oil",
+        ingredients: "100% Coconut Oil",
+        netQuantity: 1,
+        quantityUnit: "L",
+        specifications: [
+          { key: "Net Quantity", value: "1 L" },
+          { key: "Extraction", value: "Cold Pressed" },
+          { key: "Origin", value: "India" },
+        ],
       },
     ],
   },
@@ -114,55 +138,67 @@ const demoCatalog = [
     categoryType: "Clothing & Fashion",
     products: [
       {
-        name: "Everyday Cotton Kurta",
+        name: "Classic Men's Cotton Shirt",
         product_code: "DEMO-CLOTHING-001",
-        slug: "demo-everyday-cotton-kurta",
-        subcategory: "Kurtas",
-        description: "Comfortable cotton kurta designed for everyday wear.",
+        slug: "demo-classic-mens-cotton-shirt",
+        subcategory: "Men's Clothing",
+        description: "A versatile cotton shirt with a comfortable regular fit for office wear and casual occasions.",
         mrp: 1499,
-        offer: 15,
+        offer: 20,
         total_stock: 18,
         color: "Navy Blue",
-        colorHex: "#172554",
-        sizesStock: { S: 4, M: 5, L: 5, XL: 4 },
+        colorHex: "#000080",
+        sizesStock: { S: 3, M: 5, L: 6, XL: 4 },
         sizes: ["S", "M", "L", "XL"],
         material: "Cotton",
-        gender: "Unisex",
-        specifications: [{ key: "Material", value: "Cotton" }, { key: "Fit", value: "Regular" }],
+        gender: "Men",
+        specifications: [
+          { key: "Fabric", value: "100% Cotton" },
+          { key: "Fit", value: "Regular Fit" },
+          { key: "Sleeve", value: "Full Sleeve" },
+        ],
       },
       {
-        name: "Classic Printed Saree",
+        name: "Women's Printed Kurti",
         product_code: "DEMO-CLOTHING-002",
-        slug: "demo-classic-printed-saree",
-        subcategory: "Sarees",
-        description: "A versatile printed saree for celebrations and daily occasions.",
-        mrp: 2199,
-        offer: 20,
-        total_stock: 12,
-        color: "Maroon",
-        colorHex: "#7F1D1D",
-        sizesStock: { "Free Size": 12 },
-        sizes: ["Free Size"],
-        material: "Polyester",
+        slug: "demo-womens-printed-kurti",
+        subcategory: "Women's Clothing",
+        description: "A lightweight printed kurti with a flattering everyday silhouette and comfortable feel.",
+        mrp: 1199,
+        offer: 15,
+        total_stock: 20,
+        color: "Rose Pink",
+        colorHex: "#FFC0CB",
+        sizesStock: { S: 4, M: 6, L: 6, XL: 4 },
+        sizes: ["S", "M", "L", "XL"],
+        material: "Rayon",
         gender: "Women",
-        specifications: [{ key: "Material", value: "Polyester" }, { key: "Size", value: "Free Size" }],
+        specifications: [
+          { key: "Fabric", value: "Rayon" },
+          { key: "Pattern", value: "Printed" },
+          { key: "Sleeve", value: "Three Quarter Sleeve" },
+        ],
       },
       {
-        name: "Soft Cotton T-Shirt",
+        name: "Kids Casual Wear Set",
         product_code: "DEMO-CLOTHING-003",
-        slug: "demo-soft-cotton-t-shirt",
-        subcategory: "T-Shirts",
-        description: "Soft cotton T-shirt with a comfortable regular fit.",
-        mrp: 799,
+        slug: "demo-kids-casual-wear-set",
+        subcategory: "Kids Clothing",
+        description: "A soft and comfortable casual outfit set for kids, suitable for playtime and everyday wear.",
+        mrp: 999,
         offer: 10,
-        total_stock: 20,
-        color: "Forest Green",
-        colorHex: "#166534",
-        sizesStock: { S: 5, M: 5, L: 5, XL: 5 },
-        sizes: ["S", "M", "L", "XL"],
-        material: "Cotton",
-        gender: "Unisex",
-        specifications: [{ key: "Material", value: "Cotton" }, { key: "Fit", value: "Regular" }],
+        total_stock: 15,
+        color: "Golden Yellow",
+        colorHex: "#FFD700",
+        sizesStock: { S: 2, M: 3, L: 2, XL: 2, "Free Size": 6 },
+        sizes: ["S", "M", "L", "XL", "Free Size"],
+        material: "Cotton Blend",
+        gender: "Kids",
+        specifications: [
+          { key: "Fabric", value: "Cotton Blend" },
+          { key: "Set Includes", value: "Top and Bottom" },
+          { key: "Care", value: "Machine Wash" },
+        ],
       },
     ],
   },
@@ -173,14 +209,18 @@ async function ensureCategory(connection, category) {
     "SELECT cat_id FROM categories WHERE name = ? AND category_type = ? LIMIT 1",
     [category.category, category.categoryType],
   );
+
   if (existingCategories.length) return;
 
   const [idMatches] = await connection.execute(
     "SELECT cat_id FROM categories WHERE cat_id = ? LIMIT 1",
     [category.catId],
   );
+
   if (idMatches.length) {
-    throw new Error(`Category ID ${category.catId} already belongs to a different category.`);
+    throw new Error(
+      `Category ID ${category.catId} already belongs to a different category.`,
+    );
   }
 
   await connection.execute(
@@ -192,33 +232,41 @@ async function ensureCategory(connection, category) {
       category.category,
       category.categoryType,
       "Demo category created by the demo product seed.",
-      JSON.stringify([...new Set(category.products.map(product => product.subcategory))]),
+      JSON.stringify([
+        ...new Set(category.products.map((product) => product.subcategory)),
+      ]),
       JSON.stringify([]),
     ],
   );
 }
 
 function productValues(product, category) {
-  const offerPrice = Number((product.mrp * (1 - product.offer / 100)).toFixed(2));
+  const offerPrice = Number(
+    (product.mrp * (1 - product.offer / 100)).toFixed(2),
+  );
+
   const variants = product.sizesStock
-    ? [{
-        color: product.colorHex,
-        colorName: product.color,
-        images: [],
-        selectedSizes: product.sizes,
-        sizesStock: product.sizesStock,
-      }]
-    : product.quantity
-      ? [{
+    ? [
+        {
           color: product.colorHex,
           colorName: product.color,
           images: [],
-          quantity: product.quantity,
-        }]
+          selectedSizes: product.sizes,
+          sizesStock: product.sizesStock,
+        },
+      ]
+    : product.quantity
+      ? [
+          {
+            color: product.colorHex,
+            colorName: product.color,
+            images: [],
+            quantity: product.quantity,
+          },
+        ]
       : [];
-  const stockStatus = product.total_stock < 10
-    ? "Low Stock"
-    : "In Stock";
+
+  const stockStatus = product.total_stock < 10 ? "Low Stock" : "In Stock";
 
   return [
     product.name,
@@ -251,24 +299,39 @@ function productValues(product, category) {
 
 async function seedDemoProducts() {
   const pool = createPool();
+
   let connection;
   let transactionStarted = false;
   let inserted = 0;
-  let skipped = 0;
+  let updated = 0;
 
   try {
     connection = await pool.getConnection();
+
     await connection.beginTransaction();
     transactionStarted = true;
+
     for (const category of demoCatalog) {
       await ensureCategory(connection, category);
+
       for (const product of category.products) {
         const [existingProducts] = await connection.execute(
-          "SELECT id FROM products WHERE slug = ? LIMIT 1",
-          [product.slug],
+          "SELECT id FROM products WHERE product_code = ? LIMIT 1",
+          [product.product_code],
         );
+
         if (existingProducts.length) {
-          skipped += 1;
+          await connection.execute(
+            `UPDATE products
+             SET name = ?, product_code = ?, slug = ?, cat_type = ?, category = ?, subcategory = ?,
+                 description = ?, mrp = ?, offer = ?, offer_price = ?, total_stock = ?, unit = ?,
+                 stock_status = ?, images = ?, specifications = ?, natural_product_type = ?,
+                 ingredients = ?, net_quantity = ?, quantity_unit = ?, material = ?, gender = ?,
+                 available_sizes = ?, variants = ?, rating = ?, status = ?
+             WHERE id = ?`,
+            [...productValues(product, category), existingProducts[0].id],
+          );
+          updated += 1;
           continue;
         }
 
@@ -281,13 +344,20 @@ async function seedDemoProducts() {
            VALUES (${Array(25).fill("?").join(", ")})`,
           productValues(product, category),
         );
+
         inserted += 1;
       }
     }
+
     await connection.commit();
-    console.log(`Demo seed complete: ${inserted} products added, ${skipped} existing products skipped.`);
+    console.log(
+      `Demo seed complete: ${inserted} products added, ${updated} existing products updated.`,
+    );
   } catch (error) {
-    if (transactionStarted) await connection.rollback();
+    if (transactionStarted) {
+      await connection.rollback();
+    }
+
     throw error;
   } finally {
     connection?.release();
@@ -296,10 +366,14 @@ async function seedDemoProducts() {
 }
 
 if (require.main === module) {
-  seedDemoProducts().catch(error => {
+  seedDemoProducts().catch((error) => {
     console.error("Could not seed demo products:", error);
     process.exitCode = 1;
   });
 }
 
-module.exports = { demoCatalog, productValues, seedDemoProducts };
+module.exports = {
+  demoCatalog,
+  productValues,
+  seedDemoProducts,
+};

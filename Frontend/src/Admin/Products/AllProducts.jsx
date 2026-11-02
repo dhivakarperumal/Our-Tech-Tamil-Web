@@ -256,9 +256,6 @@ const AllProducts = () => {
                                 <table className="w-full text-left">
                                     <thead>
                                         <tr className="bg-gradient-to-r from-[#1F0A3C] to-[#3c096c] border-b border-[#3c096c]">
-                                            <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">
-                                                <input type="checkbox" className="rounded border-[#FCD34D]/40 accent-[#FCD34D]" />
-                                            </th>
                                             <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-12">S.No.</th>
                                             <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider">Product</th>
                                             <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider">Type / Category</th>
@@ -271,9 +268,6 @@ const AllProducts = () => {
                                     <tbody className="divide-y divide-gray-50">
                                         {currentItems.map((product, index) => (
                                             <tr key={product.id} className="hover:bg-[#240046]/5 transition-colors group">
-                                                <td className="px-5 py-4">
-                                                    <input type="checkbox" className="rounded border-gray-300" />
-                                                </td>
                                                 <td className="px-3 py-4 text-sm text-gray-500 font-medium">
                                                     {(currentPage - 1) * itemsPerPage + index + 1}
                                                 </td>

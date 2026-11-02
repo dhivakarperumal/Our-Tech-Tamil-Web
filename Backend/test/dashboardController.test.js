@@ -30,6 +30,8 @@ test("dashboard returns real inventory/customer totals and normalized low-stock 
         customerQuery = query;
         return [[{ total: "7" }]];
       }
+      if (query.includes("FROM admin_services")) return [[{ total: "4" }]];
+      if (query.includes("FROM admin_youtube_videos")) return [[{ total: "9" }]];
       if (query.includes("FROM products") && query.includes("total_stock < 10")) {
         return [[
           { id: 8, name: "Cotton saree", total_stock: 3, images: '["/uploads/products/saree.jpg"]' },
@@ -57,6 +59,7 @@ test("dashboard returns real inventory/customer totals and normalized low-stock 
   ]);
   assert.deepEqual(response.body.recentOrders, []);
   assert.deepEqual(response.body.topProducts, []);
+  assert.deepEqual(response.body.contentSummary, { services: 4, youtubeVideos: 9 });
   assert.deepEqual(response.body.dataAvailability, { orders: false, sales: false });
 });
 

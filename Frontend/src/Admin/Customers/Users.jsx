@@ -386,7 +386,6 @@ const Users = ({ initialTab = "All" }) => {
                                 <table className="w-full text-left border-collapse whitespace-nowrap">
                                     <thead>
                                         <tr className="admin-table-header text-[11px] font-black text-[#facc15] uppercase tracking-wider">
-                                            <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded border-white/70 text-[#facc15] focus:ring-[#facc15]" aria-label="Select all customers" /></th>
                                             <th className="px-6 py-4">Customer ID</th>
                                             <th className="px-6 py-4">Customer</th>
                                             <th className="px-6 py-4">Email</th>
@@ -399,13 +398,13 @@ const Users = ({ initialTab = "All" }) => {
                                     <tbody>
                                         {loading ? (
                                             <tr>
-                                                <td colSpan="8" className="px-6 py-10 text-center text-gray-400 text-sm font-semibold">
+                                                <td colSpan="7" className="px-6 py-10 text-center text-gray-400 text-sm font-semibold">
                                                     Loading customers...
                                                 </td>
                                             </tr>
                                         ) : currentItems.length === 0 ? (
                                             <tr>
-                                                <td colSpan="8" className="px-6 py-10 text-center text-gray-400 text-sm font-semibold">
+                                                <td colSpan="7" className="px-6 py-10 text-center text-gray-400 text-sm font-semibold">
                                                     No customers found.
                                                 </td>
                                             </tr>
@@ -413,9 +412,6 @@ const Users = ({ initialTab = "All" }) => {
                                             currentItems.map((user, idx) => {
                                                 return (
                                                     <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
-                                                        <td className="px-6 py-4">
-                                                            <input type="checkbox" className="rounded border-gray-300 text-[#4318FF] focus:ring-[#4318FF]" />
-                                                        </td>
                                                         <td className="px-6 py-4 text-[13px] font-black text-[#4318FF]">
                                                             CUS{1000 + (parseInt(user.id) || idx + 1)}
                                                         </td>
