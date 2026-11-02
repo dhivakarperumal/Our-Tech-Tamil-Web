@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Package } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Package, ShoppingCart, Zap } from "lucide-react";
 
 function getFirstImage(images) {
   if (!images) return "";
@@ -43,6 +44,7 @@ function getProductImage(product) {
 function ProductCard({ product }) {
   const [imageFailed, setImageFailed] = useState(false);
   const image = getProductImage(product);
+  const productDetailsPath = `/product/${product.id}`;
   const mrp = Number(product.mrp) || 0;
   const offerPrice = Number(product.offer_price ?? product.mrp) || 0;
   const hasDiscount = mrp > offerPrice;
@@ -50,7 +52,11 @@ function ProductCard({ product }) {
 
   return (
     <article className="group overflow-hidden rounded-2xl border border-border bg-white shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg">
-      <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#faf8ff] p-4">
+      <Link
+        to={productDetailsPath}
+        aria-label={`View ${product.name} details`}
+        className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#faf8ff] p-4"
+      >
         {image && !imageFailed ? (
           <img
             src={image}
@@ -67,7 +73,7 @@ function ProductCard({ product }) {
             {discount}% OFF
           </span>
         )}
-      </div>
+      </Link>
       <div className="p-3.5 sm:p-4">
         {(product.cat_type || product.category) && (
           <p className="truncate text-[10px] font-bold uppercase tracking-wider text-primary">
@@ -75,7 +81,9 @@ function ProductCard({ product }) {
           </p>
         )}
         <h3 className="mt-1 line-clamp-2 min-h-10 text-sm font-bold text-text-primary">
+          <Link to={productDetailsPath} className="transition hover:text-primary">
           {product.name}
+          </Link>
         </h3>
         <div className="mt-2 flex flex-wrap items-baseline gap-2">
           <span className="text-base font-extrabold text-text-primary">
@@ -86,6 +94,22 @@ function ProductCard({ product }) {
               ₹{mrp.toLocaleString("en-IN")}
             </span>
           )}
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary px-2 py-2 text-[11px] font-bold text-primary transition hover:bg-primary/5 sm:text-xs"
+          >
+            <ShoppingCart size={14} aria-hidden="true" />
+            Add to Cart
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-primary px-2 py-2 text-[11px] font-bold text-white transition hover:bg-primary-dark sm:text-xs"
+          >
+            <Zap size={14} aria-hidden="true" />
+            Buy Now
+          </button>
         </div>
       </div>
     </article>

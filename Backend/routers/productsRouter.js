@@ -317,6 +317,28 @@ function createProductsRouter(pool) {
     }
   });
 
+  router.get("/public/:id", async (request, response, next) => {
+    try {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) {
+        return response.status(400).json({ message: "Invalid product id." });
+      }
+
+      const [rows] = await pool.execute(
+        `SELECT ${PRODUCT_COLUMNS} FROM products
+         WHERE id = ? AND status = 'Active'
+         LIMIT 1`,
+        [id],
+      );
+      if (!rows.length) {
+        return response.status(404).json({ message: "Product not found." });
+      }
+      return response.json(toProduct(rows[0]));
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   router.use(requireAdmin);
 
   router.post("/upload", upload.fields([
