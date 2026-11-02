@@ -85,14 +85,13 @@ function Login() {
 
   return (
     <main className="relative h-dvh overflow-hidden bg-gradient-to-br from-gradient-middle via-primary-dark to-secondary-dark font-sans text-text-primary selection:bg-primary selection:text-surface lg:grid lg:grid-cols-2">
-      <div
+      <img
+        src="/images/loginbanner.png"
+        alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute -left-28 -top-32 h-80 w-80 rounded-full bg-secondary-light/50 blur-3xl"
+        className="pointer-events-none absolute inset-0 hidden h-full w-full object-cover object-center lg:block"
       />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-36 right-[35%] h-96 w-96 rounded-full bg-gradient-middle/35 blur-3xl"
-      />
+      <div className="pointer-events-none absolute inset-0 hidden bg-secondary-dark/10 lg:block" />
 
       <section className="relative z-10 flex h-full min-h-0 items-center justify-center px-4 py-3 sm:px-8 sm:py-4 lg:justify-start lg:px-0 lg:py-0">
         <div className="max-h-[calc(100dvh-24px)] w-full max-w-[460px] overflow-y-auto rounded-[30px] border border-surface/80 bg-surface/95 px-6 py-5 shadow-[0_24px_80px_rgba(40,0,120,0.2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-10 sm:py-7 lg:ml-[5.7vw] lg:px-9 lg:py-6">
@@ -235,7 +234,6 @@ function Login() {
       </section>
 
       <aside className="relative z-10 hidden h-full min-h-0 overflow-hidden lg:block">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-secondary-dark/20" />
         <div className="relative z-10 mx-auto max-w-[600px] px-8 pt-[10vh] text-center">
           <h2 className="text-4xl font-black italic leading-[1.08] text-surface xl:text-5xl">
             Upgrade Your
@@ -267,11 +265,6 @@ function Login() {
             </div>
           </div>
         </div>
-        <img
-          src="/images/loginbanner.png"
-          alt="Laptop, headphones, smartphone and other technology products"
-          className="pointer-events-none absolute bottom-0 right-0 z-[1] h-[58vh] w-auto max-w-none object-contain object-right-bottom"
-        />
       </aside>
     </main>
   );
