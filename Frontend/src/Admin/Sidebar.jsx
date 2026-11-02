@@ -170,7 +170,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         className={`
         fixed top-0 left-0 z-50 h-full
         bg-[#1D0738]
-        border-r border-white/10 shadow-[12px_0_40px_rgba(15,0,35,0.22)]
+        isolate border-r border-white/10 shadow-[12px_0_40px_rgba(15,0,35,0.22)]
         font-sans
         
         flex flex-col transition-all duration-300
@@ -179,8 +179,9 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         ${collapsed ? "lg:w-20 w-full" : "w-full lg:w-72"}
       `}
       >
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_10%_0%,rgba(168,85,247,0.16),transparent_38%),radial-gradient(ellipse_at_100%_100%,rgba(126,34,206,0.14),transparent_35%)]" />
         {/* ========== LOGO ========== */}
-        <div className="relative overflow-hidden border-b border-white/10 bg-[#2A1048] px-4 py-5">
+        <div className="relative z-10 overflow-hidden border-b border-white/10 bg-[#2A1048]/95 px-4 py-5">
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 via-transparent to-amber-400/[0.06]" />
           <div className="relative flex min-h-11 items-center gap-3">
             <div className="w-11 h-11 shrink-0 overflow-hidden rounded-full bg-[#21094E] ring-1 ring-white/15 shadow-lg shadow-fuchsia-950/30">
@@ -211,7 +212,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         </div>
 
         {/* ========== NAVIGATION ========== */}
-        <nav aria-label="Admin navigation" className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-3 py-5 hide-scrollbar">
+        <nav aria-label="Admin navigation" className="relative z-10 min-h-0 flex-1 space-y-1.5 overflow-y-auto px-3 py-5 hide-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
 
@@ -228,14 +229,16 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     aria-expanded={isMenuOpen}
                     title={collapsed ? item.label : undefined}
                     className={`
-                      w-full flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                      group w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                       ${isMenuOpen || isAnyChildActive
-                        ? "bg-white/[0.09] text-white ring-1 ring-inset ring-white/[0.1]"
-                        : "text-white/65 hover:-translate-y-px hover:bg-white/[0.07] hover:text-white"
+                        ? "border-fuchsia-300/25 bg-white/[0.09] text-white shadow-[0_8px_24px_rgba(8,0,20,0.12)]"
+                        : "border-white/[0.08] bg-white/[0.035] text-white/75 hover:border-fuchsia-300/25 hover:bg-white/[0.07] hover:text-white"
                       }
                     `}
                   >
-                    <Icon className={`h-5 w-5 shrink-0 ${isMenuOpen || isAnyChildActive ? "text-[#FFD52E]" : ""}`} />
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${isMenuOpen || isAnyChildActive ? "bg-fuchsia-400/15 text-[#FFD52E]" : "bg-white/[0.07] text-violet-200 group-hover:bg-fuchsia-400/15 group-hover:text-white"}`}>
+                      <Icon className="h-5 w-5" />
+                    </span>
 
                     {!collapsed && (
                       <>
@@ -248,7 +251,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                           )}
                         </span>
                         <ChevronDown
-                          className={`h-4 w-4 transition-transform duration-200 ${isMenuOpen ? "rotate-180 text-[#FFD52E]" : ""
+                          className={`h-4 w-4 text-white/55 transition-transform duration-200 ${isMenuOpen ? "rotate-180 text-[#FFD52E]" : ""
                             }`}
                         />
                       </>
@@ -258,7 +261,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   {/* ===== SUB MENU ===== */}
                   {!collapsed && (
                     <div
-                      className={`ml-4 space-y-1 overflow-y-auto border-l border-white/10 pl-3 hide-scrollbar transition-all duration-300
+                      className={`ml-4 space-y-1 overflow-y-auto border-l border-fuchsia-300/20 pl-3 hide-scrollbar transition-all duration-300
                       ${isMenuOpen ? "max-h-60 py-1 opacity-100" : "max-h-0 opacity-0"}`}
                     >
                       {item.children.map((sub) => {
@@ -305,35 +308,53 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             /* ===== NORMAL ITEM ===== */
             const isActive = isActiveRoute(item);
 
+            const sectionLabel = item.path === "/admin"
+              ? "Main Menu"
+              : item.path === "/"
+                ? "Navigation"
+                : null;
+
             return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.exact}
-                title={collapsed ? item.label : undefined}
-                aria-current={isActive ? "page" : undefined}
-                onClick={() => {
-                  setOpenMenu(null);
-                  if (isOpen) onClose();
-                }}
-                className={`
-                  flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
-                  ${isActive
-                    ? "bg-[#FFC928] text-[#210839] shadow-lg shadow-amber-400/20 ring-1 ring-inset ring-amber-100/25"
-                    : "text-white/65 hover:-translate-y-px hover:bg-white/[0.07] hover:text-white"
-                  }
-                `}
-              >
-                <Icon className={`h-5 w-5 shrink-0 ${isActive ? "text-[#210839]" : ""}`} />
-                {!collapsed && <span className="text-sm font-semibold tracking-wide">{item.label}</span>}
-              </NavLink>
+              <div key={item.path} className="space-y-2">
+                {sectionLabel && !collapsed && (
+                  <div className={`flex items-center gap-3 px-3 ${item.path === "/" ? "pt-5" : "pb-1"}`}>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300/80">
+                      {sectionLabel}
+                    </span>
+                    <span className="h-px flex-1 bg-gradient-to-r from-fuchsia-300/35 to-transparent" />
+                  </div>
+                )}
+                <NavLink
+                  to={item.path}
+                  end={item.exact}
+                  title={collapsed ? item.label : undefined}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => {
+                    setOpenMenu(null);
+                    if (isOpen) onClose();
+                  }}
+                  className={`
+                    group flex items-center gap-3 rounded-xl border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                    ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2.5"}
+                    ${isActive
+                      ? "border-amber-200/70 bg-gradient-to-r from-[#FFD52E] via-[#FFC928] to-[#FFB900] text-[#210839] shadow-[0_8px_22px_rgba(255,185,0,0.2)]"
+                      : "border-white/[0.08] bg-white/[0.035] text-white/75 hover:border-fuchsia-300/25 hover:bg-white/[0.07] hover:text-white"
+                    }
+                  `}
+                >
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${isActive ? "bg-white/25 text-[#210839]" : "bg-white/[0.07] text-violet-200 group-hover:bg-fuchsia-400/15 group-hover:text-white"}`}>
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  {!collapsed && <span className="text-sm font-semibold tracking-wide">{item.label}</span>}
+                </NavLink>
+              </div>
             );
           })}
         </nav>
 
         {/* ========== FOOTER / PROFILE ========== */}
         {!collapsed && (
-          <div className="relative mx-3 mb-4 shrink-0 rounded-2xl border border-fuchsia-300/15 bg-[#260A4D] p-4 shadow-lg shadow-black/10">
+          <div className="relative z-10 mx-3 mb-4 shrink-0 rounded-2xl border border-fuchsia-300/20 bg-[#260A4D]/95 p-4 shadow-lg shadow-black/10">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFF4BE] to-[#FFD52E] ring-1 ring-white/20">
                 <p className="text-lg font-bold text-[#24103E]">{(profileName || "Admin User").charAt(0).toUpperCase()}</p>
