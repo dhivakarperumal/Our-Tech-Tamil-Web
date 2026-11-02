@@ -1,21 +1,16 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useAdmin } from "../../PrivateRouter/AdminContext";
 import {
   Star,
   Search,
-  Filter,
-  MoreVertical,
   MessageSquare,
   CheckCircle,
   AlertCircle,
-  User,
   Trash2,
   Send,
   Loader2,
-  ChevronRight,
   ShieldAlert,
-  Calendar,
   Package,
   ArrowUpRight,
   Reply,
@@ -117,8 +112,9 @@ const Reviews = () => {
       await api.put(`/reviews/admin/${id}/status`, { status });
       toast.success(`Review ${status.toLowerCase()} successfully`);
       fetchReviews();
-    } catch (err) {
-      toast.error("Failed to update status");
+    } catch (error) {
+      console.error("Failed to update review status:", error);
+      toast.error(error.response?.data?.message || "Failed to update review status.");
     }
   };
 
@@ -128,8 +124,9 @@ const Reviews = () => {
       await api.delete(`/reviews/admin/${id}`);
       toast.success("Review deleted");
       fetchReviews();
-    } catch (err) {
-      toast.error("Failed to delete review");
+    } catch (error) {
+      console.error("Failed to delete review:", error);
+      toast.error(error.response?.data?.message || "Failed to delete review.");
     }
   };
 
@@ -141,8 +138,9 @@ const Reviews = () => {
       setReplyText("");
       setActiveReplyId(null);
       fetchReviews();
-    } catch (err) {
-      toast.error("Failed to add reply");
+    } catch (error) {
+      console.error("Failed to add review reply:", error);
+      toast.error(error.response?.data?.message || "Failed to add review reply.");
     }
   };
 
