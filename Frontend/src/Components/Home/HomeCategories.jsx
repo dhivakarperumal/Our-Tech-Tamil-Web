@@ -100,7 +100,7 @@ function HomeCategories() {
 
     const container = carouselContainerRef.current;
     const updateSlidesPerView = () => {
-      const availableWidth = container.clientWidth - 80;
+      const availableWidth = container.clientWidth;
       const slideWidth = window.matchMedia("(min-width: 640px)").matches ? 112 : 96;
       setCarouselLayout({
         slidesPerView: Math.max(1, Math.floor((availableWidth + 8) / (slideWidth + 8))),
@@ -139,7 +139,7 @@ function HomeCategories() {
             <span className="h-5 w-1 rounded-full bg-primary" aria-hidden="true" />
             Shop by Category
           </h2>
-          <div className="mr-20 flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {!loading && categories.length > 1 && !showAll && (
               <div className="flex items-center gap-1">
                 <button
@@ -174,7 +174,7 @@ function HomeCategories() {
         </div>
 
         {loading ? (
-          <div className="flex gap-2 overflow-hidden pr-20 sm:gap-3" aria-label="Loading categories">
+          <div className="flex gap-2 overflow-hidden sm:gap-3" aria-label="Loading categories">
             {Array.from({ length: 8 }, (_, index) => (
               <div
                 key={index}
@@ -191,7 +191,7 @@ function HomeCategories() {
             No categories are available right now.
           </p>
         ) : showAll ? (
-          <div className="grid grid-cols-3 gap-2 pr-20 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
             {categories.map((category) => (
               <CategoryCard
                 key={category.catId || category.id || category.name}
@@ -200,7 +200,7 @@ function HomeCategories() {
             ))}
           </div>
         ) : (
-          <div ref={carouselContainerRef} style={{ paddingRight: "80px" }}>
+          <div ref={carouselContainerRef}>
             <Swiper
               modules={[Autoplay]}
               onSwiper={(swiper) => {
