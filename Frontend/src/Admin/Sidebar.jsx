@@ -93,6 +93,7 @@ const isPathActive = (currentPath, path) => {
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const { profileName } = useAuth();
   const location = useLocation();
+  const isCollapsed = collapsed && !isOpen;
   const [orderCounts, setOrderCounts] = useState({
     all: 0,
     new: 0,
@@ -168,40 +169,34 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       {/* ========== SIDEBAR ========== */}
       <aside
         className={`
-        fixed top-0 left-0 z-50 h-full
-        admin-sidebar border-r border-white/5
-        font-sans
-        
-        flex flex-col transition-all duration-300
+        fixed left-0 top-0 z-50 flex h-dvh flex-col overflow-hidden
+        admin-sidebar border-r border-white/10 font-sans shadow-[12px_0_40px_rgba(19,3,44,0.18)]
+        transition-all duration-300
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0
         ${collapsed ? "lg:w-20 w-full" : "w-full lg:w-72"}
       `}
       >
-        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_10%_0%,rgba(168,85,247,0.16),transparent_38%),radial-gradient(ellipse_at_100%_100%,rgba(126,34,206,0.14),transparent_35%)]" />
         {/* ========== LOGO ========== */}
-       <div className="relative overflow-hidden px-4 pt-5 pb-5 border-b border-white/10">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500/15 via-transparent to-cyan-500/5" />
+        <div className="relative shrink-0 overflow-hidden border-b border-white/10 px-4 py-5">
           <div className="relative flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary-light via-secondary-light to-accent p-[2px] shadow-lg shadow-primary/30">
-              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[14px] bg-white">
+            <div className="h-14 w-14 shrink-0 rounded-2xl bg-gradient-to-br from-fuchsia-400 via-violet-500 to-[#FFD52E] p-[2px] shadow-lg shadow-fuchsia-950/30">
+              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[14px] bg-[#1C0739]">
                 <img
                   src="/images/logo.jpeg"
                   alt="Our Tech Tamil"
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain"
                 />
               </div>
             </div>
-            {!collapsed && (
-              <div className="overflow-hidden">
-                <p className="whitespace-nowrap text-sm font-extrabold tracking-tight text-white">
+            <div className={`min-w-0 overflow-hidden ${isCollapsed ? "lg:hidden" : ""}`}>
+                <p className="whitespace-nowrap text-base font-extrabold tracking-tight text-white">
                   Our Tech <span className="text-accent">Tamil</span>
                 </p>
-                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
-                  Admin Panel
+                <p className="mt-0.5 whitespace-nowrap text-xs font-medium text-violet-100/75">
+                  Admin Dashboard
                 </p>
-              </div>
-            )}
+            </div>
             <button
               onClick={onClose}
               aria-label="Close admin navigation"
@@ -209,11 +204,19 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             >
               <X className="w-5 h-5" />
             </button>
+            <button
+              onClick={onToggleCollapse}
+              aria-label={collapsed ? "Expand admin navigation" : "Collapse admin navigation"}
+              title={collapsed ? "Expand menu" : "Collapse menu"}
+              className={`hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-fuchsia-300/30 bg-white/[0.06] text-white/80 transition hover:border-fuchsia-200/70 hover:bg-fuchsia-400/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD52E] lg:flex ${isCollapsed ? "absolute -right-1 top-1/2 -translate-y-1/2" : "ml-auto"}`}
+            >
+              <ChevronLeft className={`h-5 w-5 transition-transform ${collapsed ? "rotate-180" : ""}`} />
+            </button>
           </div>
         </div>
 
         {/* ========== NAVIGATION ========== */}
-        <nav aria-label="Admin navigation" className="relative z-10 min-h-0 flex-1 space-y-1.5 overflow-y-auto px-3 py-5 hide-scrollbar">
+        <nav aria-label="Admin navigation" className="relative z-10 min-h-0 flex-1 space-y-2 overflow-y-auto px-3 py-5 hide-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
 
@@ -225,23 +228,24 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
               return (
                 <div key={item.label} className="space-y-1">
                   <button
+                    type="button"
                     onClick={() => toggleMenu(item.label)}
                     aria-label={item.label}
                     aria-expanded={isMenuOpen}
-                    title={collapsed ? item.label : undefined}
+                    title={isCollapsed ? item.label : undefined}
                     className={`
-                      group w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                      group w-full flex items-center gap-3 rounded-2xl border px-3 py-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                       ${isMenuOpen || isAnyChildActive
-                        ? "border-fuchsia-300/25 bg-white/[0.09] text-white shadow-[0_8px_24px_rgba(8,0,20,0.12)]"
-                        : "border-white/[0.08] bg-white/[0.035] text-white/75 hover:border-fuchsia-300/25 hover:bg-white/[0.07] hover:text-white"
+                        ? "border-fuchsia-300/45 bg-transparent text-white"
+                        : "border-white/[0.10] bg-transparent text-white/80 hover:border-fuchsia-300/35 hover:text-white"
                       }
                     `}
                   >
-                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${isMenuOpen || isAnyChildActive ? "bg-fuchsia-400/15 text-[#FFD52E]" : "bg-white/[0.07] text-violet-200 group-hover:bg-fuchsia-400/15 group-hover:text-white"}`}>
+                    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${isMenuOpen || isAnyChildActive ? "bg-fuchsia-400/20 text-[#FFD52E]" : "bg-white/[0.08] text-violet-100 group-hover:bg-fuchsia-400/15 group-hover:text-white"}`}>
                       <Icon className="h-5 w-5" />
                     </span>
 
-                    {!collapsed && (
+                    {!isCollapsed && (
                       <>
                         <span className="flex-1 text-left text-sm font-semibold tracking-wide">
                           {item.label}
@@ -260,9 +264,9 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   </button>
 
                   {/* ===== SUB MENU ===== */}
-                  {!collapsed && (
+                  {!isCollapsed && (
                     <div
-                      className={`ml-4 space-y-1 overflow-y-auto border-l border-fuchsia-300/20 pl-3 hide-scrollbar transition-all duration-300
+                      className={`ml-4 space-y-1 overflow-y-auto border-l border-fuchsia-300/25 pl-3 hide-scrollbar transition-all duration-300
                       ${isMenuOpen ? "max-h-60 py-1 opacity-100" : "max-h-0 opacity-0"}`}
                     >
                       {item.children.map((sub) => {
@@ -283,7 +287,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             onClick={() => isOpen && onClose()}
                             aria-current={isActive ? "page" : undefined}
                             className={`
-                              flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium tracking-wide transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                              flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium tracking-wide transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                               ${isActive
                                 ? "bg-[#FFC928] text-[#210839] shadow-md shadow-amber-400/20"
                                 : "text-white/65 hover:bg-white/[0.07] hover:text-white"
@@ -317,9 +321,9 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
             return (
               <div key={item.path} className="space-y-2">
-                {sectionLabel && !collapsed && (
+                {sectionLabel && !isCollapsed && (
                   <div className={`flex items-center gap-3 px-3 ${item.path === "/" ? "pt-5" : "pb-1"}`}>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300/80">
+                    <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-violet-200/80">
                       {sectionLabel}
                     </span>
                     <span className="h-px flex-1 bg-gradient-to-r from-fuchsia-300/35 to-transparent" />
@@ -328,25 +332,25 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 <NavLink
                   to={item.path}
                   end={item.exact}
-                  title={collapsed ? item.label : undefined}
+                  title={isCollapsed ? item.label : undefined}
                   aria-current={isActive ? "page" : undefined}
                   onClick={() => {
                     setOpenMenu(null);
                     if (isOpen) onClose();
                   }}
                   className={`
-                    group flex items-center gap-3 rounded-xl border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
-                    ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2.5"}
+                    group flex items-center gap-3 rounded-2xl border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                    ${isCollapsed ? "justify-center px-0 py-2.5" : "px-3 py-2.5"}
                     ${isActive
-                      ? "border-amber-200/70 bg-gradient-to-r from-[#FFD52E] via-[#FFC928] to-[#FFB900] text-[#210839] shadow-[0_8px_22px_rgba(255,185,0,0.2)]"
-                      : "border-white/[0.08] bg-white/[0.035] text-white/75 hover:border-fuchsia-300/25 hover:bg-white/[0.07] hover:text-white"
+                      ? "relative border-amber-100/80 bg-gradient-to-r from-[#FFE45C] via-[#FFD52E] to-[#FFBA00] text-[#210839] shadow-[0_8px_24px_rgba(255,185,0,0.22)] before:absolute before:-left-2 before:h-8 before:w-1.5 before:rounded-full before:bg-[#FFD52E] before:shadow-[0_0_14px_rgba(255,213,46,0.75)]"
+                      : "border-white/[0.10] bg-transparent text-white/80 hover:border-fuchsia-300/35 hover:text-white"
                     }
                   `}
                 >
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${isActive ? "bg-white/25 text-[#210839]" : "bg-white/[0.07] text-violet-200 group-hover:bg-fuchsia-400/15 group-hover:text-white"}`}>
+                  <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors ${isActive ? "bg-white/30 text-[#210839]" : "bg-white/[0.08] text-violet-100 group-hover:bg-fuchsia-400/15 group-hover:text-white"}`}>
                     <Icon className="h-5 w-5" />
                   </span>
-                  {!collapsed && <span className="text-sm font-semibold tracking-wide">{item.label}</span>}
+                  {!isCollapsed && <span className="text-sm font-semibold tracking-wide">{item.label}</span>}
                 </NavLink>
               </div>
             );
@@ -354,39 +358,19 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         </nav>
 
         {/* ========== FOOTER / PROFILE ========== */}
-        {!collapsed && (
-          <div className="relative z-10 mx-3 mb-4 shrink-0 rounded-2xl border border-fuchsia-300/20 bg-[#260A4D]/95 p-4 shadow-lg shadow-black/10">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFF4BE] to-[#FFD52E] ring-1 ring-white/20">
+        <div className={`relative z-10 mx-3 mb-4 mt-2 shrink-0 rounded-2xl border border-fuchsia-300/35 bg-[#210839] p-3 ${isCollapsed ? "flex justify-center" : ""}`}>
+          <div className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"}`} title={isCollapsed ? `${profileName || "Admin User"} - Super Admin` : undefined}>
+              <div className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFF4BE] to-[#FFD52E] ring-2 ring-white/15 shadow-md shadow-amber-500/20">
                 <p className="text-lg font-bold text-[#24103E]">{(profileName || "Admin User").charAt(0).toUpperCase()}</p>
+                <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#2A0A4F] bg-emerald-400" />
               </div>
-              <div className="overflow-hidden flex-1">
+              {!isCollapsed && <div className="min-w-0 flex-1 overflow-hidden">
                 <p className="text-sm font-semibold text-white truncate">{(profileName || "Admin User")}</p>
-                <p className="text-[10px] font-medium text-white/55 truncate">Super Admin</p>
-              </div>
-              <ChevronDown className="h-4 w-4 text-white/55" />
-            </div>
+                <p className="mt-0.5 text-xs font-medium text-violet-100/65 truncate">Super Admin</p>
+              </div>}
+              {!isCollapsed && <ChevronDown className="h-4 w-4 shrink-0 text-white/65" />}
           </div>
-        )}
-
-        {/* ========== COLLAPSE BUTTON ========== */}
-        <button
-          onClick={onToggleCollapse}
-          aria-label={collapsed ? "Expand admin navigation" : "Collapse admin navigation"}
-          className="
-            hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2
-            w-6 h-6 rounded-full
-            bg-[#FFF4BE] border border-amber-300/70
-            shadow-[0_4px_14px_rgba(15,0,35,0.24)]
-            items-center justify-center
-            text-[#3D1762] hover:bg-[#FFD52E] hover:scale-110 transition-all z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD52E]
-          "
-        >
-          <ChevronLeft
-            className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""
-              }`}
-          />
-        </button>
+        </div>
       </aside>
     </>
   );

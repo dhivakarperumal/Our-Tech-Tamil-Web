@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Image, ImagePlus, Loader2, Plus, Trash2, Wrench, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api";
@@ -21,8 +22,10 @@ const inputClass = "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4
 
 const getServiceImageUrl = (image) => {
   if (!image || /^(https?:|data:|blob:)/i.test(image)) return image;
-  const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
-  return `${backendUrl}${image.startsWith("/") ? image : `/${image}`}`;
+  const configuredBackendUrl = import.meta.env.VITE_BACKEND_URL || api.defaults.baseURL || window.location.origin;
+  const backendOrigin = new URL(configuredBackendUrl, window.location.origin).origin;
+  const imagePath = image.replace(/\\/g, "/").replace(/^\/+/, "");
+  return new URL(imagePath, `${backendOrigin}/`).href;
 };
 
 const Services = () => {
@@ -31,6 +34,8 @@ const Services = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState("");
+  const imagePreviewRef = useRef("");
   const [deletingId, setDeletingId] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -50,6 +55,10 @@ const Services = () => {
     loadServices();
   }, []);
 
+  useEffect(() => () => {
+    if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
+  }, []);
+
   useEffect(() => {
     if (!isAddModalOpen) return undefined;
     const previousOverflow = document.body.style.overflow;
@@ -67,8 +76,8 @@ const Services = () => {
   const uploadServiceImage = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      toast.error("Choose an image file.");
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
+      toast.error("Choose a PNG, JPEG, WEBP, or GIF image.");
       event.target.value = "";
       return;
     }
@@ -78,13 +87,17 @@ const Services = () => {
       return;
     }
 
+    const previewUrl = URL.createObjectURL(file);
+    if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
+    imagePreviewRef.current = previewUrl;
+    setImagePreview(previewUrl);
+    setForm((current) => ({ ...current, image_url: "" }));
+
     const imageForm = new FormData();
     imageForm.append("images", file);
     setUploadingImage(true);
     try {
-      const { data } = await api.post("/products/upload", imageForm, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+      const { data } = await api.post("/products/upload", imageForm);
       const uploadedImage = data?.images?.[0];
       if (typeof uploadedImage !== "string" || !uploadedImage) {
         throw new Error("The image upload did not return a saved image.");
@@ -94,6 +107,10 @@ const Services = () => {
     } catch (error) {
       console.error("Failed to upload service image:", error);
       toast.error(error.response?.data?.message || error.message || "Could not upload the service image.");
+      if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
+      imagePreviewRef.current = "";
+      setImagePreview("");
+      setForm((current) => ({ ...current, image_url: "" }));
     } finally {
       setUploadingImage(false);
       event.target.value = "";
@@ -117,6 +134,9 @@ const Services = () => {
       });
       setServices((current) => [data.service, ...current]);
       setForm(emptyService);
+      if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
+      imagePreviewRef.current = "";
+      setImagePreview("");
       setIsAddModalOpen(false);
       toast.success("Service added.");
     } catch (error) {
@@ -234,9 +254,9 @@ const Services = () => {
         )}
       </section>
 
-      {isAddModalOpen && (
+      {isAddModalOpen && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto overscroll-contain bg-slate-950/60 p-3 backdrop-blur-sm sm:items-center sm:p-5"
+          className="fixed inset-0 z-[100] flex items-start justify-center overflow-x-hidden overflow-y-auto overscroll-y-contain bg-slate-950/60 p-3 backdrop-blur-sm sm:items-center sm:p-5"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !saving && !uploadingImage) setIsAddModalOpen(false);
           }}
@@ -245,7 +265,7 @@ const Services = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-service-title"
-            className="my-0 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25 sm:my-auto sm:max-h-[calc(100dvh-2.5rem)]"
+            className="my-0 flex h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25 sm:my-auto sm:h-[min(90dvh,52rem)] sm:max-h-[calc(100dvh-2.5rem)]"
           >
             <div className="z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white via-white to-violet-50/70 px-5 py-4 sm:px-7">
               <div className="flex items-center gap-3">
@@ -269,7 +289,11 @@ const Services = () => {
               </button>
             </div>
 
-            <form id="add-service-form" onSubmit={submitService} className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-5 sm:p-7">
+            <form
+              id="add-service-form"
+              onSubmit={submitService}
+              className="min-h-0 flex-1 basis-0 space-y-5 overflow-x-hidden overflow-y-auto overscroll-y-contain p-5 sm:p-7"
+            >
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-slate-700">
                   Service ID *
@@ -385,26 +409,37 @@ const Services = () => {
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 transition hover:bg-violet-100">
                     {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
-                    {uploadingImage ? "Uploading image..." : "Choose image"}
+                    {uploadingImage ? "Uploading image..." : imagePreview ? "Change image" : "Choose image"}
                     <input
                       type="file"
-                      accept="image/*"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
                       onChange={uploadServiceImage}
                       disabled={uploadingImage || saving}
+                      aria-label="Upload service image"
                       className="sr-only"
                     />
                   </label>
-                  {form.image_url && (
+                  {(imagePreview || form.image_url) && (
                     <>
-                      <img
-                        src={getServiceImageUrl(form.image_url)}
-                        alt="Service preview"
-                        className="h-14 w-14 rounded-xl border border-slate-200 object-cover"
-                      />
+                      <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-2">
+                        <img
+                          src={imagePreview || getServiceImageUrl(form.image_url)}
+                          alt="Service image preview"
+                          className="h-16 w-24 rounded-lg border border-slate-200 bg-white object-cover shadow-sm"
+                        />
+                        <span className="text-xs font-semibold text-slate-600">
+                          {uploadingImage ? "Uploading..." : "Image ready"}
+                        </span>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => setForm({ ...form, image_url: "" })}
-                        className="text-xs font-semibold text-rose-600 hover:text-rose-700"
+                        onClick={() => {
+                          if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
+                          imagePreviewRef.current = "";
+                          setImagePreview("");
+                          setForm((current) => ({ ...current, image_url: "" }));
+                        }}
+                        className="rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 hover:text-rose-700"
                       >
                         Remove image
                       </button>
@@ -420,7 +455,12 @@ const Services = () => {
                       inputMode="url"
                       maxLength={2048}
                       value={form.image_url}
-                      onChange={(event) => setForm({ ...form, image_url: event.target.value })}
+                      onChange={(event) => {
+                        if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
+                        imagePreviewRef.current = "";
+                        setImagePreview("");
+                        setForm((current) => ({ ...current, image_url: event.target.value }));
+                      }}
                       placeholder="https://example.com/service.jpg"
                       className={`${inputClass} pl-10`}
                     />
@@ -453,7 +493,8 @@ const Services = () => {
               </div>
             </footer>
           </section>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

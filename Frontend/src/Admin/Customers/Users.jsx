@@ -57,6 +57,20 @@ const Users = ({ initialTab = "All" }) => {
     const [submitLoading, setSubmitLoading] = useState(false);
 
     useEffect(() => {
+        if (!isModalOpen) return undefined;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape" && !submitLoading) setIsModalOpen(false);
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isModalOpen, submitLoading]);
+
+    useEffect(() => {
         const fetchUsers = async () => {
             try {
                 const response = await api.get("/auth/users");
@@ -547,31 +561,63 @@ const Users = ({ initialTab = "All" }) => {
 
                 {/* Add/Edit User Modal */}
                 {isModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
-                            <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
-                                <div>
-                                    <h2 className="text-xl font-bold text-slate-800">{isEditing ? 'Modify Domain Privileges' : 'Register New Customer'}</h2>
-                                    <p className="text-xs text-gray-500 mt-1">{isEditing ? `Updating permissions for ID: ${editUserId}` : 'Add a new customer to your system'}</p>
+                    <div
+                        className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto overscroll-contain bg-slate-950/65 p-3 backdrop-blur-sm sm:items-center sm:p-5"
+                        onMouseDown={(event) => {
+                            if (event.target === event.currentTarget && !submitLoading) setIsModalOpen(false);
+                        }}
+                    >
+                        <section
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="customer-modal-title"
+                            className="my-0 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/30 animate-in zoom-in-95 duration-200 sm:my-auto sm:max-h-[calc(100dvh-2.5rem)]"
+                        >
+                            <header className="z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white via-white to-violet-50/70 px-5 py-4 sm:px-7">
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 shadow-sm shadow-violet-900/10">
+                                        <FiUserPlus size={20} />
+                                    </span>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Customer management</p>
+                                        <h2 id="customer-modal-title" className="mt-0.5 text-lg font-bold text-slate-900">
+                                            {isEditing ? "Edit customer" : "Register new customer"}
+                                        </h2>
+                                        <p className="text-xs text-slate-500">
+                                            {isEditing ? `Update customer details for ID ${editUserId}.` : "Add a customer account to your system."}
+                                        </p>
+                                    </div>
                                 </div>
                                 <button
+                                    type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="admin-button-icon p-2 rounded-full transition-colors"
+                                    disabled={submitLoading}
+                                    aria-label="Close customer dialog"
+                                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-white hover:text-slate-900 hover:shadow-sm disabled:opacity-50"
                                 >
                                     <FiX className="text-xl" />
                                 </button>
-                            </div>
+                            </header>
 
-                            <div className="p-6 overflow-y-auto space-y-4">
+                            <form
+                                id="customer-form"
+                                onSubmit={(event) => {
+                                    event.preventDefault();
+                                    handleSaveUser();
+                                }}
+                                className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain p-5 sm:p-7"
+                            >
                                 <div>
                                     <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Username *</label>
                                     <input
                                         type="text"
                                         name="username"
+                                        required
+                                        autoComplete="username"
                                         value={formData.username}
                                         onChange={handleInputChange}
                                         placeholder="e.g. johndoe"
-                                        className="w-full bg-white border border-gray-200 text-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#4318FF] focus:border-[#4318FF] transition-all text-sm font-medium"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                                     />
                                 </div>
                                 <div>
@@ -579,10 +625,11 @@ const Users = ({ initialTab = "All" }) => {
                                     <input
                                         type="text"
                                         name="name"
+                                        autoComplete="name"
                                         value={formData.name}
                                         onChange={handleInputChange}
                                         placeholder="e.g. Priya Sharma"
-                                        className="w-full bg-white border border-gray-200 text-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#4318FF] focus:border-[#4318FF] transition-all text-sm font-medium"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                                     />
                                 </div>
                                 <div>
@@ -590,10 +637,12 @@ const Users = ({ initialTab = "All" }) => {
                                     <input
                                         type="email"
                                         name="email"
+                                        required
+                                        autoComplete="email"
                                         value={formData.email}
                                         onChange={handleInputChange}
                                         placeholder="priya.sharma@gmail.com"
-                                        className="w-full bg-white border border-gray-200 text-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#4318FF] focus:border-[#4318FF] transition-all text-sm font-medium"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                                     />
                                 </div>
                                 <div>
@@ -601,10 +650,11 @@ const Users = ({ initialTab = "All" }) => {
                                     <input
                                         type="text"
                                         name="phone"
+                                        autoComplete="tel"
                                         value={formData.phone}
                                         onChange={handleInputChange}
                                         placeholder="+91 98765 43210"
-                                        className="w-full bg-white border border-gray-200 text-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#4318FF] focus:border-[#4318FF] transition-all text-sm font-medium"
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                                     />
                                 </div>
                                 {!isEditing && (
@@ -613,33 +663,38 @@ const Users = ({ initialTab = "All" }) => {
                                         <input
                                             type="password"
                                             name="password"
+                                            required
+                                            autoComplete="new-password"
                                             value={formData.password}
                                             onChange={handleInputChange}
                                             placeholder="••••••••"
-                                            className="w-full bg-white border border-gray-200 text-slate-800 rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#4318FF] focus:border-[#4318FF] transition-all text-sm font-medium"
+                                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                                         />
                                     </div>
                                 )}
-                            </div>
+                            </form>
 
-                            <div className="p-6 border-t border-gray-100 shrink-0 flex gap-4">
+                            <footer className="z-10 flex shrink-0 flex-col-reverse gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-7">
                                 <button
+                                    type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="admin-button-secondary flex-1 px-4 py-2.5 rounded-lg font-bold transition-colors text-sm"
+                                    disabled={submitLoading}
+                                    className="admin-button-secondary rounded-xl px-5 py-3 text-sm font-semibold transition-colors disabled:opacity-50"
                                 >
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={handleSaveUser}
-                                    disabled={submitLoading || !formData.username || !formData.email}
-                                    className="admin-button-primary flex-1 px-4 py-2.5 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 text-sm"
+                                    type="submit"
+                                    form="customer-form"
+                                    disabled={submitLoading || !formData.username || !formData.email || (!isEditing && !formData.password)}
+                                    className="admin-button-primary flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold shadow-md transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                                 >
                                     {submitLoading ? (
                                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                     ) : isEditing ? 'Update Customer' : 'Register Customer'}
                                 </button>
-                            </div>
-                        </div>
+                            </footer>
+                        </section>
                     </div>
                 )}
             </div>

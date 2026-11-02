@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef, useId } from "react";
 import { createPortal } from "react-dom";
 import api from "../../api";
 import {
@@ -30,6 +30,157 @@ const CATEGORY_TYPES = [
     "Natural Products",
     "Clothing & Fashion",
 ];
+
+const CategoryTypeDropdown = ({ value, onChange }) => {
+    const dropdownId = useId();
+    const rootRef = useRef(null);
+    const triggerRef = useRef(null);
+    const menuRef = useRef(null);
+    const [isOpen, setIsOpen] = useState(false);
+    const [activeIndex, setActiveIndex] = useState(() => Math.max(0, CATEGORY_TYPES.indexOf(value)));
+    const [position, setPosition] = useState(null);
+    const selectedIndex = Math.max(0, CATEGORY_TYPES.indexOf(value));
+
+    const updatePosition = useCallback(() => {
+        const trigger = triggerRef.current;
+        if (!trigger) return;
+        const rect = trigger.getBoundingClientRect();
+        const menuHeight = Math.min(CATEGORY_TYPES.length * 52 + 12, 240);
+        const openAbove = window.innerHeight - rect.bottom < menuHeight + 12
+            && rect.top > menuHeight + 12;
+
+        setPosition({
+            left: Math.max(12, Math.min(rect.left, window.innerWidth - rect.width - 12)),
+            top: openAbove ? rect.top - menuHeight - 8 : rect.bottom + 8,
+            width: rect.width,
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        updatePosition();
+        const closeOnOutsideClick = (event) => {
+            if (!rootRef.current?.contains(event.target) && !menuRef.current?.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("pointerdown", closeOnOutsideClick);
+        window.addEventListener("resize", updatePosition);
+        window.addEventListener("scroll", updatePosition, true);
+        return () => {
+            document.removeEventListener("pointerdown", closeOnOutsideClick);
+            window.removeEventListener("resize", updatePosition);
+            window.removeEventListener("scroll", updatePosition, true);
+        };
+    }, [isOpen, updatePosition]);
+
+    const chooseType = (index) => {
+        onChange(CATEGORY_TYPES[index]);
+        setActiveIndex(index);
+        setIsOpen(false);
+        triggerRef.current?.focus();
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === "Escape" && isOpen) {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsOpen(false);
+            return;
+        }
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            if (!isOpen) {
+                setActiveIndex(selectedIndex);
+                setIsOpen(true);
+            } else {
+                const direction = event.key === "ArrowDown" ? 1 : -1;
+                setActiveIndex((current) => (current + direction + CATEGORY_TYPES.length) % CATEGORY_TYPES.length);
+            }
+            updatePosition();
+            return;
+        }
+        if (event.key === "Home" || event.key === "End") {
+            event.preventDefault();
+            setActiveIndex(event.key === "Home" ? 0 : CATEGORY_TYPES.length - 1);
+            setIsOpen(true);
+            updatePosition();
+            return;
+        }
+        if ((event.key === "Enter" || event.key === " ") && isOpen) {
+            event.preventDefault();
+            chooseType(activeIndex);
+        }
+    };
+
+    return (
+        <div ref={rootRef}>
+            <label id={`${dropdownId}-label`} className="mb-1.5 block text-xs font-bold text-gray-700">
+                Category Type
+            </label>
+            <button
+                ref={triggerRef}
+                type="button"
+                role="combobox"
+                aria-labelledby={`${dropdownId}-label`}
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
+                aria-controls={dropdownId}
+                aria-activedescendant={isOpen ? `${dropdownId}-option-${activeIndex}` : undefined}
+                onClick={() => {
+                    setActiveIndex(selectedIndex);
+                    setIsOpen((open) => !open);
+                    updatePosition();
+                }}
+                onKeyDown={handleKeyDown}
+                className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-4 py-3 text-left text-sm font-semibold text-slate-700 shadow-sm shadow-slate-900/[0.02] outline-none transition hover:border-violet-300 hover:bg-violet-50/30 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+            >
+                <span className={value ? "text-slate-800" : "text-slate-500"}>
+                    {value || "Select category type"}
+                </span>
+                <FiChevronDown className={`text-gray-400 transition-transform ${isOpen ? "rotate-180 text-violet-600" : ""}`} />
+            </button>
+            {isOpen && position && createPortal(
+                <div
+                    ref={menuRef}
+                    id={dropdownId}
+                    role="listbox"
+                    aria-labelledby={`${dropdownId}-label`}
+                    className="rounded-2xl border border-slate-200/90 bg-white p-1.5 shadow-xl shadow-slate-950/15 ring-1 ring-black/[0.03]"
+                    style={{ position: "fixed", zIndex: 10001, left: position.left, top: position.top, width: position.width }}
+                >
+                    {CATEGORY_TYPES.map((type, index) => {
+                        const selected = type === value;
+                        const active = index === activeIndex;
+                        return (
+                            <div
+                                key={type}
+                                id={`${dropdownId}-option-${index}`}
+                                role="option"
+                                aria-selected={selected}
+                                onMouseDown={(event) => event.preventDefault()}
+                                onMouseEnter={() => setActiveIndex(index)}
+                                onClick={() => chooseType(index)}
+                                className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition ${
+                                    active ? "bg-violet-50" : "hover:bg-slate-50"
+                                }`}
+                            >
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-xs font-bold text-violet-700">
+                                    {type.charAt(0)}
+                                </span>
+                                <span className={`min-w-0 flex-1 text-sm font-semibold ${selected ? "text-violet-800" : "text-slate-700"}`}>
+                                    {type}
+                                </span>
+                                {selected && <span className="text-xs font-bold text-violet-700">Selected</span>}
+                            </div>
+                        );
+                    })}
+                </div>,
+                document.body
+            )}
+        </div>
+    );
+};
 
 const Category = () => {
     const { user } = useAuth();
@@ -63,6 +214,7 @@ const Category = () => {
     // ---- Modal State ----
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isSavingCategory, setIsSavingCategory] = useState(false);
     const [formData, setFormData] = useState({
         catId: "",
         name: "",
@@ -74,6 +226,20 @@ const Category = () => {
 
     const [subcategories, setSubcategories] = useState([]);
     const [subInput, setSubInput] = useState("");
+
+    useEffect(() => {
+        if (!isModalOpen) return undefined;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape" && !isSavingCategory) setIsModalOpen(false);
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isModalOpen, isSavingCategory]);
 
     // ---- Derived Data (Search & Pagination) ----
     const filteredCategories = useMemo(() => {
@@ -160,6 +326,7 @@ const Category = () => {
             user_id: user?.user_id || formData.user_id || null,
         };
 
+        setIsSavingCategory(true);
         try {
             if (isEditing) {
                 await api.put(`/categories/${formData.catId}`, newCatData);
@@ -176,6 +343,8 @@ const Category = () => {
         } catch (error) {
             console.error("Failed to save category:", error);
             toast.error(error.response?.data?.message || "Failed to save category.");
+        } finally {
+            setIsSavingCategory(false);
         }
     };
 
@@ -508,24 +677,46 @@ const Category = () => {
 
             {/* Add/Edit Category Modal */}
             {isModalOpen && createPortal(
-                <div className="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4" style={{ zIndex: 9999 }}>
-                    <div className="bg-white rounded-[24px] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
-                        <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
-                            <div>
-                                <h2 className="text-xl font-black text-slate-800">
-                                    {isEditing ? 'Edit Category' : 'Add New Category'}
-                                </h2>
-                                {isEditing && <p className="text-xs text-gray-500 mt-1 font-medium">Editing ID: <span className="font-bold text-[#8B5CF6]">{formData.catId}</span></p>}
+                <div
+                    className="fixed inset-0 flex items-start justify-center overflow-y-auto overscroll-contain bg-slate-950/65 p-3 backdrop-blur-sm sm:items-center sm:p-5"
+                    style={{ zIndex: 9999 }}
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget && !isSavingCategory) setIsModalOpen(false);
+                    }}
+                >
+                    <section
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="category-modal-title"
+                        className="my-0 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/30 animate-in zoom-in-95 duration-200 sm:my-auto sm:max-h-[calc(100dvh-2.5rem)]"
+                    >
+                        <header className="z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white via-white to-violet-50/70 px-5 py-4 sm:px-7">
+                            <div className="flex min-w-0 items-center gap-3">
+                                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 shadow-sm shadow-violet-900/10">
+                                    <FiLayers size={21} />
+                                </span>
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Category management</p>
+                                    <h2 id="category-modal-title" className="mt-0.5 text-lg font-bold text-slate-900">
+                                        {isEditing ? "Edit category" : "Add new category"}
+                                    </h2>
+                                    <p className="text-xs text-slate-500">
+                                        {isEditing ? `Editing ${formData.catId}` : "Organize products with a name, type, and image."}
+                                    </p>
+                                </div>
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="admin-button-icon p-2 rounded-full transition-colors"
+                                type="button"
+                                disabled={isSavingCategory}
+                                aria-label="Close category dialog"
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-white hover:text-slate-900 hover:shadow-sm disabled:opacity-50"
                             >
                                 <FiX size={20} />
                             </button>
-                        </div>
+                        </header>
 
-                        <div className="p-6 overflow-y-auto flex-1">
+                        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-5 sm:p-7">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Left Column: Inputs */}
                                 <div className="space-y-4">
@@ -550,20 +741,10 @@ const Category = () => {
                                             className="w-full bg-white border border-gray-200 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-sm"
                                         />
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1.5">Category Type</label>
-                                        <select
-                                            name="categoryType"
-                                            value={formData.categoryType}
-                                            onChange={handleInputChange}
-                                            className="w-full bg-white border border-gray-200 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-sm"
-                                        >
-                                            <option value="">Select category type</option>
-                                            {CATEGORY_TYPES.map(type => (
-                                                <option key={type} value={type}>{type}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    <CategoryTypeDropdown
+                                        value={formData.categoryType}
+                                        onChange={(categoryType) => setFormData((current) => ({ ...current, categoryType }))}
+                                    />
                                     <div>
                                         <label className="block text-xs font-bold text-gray-700 mb-1.5">Description</label>
                                         <textarea
@@ -591,7 +772,9 @@ const Category = () => {
                                                     <span key={idx} className="flex items-center gap-1.5 bg-purple-50 text-purple-600 px-2 py-1 rounded-lg text-xs font-bold">
                                                         {sub}
                                                         <button
+                                                            type="button"
                                                             onClick={() => removeSubcategory(sub)}
+                                                            aria-label={`Remove ${sub} subcategory`}
                                                             className="admin-button-danger rounded transition-colors"
                                                         >
                                                             <FiX size={12} />
@@ -659,22 +842,28 @@ const Category = () => {
                             </div>
                         </div>
 
-                        <div className="p-5 border-t border-gray-100 flex items-center justify-end gap-3 bg-gray-50/80 shrink-0">
+                        <footer className="z-10 flex shrink-0 flex-col-reverse gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
+                            <p className="text-xs text-slate-500">Category ID is generated automatically.</p>
+                            <div className="flex flex-col-reverse gap-2 sm:flex-row">
                             <button
+                                type="button"
                                 onClick={() => setIsModalOpen(false)}
-                                className="admin-button-secondary px-5 py-2.5 text-sm font-bold rounded-xl transition-all"
+                                disabled={isSavingCategory}
+                                className="admin-button-secondary rounded-xl px-5 py-3 text-sm font-semibold transition-all disabled:opacity-50"
                             >
                                 Cancel
                             </button>
                             <button
+                                type="button"
                                 onClick={handleSaveCategory}
-                                disabled={!formData.name}
-                                className="admin-button-primary px-6 py-2.5 text-sm font-bold rounded-xl shadow-md active:scale-95 flex items-center gap-2"
+                                disabled={!formData.name || isSavingCategory}
+                                className="admin-button-primary flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold shadow-md transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                             >
-                                {isEditing ? 'Update Category' : 'Save Category'}
+                                {isSavingCategory ? "Saving..." : isEditing ? "Update category" : "Save category"}
                             </button>
-                        </div>
-                    </div>
+                            </div>
+                        </footer>
+                    </section>
                 </div>
             , document.body)}
         </div>
