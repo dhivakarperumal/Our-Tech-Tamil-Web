@@ -17,7 +17,7 @@ const Footer = () => {
   return (
     <footer className="site-footer mt-20 text-white">
       <PageContainer className="!max-w-none !px-[5%] lg:!px-[3%]">
-        <div className="grid grid-cols-2 gap-x-8 gap-y-10 py-10 sm:grid-cols-3 lg:grid-cols-[1.7fr_0.8fr_0.8fr_0.8fr_0.9fr] lg:gap-8 lg:py-8">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-10 py-10 sm:grid-cols-3 lg:grid-cols-5 lg:gap-x-10 lg:gap-y-8 lg:py-8">
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <Link
               to="/"
