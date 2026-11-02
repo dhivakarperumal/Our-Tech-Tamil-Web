@@ -81,7 +81,7 @@ function Register() {
       />
 
       <section className="relative z-10 flex h-full min-h-0 items-center justify-center px-4 py-3 sm:px-8 sm:py-4 lg:justify-start lg:px-0 lg:py-0">
-        <div className="max-h-[calc(100dvh-24px)] w-full max-w-[460px] overflow-y-auto rounded-[30px] border border-surface/80 bg-surface/95 px-6 py-4 shadow-[0_24px_80px_rgba(40,0,120,0.2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-9 sm:py-6 lg:ml-[5.7vw]">
+        <div className="max-h-[calc(100dvh-24px)] w-full max-w-[460px] overflow-y-auto rounded-[30px] border border-surface/80 bg-surface/95 px-6 py-4 shadow-[0_24px_80px_rgba(40,0,120,0.2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-9 sm:py-6 lg:ml-[5.7vw] lg:h-[min(680px,calc(100dvh-24px))]">
           <header className="mb-4 text-center">
             <img
               src="/images/logo.jpeg"
@@ -98,12 +98,12 @@ function Register() {
               </p>
               <span className="h-px flex-1 bg-primary-light/70" />
             </div>
-            <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-text-primary">
+            <h1 className="mt-2 text-2xl font-extrabold tracking-tight text-text-primary">
               Join Our <span className="text-primary">Tech World</span>
             </h1>
-            <p className="mt-1 text-sm text-text-secondary">
+            {/* <p className="mt-1 text-sm text-text-secondary">
               Create an account and find your next favorite gadget
-            </p>
+            </p> */}
           </header>
 
           <form onSubmit={handleSubmit} className="space-y-2.5">
@@ -161,7 +161,7 @@ function Register() {
               />
             </div>
 
-            <div className="grid grid-cols-1 gap-3 min-[430px]:grid-cols-2">
+            <div className="grid grid-cols-1 gap-3">
               <div>
                 <label htmlFor="register-password" className={labelClassName}>
                   Password
