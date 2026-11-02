@@ -97,17 +97,6 @@ function Login() {
         aria-hidden="true"
         className="pointer-events-none absolute -right-52 bottom-[12%] hidden h-[500px] w-[700px] rounded-full border-2 border-secondary-light/40 bg-gradient-to-br from-gradient-middle/50 via-primary/30 to-secondary-dark/20 lg:block"
       />
-      <img
-        src="/images/loginbanner.png"
-        alt="Laptop, headphones, smartphone and other technology products"
-        className="pointer-events-none absolute bottom-0 right-0 z-[1] hidden h-[52vh] w-[68%] object-cover object-[72%_center] lg:block"
-        style={{
-          maskImage:
-            "linear-gradient(to bottom, transparent 0%, black 25%), linear-gradient(to right, transparent 0%, black 22%)",
-          maskComposite: "intersect",
-        }}
-      />
-
       <section className="relative z-10 flex h-full min-h-0 items-center justify-center px-4 py-3 sm:px-8 sm:py-4 lg:justify-start lg:px-0 lg:py-0">
         <div className="max-h-[calc(100dvh-24px)] w-full max-w-[460px] overflow-y-auto rounded-[30px] border border-surface/80 bg-surface/95 px-6 py-5 shadow-[0_24px_80px_rgba(40,0,120,0.2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-10 sm:py-7 lg:ml-[5.7vw] lg:px-9 lg:py-6">
           <div className="mb-5 text-center lg:mb-6">
@@ -249,7 +238,12 @@ function Login() {
       </section>
 
       <aside className="relative z-10 hidden h-full min-h-0 overflow-hidden lg:block">
-        <div className="relative z-10 mx-auto max-w-[600px] px-8 pt-[10vh] text-center max-[700px]:pt-[4vh]">
+        <img
+          src="/images/loginbanner.png"
+          alt="Laptop, headphones, smartphone and other technology products"
+          className="login-promo-art pointer-events-none absolute bottom-0 right-0 z-0 h-[48vh] w-full object-cover object-[72%_center]"
+        />
+        <div className="login-promo-content relative z-10 mx-auto max-w-[600px] px-8 text-center">
           <h2 className="text-4xl font-black italic leading-[1.08] text-surface xl:text-5xl">
             Upgrade Your
             <br />

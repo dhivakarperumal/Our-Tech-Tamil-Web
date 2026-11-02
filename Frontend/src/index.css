@@ -57,6 +57,24 @@
   );
 }
 
+.login-promo-content {
+  padding-top: 10vh;
+}
+
+.login-promo-art {
+  mask-image: linear-gradient(to top, #000 68%, transparent 100%);
+}
+
+@media (max-height: 700px) {
+  .login-promo-content {
+    padding-top: 4vh;
+  }
+
+  .login-promo-content > div:last-child {
+    margin-top: 0.75rem;
+  }
+}
+
 
 @layer utilities {
   .animate-in {
