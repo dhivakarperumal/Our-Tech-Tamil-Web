@@ -239,7 +239,7 @@ function Login() {
 
       <aside className="relative z-10 hidden h-full min-h-0 overflow-hidden lg:block">
         <img
-          src="/images/loginbanner.png"
+          src="/images/loginimage.png"
           alt="Laptop, headphones, smartphone and other technology products"
           className="login-promo-art pointer-events-none absolute bottom-0 right-0 z-0 h-[48vh] w-full object-cover object-[72%_center]"
         />
