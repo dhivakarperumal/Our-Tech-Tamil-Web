@@ -179,6 +179,7 @@ const StockDetails = () => {
             let newTotalStock = 0;
             const vars = Array.isArray(updatedVariants) ? updatedVariants : [];
             const hasVariantsWithSizes = vars.some(v => v.sizesStock && Object.keys(v.sizesStock).length > 0);
+            const hasColorQuantities = vars.some(v => v.quantity !== undefined);
 
             if (hasVariantsWithSizes) {
                 vars.forEach((v, vIndex) => {
@@ -190,6 +191,15 @@ const StockDetails = () => {
                         v.sizesStock[size] = finalQty;
                         newTotalStock += finalQty;
                     });
+                });
+            } else if (hasColorQuantities) {
+                vars.forEach((variant, vIndex) => {
+                    if (variant.quantity === undefined) return;
+                    const key = `${vIndex}-quantity`;
+                    const currentQty = Number.parseInt(variant.quantity, 10) || 0;
+                    const addedQty = Number.parseInt(variantAdditions[key], 10) || 0;
+                    variant.quantity = currentQty + addedQty;
+                    newTotalStock += variant.quantity;
                 });
             } else {
                 const currentStock = getCurrentStockValue(selectedProduct);
@@ -560,7 +570,7 @@ const StockDetails = () => {
                                 </div>
                             ) : (
                                 <div className="space-y-6">
-                                    {updatedVariants.length > 0 && updatedVariants.some(v => v.sizesStock && Object.keys(v.sizesStock).length > 0) ? (
+                                    {updatedVariants.length > 0 && updatedVariants.some(v => (v.sizesStock && Object.keys(v.sizesStock).length > 0) || v.quantity !== undefined) ? (
                                         // Variant Based Stock
                                         <div className="space-y-4">
                                             {updatedVariants.map((variant, vIndex) => (
@@ -589,8 +599,23 @@ const StockDetails = () => {
                                                                 </div>
                                                             ))}
                                                         </div>
+                                                    ) : variant.quantity !== undefined ? (
+                                                        <div className="bg-white border border-gray-200 p-3 rounded-xl">
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <label className="text-[10px] font-black text-gray-400 uppercase">Color stock</label>
+                                                                <span className="text-[9px] font-black bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">Curr: {variant.quantity}</span>
+                                                            </div>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                value={variantAdditions[`${vIndex}-quantity`] ?? ""}
+                                                                onChange={(e) => handleVariantStockChange(vIndex, "quantity", e.target.value)}
+                                                                className="w-full text-base font-black text-slate-800 outline-none placeholder:text-gray-300 bg-transparent border-b border-gray-100 focus:border-[#7b2cbf] transition-colors pb-1"
+                                                                placeholder="Add"
+                                                            />
+                                                        </div>
                                                     ) : (
-                                                        <p className="text-xs text-gray-400 font-medium">No sizes configured for this variant.</p>
+                                                        <p className="text-xs text-gray-400 font-medium">No stock configured for this variant.</p>
                                                     )}
                                                 </div>
                                             ))}

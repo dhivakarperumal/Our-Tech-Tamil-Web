@@ -239,7 +239,9 @@ const ProductDetail = () => {
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-xs font-black text-blue-600">
-                                                    {Object.values(v.sizesStock || {}).reduce((a, b) => a + (parseInt(b) || 0), 0)} {product.unit || "Piece"}
+                                                    {v.quantity !== undefined
+                                                        ? Number(v.quantity) || 0
+                                                        : Object.values(v.sizesStock || {}).reduce((a, b) => a + (parseInt(b) || 0), 0)} {product.unit || "Piece"}
                                                 </p>
                                             </div>
                                         </div>

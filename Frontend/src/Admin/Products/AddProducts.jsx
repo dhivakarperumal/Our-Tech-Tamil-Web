@@ -187,6 +187,7 @@ const AddProducts = () => {
     const selectedCategory = categories.find(cat => cat.name === formData.category);
     const isClothingCategory = /clothing|apparel|fashion|garment|textile|ethnic wear|traditional wear|footwear/i
         .test(`${formData.cat_type} ${selectedCategory?.name || ""}`);
+    const isGadgetCategory = /gadget|electronic/i.test(`${formData.cat_type} ${selectedCategory?.name || ""}`);
     const isFootwearCategory = /footwear/i.test(`${formData.cat_type} ${selectedCategory?.name || ""}`);
     const isFreeSizeCategory = /free size|one size|material/i.test(selectedCategory?.name || "");
     const sizeOptions = !isClothingCategory
@@ -220,19 +221,16 @@ const AddProducts = () => {
         }
     }, [formData.mrp, formData.offer_price, formData.offer]);
 
-    // 2. Auto-calculate Total Stock whenever variants or sizesStock change
+    // Keep total stock synchronized with color quantities or clothing size quantities.
     useEffect(() => {
-        if (isClothingCategory && !isStockManuallyEdited) {
-            const hasSizeStock = variants.some(variant => Object.keys(variant.sizesStock || {}).length > 0);
-            if (!hasSizeStock) return;
-            let total = 0;
-            variants.forEach(variant => {
-                Object.values(variant.sizesStock || {}).forEach(qty => {
-                    total += parseInt(qty) || 0;
-                });
-            });
-            setFormData(prev => ({ ...prev, total_stock: total.toString() }));
-        }
+        if (isStockManuallyEdited || !variants.length) return;
+        const total = variants.reduce((sum, variant) => {
+            const variantStock = isClothingCategory
+                ? Object.values(variant.sizesStock || {}).reduce((sizeTotal, quantity) => sizeTotal + (Number.parseInt(quantity, 10) || 0), 0)
+                : (Number.parseInt(variant.quantity, 10) || 0);
+            return sum + variantStock;
+        }, 0);
+        setFormData(prev => prev.total_stock === String(total) ? prev : { ...prev, total_stock: String(total) });
     }, [variants, isStockManuallyEdited, isClothingCategory]);
 
     useEffect(() => {
@@ -305,7 +303,17 @@ const AddProducts = () => {
                         storage_instructions: p.storage_instructions || "",
                         country_of_origin: p.country_of_origin || "",
                     });
-                    setVariants(Array.isArray(p.variants) ? p.variants : p.variants ? JSON.parse(p.variants) : []);
+                    const loadedVariants = Array.isArray(p.variants) ? p.variants : p.variants ? JSON.parse(p.variants) : [];
+                    const loadedClothingCategory = /clothing|apparel|fashion|garment|textile|ethnic wear|traditional wear|footwear/i
+                        .test(`${p.cat_type || p.category_type || selectedCat?.categoryType || selectedCat?.category_type || ""} ${p.category || ""}`);
+                    const normalizedVariants = !loadedClothingCategory && loadedVariants.length > 0 &&
+                        loadedVariants.every(variant => variant.quantity === undefined)
+                        ? loadedVariants.map((variant, index) => ({
+                            ...variant,
+                            quantity: index === 0 ? Number.parseInt(p.total_stock, 10) || 0 : 0,
+                        }))
+                        : loadedVariants;
+                    setVariants(normalizedVariants);
                     setIsStockManuallyEdited(false);
                     setFetching(false);
                 } else {
@@ -357,18 +365,6 @@ const AddProducts = () => {
             [name]: value,
             ...(name === "name" ? { slug: createSlug(value) } : {}),
         }));
-    };
-
-    const handleClothingMultiSelect = (field, value) => {
-        setFormData(prev => {
-            const selected = prev[field] || [];
-            return {
-                ...prev,
-                [field]: selected.includes(value)
-                    ? selected.filter(item => item !== value)
-                    : [...selected, value],
-            };
-        });
     };
 
     const addSpecification = () => {
@@ -448,19 +444,18 @@ const AddProducts = () => {
     };
 
     useEffect(() => {
-        if (isClothingCategory && variants.length === 0) {
+        if (variants.length === 0) {
             const initialVariant = {
                 color: "#3D01B1",
                 colorName: "Purple",
                 images: [],
+                ...(!isClothingCategory ? { quantity: Number.parseInt(formData.total_stock, 10) || 0 } : {}),
                 selectedSizes: sizeOptions.length === 1 ? [sizeOptions[0]] : [],
                 sizesStock: sizeOptions.length === 1 ? { [sizeOptions[0]]: 0 } : {},
             };
             setVariants([initialVariant]);
-        } else if (!isClothingCategory && variants.length > 0) {
-            setVariants([]);
         }
-    }, [isClothingCategory, variants.length, sizeOptions.length]);
+    }, [isClothingCategory, variants.length, sizeOptions.length, formData.total_stock]);
 
     // Reset stock to auto-calculate
     const resetStockCalculation = () => {
@@ -474,14 +469,17 @@ const AddProducts = () => {
             color: "#3D01B1",
             colorName: "Purple",
             images: [],
+            ...(!isClothingCategory ? { quantity: 0 } : {}),
             selectedSizes: sizes.length === 1 ? [sizes[0]] : [],
             sizesStock: sizes.length === 1 ? { [sizes[0]]: 0 } : {}
         };
         setVariants([...variants, initialVariant]);
+        setIsStockManuallyEdited(false);
     };
 
     const removeVariant = (index) => {
         setVariants(variants.filter((_, i) => i !== index));
+        setIsStockManuallyEdited(false);
     };
 
     const handleVariantChange = (index, field, value) => {
@@ -509,6 +507,7 @@ const AddProducts = () => {
             updated[vIndex].sizesStock[size] = 0; // Default stock 0
         }
         setVariants(updated);
+        setIsStockManuallyEdited(false);
     };
 
     const handleStockChange = (vIndex, size, value) => {
@@ -516,6 +515,14 @@ const AddProducts = () => {
         if (!updated[vIndex].sizesStock) updated[vIndex].sizesStock = {};
         updated[vIndex].sizesStock[size] = Math.max(0, parseInt(value, 10) || 0);
         setVariants(updated);
+        setIsStockManuallyEdited(false);
+    };
+
+    const handleColorStockChange = (vIndex, value) => {
+        const updated = [...variants];
+        updated[vIndex] = { ...updated[vIndex], quantity: Math.max(0, Number.parseInt(value, 10) || 0) };
+        setVariants(updated);
+        setIsStockManuallyEdited(false);
     };
 
     const handleProductImageUpload = async (e) => {
@@ -560,37 +567,6 @@ const AddProducts = () => {
         } catch (error) {
             console.error("Product video upload error:", error);
             toast.error(error.response?.data?.message || "Product video upload failed.");
-        } finally {
-            setPendingUploads(count => Math.max(0, count - 1));
-        }
-    };
-
-    const handleSizeChartUpload = async (e) => {
-        const file = e.target.files?.[0];
-        e.target.value = "";
-        if (!file) return;
-        if (!file.type.startsWith("image/")) {
-            toast.error("Choose an image file for the size chart.");
-            return;
-        }
-
-        const uploadData = new FormData();
-        setPendingUploads(count => count + 1);
-        try {
-            const compressed = await imageCompression(file, {
-                maxSizeMB: 1,
-                maxWidthOrHeight: 2000,
-            });
-            uploadData.append("size_chart", compressed);
-            const response = await api.post("/products/upload", uploadData);
-            if (!response.data?.size_chart) {
-                throw new Error("The size chart image was not returned by the server.");
-            }
-            setFormData(prev => ({ ...prev, size_chart: response.data.size_chart }));
-            toast.success("Size chart uploaded.");
-        } catch (error) {
-            console.error("Size chart upload error:", error);
-            toast.error(error.response?.data?.message || error.message || "Size chart upload failed.");
         } finally {
             setPendingUploads(count => Math.max(0, count - 1));
         }
@@ -677,17 +653,17 @@ const AddProducts = () => {
 
         setLoading(true);
         try {
-            const activeVariants = isClothingCategory ? variants : [];
+            const activeVariants = variants;
             const variantStockTotal = activeVariants.reduce(
-                (total, variant) => total + Object.values(variant.sizesStock || {}).reduce(
-                    (stockTotal, quantity) => stockTotal + (parseInt(quantity, 10) || 0),
-                    0,
-                ),
+                (total, variant) => total + (isClothingCategory
+                    ? Object.values(variant.sizesStock || {}).reduce(
+                        (stockTotal, quantity) => stockTotal + (parseInt(quantity, 10) || 0),
+                        0,
+                    )
+                    : Number.parseInt(variant.quantity, 10) || 0),
                 0,
             );
-            const hasVariantStock = activeVariants.some(
-                (variant) => Object.keys(variant.sizesStock || {}).length > 0,
-            );
+            const hasVariantStock = activeVariants.length > 0;
             const finalTotalStock = isStockManuallyEdited
                 ? parseInt(formData.total_stock, 10) || 0
                 : hasVariantStock
@@ -838,7 +814,7 @@ const AddProducts = () => {
                     </div>
 
                     {/* Product Media */}
-                    {!isClothingCategory && (
+                    {!isClothingCategory && !isGadgetCategory && (
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                         <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-[#1F0A3C]/5">
                             <span className="p-1.5 bg-[#1F0A3C] text-white rounded-lg"><FiImage size={15} /></span>
@@ -1066,12 +1042,12 @@ const AddProducts = () => {
 
                 </div>
 
-                {/* Clothing color and size stock */}
-                {isClothingCategory && <div className="space-y-4 lg:col-span-1 lg:order-2">
+                {/* Color and stock variants */}
+                <div className={`space-y-4 lg:order-2 ${isClothingCategory ? "lg:col-span-1" : "lg:col-span-2"}`}>
                     <div className="flex items-center justify-between sticky  z-20 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
                         <div className="flex items-center  gap-2">
                             <FiBox className="text-[#1F0A3C] w-4 h-4" />
-                            <h3 className="text-sm font-bold text-[#1F0A3C] uppercase tracking-wider">Color & Size Stock</h3>
+                            <h3 className="text-sm font-bold text-[#1F0A3C] uppercase tracking-wider">{isClothingCategory ? "Color & Size Stock" : "Color & Stock"}</h3>
                         </div>
                         <button type="button" onClick={addVariant} className="bg-[#1F0A3C] text-white p-1.5 rounded-lg active:scale-90 transition-all shadow hover:bg-[#2d0f57]"><FiPlus size={15} /></button>
                     </div>
@@ -1113,23 +1089,39 @@ const AddProducts = () => {
                             <div className="px-4 pb-4 pt-3 space-y-3">
                                 {/* Stock by Size */}
                                 <div className="space-y-2">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Select sizes and enter quantity per size</label>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {sizeOptions.map(sz => (
-                                            <button key={sz} type="button" onClick={() => toggleSize(vIndex, sz)} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${(v.selectedSizes || []).includes(sz) ? 'bg-[#1F0A3C] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{sz}</button>
-                                        ))}
-                                    </div>
-                                    {(v.selectedSizes || []).length > 0 && (
-                                        <div className="grid grid-cols-2 gap-2 pt-1">
-                                            {v.selectedSizes.map(sz => (
-                                                <div key={sz} className="bg-[#1F0A3C]/5 border border-[#1F0A3C]/15 p-2 rounded-lg flex items-center justify-between">
-                                                    <div>
-                                                        <p className="text-[9px] font-bold text-[#1F0A3C]/60 uppercase mb-0.5">{sz}</p>
-                                                        <input type="number" min="0" value={v.sizesStock?.[sz] ?? 0} onChange={(e) => handleStockChange(vIndex, sz, e.target.value)} className="w-full bg-transparent border-none outline-none p-0 text-sm font-bold text-[#1F0A3C] focus:ring-0" />
-                                                    </div>
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-[#1F0A3C]/30"></div>
+                                    {isClothingCategory ? (
+                                        <>
+                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Select sizes and enter quantity per size</label>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {sizeOptions.map(sz => (
+                                                    <button key={sz} type="button" onClick={() => toggleSize(vIndex, sz)} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${(v.selectedSizes || []).includes(sz) ? 'bg-[#1F0A3C] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{sz}</button>
+                                                ))}
+                                            </div>
+                                            {(v.selectedSizes || []).length > 0 && (
+                                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                                    {v.selectedSizes.map(sz => (
+                                                        <div key={sz} className="bg-[#1F0A3C]/5 border border-[#1F0A3C]/15 p-2 rounded-lg flex items-center justify-between">
+                                                            <div>
+                                                                <p className="text-[9px] font-bold text-[#1F0A3C]/60 uppercase mb-0.5">{sz}</p>
+                                                                <input type="number" min="0" value={v.sizesStock?.[sz] ?? 0} onChange={(e) => handleStockChange(vIndex, sz, e.target.value)} className="w-full bg-transparent border-none outline-none p-0 text-sm font-bold text-[#1F0A3C] focus:ring-0" />
+                                                            </div>
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-[#1F0A3C]/30"></div>
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className="space-y-1">
+                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock Quantity</label>
+                                            <input
+                                                type="number"
+                                                min="0"
+                                                value={v.quantity ?? 0}
+                                                onChange={e => handleColorStockChange(vIndex, e.target.value)}
+                                                aria-label={`Stock quantity for ${v.colorName || `color ${vIndex + 1}`}`}
+                                                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-semibold text-gray-800"
+                                            />
                                         </div>
                                     )}
                                 </div>
@@ -1137,13 +1129,13 @@ const AddProducts = () => {
                                 {/* Images */}
                                 <div className="grid grid-cols-3 gap-2">
                                     {(v.images || []).slice(0, 5).map((img, iIndex) => (
-                                        <div key={iIndex} className="relative aspect-[3/4] rounded-xl overflow-hidden bg-gray-50 border border-gray-200 group/img">
+                                        <div key={iIndex} className="relative h-36 sm:h-40 rounded-xl overflow-hidden bg-gray-50 border border-gray-200 group/img">
                                             <img src={resolveImageUrl(img)} alt="Product preview" className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500" onError={(e) => { e.currentTarget.style.opacity = "0.35"; }} />
                                             <button type="button" onClick={() => removeVariantImage(vIndex, iIndex)} className="absolute inset-0 bg-red-600/70 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"><FiTrash2 size={13} /></button>
                                         </div>
                                     ))}
                                     {(v.images || []).length < 5 && (
-                                        <label className="flex flex-col items-center justify-center aspect-[3/4] rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 cursor-pointer hover:bg-[#1F0A3C]/5 hover:border-[#1F0A3C]/40 group/label transition-all">
+                                        <label className="flex h-36 sm:h-40 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 cursor-pointer hover:bg-[#1F0A3C]/5 hover:border-[#1F0A3C]/40 group/label transition-all">
                                             <FiUploadCloud size={18} className="text-gray-300 group-hover/label:text-[#1F0A3C] transition-colors" />
                                             <span className="mt-1 text-[10px] font-semibold text-gray-400">Color images</span>
                                             <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => handleVariantImageUpload(vIndex, e)} />
@@ -1153,7 +1145,7 @@ const AddProducts = () => {
                             </div>
                         </div>
                     ))}
-                </div>}
+                </div>
 
                 {/* Bottom Global Action Button */}
                 <div className="lg:col-span-2 lg:order-4 pt-5 pb-10 border-t border-gray-200 mt-2">

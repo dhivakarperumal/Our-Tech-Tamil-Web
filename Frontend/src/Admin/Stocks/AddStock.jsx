@@ -87,6 +87,7 @@ const AddStock = () => {
             const updatedVariants = [...selectedProduct.variants];
             let addedTotal = 0;
             const hasVariantsWithSizes = updatedVariants.some(v => v.sizesStock && Object.keys(v.sizesStock).length > 0);
+            const hasColorQuantities = updatedVariants.some(v => v.quantity !== undefined);
 
             if (hasVariantsWithSizes) {
                 updatedVariants.forEach((v, vIndex) => {
@@ -98,6 +99,13 @@ const AddStock = () => {
                             addedTotal += addition;
                         });
                     }
+                });
+            } else if (hasColorQuantities) {
+                updatedVariants.forEach((variant, vIndex) => {
+                    if (variant.quantity === undefined) return;
+                    const addition = parseInt(stockAdditions[`${vIndex}-quantity`], 10) || 0;
+                    variant.quantity = (parseInt(variant.quantity, 10) || 0) + addition;
+                    addedTotal += addition;
                 });
             } else {
                 addedTotal = parseInt(manualTotalStockAdd) || 0;
@@ -132,6 +140,7 @@ const AddStock = () => {
     };
 
     const hasSizes = selectedProduct && selectedProduct.variants && selectedProduct.variants.some(v => v.sizesStock && Object.keys(v.sizesStock).length > 0);
+    const hasColorQuantities = selectedProduct?.variants?.some(v => v.quantity !== undefined) || false;
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
@@ -243,10 +252,11 @@ const AddStock = () => {
                                         Step 2: Enter New Stock Details
                                     </label>
 
-                                    {hasSizes ? (
+                                    {hasSizes || hasColorQuantities ? (
                                         <div className="space-y-6">
                                             {selectedProduct.variants.map((v, vIndex) => {
-                                                if (!v.sizesStock || Object.keys(v.sizesStock).length === 0) return null;
+                                                const hasVariantSizes = v.sizesStock && Object.keys(v.sizesStock).length > 0;
+                                                if (!hasVariantSizes && v.quantity === undefined) return null;
                                                 return (
                                                     <div key={vIndex} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                                                         <div className="flex items-center gap-3 mb-4">
@@ -254,7 +264,7 @@ const AddStock = () => {
                                                             <span className="text-sm font-black text-slate-800">{v.colorName || 'Default Shade'}</span>
                                                         </div>
                                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                            {Object.entries(v.sizesStock).map(([size, currentStock]) => {
+                                                            {(hasVariantSizes ? Object.entries(v.sizesStock) : [["quantity", v.quantity]]).map(([size, currentStock]) => {
                                                                 const key = `${vIndex}-${size}`;
                                                                 const added = parseInt(stockAdditions[key]) || 0;
                                                                 const oldTotal = parseInt(currentStock) || 0;
@@ -262,7 +272,7 @@ const AddStock = () => {
                                                                 return (
                                                                     <div key={size} className="bg-gray-50 p-3 rounded-xl border border-gray-100">
                                                                         <div className="flex justify-between items-center mb-2">
-                                                                            <label className="text-[10px] font-black text-gray-400 uppercase">{size}</label>
+                                                                            <label className="text-[10px] font-black text-gray-400 uppercase">{size === "quantity" ? "Color stock" : size}</label>
                                                                             <span className="text-[9px] font-black bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded-md">Curr: {oldTotal}</span>
                                                                         </div>
                                                                         <div className="relative mt-1">
