@@ -194,10 +194,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#D4AF37] mb-1">
-                  Our Tech Tamil
+                <p className="whitespace-nowrap text-sm font-extrabold tracking-tight text-white">
+                  Our Tech <span className="text-accent">Tamil</span>
                 </p>
-                <p className="text-sm font-semibold tracking-wide text-white">
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
                   Admin Panel
                 </p>
               </div>

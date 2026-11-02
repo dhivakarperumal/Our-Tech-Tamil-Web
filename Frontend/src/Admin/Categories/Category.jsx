@@ -307,14 +307,14 @@ const Category = () => {
                    
                     <div className="flex items-center gap-3">
                     <div className="flex bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
-                        <button onClick={() => setViewMode("table")} className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-purple-100 text-purple-600' : 'text-gray-400 hover:text-slate-600'}`}>
+                        <button onClick={() => setViewMode("table")} className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'admin-button-toggle-active' : 'admin-button-toggle-inactive'}`}>
                             <FiList size={18} />
                         </button>
-                        <button onClick={() => setViewMode("grid")} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-purple-100 text-purple-600' : 'text-gray-400 hover:text-slate-600'}`}>
+                        <button onClick={() => setViewMode("grid")} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'admin-button-toggle-active' : 'admin-button-toggle-inactive'}`}>
                             <FiGrid size={18} />
                         </button>
                     </div>
-                    <button onClick={openAddModal} className="flex items-center gap-2 py-3 bg-gradient-to-r from-[#1F0A3C] to-[#3c096c] hover:bg-[#7C3AED] text-white px-5  rounded-md text-sm font-bold transition-all shadow-md active:scale-95">
+                    <button onClick={openAddModal} className="admin-button-primary flex items-center gap-2 py-3 px-5 rounded-md text-sm font-bold shadow-md active:scale-95">
                         <FiPlus size={18} /> Add New Category
                     </button>
                 </div>
@@ -340,7 +340,7 @@ const Category = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-left whitespace-nowrap">
                             <thead>
-                                <tr className="bg-gradient-to-r from-[#1F0A3C] to-[#3c096c] border-b border-[#3c096c]">
+                                <tr className="admin-table-header border-b border-[#3c096c]">
                                     <th className="px-4 py-4 w-12 text-center "><input type="checkbox" className="rounded accent-white w-4 h-4 border-violet-300" /></th>
                                     <th className="px-4 py-4 text-[10px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">S.NO.</th>
                                     <th className="px-4 py-4 text-[10px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">CATEGORY</th>
@@ -394,10 +394,10 @@ const Category = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => openEditModal(cat)} className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors" title="Edit">
+                                                    <button onClick={() => openEditModal(cat)} className="admin-button-icon w-8 h-8 flex items-center justify-center rounded-full border transition-colors" title="Edit">
                                                         <FiEdit2 size={14} />
                                                     </button>
-                                                    <button onClick={() => handleDeleteCategory(cat.catId)} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Delete">
+                                                    <button onClick={() => handleDeleteCategory(cat.catId)} className="admin-button-danger w-8 h-8 flex items-center justify-center rounded-full border transition-colors" title="Delete">
                                                         <FiTrash2 size={14} />
                                                     </button>
                                                 </div>
@@ -453,10 +453,10 @@ const Category = () => {
                                 </div>
 
                                 <div className="mt-auto pt-4 border-t border-gray-50 flex items-center gap-2 shrink-0">
-                                    <button onClick={() => openEditModal(cat)} className="flex-1 py-1.5 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-blue-500 hover:bg-blue-50 transition-colors text-xs font-bold">
+                                    <button onClick={() => openEditModal(cat)} className="admin-button-icon flex-1 py-1.5 flex items-center justify-center gap-1.5 rounded-lg border transition-colors text-xs font-bold">
                                         <FiEdit2 size={12} /> Edit
                                     </button>
-                                    <button onClick={() => handleDeleteCategory(cat.catId)} className="flex-1 py-1.5 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-red-500 hover:bg-red-50 transition-colors text-xs font-bold">
+                                    <button onClick={() => handleDeleteCategory(cat.catId)} className="admin-button-danger flex-1 py-1.5 flex items-center justify-center gap-1.5 rounded-lg border transition-colors text-xs font-bold">
                                         <FiTrash2 size={12} /> Delete
                                     </button>
                                 </div>
@@ -476,17 +476,17 @@ const Category = () => {
                         <button
                             onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                             disabled={currentPage === 1}
-                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors shadow-sm"
+                            className="admin-button-pagination w-9 h-9 flex items-center justify-center rounded-xl transition-colors shadow-sm"
                         >
                             <FiChevronLeft size={16} />
                         </button>
-                        <button className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#8B5CF6] text-white text-sm font-bold shadow-sm shadow-purple-200">
+                        <button className="admin-button-pagination admin-button-pagination-active w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold shadow-sm">
                             {currentPage}
                         </button>
                         <button
                             onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                             disabled={currentPage === totalPages}
-                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors shadow-sm"
+                            className="admin-button-pagination w-9 h-9 flex items-center justify-center rounded-xl transition-colors shadow-sm"
                         >
                             <FiChevronRight size={16} />
                         </button>
@@ -507,7 +507,7 @@ const Category = () => {
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="p-2 text-gray-400 hover:text-slate-700 hover:bg-gray-100 rounded-full transition-colors"
+                                className="admin-button-icon p-2 rounded-full transition-colors"
                             >
                                 <FiX size={20} />
                             </button>
@@ -534,7 +534,7 @@ const Category = () => {
                                             name="name"
                                             value={formData.name}
                                             onChange={handleInputChange}
-                                            placeholder="e.g. Silk Sarees"
+                                            placeholder="e.g. Wireless Earbuds"
                                             className="w-full bg-white border border-gray-200 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-sm"
                                         />
                                     </div>
@@ -566,7 +566,7 @@ const Category = () => {
                                                         {sub}
                                                         <button
                                                             onClick={() => removeSubcategory(sub)}
-                                                            className="text-purple-400 hover:text-red-500 transition-colors"
+                                                            className="admin-button-danger rounded transition-colors"
                                                         >
                                                             <FiX size={12} />
                                                         </button>
@@ -594,7 +594,7 @@ const Category = () => {
                                                         <img src={imgUrl} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
                                                         <button
                                                             onClick={() => removeImage(idx)}
-                                                            className="absolute top-1 right-1 p-1 bg-white/90 hover:bg-red-50 text-red-500 rounded opacity-0 group-hover:opacity-100 transition-all shadow-sm"
+                                                            className="admin-button-danger absolute top-1 right-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-all shadow-sm"
                                                         >
                                                             <FiX size={12} />
                                                         </button>
@@ -624,14 +624,14 @@ const Category = () => {
                         <div className="p-5 border-t border-gray-100 flex items-center justify-end gap-3 bg-gray-50/80 shrink-0">
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-slate-800 hover:bg-gray-200 rounded-xl transition-all"
+                                className="admin-button-secondary px-5 py-2.5 text-sm font-bold rounded-xl transition-all"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSaveCategory}
                                 disabled={!formData.name}
-                                className="px-6 py-2.5 bg-gradient-to-r from-[#1F0A3C] to-[#3c096c] hover:from-[#2d1254] hover:to-[#4d0b87] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-purple-200 active:scale-95 flex items-center gap-2"
+                                className="admin-button-primary px-6 py-2.5 text-sm font-bold rounded-xl shadow-md active:scale-95 flex items-center gap-2"
                             >
                                 {isEditing ? 'Update Category' : 'Save Category'}
                             </button>

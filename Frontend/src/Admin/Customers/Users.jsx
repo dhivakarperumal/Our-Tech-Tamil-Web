@@ -319,7 +319,7 @@ const Users = ({ initialTab = "All" }) => {
                             <button
                                 type="button"
                                 onClick={() => setViewMode("table")}
-                                className={`p-2 rounded-md transition-colors ${viewMode === "table" ? "bg-white text-[#4318FF] shadow-sm" : "text-gray-500 hover:text-[#4318FF]"}`}
+                                className={`p-2 rounded-md transition-colors ${viewMode === "table" ? "admin-button-toggle-active" : "admin-button-toggle-inactive"}`}
                                 aria-label="Table mode"
                             >
                                 <FiList size={16} />
@@ -327,7 +327,7 @@ const Users = ({ initialTab = "All" }) => {
                             <button
                                 type="button"
                                 onClick={() => setViewMode("card")}
-                                className={`p-2 rounded-md transition-colors ${viewMode === "card" ? "bg-white text-[#4318FF] shadow-sm" : "text-gray-500 hover:text-[#4318FF]"}`}
+                                className={`p-2 rounded-md transition-colors ${viewMode === "card" ? "admin-button-toggle-active" : "admin-button-toggle-inactive"}`}
                                 aria-label="Card mode"
                             >
                                 <FiGrid size={16} />
@@ -336,7 +336,7 @@ const Users = ({ initialTab = "All" }) => {
 
                         <button
                             onClick={() => { setIsEditing(false); setFormData({ username: "", name: "", email: "", phone: "", role: "user", password: "" }); setIsModalOpen(true); }}
-                            className="flex items-center gap-2 bg-[#4b0b78] hover:bg-[#260642] text-white px-5 py-3 rounded-md font-bold text-sm transition-all shadow-lg shadow-purple-500/25 active:scale-95"
+                            className="admin-button-primary flex items-center gap-2 px-5 py-3 rounded-md font-bold text-sm shadow-lg active:scale-95"
                         >
                             <span className="text-lg leading-none ">+</span> Add New Customer
                         </button>
@@ -350,7 +350,7 @@ const Users = ({ initialTab = "All" }) => {
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left border-collapse whitespace-nowrap">
                                     <thead>
-                                        <tr className="bg-gradient-to-r from-[#260642] to-[#4b0b78] text-[11px] font-black text-[#facc15] uppercase tracking-wider">
+                                        <tr className="admin-table-header text-[11px] font-black text-[#facc15] uppercase tracking-wider">
                                             <th className="px-6 py-4 w-12"><input type="checkbox" className="rounded border-white/70 text-[#facc15] focus:ring-[#facc15]" aria-label="Select all customers" /></th>
                                             <th className="px-6 py-4">Customer ID</th>
                                             <th className="px-6 py-4">Customer</th>
@@ -416,12 +416,12 @@ const Users = ({ initialTab = "All" }) => {
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="flex items-center justify-center gap-2">
-                                                                <button className="p-1.5 border border-gray-200 rounded hover:bg-gray-100 text-[#4318FF] transition-colors shadow-sm">
+                                                                <button className="admin-button-icon p-1.5 border rounded transition-colors shadow-sm">
                                                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                                                                 </button>
                                                                 <button
                                                                     onClick={() => openEditModal(user)}
-                                                                    className="p-1.5 border border-gray-200 rounded hover:bg-gray-100 text-[#4318FF] transition-colors shadow-sm"
+                                                                    className="admin-button-icon p-1.5 border rounded transition-colors shadow-sm"
                                                                 >
                                                                     <FiMoreVertical size={14} />
                                                                 </button>
@@ -480,12 +480,12 @@ const Users = ({ initialTab = "All" }) => {
                                                     {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
                                                 </span>
                                                 <div className="flex items-center gap-2">
-                                                    <button className="p-1.5 border border-gray-200 rounded hover:bg-gray-100 text-[#4318FF] transition-colors shadow-sm">
+                                                    <button className="admin-button-icon p-1.5 border rounded transition-colors shadow-sm">
                                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                                                     </button>
                                                     <button
                                                         onClick={() => openEditModal(user)}
-                                                        className="p-1.5 border border-gray-200 rounded hover:bg-gray-100 text-[#4318FF] transition-colors shadow-sm"
+                                                        className="admin-button-icon p-1.5 border rounded transition-colors shadow-sm"
                                                     >
                                                         <FiMoreVertical size={14} />
                                                     </button>
@@ -511,7 +511,7 @@ const Users = ({ initialTab = "All" }) => {
                                 <button
                                     onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                                     disabled={currentPage === 1}
-                                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 shadow-sm font-bold text-[13px]"
+                                    className="admin-button-pagination w-8 h-8 flex items-center justify-center rounded-lg shadow-sm font-bold text-[13px]"
                                 >
                                     &lt;
                                 </button>
@@ -519,7 +519,7 @@ const Users = ({ initialTab = "All" }) => {
                                     <button
                                         key={i}
                                         onClick={() => setCurrentPage(i + 1)}
-                                        className={`w-8 h-8 flex items-center justify-center rounded-lg text-[13px] font-bold shadow-sm ${currentPage === i + 1 ? 'bg-[#4318FF] text-white border border-[#4318FF]' : 'border border-gray-200 text-[#2B3674] hover:bg-gray-50'}`}
+                                        className={`admin-button-pagination w-8 h-8 flex items-center justify-center rounded-lg text-[13px] font-bold shadow-sm ${currentPage === i + 1 ? "admin-button-pagination-active" : ""}`}
                                     >
                                         {i + 1}
                                     </button>
@@ -528,7 +528,7 @@ const Users = ({ initialTab = "All" }) => {
                                 {totalPages > 3 && (
                                     <button
                                         onClick={() => setCurrentPage(totalPages)}
-                                        className="w-8 h-8 flex items-center justify-center rounded-lg text-[13px] font-bold border border-gray-200 text-[#2B3674] hover:bg-gray-50 shadow-sm"
+                                        className="admin-button-pagination w-8 h-8 flex items-center justify-center rounded-lg text-[13px] font-bold shadow-sm"
                                     >
                                         125
                                     </button>
@@ -536,7 +536,7 @@ const Users = ({ initialTab = "All" }) => {
                                 <button
                                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                                     disabled={currentPage === totalPages}
-                                    className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 shadow-sm font-bold text-[13px]"
+                                    className="admin-button-pagination w-8 h-8 flex items-center justify-center rounded-lg shadow-sm font-bold text-[13px]"
                                 >
                                     &gt;
                                 </button>
@@ -556,7 +556,7 @@ const Users = ({ initialTab = "All" }) => {
                                 </div>
                                 <button
                                     onClick={() => setIsModalOpen(false)}
-                                    className="p-2 text-gray-400 hover:bg-gray-50 rounded-full transition-colors"
+                                    className="admin-button-icon p-2 rounded-full transition-colors"
                                 >
                                     <FiX className="text-xl" />
                                 </button>
@@ -625,14 +625,14 @@ const Users = ({ initialTab = "All" }) => {
                             <div className="p-6 border-t border-gray-100 shrink-0 flex gap-4">
                                 <button
                                     onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg font-bold text-gray-500 hover:bg-gray-50 transition-colors text-sm"
+                                    className="admin-button-secondary flex-1 px-4 py-2.5 rounded-lg font-bold transition-colors text-sm"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     onClick={handleSaveUser}
                                     disabled={submitLoading || !formData.username || !formData.email}
-                                    className="flex-1 bg-[#4318FF] hover:bg-blue-800 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 text-sm"
+                                    className="admin-button-primary flex-1 px-4 py-2.5 rounded-lg font-bold transition-colors flex items-center justify-center gap-2 text-sm"
                                 >
                                     {submitLoading ? (
                                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
