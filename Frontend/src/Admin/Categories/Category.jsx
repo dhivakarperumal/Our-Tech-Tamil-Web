@@ -25,6 +25,12 @@ import imageCompression from "browser-image-compression";
 import { toast, Toaster } from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 
+const CATEGORY_TYPES = [
+    "Gadgets & Electronics",
+    "Natural Products",
+    "Clothing & Fashion",
+];
+
 const Category = () => {
     const { user } = useAuth();
     // ---- Global State ----
@@ -60,6 +66,7 @@ const Category = () => {
     const [formData, setFormData] = useState({
         catId: "",
         name: "",
+        categoryType: "",
         description: "",
         subcategory: "",
         images: []
@@ -95,13 +102,20 @@ const Category = () => {
         setCurrentPage(1);
     };
 
-    const handleAddSubcategory = (e) => {
-        if (e.key === 'Enter' && subInput.trim()) {
-            e.preventDefault();
-            if (!subcategories.includes(subInput.trim())) {
-                setSubcategories([...subcategories, subInput.trim()]);
-            }
+    const addSubcategory = () => {
+        const subcategory = subInput.trim();
+        if (subcategory) {
+            setSubcategories(current =>
+                current.includes(subcategory) ? current : [...current, subcategory]
+            );
             setSubInput("");
+        }
+    };
+
+    const handleAddSubcategory = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addSubcategory();
         }
     };
 
@@ -114,34 +128,27 @@ const Category = () => {
     };
 
     const handleImageUpload = async (e) => {
-        try {
-            const files = Array.from(e.target.files);
-            const imagesArray = await Promise.all(
-                files.map(async (file) => {
-                    const compressed = await imageCompression(file, {
-                        maxSizeMB: 0.2,
-                        maxWidthOrHeight: 600,
-                    });
-                    return imageCompression.getDataUrlFromFile(compressed);
-                })
-            );
+        const file = e.target.files?.[0];
+        e.target.value = "";
+        if (!file) return;
 
-            setFormData((p) => ({
-                ...p,
-                images: [...(Array.isArray(p.images) ? p.images : []), ...imagesArray],
-            }));
-            toast.success("Images added!");
+        try {
+            const compressed = await imageCompression(file, {
+                maxSizeMB: 0.2,
+                maxWidthOrHeight: 600,
+            });
+            const image = await imageCompression.getDataUrlFromFile(compressed);
+
+            setFormData(p => ({ ...p, images: [image] }));
+            toast.success("Category image updated!");
         } catch (error) {
             console.error("Image upload failed:", error);
             toast.error("Image upload failed");
         }
     };
 
-    const removeImage = (indexToRemove) => {
-        setFormData(p => ({
-            ...p,
-            images: p.images.filter((_, idx) => idx !== indexToRemove)
-        }));
+    const removeImage = () => {
+        setFormData(p => ({ ...p, images: [] }));
     };
 
     const handleSaveCategory = async () => {
@@ -189,7 +196,7 @@ const Category = () => {
     };
 
     const resetModalForm = () => {
-        setFormData({ catId: "", name: "", description: "", subcategory: "", images: [] });
+        setFormData({ catId: "", name: "", categoryType: "", description: "", subcategory: "", images: [] });
         setSubcategories([]);
         setIsEditing(false);
     };
@@ -213,9 +220,12 @@ const Category = () => {
         setFormData({
             catId: category.catId,
             name: category.name,
+            categoryType: category.categoryType || "",
             description: category.description,
             subcategory: "",
-            images: Array.isArray(category.images) ? category.images : (category.images ? [category.images] : [])
+            images: Array.isArray(category.images)
+                ? category.images.slice(0, 1)
+                : (category.images ? [category.images] : [])
         });
         setSubcategories(category.subcategory || []);
         setIsEditing(true);
@@ -307,14 +317,14 @@ const Category = () => {
                    
                     <div className="flex items-center gap-3">
                     <div className="flex bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
-                        <button onClick={() => setViewMode("table")} className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'bg-purple-100 text-purple-600' : 'text-gray-400 hover:text-slate-600'}`}>
+                        <button onClick={() => setViewMode("table")} className={`p-2 rounded-lg transition-all ${viewMode === 'table' ? 'admin-button-toggle-active' : 'admin-button-toggle-inactive'}`}>
                             <FiList size={18} />
                         </button>
-                        <button onClick={() => setViewMode("grid")} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-purple-100 text-purple-600' : 'text-gray-400 hover:text-slate-600'}`}>
+                        <button onClick={() => setViewMode("grid")} className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'admin-button-toggle-active' : 'admin-button-toggle-inactive'}`}>
                             <FiGrid size={18} />
                         </button>
                     </div>
-                    <button onClick={openAddModal} className="flex items-center gap-2 py-3 bg-gradient-to-r from-[#1F0A3C] to-[#3c096c] hover:bg-[#7C3AED] text-white px-5  rounded-md text-sm font-bold transition-all shadow-md active:scale-95">
+                    <button onClick={openAddModal} className="admin-button-primary flex items-center gap-2 py-3 px-5 rounded-md text-sm font-bold shadow-md active:scale-95">
                         <FiPlus size={18} /> Add New Category
                     </button>
                 </div>
@@ -340,7 +350,7 @@ const Category = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-left whitespace-nowrap">
                             <thead>
-                                <tr className="bg-gradient-to-r from-[#1F0A3C] to-[#3c096c] border-b border-[#3c096c]">
+                                <tr className="admin-table-header border-b border-[#3c096c]">
                                     <th className="px-4 py-4 w-12 text-center "><input type="checkbox" className="rounded accent-white w-4 h-4 border-violet-300" /></th>
                                     <th className="px-4 py-4 text-[10px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">S.NO.</th>
                                     <th className="px-4 py-4 text-[10px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">CATEGORY</th>
@@ -371,6 +381,7 @@ const Category = () => {
                                                     </div>
                                                     <div>
                                                         <h4 className="text-sm font-bold text-slate-800 mb-0.5">{cat.name}</h4>
+                                                        {cat.categoryType && <span className="inline-block mb-1 px-2 py-0.5 rounded bg-violet-50 text-violet-700 text-[10px] font-bold">{cat.categoryType}</span>}
                                                         <p className="text-[11px] text-gray-400 font-medium">ID: {cat.catId || "N/A"}</p>
                                                     </div>
                                                 </div>
@@ -394,10 +405,10 @@ const Category = () => {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <button onClick={() => openEditModal(cat)} className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-500 hover:bg-blue-100 transition-colors" title="Edit">
+                                                    <button onClick={() => openEditModal(cat)} className="admin-button-icon w-8 h-8 flex items-center justify-center rounded-full border transition-colors" title="Edit">
                                                         <FiEdit2 size={14} />
                                                     </button>
-                                                    <button onClick={() => handleDeleteCategory(cat.catId)} className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors" title="Delete">
+                                                    <button onClick={() => handleDeleteCategory(cat.catId)} className="admin-button-danger w-8 h-8 flex items-center justify-center rounded-full border transition-colors" title="Delete">
                                                         <FiTrash2 size={14} />
                                                     </button>
                                                 </div>
@@ -432,6 +443,7 @@ const Category = () => {
 
                                 <div className="flex-1">
                                     <h3 className="text-sm font-bold text-slate-800 mb-1">{cat.name}</h3>
+                                    {cat.categoryType && <span className="inline-block mb-2 px-2 py-0.5 rounded bg-violet-50 text-violet-700 text-[10px] font-bold">{cat.categoryType}</span>}
                                     <p className="text-xs text-gray-500 mb-4 line-clamp-2">
                                         {cat.description || "No description provided."}
                                     </p>
@@ -453,10 +465,10 @@ const Category = () => {
                                 </div>
 
                                 <div className="mt-auto pt-4 border-t border-gray-50 flex items-center gap-2 shrink-0">
-                                    <button onClick={() => openEditModal(cat)} className="flex-1 py-1.5 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-blue-500 hover:bg-blue-50 transition-colors text-xs font-bold">
+                                    <button onClick={() => openEditModal(cat)} className="admin-button-icon flex-1 py-1.5 flex items-center justify-center gap-1.5 rounded-lg border transition-colors text-xs font-bold">
                                         <FiEdit2 size={12} /> Edit
                                     </button>
-                                    <button onClick={() => handleDeleteCategory(cat.catId)} className="flex-1 py-1.5 flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 text-red-500 hover:bg-red-50 transition-colors text-xs font-bold">
+                                    <button onClick={() => handleDeleteCategory(cat.catId)} className="admin-button-danger flex-1 py-1.5 flex items-center justify-center gap-1.5 rounded-lg border transition-colors text-xs font-bold">
                                         <FiTrash2 size={12} /> Delete
                                     </button>
                                 </div>
@@ -476,17 +488,17 @@ const Category = () => {
                         <button
                             onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
                             disabled={currentPage === 1}
-                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors shadow-sm"
+                            className="admin-button-pagination w-9 h-9 flex items-center justify-center rounded-xl transition-colors shadow-sm"
                         >
                             <FiChevronLeft size={16} />
                         </button>
-                        <button className="w-9 h-9 flex items-center justify-center rounded-xl bg-[#8B5CF6] text-white text-sm font-bold shadow-sm shadow-purple-200">
+                        <button className="admin-button-pagination admin-button-pagination-active w-9 h-9 flex items-center justify-center rounded-xl text-sm font-bold shadow-sm">
                             {currentPage}
                         </button>
                         <button
                             onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
                             disabled={currentPage === totalPages}
-                            className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 transition-colors shadow-sm"
+                            className="admin-button-pagination w-9 h-9 flex items-center justify-center rounded-xl transition-colors shadow-sm"
                         >
                             <FiChevronRight size={16} />
                         </button>
@@ -507,7 +519,7 @@ const Category = () => {
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="p-2 text-gray-400 hover:text-slate-700 hover:bg-gray-100 rounded-full transition-colors"
+                                className="admin-button-icon p-2 rounded-full transition-colors"
                             >
                                 <FiX size={20} />
                             </button>
@@ -534,9 +546,23 @@ const Category = () => {
                                             name="name"
                                             value={formData.name}
                                             onChange={handleInputChange}
-                                            placeholder="e.g. Silk Sarees"
+                                            placeholder="e.g. Wireless Earbuds"
                                             className="w-full bg-white border border-gray-200 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-sm"
                                         />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1.5">Category Type</label>
+                                        <select
+                                            name="categoryType"
+                                            value={formData.categoryType}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-white border border-gray-200 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-sm"
+                                        >
+                                            <option value="">Select category type</option>
+                                            {CATEGORY_TYPES.map(type => (
+                                                <option key={type} value={type}>{type}</option>
+                                            ))}
+                                        </select>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-700 mb-1.5">Description</label>
@@ -557,7 +583,7 @@ const Category = () => {
                                     <div>
                                         <label className="flex items-center justify-between text-xs font-bold text-gray-700 mb-1.5">
                                             <span>Subcategories</span>
-                                            <span className="text-[10px] text-gray-400 font-medium">Press enter to add</span>
+                                            <span className="text-[10px] text-gray-400 font-medium">Press Enter or + to add</span>
                                         </label>
                                         <div className="bg-white border border-gray-200 rounded-xl p-2 min-h-[100px] focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500 transition-all">
                                             <div className="flex flex-wrap gap-2 mb-2">
@@ -566,53 +592,65 @@ const Category = () => {
                                                         {sub}
                                                         <button
                                                             onClick={() => removeSubcategory(sub)}
-                                                            className="text-purple-400 hover:text-red-500 transition-colors"
+                                                            className="admin-button-danger rounded transition-colors"
                                                         >
                                                             <FiX size={12} />
                                                         </button>
                                                     </span>
                                                 ))}
                                             </div>
-                                            <input
-                                                type="text"
-                                                value={subInput}
-                                                onChange={(e) => setSubInput(e.target.value)}
-                                                onKeyDown={handleAddSubcategory}
-                                                placeholder={subcategories.length === 0 ? "Type and press Enter..." : "Add another..."}
-                                                className="w-full bg-transparent border-none outline-none text-slate-800 px-1 py-1 text-sm font-medium placeholder:text-gray-400"
-                                            />
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={subInput}
+                                                    onChange={(e) => setSubInput(e.target.value)}
+                                                    onKeyDown={handleAddSubcategory}
+                                                    placeholder={subcategories.length === 0 ? "Type and press Enter..." : "Add another..."}
+                                                    className="min-w-0 flex-1 bg-transparent border-none outline-none text-slate-800 px-1 py-1 text-sm font-medium placeholder:text-gray-400"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={addSubcategory}
+                                                    disabled={!subInput.trim()}
+                                                    aria-label="Add subcategory"
+                                                    className="admin-button-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-lg disabled:cursor-not-allowed"
+                                                >
+                                                    <FiPlus size={16} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Image Dropzone */}
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1.5">Category Images</label>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1.5">Category Image</label>
                                         {formData.images && formData.images.length > 0 ? (
-                                            <div className="grid grid-cols-3 gap-2 mb-2">
-                                                {formData.images.map((imgUrl, idx) => (
-                                                    <div key={idx} className="relative group w-full h-20 rounded-xl overflow-hidden border border-gray-200">
-                                                        <img src={imgUrl} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
-                                                        <button
-                                                            onClick={() => removeImage(idx)}
-                                                            className="absolute top-1 right-1 p-1 bg-white/90 hover:bg-red-50 text-red-500 rounded opacity-0 group-hover:opacity-100 transition-all shadow-sm"
-                                                        >
-                                                            <FiX size={12} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                                <label className="w-full h-20 border-2 border-dashed border-gray-300 hover:border-purple-400 hover:bg-purple-50/50 rounded-xl cursor-pointer flex flex-col items-center justify-center transition-all">
-                                                    <FiPlus className="text-lg text-purple-500 mb-0.5" />
-                                                    <span className="text-[10px] font-bold text-gray-500">Add More</span>
-                                                    <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={formData.images[0]}
+                                                    alt="Category"
+                                                    className="h-20 w-20 rounded-xl border border-gray-200 object-cover"
+                                                />
+                                                <label className="admin-button-secondary cursor-pointer rounded-lg px-3 py-2 text-xs font-bold">
+                                                    Change Image
+                                                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                                                 </label>
+                                                <button
+                                                    type="button"
+                                                    onClick={removeImage}
+                                                    aria-label="Remove category image"
+                                                    className="admin-button-danger rounded-lg p-2"
+                                                >
+                                                    <FiX size={14} />
+                                                </button>
                                             </div>
                                         ) : (
                                             <label className="relative border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-purple-50/50 hover:border-purple-400 rounded-xl overflow-hidden transition-all cursor-pointer flex flex-col items-center justify-center p-6 text-center min-h-[100px]">
-                                                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                                                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                                                 <div className="w-8 h-8 bg-white shadow-sm rounded-full flex items-center justify-center mb-2 text-purple-500">
                                                     <FiUploadCloud size={16} />
                                                 </div>
-                                                <p className="text-xs font-bold text-slate-700">Upload Images</p>
+                                                <p className="text-xs font-bold text-slate-700">Upload Image</p>
                                                 <p className="text-[10px] text-gray-500 mt-0.5 font-medium">PNG, JPG up to 5MB</p>
                                             </label>
                                         )}
@@ -624,14 +662,14 @@ const Category = () => {
                         <div className="p-5 border-t border-gray-100 flex items-center justify-end gap-3 bg-gray-50/80 shrink-0">
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="px-5 py-2.5 text-sm font-bold text-gray-600 hover:text-slate-800 hover:bg-gray-200 rounded-xl transition-all"
+                                className="admin-button-secondary px-5 py-2.5 text-sm font-bold rounded-xl transition-all"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleSaveCategory}
                                 disabled={!formData.name}
-                                className="px-6 py-2.5 bg-gradient-to-r from-[#1F0A3C] to-[#3c096c] hover:from-[#2d1254] hover:to-[#4d0b87] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-bold rounded-xl transition-all shadow-md shadow-purple-200 active:scale-95 flex items-center gap-2"
+                                className="admin-button-primary px-6 py-2.5 text-sm font-bold rounded-xl shadow-md active:scale-95 flex items-center gap-2"
                             >
                                 {isEditing ? 'Update Category' : 'Save Category'}
                             </button>
