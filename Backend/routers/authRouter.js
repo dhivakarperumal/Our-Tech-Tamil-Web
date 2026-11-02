@@ -6,6 +6,8 @@ function createAuthRouter(authController) {
 
   router.get("/users", requireAdmin, authController.listUsers);
   router.post("/users", requireAdmin, authController.createUser);
+  router.put("/users/:id", requireAdmin, authController.updateUser);
+  router.delete("/users/:id", requireAdmin, authController.deleteUser);
   router.post("/register", authController.register);
   router.post("/login", authController.login);
   router.post("/google-login", authController.googleLogin);

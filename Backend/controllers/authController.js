@@ -76,6 +76,61 @@ function createAuthController(authService) {
       }
     },
 
+    async updateUser(request, response, next) {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) {
+        return response.status(400).json({ message: "Invalid user ID." });
+      }
+
+      const body = request.body || {};
+      const username = typeof body.username === "string" ? body.username.trim() : "";
+      const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+      const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+      const role = typeof body.role === "string" ? body.role.toLowerCase() : "";
+
+      if (username.length < 2 || username.length > 120) {
+        return response.status(400).json({ message: "Username must be between 2 and 120 characters." });
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 191) {
+        return response.status(400).json({ message: "Enter a valid email address." });
+      }
+      if (phone && (phone.length < 6 || phone.length > 32)) {
+        return response.status(400).json({ message: "Phone number must be between 6 and 32 characters." });
+      }
+      if (!assignableRoles.has(role)) {
+        return response.status(400).json({ message: "Choose a valid user role." });
+      }
+
+      try {
+        const user = await authService.updateUser(id, { username, email, phone: phone || null, role });
+        if (!user) return response.status(404).json({ message: "User not found." });
+        return response.json({ message: "User updated successfully.", user });
+      } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+          return response.status(409).json({ message: "An account with this email or phone already exists." });
+        }
+        return next(error);
+      }
+    },
+
+    async deleteUser(request, response, next) {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) {
+        return response.status(400).json({ message: "Invalid user ID." });
+      }
+      if (Number(request.user?.id) === id) {
+        return response.status(400).json({ message: "You cannot delete your own admin account." });
+      }
+
+      try {
+        const deleted = await authService.deleteUser(id);
+        if (!deleted) return response.status(404).json({ message: "User not found." });
+        return response.status(204).end();
+      } catch (error) {
+        return next(error);
+      }
+    },
+
     async login(request, response, next) {
       const body = request.body || {};
       const identifier = typeof body.identifier === "string" ? body.identifier.trim() : "";

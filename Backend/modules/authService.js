@@ -61,6 +61,28 @@ function createAuthService(pool) {
       return toPublicUser(users[0]);
     },
 
+    async updateUser(id, { username, email, phone, role }) {
+      const [result] = await pool.execute(
+        "UPDATE users SET username = ?, email = ?, phone = ?, role = ? WHERE id = ?",
+        [username, email, phone, role, id],
+      );
+      if (!result.affectedRows) {
+        const [existingUsers] = await pool.execute("SELECT id FROM users WHERE id = ? LIMIT 1", [id]);
+        if (!existingUsers.length) return null;
+      }
+
+      const [users] = await pool.execute(
+        `SELECT ${USER_COLUMNS} FROM users WHERE id = ? LIMIT 1`,
+        [id],
+      );
+      return users[0] ? toPublicUser(users[0]) : null;
+    },
+
+    async deleteUser(id) {
+      const [result] = await pool.execute("DELETE FROM users WHERE id = ?", [id]);
+      return result.affectedRows > 0;
+    },
+
     async login(identifier, password) {
       const [users] = await pool.execute(
         `SELECT ${AUTH_USER_COLUMNS} FROM users WHERE email = ? OR phone = ? LIMIT 1`,

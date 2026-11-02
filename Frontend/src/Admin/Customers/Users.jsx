@@ -12,7 +12,9 @@ import {
     FiX,
     FiEdit2,
     FiGrid,
-    FiList
+    FiList,
+    FiEye,
+    FiEyeOff
 } from "react-icons/fi";
 import { toast, Toaster } from "react-hot-toast";
 
@@ -44,8 +46,11 @@ const Users = ({ initialTab = "All" }) => {
 
     // ---- Modal State for Registering/Editing User ----
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [viewUser, setViewUser] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [editUserId, setEditUserId] = useState(null);
+    const [usePhoneAsPassword, setUsePhoneAsPassword] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
     const [formData, setFormData] = useState({
         username: "",
         name: "",
@@ -77,12 +82,16 @@ const Users = ({ initialTab = "All" }) => {
                 // Transform data if needed for UI
                 const fetchedUsers = response.data.map((u, index) => ({
                     id: u.id || u.user_id,
+                    user_id: u.user_id,
+                    username: u.username,
                     name: u.name || u.username,
                     email: u.email,
+                    phone: u.phone || "",
                     role: u.role ? u.role.toLowerCase() : 'user',
                     status: deriveUserStatus(u, index),
                     joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A',
                     rawCreated_at: u.created_at,
+                    updated_at: u.updated_at,
                     avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || u.username)}&background=random`
                 }));
                 setUsers(fetchedUsers);
@@ -101,12 +110,16 @@ const Users = ({ initialTab = "All" }) => {
             const response = await api.get("/auth/users");
             const fetchedUsers = response.data.map((u, index) => ({
                 id: u.id || u.user_id,
+                user_id: u.user_id,
+                username: u.username,
                 name: u.name || u.username,
                 email: u.email,
+                phone: u.phone || "",
                 role: u.role ? u.role.toLowerCase() : 'user',
                 status: deriveUserStatus(u, index),
                 joined: u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A',
                 rawCreated_at: u.created_at,
+                updated_at: u.updated_at,
                 avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || u.username)}&background=random`
             }));
             setUsers(fetchedUsers);
@@ -123,7 +136,13 @@ const Users = ({ initialTab = "All" }) => {
 
     const handleSaveUser = async () => {
         if (!formData.username || !formData.email) return;
-        if (!isEditing && !formData.password) return;
+        const password = usePhoneAsPassword ? formData.phone.trim() : formData.password;
+        if (!isEditing && password.length < 8) {
+            toast.error(usePhoneAsPassword
+                ? "Enter a phone number with at least 8 characters, or choose manual password entry."
+                : "Password must be at least 8 characters.");
+            return;
+        }
 
         setSubmitLoading(true);
         try {
@@ -131,7 +150,7 @@ const Users = ({ initialTab = "All" }) => {
                 await api.put(`/auth/users/${editUserId}`, { ...formData, role: formData.role.toLowerCase() });
                 toast.success("User updated successfully!");
             } else {
-                await api.post("/auth/users", { ...formData, role: formData.role.toLowerCase() });
+                await api.post("/auth/users", { ...formData, password, role: formData.role.toLowerCase() });
                 toast.success("User registered successfully!");
             }
             setIsModalOpen(false);
@@ -147,14 +166,17 @@ const Users = ({ initialTab = "All" }) => {
         }
     };
 
-    const handleDeleteUser = async (id) => {
-        if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
+    const handleDeleteUser = async (user) => {
+        if (!window.confirm(`Delete ${user.name}? This action cannot be undone.`)) return;
         try {
-            await api.delete(`/auth/users/${id}`);
-            toast.success("User eliminated from system.");
+            await api.delete(`/auth/users/${user.id}`);
+            setUsers((current) => current.filter((entry) => entry.id !== user.id));
+            setViewUser((current) => current?.id === user.id ? null : current);
+            toast.success("User deleted.");
             fetchUsers();
         } catch (error) {
-            toast.error("Failed to delete user");
+            console.error("Failed to delete user:", error);
+            toast.error(error.response?.data?.message || "Failed to delete user.");
         }
     };
 
@@ -349,7 +371,7 @@ const Users = ({ initialTab = "All" }) => {
                         </div>
 
                         <button
-                            onClick={() => { setIsEditing(false); setFormData({ username: "", name: "", email: "", phone: "", role: "user", password: "" }); setIsModalOpen(true); }}
+                            onClick={() => { setIsEditing(false); setUsePhoneAsPassword(true); setFormData({ username: "", name: "", email: "", phone: "", role: "user", password: "" }); setIsModalOpen(true); }}
                             className="admin-button-primary flex items-center gap-2 px-5 py-3 rounded-md font-bold text-sm shadow-lg active:scale-95"
                         >
                             <span className="text-lg leading-none ">+</span> Add New Customer
@@ -390,8 +412,6 @@ const Users = ({ initialTab = "All" }) => {
                                             </tr>
                                         ) : (
                                             currentItems.map((user, idx) => {
-                                                const mockPhone = user.phone || "+91 98765 4321" + (idx % 10);
-
                                                 return (
                                                     <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
                                                         <td className="px-6 py-4">
@@ -405,7 +425,7 @@ const Users = ({ initialTab = "All" }) => {
                                                                 <img src={user.avatar} alt="avatar" className="w-8 h-8 rounded-full shadow-sm shrink-0" />
                                                                 <div>
                                                                     <div className="text-[13px] font-bold text-[#2B3674]">{user.name}</div>
-                                                                    <div className="text-[11px] text-gray-400 font-medium mt-0.5">{mockPhone}</div>
+                                                                    <div className="text-[11px] text-gray-400 font-medium mt-0.5">{user.phone || "Phone not provided"}</div>
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -430,14 +450,31 @@ const Users = ({ initialTab = "All" }) => {
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="flex items-center justify-center gap-2">
-                                                                <button className="admin-button-icon p-1.5 border rounded transition-colors shadow-sm">
-                                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setViewUser(user)}
+                                                                    aria-label={`View ${user.name}`}
+                                                                    title="View customer"
+                                                                    className="admin-button-icon p-1.5 border rounded transition-colors shadow-sm"
+                                                                >
+                                                                    <FiEye size={14} />
                                                                 </button>
                                                                 <button
                                                                     onClick={() => openEditModal(user)}
                                                                     className="admin-button-icon p-1.5 border rounded transition-colors shadow-sm"
+                                                                    aria-label={`Edit ${user.name}`}
+                                                                    title="Edit customer"
                                                                 >
                                                                     <FiMoreVertical size={14} />
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleDeleteUser(user)}
+                                                                    aria-label={`Delete ${user.name}`}
+                                                                    title="Delete customer"
+                                                                    className="admin-button-danger p-1.5 border rounded transition-colors shadow-sm"
+                                                                >
+                                                                    <FiUserX size={14} />
                                                                 </button>
                                                             </div>
                                                         </td>
@@ -461,8 +498,6 @@ const Users = ({ initialTab = "All" }) => {
                                 </div>
                             ) : (
                                 currentItems.map((user, idx) => {
-                                    const mockPhone = user.phone || "+91 98765 4321" + (idx % 10);
-
                                     return (
                                         <article key={user.id} className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm hover:-translate-y-0.5 hover:shadow-lg transition-all">
                                             <div className="flex items-start justify-between gap-3 pb-4 border-b border-gray-100">
@@ -481,7 +516,7 @@ const Users = ({ initialTab = "All" }) => {
 
                                             <div className="mt-5 space-y-3 text-[12px] text-gray-600">
                                                 <div className="flex items-center gap-3 min-w-0"><FiMail size={14} className="text-violet-500 shrink-0" /> <span className="truncate">{user.email}</span></div>
-                                                <div className="flex items-center gap-3"><FiPhone size={14} className="text-violet-500 shrink-0" /> {mockPhone}</div>
+                                                <div className="flex items-center gap-3"><FiPhone size={14} className="text-violet-500 shrink-0" /> {user.phone || "Phone not provided"}</div>
                                                 <div className="flex items-center gap-3"><FiCalendar size={14} className="text-violet-500 shrink-0" /> Joined {user.joined}</div>
                                             </div>
 
@@ -494,14 +529,31 @@ const Users = ({ initialTab = "All" }) => {
                                                     {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
                                                 </span>
                                                 <div className="flex items-center gap-2">
-                                                    <button className="admin-button-icon p-1.5 border rounded transition-colors shadow-sm">
-                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setViewUser(user)}
+                                                        aria-label={`View ${user.name}`}
+                                                        title="View customer"
+                                                        className="admin-button-icon p-1.5 border rounded transition-colors shadow-sm"
+                                                    >
+                                                        <FiEye size={14} />
                                                     </button>
                                                     <button
                                                         onClick={() => openEditModal(user)}
                                                         className="admin-button-icon p-1.5 border rounded transition-colors shadow-sm"
+                                                        aria-label={`Edit ${user.name}`}
+                                                        title="Edit customer"
                                                     >
                                                         <FiMoreVertical size={14} />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleDeleteUser(user)}
+                                                        aria-label={`Delete ${user.name}`}
+                                                        title="Delete customer"
+                                                        className="admin-button-danger p-1.5 border rounded transition-colors shadow-sm"
+                                                    >
+                                                        <FiUserX size={14} />
                                                     </button>
                                                 </div>
                                             </div>
@@ -558,6 +610,71 @@ const Users = ({ initialTab = "All" }) => {
                         </div>
                     </div>
                 </div>
+
+                {/* Add/Edit User Modal */}
+                {viewUser && (
+                    <div
+                        className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/65 p-4 backdrop-blur-sm"
+                        onMouseDown={(event) => {
+                            if (event.target === event.currentTarget) setViewUser(null);
+                        }}
+                    >
+                        <section
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="view-customer-title"
+                            className="w-full max-w-lg overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl"
+                        >
+                            <header className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white to-violet-50/70 px-6 py-5">
+                                <div className="flex items-center gap-3">
+                                    <img src={viewUser.avatar} alt="" className="h-12 w-12 rounded-full shadow-sm" />
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Customer details</p>
+                                        <h2 id="view-customer-title" className="font-bold text-slate-900">{viewUser.name}</h2>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewUser(null)}
+                                    aria-label="Close customer details"
+                                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-900"
+                                >
+                                    <FiX size={18} />
+                                </button>
+                            </header>
+                            <dl className="grid gap-4 px-6 py-5 sm:grid-cols-2">
+                                {[
+                                    ["Customer ID", viewUser.user_id || `CUS${1000 + (Number(viewUser.id) || 0)}`],
+                                    ["Username", viewUser.username || "—"],
+                                    ["Email", viewUser.email || "—"],
+                                    ["Phone", viewUser.phone || "Not provided"],
+                                    ["Role", (viewUser.role || "user").replace(/^./, (letter) => letter.toUpperCase())],
+                                    ["Status", viewUser.status || "Active"],
+                                    ["Joined", viewUser.joined || "—"],
+                                    ["Last updated", viewUser.updated_at ? new Date(viewUser.updated_at).toLocaleDateString() : "—"],
+                                ].map(([label, value]) => (
+                                    <div key={label} className="min-w-0 rounded-xl bg-slate-50 px-4 py-3">
+                                        <dt className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{label}</dt>
+                                        <dd className="mt-1 break-words text-sm font-semibold text-slate-800">{value}</dd>
+                                    </div>
+                                ))}
+                            </dl>
+                            <footer className="flex justify-end border-t border-slate-100 px-6 py-4">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const customer = viewUser;
+                                        setViewUser(null);
+                                        openEditModal(customer);
+                                    }}
+                                    className="admin-button-primary rounded-xl px-5 py-2.5 text-sm font-bold"
+                                >
+                                    Edit customer
+                                </button>
+                            </footer>
+                        </section>
+                    </div>
+                )}
 
                 {/* Add/Edit User Modal */}
                 {isModalOpen && (
@@ -650,6 +767,8 @@ const Users = ({ initialTab = "All" }) => {
                                     <input
                                         type="text"
                                         name="phone"
+                                        required={!isEditing && usePhoneAsPassword}
+                                        minLength={!isEditing && usePhoneAsPassword ? 8 : undefined}
                                         autoComplete="tel"
                                         value={formData.phone}
                                         onChange={handleInputChange}
@@ -672,18 +791,48 @@ const Users = ({ initialTab = "All" }) => {
                                     </select>
                                 </div>
                                 {!isEditing && (
-                                    <div>
-                                        <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-widest mb-2">Password *</label>
-                                        <input
-                                            type="password"
-                                            name="password"
-                                            required
-                                            autoComplete="new-password"
-                                            value={formData.password}
-                                            onChange={handleInputChange}
-                                            placeholder="••••••••"
-                                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                                        />
+                                    <div className="space-y-3">
+                                        <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={usePhoneAsPassword}
+                                                onChange={(event) => setUsePhoneAsPassword(event.target.checked)}
+                                                className="h-4 w-4 rounded border-slate-300 text-violet-700 focus:ring-violet-500"
+                                            />
+                                            Use phone number as password
+                                        </label>
+                                        <div>
+                                            <label htmlFor="customer-password" className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-gray-500">
+                                                Password {!usePhoneAsPassword && "*"}
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    id="customer-password"
+                                                    type={showPassword ? "text" : "password"}
+                                                    name="password"
+                                                    required={!usePhoneAsPassword}
+                                                    minLength={!usePhoneAsPassword ? 8 : undefined}
+                                                    autoComplete="new-password"
+                                                    readOnly={usePhoneAsPassword}
+                                                    value={usePhoneAsPassword ? formData.phone : formData.password}
+                                                    onChange={handleInputChange}
+                                                    placeholder={usePhoneAsPassword ? "Enter phone number above" : "At least 8 characters"}
+                                                    className={`w-full rounded-xl border border-slate-200 px-4 py-3 pr-12 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100 ${usePhoneAsPassword ? "cursor-not-allowed bg-slate-50" : "bg-white"}`}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowPassword((visible) => !visible)}
+                                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                                    aria-pressed={showPassword}
+                                                    className="absolute inset-y-0 right-2 flex w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
+                                                >
+                                                    {showPassword ? <FiEyeOff aria-hidden="true" /> : <FiEye aria-hidden="true" />}
+                                                </button>
+                                            </div>
+                                            <p className="mt-1.5 text-xs text-amber-700">
+                                                Using a phone number as a password is less secure. Choose manual entry for a stronger password.
+                                            </p>
+                                        </div>
                                     </div>
                                 )}
                             </form>
