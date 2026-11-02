@@ -61,9 +61,11 @@ function parseBanner(body, existing, files) {
   const desktopImage = files.desktop_image?.[0]
     ? `/uploads/banners/${files.desktop_image[0].filename}`
     : existing?.desktop_image || "";
-  const mobileImage = files.mobile_image?.[0]
-    ? `/uploads/banners/${files.mobile_image[0].filename}`
-    : existing?.mobile_image || null;
+  const mobileImage = body.remove_mobile_image === "true"
+    ? null
+    : files.mobile_image?.[0]
+      ? `/uploads/banners/${files.mobile_image[0].filename}`
+      : existing?.mobile_image || null;
 
   if (!title || title.length > 160) {
     throw requestError("Headline is required and must be 160 characters or fewer.");
@@ -97,10 +99,6 @@ function parseBanner(body, existing, files) {
   if (!desktopImage) {
     throw requestError("A desktop banner image is required.");
   }
-  if (!mobileImage) {
-    throw requestError("A mobile banner image is required.");
-  }
-
   return {
     title,
     subtitle: subtitle || null,
@@ -213,7 +211,9 @@ function createBannerController(pool) {
         );
         const replacedImages = [
           request.files?.desktop_image?.[0] ? existingRows[0].desktop_image : null,
-          request.files?.mobile_image?.[0] ? existingRows[0].mobile_image : null,
+          request.files?.mobile_image?.[0] || request.body?.remove_mobile_image === "true"
+            ? existingRows[0].mobile_image
+            : null,
         ].filter(Boolean);
         try {
           await removeStoredImages(replacedImages);

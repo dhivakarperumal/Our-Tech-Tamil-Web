@@ -160,10 +160,6 @@ function BannerModal({ banner, saving, onClose, onSubmit }) {
       toast.error("Add a desktop banner visual.");
       return;
     }
-    if (!form.mobile_image) {
-      toast.error("Add a mobile banner visual.");
-      return;
-    }
     const data = new FormData();
     data.append("title", form.title.trim());
     data.append("subtitle", form.subtitle.trim());
@@ -176,6 +172,9 @@ function BannerModal({ banner, saving, onClose, onSubmit }) {
     }
     if (form.mobile_image?.file instanceof File) {
       data.append("mobile_image", form.mobile_image.file);
+    }
+    if (!form.mobile_image && banner?.mobile_image) {
+      data.append("remove_mobile_image", "true");
     }
     onSubmit(data);
   };
