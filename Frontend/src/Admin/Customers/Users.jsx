@@ -4,7 +4,6 @@ import {
     FiSearch,
     FiFilter,
     FiUserPlus,
-    FiMoreVertical,
     FiMail,
     FiPhone,
     FiCalendar,
@@ -465,7 +464,7 @@ const Users = ({ initialTab = "All" }) => {
                                                                     aria-label={`Edit ${user.name}`}
                                                                     title="Edit customer"
                                                                 >
-                                                                    <FiMoreVertical size={14} />
+                                                                    <FiEdit2 size={14} />
                                                                 </button>
                                                                 <button
                                                                     type="button"
@@ -544,7 +543,7 @@ const Users = ({ initialTab = "All" }) => {
                                                         aria-label={`Edit ${user.name}`}
                                                         title="Edit customer"
                                                     >
-                                                        <FiMoreVertical size={14} />
+                                                        <FiEdit2 size={14} />
                                                     </button>
                                                     <button
                                                         type="button"

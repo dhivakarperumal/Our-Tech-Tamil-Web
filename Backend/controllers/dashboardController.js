@@ -29,7 +29,7 @@ function createDashboardController(pool) {
         pool.execute(`
           SELECT COUNT(*) AS total
           FROM users
-          WHERE role = 'customer' AND status = 'active'
+          WHERE role IN ('customer', 'user') AND status = 'active'
         `),
         pool.execute(`
           SELECT id, name, total_stock, images

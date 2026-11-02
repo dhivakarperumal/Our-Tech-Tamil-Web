@@ -350,7 +350,7 @@ const Dashboard = () => {
     ];
 
     return (
-        <div className="ott-dashboard-motion relative isolate mx-auto min-h-screen max-w-[1800px] space-y-5 bg-gradient-to-br from-[#f3edff] via-[#f2f8ff] to-[#fff4e6] pb-10 sm:space-y-6">
+        <div className="ott-dashboard-motion relative isolate -mx-4 -my-4 min-h-screen space-y-5 bg-gradient-to-br from-[#f3edff] via-[#f2f8ff] to-[#fff4e6] px-4 py-4 pb-10 sm:-mx-5 sm:-my-5 sm:space-y-6 sm:px-5 sm:py-5 lg:-mx-6 lg:-my-6 lg:px-6 lg:py-6">
             <style>{`
                 @keyframes ottDashboardEnter {
                     from { opacity: 0; transform: translate3d(0, 16px, 0) scale(.99); }
@@ -486,7 +486,7 @@ const Dashboard = () => {
                     .ott-dashboard-ambient { will-change: auto; }
                 }
             `}</style>
-            <div aria-hidden="true" className="ott-dashboard-backdrop absolute inset-0 -z-10 overflow-hidden rounded-[2rem]">
+            <div aria-hidden="true" className="ott-dashboard-backdrop absolute inset-0 -z-10 overflow-hidden">
                 <span className="ott-dashboard-ambient ott-dashboard-ambient-violet" />
                 <span className="ott-dashboard-ambient ott-dashboard-ambient-pink" />
                 <span className="ott-dashboard-ambient ott-dashboard-ambient-gold" />
