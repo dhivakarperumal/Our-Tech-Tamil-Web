@@ -42,6 +42,7 @@ const TechBanner = () => {
             .filter((banner) =>
               banner.target_section === "offers" && isPublished(banner.is_published),
             )
+            .sort((first, second) => Number(first.id) - Number(second.id))
             .slice(0, 3);
           setBanners(offerBanners);
         }
@@ -124,7 +125,7 @@ const TechBanner = () => {
                 </div>
               </>
             );
-            const className = `group relative flex h-[116px] min-w-0 overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:h-[108px] lg:h-[116px] ${
+            const className = `group relative flex h-[140px] min-w-0 overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:h-[132px] lg:h-[150px] ${
               theme === "gaming"
                 ? "bg-gradient-to-r from-secondary-dark via-primary to-primary-dark"
                 : theme === "laptop"
