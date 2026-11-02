@@ -127,6 +127,21 @@ function createBannerController(pool) {
       }
     },
 
+    async listPublished(request, response, next) {
+      try {
+        const [banners] = await pool.query(
+          `SELECT id, title, subtitle, description, destination_link, target_section,
+                  is_published, desktop_image, mobile_image, created_at, updated_at
+           FROM banners
+           WHERE is_published = TRUE
+           ORDER BY created_at DESC, id DESC`,
+        );
+        return response.json({ banners });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
     async create(request, response, next) {
       const uploadedFiles = getUploadedFiles(request);
       let saved = false;

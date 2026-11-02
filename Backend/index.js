@@ -11,6 +11,7 @@ const { createBannerController } = require("./controllers/bannerController");
 const createAuthRouter = require("./routers/authRouter");
 const createAdminContentRouter = require("./routers/adminContentRouter");
 const createBannersRouter = require("./routers/bannersRouter");
+const createPublicBannersRouter = require("./routers/publicBannersRouter");
 const createCategoriesRouter = require("./routers/categoriesRouter");
 const createProductsRouter = require("./routers/productsRouter");
 
@@ -42,6 +43,7 @@ app.get("/api/health", async (request, response) => {
 app.use("/api/auth", createAuthRouter(authController));
 app.use("/api/admin/content", createAdminContentRouter(adminContentController));
 app.use("/api/admin/banners", createBannersRouter(bannerController));
+app.use("/api/banners", createPublicBannersRouter(bannerController));
 app.use("/api/categories", createCategoriesRouter(pool));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/products", createProductsRouter(pool));
