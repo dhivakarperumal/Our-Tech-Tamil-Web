@@ -9,6 +9,8 @@ const { createAuthController } = require("./controllers/authController");
 const { createAdminContentController } = require("./controllers/adminContentController");
 const createAuthRouter = require("./routers/authRouter");
 const createAdminContentRouter = require("./routers/adminContentRouter");
+const createCategoriesRouter = require("./routers/categoriesRouter");
+const createProductsRouter = require("./routers/productsRouter");
 
 const port = Number(process.env.PORT || 5000);
 
@@ -36,10 +38,21 @@ app.get("/api/health", async (request, response) => {
 
 app.use("/api/auth", createAuthRouter(authController));
 app.use("/api/admin/content", createAdminContentRouter(adminContentController));
+app.use("/api/categories", createCategoriesRouter(pool));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/api/products", createProductsRouter(pool));
 
 app.use((error, request, response, next) => {
   console.error("Backend request failed:", error);
-  response.status(500).json({ message: "Internal server error." });
+  const uploadLimitError = typeof error.code === "string" && error.code.startsWith("LIMIT_");
+  const status = Number.isInteger(error.status) && error.status >= 400 && error.status < 500
+    ? error.status
+    : uploadLimitError
+      ? 400
+      : 500;
+  response.status(status).json({
+    message: status === 500 ? "Internal server error." : error.message,
+  });
 });
 
 async function start() {

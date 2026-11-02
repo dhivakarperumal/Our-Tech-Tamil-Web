@@ -169,8 +169,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       <aside
         className={`
         fixed top-0 left-0 z-50 h-full
-        bg-[#1D0738]
-        isolate border-r border-white/10 shadow-[12px_0_40px_rgba(15,0,35,0.22)]
+        admin-sidebar border-r border-white/5
         font-sans
         
         flex flex-col transition-all duration-300
@@ -181,22 +180,24 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       >
         <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_10%_0%,rgba(168,85,247,0.16),transparent_38%),radial-gradient(ellipse_at_100%_100%,rgba(126,34,206,0.14),transparent_35%)]" />
         {/* ========== LOGO ========== */}
-        <div className="relative z-10 overflow-hidden border-b border-white/10 bg-[#2A1048]/95 px-4 py-5">
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 via-transparent to-amber-400/[0.06]" />
-          <div className="relative flex min-h-11 items-center gap-3">
-            <div className="w-11 h-11 shrink-0 overflow-hidden rounded-full bg-[#21094E] ring-1 ring-white/15 shadow-lg shadow-fuchsia-950/30">
-              <img
-                src="/images/logo1.png"
-                alt="Our Tech Tamil"
-                className="h-full w-full object-cover"
-              />
+       <div className="relative overflow-hidden px-4 pt-5 pb-5 border-b border-white/10">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500/15 via-transparent to-cyan-500/5" />
+          <div className="relative flex items-center gap-3">
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary-light via-secondary-light to-accent p-[2px] shadow-lg shadow-primary/30">
+              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[14px] bg-white">
+                <img
+                  src="/images/logo.jpeg"
+                  alt="Our Tech Tamil"
+                  className="h-full w-full object-cover"
+                />
+              </div>
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#FFD52E]">
-                  Our Tech Tamil
+                <p className="whitespace-nowrap text-sm font-extrabold tracking-tight text-white">
+                  Our Tech <span className="text-accent">Tamil</span>
                 </p>
-                <p className="text-sm font-semibold tracking-wide text-white">
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
                   Admin Panel
                 </p>
               </div>
