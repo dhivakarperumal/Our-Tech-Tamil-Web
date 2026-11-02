@@ -83,13 +83,18 @@ const Footer = () => {
           </div>
 
           <div>
-            <h2 className="mb-3 text-sm font-bold">Information</h2>
-            <ul className="flex flex-col gap-1.5">
-              <li><Link to="/about" className={linkClass}>About Us</Link></li>
-              <li><Link to="/contactus" className={linkClass}>Contact Us</Link></li>
-              <li><Link to="/about" className={linkClass}>Our Blog</Link></li>
-              <li><Link to="/contactus" className={linkClass}>Careers</Link></li>
-              <li><Link to="/" className={linkClass}>Sitemap</Link></li>
+            <h2 className="mb-3 text-sm font-bold">Contact Information</h2>
+            <ul className="flex flex-col gap-2">
+              <li>
+                <a href="tel:+919876543210" className={linkClass}>
+                  Mobile: +91 98765 43210
+                </a>
+              </li>
+              <li>
+                <a href="mailto:support@ourtechtamil.com" className={linkClass}>
+                  Email: support@ourtechtamil.com
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -104,13 +109,24 @@ const Footer = () => {
             </ul>
           </div>
 
-          <div className="col-span-2 sm:col-span-1">
-            <h2 className="mb-3 text-sm font-bold">We Accept</h2>
+        </div>
+
+        <div className="flex flex-col gap-4 border-t border-white/20 py-4 text-xs text-white/85 md:flex-row md:items-center md:justify-between">
+          <p>© {new Date().getFullYear()} Our Tech. All Rights Reserved.</p>
+          <nav aria-label="Legal links" className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <Link to="/termsandconditions" className="transition-colors hover:text-secondary-light">Privacy Policy</Link>
+            <span aria-hidden="true">|</span>
+            <Link to="/termsandconditions" className="transition-colors hover:text-secondary-light">Terms &amp; Conditions</Link>
+            <span aria-hidden="true">|</span>
+            <Link to="/contactus" className="transition-colors hover:text-secondary-light">Shipping Policy</Link>
+          </nav>
+          <div className="md:ml-auto">
+            <h2 className="mb-2 text-xs font-bold">We Accept</h2>
             <div className="flex flex-wrap gap-2">
               {["VISA", "Mastercard", "RuPay", "UPI"].map((method) => (
                 <span
                   key={method}
-                  className="flex h-9 min-w-[54px] items-center justify-center rounded-md bg-white px-2 text-xs font-extrabold italic text-[#1f1650] shadow-sm"
+                  className="flex h-8 min-w-[48px] items-center justify-center rounded-md bg-white px-2 text-[10px] font-extrabold italic text-[#1f1650] shadow-sm"
                 >
                   {method === "Mastercard" ? (
                     <span className="flex items-center" aria-label="Mastercard">
@@ -122,17 +138,6 @@ const Footer = () => {
               ))}
             </div>
           </div>
-        </div>
-
-        <div className="flex flex-col gap-3 border-t border-white/20 py-4 text-xs text-white/85 md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} Our Tech. All Rights Reserved.</p>
-          <nav aria-label="Legal links" className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <Link to="/termsandconditions" className="transition-colors hover:text-secondary-light">Privacy Policy</Link>
-            <span aria-hidden="true">|</span>
-            <Link to="/termsandconditions" className="transition-colors hover:text-secondary-light">Terms &amp; Conditions</Link>
-            <span aria-hidden="true">|</span>
-            <Link to="/contactus" className="transition-colors hover:text-secondary-light">Shipping Policy</Link>
-          </nav>
         </div>
       </PageContainer>
     </footer>
