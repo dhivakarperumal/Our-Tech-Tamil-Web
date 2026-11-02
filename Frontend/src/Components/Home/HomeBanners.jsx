@@ -73,11 +73,11 @@ function HomeBanners() {
               <span>Shop by Categories</span>
             </a>
 
-            <h1 className="max-w-[700px] text-[2.8rem] font-black leading-[0.98] tracking-[-0.055em] text-[#24104f] sm:text-6xl xl:text-[4.25rem]">
+            <h1             className="max-w-[700px] text-[2.5rem] font-black leading-[0.98] tracking-[-0.055em] text-[#24104f] sm:text-5xl xl:text-[3.75rem]">
               {heroTitle}
             </h1>
 
-            <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-[#22213b] sm:text-base">
+            <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-[13px] font-medium text-[#22213b] sm:text-[15px]">
               {heroItems.map((item, index) => (
                 <div key={`${item}-${index}`} className="flex items-center gap-4">
                   <span>{item}</span>
@@ -97,7 +97,7 @@ function HomeBanners() {
                   <span className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full border-2 border-white/90 bg-white/25 text-[#4b16a3] shadow-[inset_0_0_16px_rgba(255,255,255,0.55)]">
                     <Icon className="h-6 w-6" strokeWidth={2} />
                   </span>
-                  <span className="flex flex-col text-[15px] leading-tight">
+                  <span className="flex flex-col text-[14px] leading-tight">
                     <strong className="font-extrabold">{title}</strong>
                     <span className="font-semibold">{subtitle}</span>
                   </span>
@@ -107,7 +107,7 @@ function HomeBanners() {
 
             <a
               href={heroBanner?.destination_link || "#shop-by-category"}
-              className="mt-9 inline-flex min-w-[250px] items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-7 py-4 text-xl font-extrabold text-white shadow-[0_14px_28px_rgba(103,21,181,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_32px_rgba(103,21,181,0.36)]"
+              className="mt-9 inline-flex min-w-[230px] items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-6 py-3.5 text-lg font-extrabold text-white shadow-[0_14px_28px_rgba(103,21,181,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_32px_rgba(103,21,181,0.36)]"
             >
               <span>Shop Now</span>
               <ArrowRight className="h-6 w-6" />
