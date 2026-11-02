@@ -39,10 +39,12 @@ function HomeBanners() {
     };
   }, []);
 
-  const heroBanner = useMemo(
-    () => banners.find((banner) => banner.target_section === "hero") || null,
+  const heroBanners = useMemo(
+    () => banners.filter((banner) => banner.target_section === "hero"),
     [banners],
   );
+  const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+  const heroBanner = heroBanners[activeHeroIndex] || heroBanners[0] || null;
 
   const heroImage = heroBanner?.desktop_image ? getImageUrl(heroBanner.desktop_image) : "";
   const heroTitle = heroBanner?.title || "Everything You Need in One Place";
@@ -54,95 +56,106 @@ function HomeBanners() {
     .filter(Boolean);
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-r from-violet-100 via-violet-200 to-purple-200">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,255,255,0.7),_transparent_35%),radial-gradient(circle_at_bottom_right,_rgba(167,139,250,0.26),_transparent_30%)]" />
-      <PageContainer className="relative py-8 pb-12">
-        <div className="relative mx-auto max-w-[1500px]">
-          <div className="grid items-center gap-8 lg:grid-cols-[1.1fr_1fr]">
-            <div className="relative z-10 max-w-[700px]">
-              <div className="mb-6 inline-flex items-center gap-2 rounded-2xl border border-violet-300/60 bg-white/25 px-4 py-2.5 shadow-[0_10px_25px_rgba(91,48,156,0.08)] backdrop-blur-sm">
-                <ShoppingBag className="h-5 w-5 text-violet-700" />
-                <span className="text-base font-bold text-violet-800">Shop by Categories</span>
-              </div>
+    <section className="relative isolate overflow-hidden bg-gradient-to-br from-[#faf5ff] via-[#f2e7ff] to-[#c99af4]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_68%_48%,rgba(164,91,232,0.34),transparent_38%),radial-gradient(ellipse_at_26%_0%,rgba(255,255,255,0.9),transparent_55%)]" />
+      <div className="pointer-events-none absolute -left-[8%] -top-[57%] h-[82%] w-[62%] rounded-[50%] bg-white/45" />
+      <div className="pointer-events-none absolute -bottom-[44%] -left-[8%] h-[58%] w-[72%] -rotate-6 rounded-[50%] bg-white/35" />
+      <div className="pointer-events-none absolute -bottom-[50%] -right-[12%] h-[72%] w-[70%] rotate-[-8deg] rounded-[50%] bg-violet-400/30" />
 
-              <h1 className="text-[2.7rem] font-black leading-[0.9] tracking-[-0.08em] text-slate-900 sm:text-[4rem] xl:text-[6rem]">
+      <PageContainer className="relative py-8 sm:py-10 lg:py-12">
+        <div className="mx-auto grid min-h-[620px] max-w-[1500px] items-center gap-3 lg:min-h-[610px] lg:grid-cols-[0.98fr_1.02fr] xl:gap-0">
+          <div className="relative z-10 py-4 lg:py-0">
+              <a
+                href="#shop-by-category"
+                className="mb-7 inline-flex items-center gap-2 rounded-full bg-[#ead8ff] px-5 py-2.5 text-base font-bold text-[#35116d] transition hover:bg-[#dfc5ff]"
+              >
+                <ShoppingBag className="h-5 w-5" />
+                <span>Shop by Categories</span>
+              </a>
+
+              <h1 className="max-w-[700px] text-[2.8rem] font-black leading-[0.98] tracking-[-0.055em] text-[#24104f] sm:text-6xl xl:text-[4.25rem]">
                 {heroTitle}
               </h1>
 
-              <div className="mt-6 flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-700 sm:text-base">
+              <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-[#22213b] sm:text-base">
                 {heroItems.map((item, index) => (
-                  <div key={`${item}-${index}`} className="flex items-center gap-3">
+                  <div key={`${item}-${index}`} className="flex items-center gap-4">
                     <span>{item}</span>
-                    {index < heroItems.length - 1 && <span className="text-violet-400">|</span>}
+                    {index < heroItems.length - 1 && <span className="text-[#4c326f]">|</span>}
                   </div>
                 ))}
               </div>
 
-              <div className="mt-8 grid max-w-[620px] grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="mt-8 flex flex-wrap items-center gap-4 sm:gap-5">
                 {[
                   { icon: Truck, title: "Fast", subtitle: "Delivery" },
                   { icon: ShieldCheck, title: "Secure", subtitle: "Payments" },
                   { icon: Clock3, title: "24/7", subtitle: "Support" },
                 ].map(({ icon: Icon, title, subtitle }, index) => (
-                  <div key={title} className="flex items-center gap-3">
-                    {index !== 0 && <div className="hidden h-12 w-px bg-violet-200 sm:block" />}
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full border border-violet-300 bg-white/30 text-violet-700 shadow-inner shadow-violet-100/80">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="text-xl font-black text-slate-800">{title}</div>
-                      <div className="text-sm text-slate-600">{subtitle}</div>
-                    </div>
+                  <div key={title} className="flex items-center gap-2.5 text-[#26134c]">
+                    {index > 0 && <span className="mr-1 hidden h-12 w-px bg-violet-500/40 sm:block" />}
+                    <span className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full border-2 border-white/90 bg-white/25 text-[#4b16a3] shadow-[inset_0_0_16px_rgba(255,255,255,0.55)]">
+                      <Icon className="h-6 w-6" strokeWidth={2} />
+                    </span>
+                    <span className="flex flex-col text-[15px] leading-tight">
+                      <strong className="font-extrabold">{title}</strong>
+                      <span className="font-semibold">{subtitle}</span>
+                    </span>
                   </div>
                 ))}
               </div>
 
-              <button
-                type="button"
-                className="mt-9 inline-flex items-center gap-3 rounded-2xl bg-gradient-to-r from-violet-700 to-purple-700 px-6 py-4 text-lg font-bold text-white shadow-[0_18px_35px_rgba(91,48,156,0.28)] transition hover:translate-y-[-1px]"
+              <a
+                href={heroBanner?.destination_link || "#shop-by-category"}
+                className="mt-9 inline-flex min-w-[250px] items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-7 py-4 text-xl font-extrabold text-white shadow-[0_14px_28px_rgba(103,21,181,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_32px_rgba(103,21,181,0.36)]"
               >
                 <span>Shop Now</span>
-                <ArrowRight className="h-5 w-5" />
-              </button>
-            </div>
+                <ArrowRight className="h-6 w-6" />
+              </a>
+          </div>
 
-            <div className="relative z-10 flex min-h-[420px] items-center justify-center lg:min-h-[560px]">
-              <div className="absolute h-[440px] w-[440px] rounded-full border-[12px] border-violet-300/90 shadow-[0_0_25px_rgba(168,85,247,0.45)] lg:h-[560px] lg:w-[560px]" />
+          <div className="relative z-10 flex min-h-[320px] items-end justify-center sm:min-h-[430px] lg:min-h-[560px]">
+            <div className="absolute left-1/2 top-[5%] aspect-square w-[75%] -translate-x-1/2 rounded-full border-[3px] border-white/80 shadow-[0_0_16px_2px_rgba(255,255,255,0.9),0_0_36px_rgba(155,91,220,0.45)] sm:top-[2%] sm:w-[78%] lg:w-[86%]" />
+            <div className="absolute bottom-[4%] left-[3%] h-[17%] w-[94%] rounded-[50%] bg-gradient-to-b from-[#f7edff] via-[#d9c0f3] to-[#aa7bd4] shadow-[0_14px_24px_rgba(97,48,157,0.2)]" />
 
-              <div className="absolute right-10 top-16 h-24 w-24 rotate-12 rounded-full bg-gradient-to-br from-green-200 to-green-400 opacity-90 blur-sm" />
-              <div className="absolute right-16 top-20 h-20 w-20 rotate-[-10deg] rounded-full bg-gradient-to-br from-green-300 to-emerald-500 opacity-80 blur-sm" />
-              <div className="absolute right-24 top-24 h-20 w-20 rotate-12 rounded-full bg-gradient-to-br from-green-300 to-emerald-500 opacity-80 blur-sm" />
-
-              {heroImage ? (
+            {heroImage ? (
+              <picture className="relative z-10 block w-full">
+                {heroBanner?.mobile_image && (
+                  <source
+                    media="(max-width: 639px)"
+                    srcSet={getImageUrl(heroBanner.mobile_image)}
+                  />
+                )}
                 <img
                   src={heroImage}
-                  alt="Featured banner product"
-                  className="relative z-10 max-h-[470px] w-[90%] object-contain drop-shadow-[0_30px_35px_rgba(100,60,180,0.22)]"
+                  alt={heroTitle}
+                  className="mx-auto max-h-[500px] w-full object-contain drop-shadow-[0_20px_28px_rgba(67,30,116,0.2)] sm:max-h-[540px]"
                 />
-              ) : (
-                <div className="relative z-10 flex h-[420px] w-[90%] items-center justify-center rounded-[2rem] bg-gradient-to-br from-violet-800 via-violet-600 to-fuchsia-400 shadow-[0_30px_45px_rgba(98,58,175,0.26)]">
-                  <div className="relative h-[220px] w-[280px] rounded-[1.5rem] border border-white/20 bg-white/5 backdrop-blur-sm" />
-                </div>
-              )}
-
-              <div className="absolute left-8 top-20 h-16 w-16 rounded-full bg-violet-500/10 blur-2xl" />
-              <div className="absolute bottom-10 left-0 h-24 w-24 rounded-full bg-violet-400/10 blur-2xl" />
-            </div>
-          </div>
-
-          <div className="relative z-10 mt-10 flex justify-center gap-3 pb-4">
-            {[0, 1, 2, 3].map((dot) => (
-              <span
-                key={dot}
-                className={`h-3.5 w-3.5 rounded-full ${dot === 0 ? "bg-violet-700 shadow-[0_0_0_4px_rgba(139,92,246,0.15)]" : "bg-violet-200"}`}
-              />
-            ))}
+              </picture>
+            ) : (
+              <div className="relative z-10 mb-[12%] h-[50%] w-[75%] rounded-t-[50%] bg-gradient-to-br from-violet-300/30 to-white/30" />
+            )}
           </div>
         </div>
-      </PageContainer>
 
-      <div className="absolute -bottom-12 left-0 h-32 w-full rotate-[-2deg] bg-gradient-to-r from-violet-200/60 via-violet-100/80 to-violet-200/60" />
-      <div className="absolute -bottom-12 right-0 h-28 w-[55%] rotate-[5deg] bg-gradient-to-r from-violet-100/60 to-violet-200/60" />
+        <div className="relative z-10 mt-2 flex items-center justify-center gap-3 pb-2 lg:absolute lg:bottom-10 lg:left-[5%] lg:mt-0 lg:justify-start">
+          {heroBanners.length > 0 ? heroBanners.map((banner, index) => (
+            <button
+              key={banner.id}
+              type="button"
+              aria-label={`Show banner ${index + 1}: ${banner.title}`}
+              aria-current={index === activeHeroIndex ? "true" : undefined}
+              onClick={() => setActiveHeroIndex(index)}
+              className={`h-3.5 w-3.5 rounded-full transition ${index === activeHeroIndex ? "bg-[#7400df]" : "bg-violet-400/60 hover:bg-violet-500"}`}
+            />
+          )) : [0, 1, 2].map((dot) => (
+            <span
+              key={dot}
+              className={`h-3.5 w-3.5 rounded-full ${dot === 0 ? "bg-[#7400df]" : "bg-violet-400/60"}`}
+            />
+          ))}
+        </div>
+      </PageContainer>
     </section>
   );
 }
