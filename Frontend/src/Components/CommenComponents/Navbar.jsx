@@ -330,6 +330,9 @@ const Navbar = () => {
             <button
               onClick={() => setMobileMenu(!mobileMenu)}
               className="md:hidden text-primary"
+              aria-label={mobileMenu ? "Close menu" : "Open menu"}
+              aria-expanded={mobileMenu}
+              aria-controls="mobile-navigation"
             >
               {mobileMenu ? <X size={26} /> : <Menu size={26} />}
             </button>
@@ -389,7 +392,10 @@ const Navbar = () => {
           />
 
           {/* Drawer */}
-          <div className="absolute top-0 left-0 h-full w-[85%] max-w-[340px] bg-white shadow-xl overflow-hidden">
+          <div
+            id="mobile-navigation"
+            className="absolute inset-0 h-full w-full max-w-none overflow-y-auto bg-white shadow-xl"
+          >
 
             {/* MENU SCREEN */}
             {!mobileCategory && !mobilePages && (
@@ -449,17 +455,35 @@ const Navbar = () => {
                     <FiChevronRight size={16} />
                   </button>
 
-                  <button
-                    onClick={() => setMobilePages(true)}
-                    className="flex items-center justify-between px-4 py-3 rounded-lg text-sm bg-gray-100 text-gray-700 hover:text-primary transition"
+                  <NavLink
+                    to="/about"
+                    onClick={() => setMobileMenu(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition
+                      ${isActive
+                        ? "bg-primary text-white shadow"
+                        : "bg-gray-100 text-gray-700 hover:text-primary"
+                      }`
+                    }
                   >
-                    <div className="flex items-center gap-3">
-                      <FiFileText size={16} />
-                      Pages
-                    </div>
+                    <FiFileText size={16} />
+                    About Us
+                  </NavLink>
 
-                    <FiChevronRight size={16} />
-                  </button>
+                  <NavLink
+                    to="/contactus"
+                    onClick={() => setMobileMenu(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition
+                      ${isActive
+                        ? "bg-primary text-white shadow"
+                        : "bg-gray-100 text-gray-700 hover:text-primary"
+                      }`
+                    }
+                  >
+                    <FiPhone size={16} />
+                    Contact Us
+                  </NavLink>
 
                 </div>
               </>
