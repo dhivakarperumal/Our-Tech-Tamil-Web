@@ -1,22 +1,43 @@
-﻿import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import api from "../../api";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { toast } from "react-hot-toast";
 import { GoogleLogin } from "@react-oauth/google";
-import { Eye, EyeOff, Footprints } from "lucide-react";
-import { Link } from "react-router-dom";
+import {
+  ArrowRight,
+  Award,
+  Eye,
+  EyeOff,
+  Gamepad2,
+  LockKeyhole,
+  ShieldCheck,
+  Truck,
+  UserRound,
+} from "lucide-react";
 
 function Login() {
   const navigate = useNavigate();
   const { login } = useContext(AuthContext);
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
+  const [googleButtonWidth, setGoogleButtonWidth] = useState(360);
   const [form, setForm] = useState({
     identifier: "",
     password: "",
   });
+
+  useEffect(() => {
+    const updateButtonWidth = () => {
+      setGoogleButtonWidth(
+        Math.max(200, Math.min(360, window.innerWidth - 80)),
+      );
+    };
+
+    updateButtonWidth();
+    window.addEventListener("resize", updateButtonWidth);
+    return () => window.removeEventListener("resize", updateButtonWidth);
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -57,225 +78,201 @@ function Login() {
       }
     } catch (error) {
       console.error("Google Login Error:", error);
-      toast.error(error.response?.data?.message || error.message || "Google Login Failed");
+      toast.error(
+        error.response?.data?.message || error.message || "Google Login Failed",
+      );
     }
   };
 
   return (
-    <div className="h-screen w-full font-sans flex overflow-hidden bg-[#faf9f8] relative selection:bg-primary selection:text-white">
+    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-background via-surface to-secondary-light/20 font-sans text-text-primary selection:bg-primary selection:text-surface lg:grid lg:min-h-screen lg:grid-cols-[minmax(430px,0.9fr)_1.1fr] lg:overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -left-36 -top-32 h-80 w-80 rounded-full bg-secondary-light/30 blur-3xl"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-36 right-1/4 h-96 w-96 rounded-full bg-gradient-middle/10 blur-3xl"
+      />
 
-      {/* Background Accents */}
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-pink-100/40 rounded-full blur-[100px] pointer-events-none" />
-      <div className="absolute bottom-0 right-[20%] w-[400px] h-[400px] bg-yellow-100/30 rounded-full blur-[80px] pointer-events-none" />
-
-      {/* SVG Clip Path */}
-      <svg width="0" height="0" className="absolute">
-        <defs>
-          <clipPath id="sCurve" clipPathUnits="objectBoundingBox">
-            <path d="M 0 0 L 0.92 0 C 1 0.35, 0.9 0.7, 0.65 1 L 0 1 Z" />
-          </clipPath>
-        </defs>
-      </svg>
-
-      {/* LEFT IMAGE */}
-      <div className="hidden lg:block lg:w-5/12 relative h-full z-20 drop-shadow-[20px_0_30px_rgba(0,0,0,0.15)]">
-        <div
-          className="absolute inset-0 bg-gradient-to-b from-yellow-200 via-yellow-500 to-yellow-700 w-[101.5%] h-full z-10"
-          style={{ clipPath: 'url(#sCurve)' }}
-        />
-        <div
-          className="absolute inset-0 bg-black w-full h-full z-20"
-          style={{ clipPath: 'url(#sCurve)' }}
-        >
-          <img
-            src="/images/loginbanner.png"
-            alt="Our Tech Tamil gadgets and electronics"
-            className="h-full w-full object-cover object-center opacity-90"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-black/20 to-transparent pointer-events-none" />
-          <div className="absolute bottom-44 left-12 xl:left-16 text-white z-30">
-            <h1 className="text-4xl xl:text-5xl font-serif mb-4 leading-tight drop-shadow-2xl text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-300">
-              Power Your <br/> Everyday Tech
-            </h1>
-            <p className="text-gray-200 text-sm max-w-[260px] font-light tracking-wide drop-shadow-md">
-              Discover smart gadgets and electronics that make life easier, faster, and more connected.
+      <section className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:px-10 lg:py-10">
+        <div className="w-full max-w-[440px] rounded-[30px] border border-surface/80 bg-surface/90 px-6 py-7 shadow-[0_24px_80px_rgba(40,0,120,0.14)] backdrop-blur-xl sm:px-10 sm:py-8">
+          <div className="mb-6 text-center">
+            <img
+              src="/images/logo1.png"
+              alt="Our Tech Tamil"
+              className="mx-auto mb-2 h-14 w-14 object-contain"
+            />
+            <p className="text-[9px] font-bold uppercase tracking-[0.32em] text-text-secondary">
+              Gadgets &amp; Electronics
             </p>
-            <div className="flex items-center gap-3 mt-6">
-              <div className="h-[2px] w-10 bg-gradient-to-r from-yellow-400 to-transparent" />
-              <span className="text-yellow-400 text-sm drop-shadow-lg shadow-yellow-400">✦</span>
-              <div className="h-[2px] w-10 bg-gradient-to-l from-yellow-400 to-transparent" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* RIGHT FORM */}
-      <div className="w-full lg:w-7/12 h-full flex flex-col justify-center px-6 py-4 sm:px-16 lg:px-24 relative z-10 overflow-hidden">
-        <div className="max-w-md mx-auto w-full">
-
-          {/* Logo & Header */}
-          <div className="text-center mb-5">
-            <div className="flex justify-center mb-2 relative">
-              <div className="absolute inset-0 bg-yellow-400/20 blur-xl rounded-full scale-150" />
-              <Footprints size={48} strokeWidth={1.4} className="text-yellow-600 relative z-10 drop-shadow-sm" aria-hidden="true" />
-            </div>
-            
-            <p className="text-xs text-yellow-700 font-bold tracking-[0.2em] uppercase mb-4">Step into your style</p>
-            <h3 className="text-xl font-serif text-gray-800 mb-1">Welcome Back</h3>
-            <p className="text-gray-500 text-sm">Sign in to discover shoes, bags, and everyday essentials.</p>
+            <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-text-primary">
+              Welcome <span className="text-primary">Back</span>
+            </h1>
+            <p className="mt-1 text-sm text-text-secondary">
+              Sign in to your account to continue shopping
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <label className="relative block">
+              <span className="sr-only">Email or phone number</span>
+              <UserRound
+                size={20}
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-primary"
+              />
+              <input
+                name="identifier"
+                type="text"
+                placeholder="Email or Phone Number"
+                autoComplete="username"
+                value={form.identifier}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-secondary-light/40 bg-surface/80 py-3.5 pl-12 pr-4 text-sm text-text-primary outline-none transition placeholder:text-text-secondary focus:border-primary-light focus:ring-4 focus:ring-primary/10"
+                required
+              />
+            </label>
 
-            {/* Email/Mobile */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1 tracking-wide">
-                Email / Mobile Number
-              </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400 group-focus-within:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
+            <label className="relative block">
+              <span className="sr-only">Password</span>
+              <LockKeyhole
+                size={20}
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-primary"
+              />
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                autoComplete="current-password"
+                value={form.password}
+                onChange={handleChange}
+                className="w-full rounded-2xl border border-secondary-light/40 bg-surface/80 py-3.5 pl-12 pr-12 text-sm text-text-primary outline-none transition placeholder:text-text-secondary focus:border-primary-light focus:ring-4 focus:ring-primary/10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary transition hover:text-primary"
+              >
+                {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+              </button>
+            </label>
+
+            <div className="flex items-center justify-between gap-3 text-xs sm:text-sm">
+              <label className="flex cursor-pointer items-center gap-2 text-text-secondary">
                 <input
-                  name="identifier"
-                  type="text"
-                  placeholder="Enter your email or mobile number"
-                  value={form.identifier}
-                  onChange={handleChange}
-                  className="w-full pl-12 p-3.5 rounded-xl bg-white border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm font-medium text-gray-700"
-                  required
+                  type="checkbox"
+                  className="h-4 w-4 rounded border-border accent-primary"
                 />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 ml-1 tracking-wide">
-                Password
+                Remember me
               </label>
-              <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400 group-focus-within:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  placeholder="Enter your password"
-                  value={form.password}
-                  onChange={handleChange}
-                  className="w-full pl-12 p-3.5 pr-12 rounded-xl bg-white border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm font-medium text-gray-700"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-primary transition-colors cursor-pointer"
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Remember & Forgot */}
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 cursor-pointer group">
-                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 accent-primary" />
-                <span className="text-sm text-gray-600 group-hover:text-primary transition-colors">Remember Me</span>
-              </label>
-              <a href="#" className="text-sm font-semibold text-primary-light hover:text-primary hover:underline transition-colors">
+              <a
+                href="#"
+                className="font-semibold text-primary transition hover:text-primary-light hover:underline"
+              >
                 Forgot Password?
               </a>
             </div>
 
-            {/* Login Button */}
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3.5 rounded-xl text-white font-semibold bg-gradient-to-r from-primary to-primary-light hover:from-primary-dark hover:to-primary transition-all flex items-center justify-center gap-2 relative overflow-hidden group shadow-lg shadow-primary/30 cursor-pointer hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+              className="group flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-primary-dark via-primary to-gradient-middle py-3.5 font-bold text-surface shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/25 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <span className="relative z-10 flex items-center gap-2 tracking-wide">
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                {submitting ? "Signing In..." : "Secure Login"}
-              </span>
-              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              {submitting ? "Signing In..." : "Sign In"}
+              {!submitting && (
+                <ArrowRight
+                  size={20}
+                  className="transition-transform group-hover:translate-x-1"
+                />
+              )}
             </button>
 
-            {/* OR */}
-            <div className="flex items-center gap-4 my-1">
-              <div className="flex-1 h-[1px] bg-gradient-to-r from-transparent via-gray-300 to-gray-300"></div>
-              <span className="text-xs text-gray-400 font-bold tracking-widest uppercase">OR</span>
-              <div className="flex-1 h-[1px] bg-gradient-to-l from-transparent via-gray-300 to-gray-300"></div>
+            <div className="flex items-center gap-4 py-0.5">
+              <span className="h-px flex-1 bg-gradient-to-r from-transparent via-secondary-light/50 to-secondary-light/50" />
+              <span className="text-xs font-medium text-text-secondary">
+                or continue with
+              </span>
+              <span className="h-px flex-1 bg-gradient-to-l from-transparent via-secondary-light/50 to-secondary-light/50" />
             </div>
 
-            {/* Google Login */}
-            <div className="flex justify-center w-full [&>div]:w-full [&>div]:flex [&>div]:justify-center hover:scale-[1.02] transition-transform">
+            <div className="flex w-full justify-center [&>div]:w-full [&>div]:!max-w-full [&>div]:!justify-center">
               <GoogleLogin
                 onSuccess={handleSuccess}
-                onError={() => toast.error("Google sign-in could not be completed.")}
+                onError={() =>
+                  toast.error("Google sign-in could not be completed.")
+                }
                 type="standard"
                 theme="outline"
                 size="large"
                 shape="rectangular"
-                width="100%"
+                width={String(googleButtonWidth)}
                 logo_alignment="center"
               />
             </div>
 
-            {/* Register Link */}
-            <p className="text-center text-sm text-gray-500">
-              Don't have an account?{" "}
-              <Link to="/register" className="text-primary-light font-bold hover:underline transition-all">
+            <p className="pt-1 text-center text-sm text-text-secondary">
+              Don&apos;t have an account?{" "}
+              <Link
+                to="/register"
+                className="font-bold text-primary underline-offset-4 transition hover:text-primary-light hover:underline"
+              >
                 Register Now
               </Link>
             </p>
-
           </form>
         </div>
-      </div>
+      </section>
 
-      {/* BOTTOM FEATURES BAR */}
-      <div className="hidden lg:flex absolute bottom-0 left-0 w-[55%] h-36 bg-gradient-to-r from-primary-dark to-primary-light z-30 rounded-tr-[100px] shadow-2xl shadow-primary/30 items-center justify-evenly px-12 border-t border-r border-primary-light/50">
+      <aside className="relative hidden min-h-screen overflow-hidden bg-gradient-to-br from-secondary-dark via-primary-dark to-gradient-middle lg:block">
+        <img
+          src="/images/loginbanner.png"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-x-0 bottom-0 z-0 h-auto w-full object-contain object-bottom"
+        />
+        <div className="absolute inset-0 z-[1] bg-gradient-to-b from-secondary-dark/35 via-transparent to-secondary-dark/10" />
+        <div className="relative z-10 mx-auto max-w-[650px] px-8 pt-14 text-center xl:pt-16">
+          <Gamepad2
+            aria-hidden="true"
+            className="mx-auto mb-3 h-11 w-11 text-accent"
+            strokeWidth={1.7}
+          />
+          <h2 className="text-4xl font-black italic leading-[1.08] text-surface xl:text-5xl">
+            Upgrade Your
+            <br />
+            <span className="bg-gradient-to-r from-surface via-secondary-light to-accent bg-clip-text text-transparent">
+              Tech Lifestyle
+            </span>
+          </h2>
+          <div className="mx-auto my-4 h-1 w-20 rounded-full bg-gradient-to-r from-secondary-light to-gradient-middle" />
+          <p className="mx-auto max-w-sm text-sm leading-relaxed text-surface/85 xl:text-base">
+            Discover the latest gadgets, laptops, accessories and more at great
+            prices.
+          </p>
 
-        <div className="flex flex-col items-center justify-center text-center group">
-          <div className="p-3 bg-white/5 rounded-full mb-2 group-hover:bg-white/10 transition-colors">
-            <svg className="w-7 h-7 text-yellow-400 group-hover:scale-110 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-            </svg>
+          <div className="mx-auto mt-7 flex max-w-md items-center justify-center">
+            <div className="flex flex-1 flex-col items-center gap-1.5 text-surface">
+              <Truck size={30} strokeWidth={1.7} />
+              <span className="text-xs font-medium">Fast Delivery</span>
+            </div>
+            <span className="h-12 w-px bg-surface/20" />
+            <div className="flex flex-1 flex-col items-center gap-1.5 text-surface">
+              <ShieldCheck size={30} strokeWidth={1.7} />
+              <span className="text-xs font-medium">Secure Payments</span>
+            </div>
+            <span className="h-12 w-px bg-surface/20" />
+            <div className="flex flex-1 flex-col items-center gap-1.5 text-surface">
+              <Award size={30} strokeWidth={1.7} />
+              <span className="text-xs font-medium">Trusted Quality</span>
+            </div>
           </div>
-          <span className="text-white text-[10px] uppercase font-bold tracking-widest">Premium<br/>Quality</span>
         </div>
-
-        <div className="w-[1px] h-16 bg-gradient-to-b from-transparent via-yellow-600/30 to-transparent" />
-
-        <div className="flex flex-col items-center justify-center text-center group">
-          <div className="p-3 bg-white/5 rounded-full mb-2 group-hover:bg-white/10 transition-colors">
-            <svg className="w-7 h-7 text-yellow-400 group-hover:scale-110 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-          </div>
-          <span className="text-white text-[10px] uppercase font-bold tracking-widest">New Arrival<br/>Every Week</span>
-        </div>
-
-        <div className="w-[1px] h-16 bg-gradient-to-b from-transparent via-yellow-600/30 to-transparent" />
-
-        <div className="flex flex-col items-center justify-center text-center group">
-          <div className="p-3 bg-white/5 rounded-full mb-2 group-hover:bg-white/10 transition-colors">
-            <svg className="w-7 h-7 text-yellow-400 group-hover:scale-110 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-          </div>
-          <span className="text-white text-[10px] uppercase font-bold tracking-widest">Easy<br/>Returns</span>
-        </div>
-
-      </div>
-
-    </div>
+      </aside>
+    </main>
   );
 }
 
