@@ -56,9 +56,9 @@ const navItems = [
     ],
   },
   
-
+  { path: "/admin/service", label: "Service", icon: Wrench },
   { path: "/admin/youtube-videos", label: "Youtube Video", icon: Video },
-  { path: "/admin/banners", label: "Promotion Banners", icon: Image },
+  
 
   { path: "/admin/orders/billing", label: "Billing", icon: CreditCard },
   
@@ -74,8 +74,8 @@ const navItems = [
     label: "Marketing Management",
     icon: Megaphone,
     children: [
-      { path: "/admin/service", label: "Service", icon: Wrench },
      
+      { path: "/admin/banners", label: "Promotion Banners", icon: Image },
       { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
       { path: "/admin/users/all", label: "Customers", icon: Users },
     ],
