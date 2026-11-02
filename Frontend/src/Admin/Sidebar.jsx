@@ -230,15 +230,15 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     aria-expanded={isMenuOpen}
                     title={collapsed ? item.label : undefined}
                     className={`
-                      group w-full flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                      group w-full flex items-center gap-3 rounded-xl px-3 py-1.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                       ${isMenuOpen || isAnyChildActive
-                        ? "bg-white/[0.09] text-white shadow-[0_3px_10px_rgba(8,0,20,0.12)]"
-                        : "bg-white/[0.035] text-white/75 hover:bg-white/[0.07] hover:text-white"
+                        ? "bg-white/[0.09] text-white"
+                        : "text-white/75 hover:text-white"
                       }
                     `}
                   >
                     <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${isMenuOpen || isAnyChildActive ? "bg-fuchsia-400/15 text-[#FFD52E]" : "bg-white/[0.07] text-violet-200 group-hover:bg-fuchsia-400/15 group-hover:text-white"}`}>
-                      <Icon className="h-5 w-5" />
+                      <Icon className="h-4 w-4" />
                     </span>
 
                     {!collapsed && (
@@ -283,14 +283,16 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             onClick={() => isOpen && onClose()}
                             aria-current={isActive ? "page" : undefined}
                             className={`
-                              flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium tracking-wide transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                              flex items-center gap-3 rounded-lg px-3 py-1.5 text-xs font-medium tracking-wide transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                               ${isActive
-                                ? "bg-[#FFC928] text-[#210839] shadow-sm shadow-amber-400/20"
-                                : "text-white/65 hover:bg-white/[0.07] hover:text-white"
+                                ? "bg-[#FFC928] text-[#210839]"
+                                : "text-white/65 hover:text-white"
                               }
                             `}
                           >
-                            <SubIcon className={`h-4 w-4 shrink-0 ${isActive ? "text-[#210839]" : ""}`} />
+                            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${isActive ? "bg-[#1F0A3C]/10 text-[#1F0A3C]" : "bg-white/[0.07] text-violet-200"}`}>
+                              <SubIcon className="h-4 w-4" />
+                            </span>
                             <span className="flex-1">{sub.label}</span>
                             {badgeCount > 0 && (
                               <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-[#FFD52E] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[#210839]">
@@ -332,15 +334,15 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   }}
                   className={`
                     group flex items-center gap-3 rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
-                    ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2.5"}
+                    ${collapsed ? "justify-center px-0 py-1.5" : "px-3 py-1.5"}
                     ${isActive
-                      ? "bg-gradient-to-r from-[#FFD52E] via-[#FFC928] to-[#FFB900] text-[#210839] shadow-[0_3px_10px_rgba(255,185,0,0.2)]"
-                      : "bg-white/[0.035] text-white/75 hover:bg-white/[0.07] hover:text-white"
+                      ? "bg-gradient-to-r from-[#FFD52E] via-[#FFC928] to-[#FFB900] text-[#210839]"
+                      : "text-white/75 hover:text-white"
                     }
                   `}
                 >
-                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${isActive ? "bg-white/25 text-[#210839]" : "bg-white/[0.07] text-violet-200 group-hover:bg-fuchsia-400/15 group-hover:text-white"}`}>
-                    <Icon className="h-5 w-5" />
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${isActive ? "bg-[#1F0A3C]/10 text-[#1F0A3C]" : "bg-white/[0.07] text-violet-200 group-hover:bg-fuchsia-400/15 group-hover:text-white"}`}>
+                    <Icon className="h-4 w-4" />
                   </span>
                   {!collapsed && <span className="text-sm font-semibold tracking-wide">{item.label}</span>}
                 </NavLink>
