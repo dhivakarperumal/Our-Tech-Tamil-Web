@@ -111,105 +111,105 @@ function HomeCategories() {
         className="w-full"
       >
         <div className="mb-3 flex items-center justify-between gap-3">
-        <h2
-          id="shop-by-category-heading"
-          className="flex items-center gap-2 text-base font-extrabold tracking-tight text-text-primary sm:text-lg"
-        >
-          <span className="h-5 w-1 rounded-full bg-primary" aria-hidden="true" />
-          Shop by Category
-        </h2>
-        <div className="mr-20 flex shrink-0 items-center gap-2">
-          {!loading && categories.length > 1 && !showAll && (
-            <div className="flex items-center gap-1">
+          <h2
+            id="shop-by-category-heading"
+            className="flex items-center gap-2 text-base font-extrabold tracking-tight text-text-primary sm:text-lg"
+          >
+            <span className="h-5 w-1 rounded-full bg-primary" aria-hidden="true" />
+            Shop by Category
+          </h2>
+          <div className="mr-20 flex shrink-0 items-center gap-2">
+            {!loading && categories.length > 1 && !showAll && (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => swiperRef.current?.slidePrev()}
+                  aria-label="Previous categories"
+                  className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
+                >
+                  <ChevronLeft size={17} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => swiperRef.current?.slideNext()}
+                  aria-label="Next categories"
+                  className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
+                >
+                  <ChevronRight size={17} />
+                </button>
+              </div>
+            )}
+            {!loading && categories.length > 0 && (
               <button
                 type="button"
-                onClick={() => swiperRef.current?.slidePrev()}
-                aria-label="Previous categories"
-                className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
+                onClick={() => setShowAll((current) => !current)}
+                className="flex items-center gap-1 whitespace-nowrap text-[11px] font-bold text-primary transition hover:text-primary-light sm:text-xs"
               >
-                <ChevronLeft size={17} />
+                {showAll ? "Show carousel" : "View All Categories"}
+                <ChevronRight size={15} aria-hidden="true" />
               </button>
-              <button
-                type="button"
-                onClick={() => swiperRef.current?.slideNext()}
-                aria-label="Next categories"
-                className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
-              >
-                <ChevronRight size={17} />
-              </button>
-            </div>
-          )}
-          {!loading && categories.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setShowAll((current) => !current)}
-              className="flex items-center gap-1 whitespace-nowrap text-[11px] font-bold text-primary transition hover:text-primary-light sm:text-xs"
-            >
-              {showAll ? "Show carousel" : "View All Categories"}
-              <ChevronRight size={15} aria-hidden="true" />
-            </button>
-          )}
-        </div>
+            )}
+          </div>
         </div>
 
         {loading ? (
-        <div className="flex gap-2 overflow-hidden pr-20 sm:gap-3" aria-label="Loading categories">
-          {Array.from({ length: 8 }, (_, index) => (
-            <div
-              key={index}
-              className="h-[92px] w-[96px] shrink-0 animate-pulse rounded-xl bg-[#faf8ff] sm:h-[102px] sm:w-[112px]"
-            />
-          ))}
-        </div>
-      ) : fetchFailed ? (
-        <p className="rounded-xl bg-[#faf8ff] px-4 py-5 text-center text-sm text-text-secondary">
-          Categories could not be loaded. Please try again later.
-        </p>
-      ) : categories.length === 0 ? (
-        <p className="rounded-xl bg-[#faf8ff] px-4 py-5 text-center text-sm text-text-secondary">
-          No categories are available right now.
-        </p>
-      ) : showAll ? (
-        <div className="grid grid-cols-3 gap-2 pr-20 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
-          {categories.map((category) => (
-            <CategoryCard
-              key={category.catId || category.id || category.name}
-              category={category}
-            />
-          ))}
-        </div>
-      ) : (
-        <div style={{ paddingRight: "80px" }}>
-          <Swiper
-            modules={[Autoplay]}
-            onSwiper={(swiper) => {
-              swiperRef.current = swiper;
-            }}
-            slidesPerView="auto"
-            slidesPerGroup={1}
-            spaceBetween={8}
-            loop={categories.length > 1}
-            loopAddBlankSlides={false}
-            speed={550}
-            autoplay={
-              categories.length > 1
-                ? { delay: 2200, disableOnInteraction: false, pauseOnMouseEnter: true }
-                : false
-            }
-            navigation={false}
-            className="home-category-swiper"
-            aria-label="Shop by category"
-          >
-            {slides.map((category) => (
-              <SwiperSlide
-                key={category.slideKey}
-                className="!w-[96px] sm:!w-[112px]"
-              >
-                <CategoryCard category={category} />
-              </SwiperSlide>
+          <div className="flex gap-2 overflow-hidden pr-20 sm:gap-3" aria-label="Loading categories">
+            {Array.from({ length: 8 }, (_, index) => (
+              <div
+                key={index}
+                className="h-[92px] w-[96px] shrink-0 animate-pulse rounded-xl bg-[#faf8ff] sm:h-[102px] sm:w-[112px]"
+              />
             ))}
-          </Swiper>
-        </div>
+          </div>
+        ) : fetchFailed ? (
+          <p className="rounded-xl bg-[#faf8ff] px-4 py-5 text-center text-sm text-text-secondary">
+            Categories could not be loaded. Please try again later.
+          </p>
+        ) : categories.length === 0 ? (
+          <p className="rounded-xl bg-[#faf8ff] px-4 py-5 text-center text-sm text-text-secondary">
+            No categories are available right now.
+          </p>
+        ) : showAll ? (
+          <div className="grid grid-cols-3 gap-2 pr-20 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
+            {categories.map((category) => (
+              <CategoryCard
+                key={category.catId || category.id || category.name}
+                category={category}
+              />
+            ))}
+          </div>
+        ) : (
+          <div style={{ paddingRight: "80px" }}>
+            <Swiper
+              modules={[Autoplay]}
+              onSwiper={(swiper) => {
+                swiperRef.current = swiper;
+              }}
+              slidesPerView="auto"
+              slidesPerGroup={1}
+              spaceBetween={8}
+              loop={categories.length > 1}
+              loopAddBlankSlides={false}
+              speed={550}
+              autoplay={
+                categories.length > 1
+                  ? { delay: 2200, disableOnInteraction: false, pauseOnMouseEnter: true }
+                  : false
+              }
+              navigation={false}
+              className="home-category-swiper"
+              aria-label="Shop by category"
+            >
+              {slides.map((category) => (
+                <SwiperSlide
+                  key={category.slideKey}
+                  className="!w-[96px] sm:!w-[112px]"
+                >
+                  <CategoryCard category={category} />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+          </div>
         )}
       </section>
     </PageContainer>
