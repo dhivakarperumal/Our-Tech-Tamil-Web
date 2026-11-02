@@ -292,6 +292,31 @@ function productValues(product) {
 
 function createProductsRouter(pool) {
   const router = express.Router();
+
+  router.get("/public", async (request, response, next) => {
+    try {
+      const page = Math.max(1, Number.parseInt(request.query.page, 10) || 1);
+      const limit = Math.min(100, Math.max(1, Number.parseInt(request.query.limit, 10) || 10));
+      const [[countRows], [rows]] = await Promise.all([
+        pool.execute("SELECT COUNT(*) AS total FROM products WHERE status = 'Active'"),
+        pool.execute(
+          `SELECT ${PRODUCT_COLUMNS} FROM products
+           WHERE status = 'Active'
+           ORDER BY created_at DESC, id DESC
+           LIMIT ? OFFSET ?`,
+          [limit, (page - 1) * limit],
+        ),
+      ]);
+      const total = Number(countRows[0].total) || 0;
+      return response.json({
+        products: rows.map(toProduct),
+        pagination: { total, totalPages: Math.max(1, Math.ceil(total / limit)) },
+      });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   router.use(requireAdmin);
 
   router.post("/upload", upload.fields([
