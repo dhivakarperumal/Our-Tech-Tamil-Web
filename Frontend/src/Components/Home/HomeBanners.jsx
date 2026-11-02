@@ -115,9 +115,6 @@ function HomeBanners() {
           </div>
 
           <div className="relative z-10 flex min-h-[320px] items-end justify-center sm:min-h-[430px] lg:min-h-[560px]">
-            <div className="absolute left-1/2 top-[5%] aspect-square w-[75%] -translate-x-1/2 rounded-full border-[3px] border-white/80 shadow-[0_0_16px_2px_rgba(255,255,255,0.9),0_0_36px_rgba(155,91,220,0.45)] sm:top-[2%] sm:w-[78%] lg:w-[86%]" />
-            <div className="absolute bottom-[4%] left-[3%] h-[17%] w-[94%] rounded-[50%] bg-gradient-to-b from-[#f7edff] via-[#d9c0f3] to-[#aa7bd4] shadow-[0_14px_24px_rgba(97,48,157,0.2)]" />
-
             {heroImage ? (
               <picture className="relative z-10 block w-full">
                 {heroBanner?.mobile_image && (
@@ -133,7 +130,7 @@ function HomeBanners() {
                 />
               </picture>
             ) : (
-              <div className="relative z-10 mb-[12%] h-[50%] w-[75%] rounded-t-[50%] bg-gradient-to-br from-violet-300/30 to-white/30" />
+              <div className="relative z-10 h-[50%] w-[75%] bg-gradient-to-br from-violet-300/30 to-white/30" />
             )}
           </div>
         </div>
