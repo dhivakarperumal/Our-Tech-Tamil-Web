@@ -60,7 +60,7 @@ function OfferBanner() {
         className="pointer-events-none absolute -bottom-[17%] left-[22%] h-[28%] w-[62%] rounded-[50%] border-t-4 border-yellow-200 bg-gradient-to-b from-fuchsia-400 via-purple-700 to-[#24004f] shadow-[0_-8px_35px_rgba(255,215,0,0.75)]"
       />
 
-      <div className="relative z-10 flex w-full flex-col justify-center px-6 py-8 pr-20 sm:px-10 sm:pr-24 md:absolute md:inset-y-0 md:left-0 md:w-[34%] md:px-8 md:pr-0 lg:px-12">
+      <div className="relative z-10 flex w-full flex-col justify-center px-6 py-6 pr-20 sm:px-10 sm:py-7 sm:pr-24 md:absolute md:inset-y-0 md:left-0 md:w-[34%] md:px-8 md:pr-0 lg:px-12">
         <h2 className="max-w-lg text-3xl font-black leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
           {banner.title}
         </h2>
@@ -81,7 +81,7 @@ function OfferBanner() {
       </div>
 
       {banner.desktop_image && (
-        <div className="relative z-[1] mx-auto flex h-[185px] w-[82%] items-center justify-center sm:h-[240px] md:absolute md:inset-y-[8%] md:left-[27%] md:mx-0 md:h-[84%] md:w-[56%] lg:left-[25%] lg:w-[60%]">
+        <div className="relative z-[1] mx-auto flex h-[145px] w-[78%] items-center justify-center sm:h-[180px] md:absolute md:inset-y-[8%] md:left-[27%] md:mx-0 md:h-[84%] md:w-[56%] lg:left-[25%] lg:w-[60%]">
           <img
             src={getImageUrl(banner.desktop_image)}
             alt={banner.title}
@@ -101,7 +101,7 @@ function OfferBanner() {
       </div>
     </>
   );
-  const className = "group relative isolate flex min-h-[350px] w-full flex-col overflow-hidden rounded-2xl bg-gradient-to-r from-primary-dark via-primary to-gradient-middle shadow-lg sm:min-h-[420px] md:aspect-[3/1] md:min-h-[360px] md:flex-row";
+  const className = "group relative isolate flex min-h-[280px] w-full flex-col overflow-hidden rounded-2xl bg-gradient-to-r from-primary-dark via-primary to-gradient-middle shadow-lg sm:min-h-[320px] md:min-h-[300px] md:flex-row";
 
   return (
     <section aria-label="Latest offer">
