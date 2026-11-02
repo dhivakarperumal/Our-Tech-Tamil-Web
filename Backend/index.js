@@ -7,8 +7,10 @@ const { createPool, initializeDatabase } = require("./modules/db");
 const { createAuthService } = require("./modules/authService");
 const { createAuthController } = require("./controllers/authController");
 const { createAdminContentController } = require("./controllers/adminContentController");
+const { createBannerController } = require("./controllers/bannerController");
 const createAuthRouter = require("./routers/authRouter");
 const createAdminContentRouter = require("./routers/adminContentRouter");
+const createBannersRouter = require("./routers/bannersRouter");
 const createCategoriesRouter = require("./routers/categoriesRouter");
 const createProductsRouter = require("./routers/productsRouter");
 
@@ -23,6 +25,7 @@ const app = express();
 const authService = createAuthService(pool);
 const authController = createAuthController(authService);
 const adminContentController = createAdminContentController(pool);
+const bannerController = createBannerController(pool);
 
 app.use(cors());
 app.use(express.json({ limit: "12mb" }));
@@ -38,6 +41,7 @@ app.get("/api/health", async (request, response) => {
 
 app.use("/api/auth", createAuthRouter(authController));
 app.use("/api/admin/content", createAdminContentRouter(adminContentController));
+app.use("/api/admin/banners", createBannersRouter(bannerController));
 app.use("/api/categories", createCategoriesRouter(pool));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/products", createProductsRouter(pool));
