@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ExternalLink,
   FileText,
@@ -280,9 +281,9 @@ const YoutubeVideos = () => {
         </div>
       </header>
 
-      {isAddModalOpen && (
+      {isAddModalOpen && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto overscroll-contain bg-slate-950/60 p-3 backdrop-blur-sm sm:items-center sm:p-5"
+          className="fixed inset-0 z-[100] flex items-start justify-center overflow-x-hidden overflow-y-auto overscroll-y-contain bg-slate-950/60 p-3 backdrop-blur-sm sm:items-center sm:p-5"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget && !saving && !uploadingThumbnail && !uploadingDocuments) {
               setIsAddModalOpen(false);
@@ -293,7 +294,7 @@ const YoutubeVideos = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-youtube-title"
-            className="my-0 flex max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25 sm:my-auto sm:max-h-[calc(100dvh-2.5rem)]"
+            className="my-0 flex h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25 sm:my-auto sm:h-[min(90dvh,52rem)] sm:max-h-[calc(100dvh-2.5rem)]"
           >
             <div className="z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white via-white to-violet-50/70 px-5 py-4 sm:px-7">
               <div className="flex items-center gap-3">
@@ -317,7 +318,11 @@ const YoutubeVideos = () => {
               </button>
             </div>
 
-            <form id="add-youtube-form" onSubmit={submitVideo} className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-5 sm:p-7">
+            <form
+              id="add-youtube-form"
+              onSubmit={submitVideo}
+              className="min-h-0 flex-1 basis-0 space-y-5 overflow-x-hidden overflow-y-auto overscroll-y-contain p-5 sm:p-7"
+            >
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-slate-700">
                   Video ID *
@@ -563,7 +568,8 @@ const YoutubeVideos = () => {
               </div>
             </footer>
           </section>
-        </div>
+        </div>,
+        document.body
       )}
 
       <section>
