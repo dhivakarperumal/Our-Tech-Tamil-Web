@@ -9,7 +9,6 @@ import {
   Award,
   Eye,
   EyeOff,
-  Gamepad2,
   LockKeyhole,
   ShieldCheck,
   Truck,
@@ -85,28 +84,34 @@ function Login() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-background via-surface to-secondary-light/20 font-sans text-text-primary selection:bg-primary selection:text-surface lg:grid lg:min-h-screen lg:grid-cols-[minmax(430px,0.9fr)_1.1fr] lg:overflow-hidden">
-      <div
+    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-background via-surface to-secondary-light/20 font-sans text-text-primary selection:bg-primary selection:text-surface lg:grid lg:h-screen lg:min-h-[680px] lg:grid-cols-2 lg:bg-secondary-dark">
+      <img
+        src="/images/loginbanner.png"
+        alt=""
         aria-hidden="true"
-        className="pointer-events-none absolute -left-36 -top-32 h-80 w-80 rounded-full bg-secondary-light/30 blur-3xl"
+        className="pointer-events-none absolute inset-0 hidden h-full w-full object-cover object-center lg:block"
       />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-36 right-1/4 h-96 w-96 rounded-full bg-gradient-middle/10 blur-3xl"
-      />
+      <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-secondary-dark/10 via-transparent to-secondary-dark/10 lg:block" />
 
-      <section className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:px-10 lg:py-10">
-        <div className="w-full max-w-[440px] rounded-[30px] border border-surface/80 bg-surface/90 px-6 py-7 shadow-[0_24px_80px_rgba(40,0,120,0.14)] backdrop-blur-xl sm:px-10 sm:py-8">
-          <div className="mb-6 text-center">
+      <section className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:min-h-0 lg:justify-start lg:px-0 lg:py-0">
+        <div className="w-full max-w-[460px] rounded-[30px] border border-surface/80 bg-surface/95 px-6 py-7 shadow-[0_24px_80px_rgba(40,0,120,0.2)] backdrop-blur-xl sm:px-10 sm:py-8 lg:ml-[5.7vw] lg:px-9 lg:py-7">
+          <div className="mb-6 text-center lg:mb-7">
             <img
               src="/images/logo1.png"
-              alt="Our Tech Tamil"
-              className="mx-auto mb-2 h-14 w-14 object-contain"
+              alt="Our Tech Tamil logo"
+              className="mx-auto mb-1 h-11 w-11 object-contain"
             />
-            <p className="text-[9px] font-bold uppercase tracking-[0.32em] text-text-secondary">
-              Gadgets &amp; Electronics
+            <p className="text-[26px] font-extrabold leading-none tracking-tight text-text-primary">
+              Our Tech <span className="text-gradient-middle">Tamil</span>
             </p>
-            <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-text-primary">
+            <div className="mx-auto mt-2 flex max-w-[290px] items-center gap-3">
+              <span className="h-px flex-1 bg-primary-light/70" />
+              <p className="whitespace-nowrap text-[8px] font-bold uppercase tracking-[0.32em] text-secondary-dark">
+                Gadgets &amp; Electronics
+              </p>
+              <span className="h-px flex-1 bg-primary-light/70" />
+            </div>
+            <h1 className="mt-7 text-3xl font-extrabold tracking-tight text-text-primary">
               Welcome <span className="text-primary">Back</span>
             </h1>
             <p className="mt-1 text-sm text-text-secondary">
@@ -114,7 +119,7 @@ function Login() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-[18px]">
             <label className="relative block">
               <span className="sr-only">Email or phone number</span>
               <UserRound
@@ -129,7 +134,7 @@ function Login() {
                 autoComplete="username"
                 value={form.identifier}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-secondary-light/40 bg-surface/80 py-3.5 pl-12 pr-4 text-sm text-text-primary outline-none transition placeholder:text-text-secondary focus:border-primary-light focus:ring-4 focus:ring-primary/10"
+                className="w-full rounded-2xl border border-secondary-light/40 bg-surface/80 py-3.5 pl-12 pr-4 text-sm text-text-primary outline-none transition placeholder:text-text-secondary focus:border-primary-light focus:ring-4 focus:ring-primary/10 lg:py-4"
                 required
               />
             </label>
@@ -148,7 +153,7 @@ function Login() {
                 autoComplete="current-password"
                 value={form.password}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-secondary-light/40 bg-surface/80 py-3.5 pl-12 pr-12 text-sm text-text-primary outline-none transition placeholder:text-text-secondary focus:border-primary-light focus:ring-4 focus:ring-primary/10"
+                className="w-full rounded-2xl border border-secondary-light/40 bg-surface/80 py-3.5 pl-12 pr-12 text-sm text-text-primary outline-none transition placeholder:text-text-secondary focus:border-primary-light focus:ring-4 focus:ring-primary/10 lg:py-4"
                 required
               />
               <button
@@ -180,7 +185,7 @@ function Login() {
             <button
               type="submit"
               disabled={submitting}
-              className="group flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-primary-dark via-primary to-gradient-middle py-3.5 font-bold text-surface shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/25 disabled:cursor-not-allowed disabled:opacity-60"
+              className="group flex w-full items-center justify-center gap-3 rounded-full bg-gradient-to-r from-primary-dark via-primary to-gradient-middle py-3.5 font-bold text-surface shadow-lg shadow-primary/20 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/25 disabled:cursor-not-allowed disabled:opacity-60 lg:py-4"
             >
               {submitting ? "Signing In..." : "Sign In"}
               {!submitting && (
@@ -208,7 +213,8 @@ function Login() {
                 type="standard"
                 theme="outline"
                 size="large"
-                shape="rectangular"
+                shape="pill"
+                text="continue_with"
                 width={String(googleButtonWidth)}
                 logo_alignment="center"
               />
@@ -227,20 +233,8 @@ function Login() {
         </div>
       </section>
 
-      <aside className="relative hidden min-h-screen overflow-hidden bg-gradient-to-br from-secondary-dark via-primary-dark to-gradient-middle lg:block">
-        <img
-          src="/images/loginbanner.png"
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-x-0 bottom-0 z-0 h-auto w-full object-contain object-bottom"
-        />
-        <div className="absolute inset-0 z-[1] bg-gradient-to-b from-secondary-dark/35 via-transparent to-secondary-dark/10" />
-        <div className="relative z-10 mx-auto max-w-[650px] px-8 pt-14 text-center xl:pt-16">
-          <Gamepad2
-            aria-hidden="true"
-            className="mx-auto mb-3 h-11 w-11 text-accent"
-            strokeWidth={1.7}
-          />
+      <aside className="relative z-10 hidden min-h-screen overflow-hidden lg:block">
+        <div className="mx-auto max-w-[600px] px-8 pt-[10vh] text-center">
           <h2 className="text-4xl font-black italic leading-[1.08] text-surface xl:text-5xl">
             Upgrade Your
             <br />
@@ -249,7 +243,7 @@ function Login() {
             </span>
           </h2>
           <div className="mx-auto my-4 h-1 w-20 rounded-full bg-gradient-to-r from-secondary-light to-gradient-middle" />
-          <p className="mx-auto max-w-sm text-sm leading-relaxed text-surface/85 xl:text-base">
+          <p className="mx-auto max-w-sm text-sm leading-relaxed text-surface/90 xl:text-base">
             Discover the latest gadgets, laptops, accessories and more at great
             prices.
           </p>
