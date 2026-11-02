@@ -571,6 +571,37 @@ const AddProducts = () => {
         }
     };
 
+    const handleSizeChartUpload = async (e) => {
+        const file = e.target.files?.[0];
+        e.target.value = "";
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            toast.error("Choose an image file for the size chart.");
+            return;
+        }
+
+        const uploadData = new FormData();
+        setPendingUploads(count => count + 1);
+        try {
+            const compressed = await imageCompression(file, {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 2000,
+            });
+            uploadData.append("size_chart", compressed);
+            const response = await api.post("/products/upload", uploadData);
+            if (!response.data?.size_chart) {
+                throw new Error("The size chart image was not returned by the server.");
+            }
+            setFormData(prev => ({ ...prev, size_chart: response.data.size_chart }));
+            toast.success("Size chart uploaded.");
+        } catch (error) {
+            console.error("Size chart upload error:", error);
+            toast.error(error.response?.data?.message || error.message || "Size chart upload failed.");
+        } finally {
+            setPendingUploads(count => Math.max(0, count - 1));
+        }
+    };
+
     const removeProductImage = (indexToRemove) => {
         setFormData(prev => ({
             ...prev,
@@ -808,6 +839,37 @@ const AddProducts = () => {
                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Full Description</label>
                                 <textarea name="description" value={formData.description} onChange={handleFormChange} rows="5" placeholder="Describe product features, specifications, and what's included..." className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm text-gray-700 resize-y" />
                             </div>
+                            {isClothingCategory && (
+                                <div className="space-y-2">
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Size Chart (optional)</label>
+                                    {formData.size_chart ? (
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <img
+                                                src={resolveImageUrl(formData.size_chart)}
+                                                alt="Clothing size chart"
+                                                className="h-28 max-w-full rounded-lg border border-gray-200 object-contain"
+                                            />
+                                            <label className="admin-button-secondary cursor-pointer rounded-lg px-3 py-2 text-xs font-bold">
+                                                Change Chart
+                                                <input type="file" accept="image/*" onChange={handleSizeChartUpload} className="hidden" />
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, size_chart: "" }))}
+                                                className="admin-button-danger rounded-lg px-3 py-2 text-xs font-bold"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <label className="flex min-h-24 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 text-sm font-semibold text-gray-500 hover:border-violet-400 hover:bg-violet-50">
+                                            <FiUploadCloud size={20} className="mb-2 text-violet-500" />
+                                            Upload clothing size chart
+                                            <input type="file" accept="image/*" onChange={handleSizeChartUpload} className="hidden" />
+                                        </label>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
 
