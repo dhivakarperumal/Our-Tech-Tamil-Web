@@ -40,7 +40,7 @@ const banners = [
 const TechBanner = () => {
   return (
     <section className="w-full py-4">
-      <div className="mx-auto grid max-w-[1450px] grid-cols-1 gap-2 px-4 sm:grid-cols-2 md:grid-cols-3">
+      <div className="mx-auto grid max-w-[1450px] grid-cols-1 gap-2 px-4 sm:grid-cols-3">
 
         {banners.map((banner) => (
           <div
@@ -118,7 +118,7 @@ const TechBanner = () => {
                 src={banner.image}
                 alt={banner.imageAlt}
                 className={`h-[96%] w-full object-contain p-1 transition-transform duration-500 group-hover:scale-110 ${
-                  banner.theme === "audio" ? "relative z-10" : ""
+                  banner.theme === "audio" ? "relative z-10 mix-blend-multiply" : ""
                 }`}
               />
             </div>
