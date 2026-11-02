@@ -7,12 +7,12 @@ import {
   Users,
   MessageSquare,
   Megaphone,
+  Wrench,
+  CreditCard,
   X,
-  ShoppingBag,
   ChevronDown,
   ChevronLeft,
   Home,
-  Tag,
   PlusCircle,
   List,
   Layers,
@@ -55,10 +55,12 @@ const navItems = [
       { path: "/admin/products/stock", label: "Stock Details", icon: Archive },
     ],
   },
+  
 
- 
+  { path: "/admin/service", label: "Service", icon: Wrench },
+  { path: "/admin/Youtube", label: "Youtube Video", icon: Video },
 
-  { path: "/admin/orders/billing", label: "Billing", icon: PlusCircle },
+  { path: "/admin/orders/billing", label: "Billing", icon: CreditCard },
   { path: "/admin/users/all", label: "Customers", icon: Users },
   {
     label: "Dealers",
@@ -79,6 +81,13 @@ const navItems = [
   },
   { path: "/", label: "Back Home", icon: Home },
 ];
+
+const isPathActive = (currentPath, path) => {
+  const normalizedPath = path.toLowerCase();
+  const normalizedCurrentPath = currentPath.toLowerCase();
+  return normalizedCurrentPath === normalizedPath
+    || normalizedCurrentPath.startsWith(`${normalizedPath}/`);
+};
 
 /* ================= SIDEBAR ================= */
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
@@ -116,41 +125,31 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     const interval = setInterval(fetchOrderCounts, 30000);
     return () => clearInterval(interval);
   }, []);
-  /* ================= ACTIVE ROUTE MAP ================= */
-  const activeRouteMap = {
-    "/admin/products": ["/admin/products/all", "/admin/products/add", "/admin/products/category"],
-    "/admin/orders": ["/admin/orders/all", "/admin/orders/new", "/admin/orders/billing", "/admin/orders/delivery", "/admin/orders/cancelled"],
-    "/admin/users": ["/admin/users/all"],
-  };
 
   /* ================= HELPERS & LOGIC ================= */
   const isActiveRoute = (item) => {
-    const currentPath = location.pathname;
-
-    // 1. Strict exact match for root routes to prevent Dashboard/BackHome overlap
     if (item.path === "/" || item.path === "/admin" || item.exact) {
-      return currentPath === item.path;
+      return location.pathname.toLowerCase() === item.path.toLowerCase();
     }
 
-    // 2. Dropdown parent check: check if any child is perfectly active or a sub-path
     if (item.children) {
-      return item.children.some(child =>
-        currentPath === child.path || currentPath.startsWith(child.path + "/")
-      );
+      return item.children.some(child => isPathActive(location.pathname, child.path));
     }
 
-    // 3. Normal item check: match exact or match as a parent path (with boundary)
-    if (item.path) {
-      return currentPath === item.path || currentPath.startsWith(item.path + "/");
-    }
-
-    return false;
+    return item.path ? isPathActive(location.pathname, item.path) : false;
   };
 
   const [openMenu, setOpenMenu] = useState(() => {
     const activeItem = navItems.find(item => item.children && isActiveRoute(item));
     return activeItem ? activeItem.label : null;
   });
+
+  useEffect(() => {
+    const activeItem = navItems.find(item =>
+      item.children?.some(child => isPathActive(location.pathname, child.path))
+    );
+    setOpenMenu(activeItem ? activeItem.label : null);
+  }, [location.pathname]);
 
   /* Dropdown logic - only one open at a time */
   const toggleMenu = (label) => {
@@ -170,7 +169,8 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       <aside
         className={`
         fixed top-0 left-0 z-50 h-full
-        bg-[#1F0A3C] border-r border-white/5
+        bg-[#1D0738]
+        border-r border-white/10 shadow-[12px_0_40px_rgba(15,0,35,0.22)]
         font-sans
         
         flex flex-col transition-all duration-300
@@ -180,15 +180,19 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       `}
       >
         {/* ========== LOGO ========== */}
-       <div className="relative overflow-hidden px-4 pt-5 pb-5 border-b border-white/10">
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500/15 via-transparent to-cyan-500/5" />
-          <div className="relative flex items-center gap-3">
-            <div className="w-11 h-11 rounded-3xl bg-white border border-emerald-300/10 flex items-center justify-center shadow-2xl shadow-emerald-500/10 overflow-hidden">
-              <ShoppingBag className="w-6 h-6 text-[#1F0A3C]" aria-hidden="true" />
+        <div className="relative overflow-hidden border-b border-white/10 bg-[#2A1048] px-4 py-5">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 via-transparent to-amber-400/[0.06]" />
+          <div className="relative flex min-h-11 items-center gap-3">
+            <div className="w-11 h-11 shrink-0 overflow-hidden rounded-full bg-[#21094E] ring-1 ring-white/15 shadow-lg shadow-fuchsia-950/30">
+              <img
+                src="/images/logo1.png"
+                alt="Our Tech Tamil"
+                className="h-full w-full object-cover"
+              />
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#D4AF37] mb-1">
+                <p className="mb-1 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#FFD52E]">
                   Our Tech Tamil
                 </p>
                 <p className="text-sm font-semibold tracking-wide text-white">
@@ -196,18 +200,18 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 </p>
               </div>
             )}
+            <button
+              onClick={onClose}
+              aria-label="Close admin navigation"
+              className="ml-auto rounded-xl border border-transparent p-2 text-white/60 transition-colors hover:border-white/10 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD52E] lg:hidden"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-
-          <button
-            onClick={onClose}
-            className="ml-auto p-2 rounded-xl text-white/40 hover:bg-white/5 lg:hidden border border-transparent hover:border-white/10 transition-all"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* ========== NAVIGATION ========== */}
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto hide-scrollbar">
+        <nav aria-label="Admin navigation" className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-3 py-5 hide-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
 
@@ -220,28 +224,31 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 <div key={item.label} className="space-y-1">
                   <button
                     onClick={() => toggleMenu(item.label)}
+                    aria-label={item.label}
+                    aria-expanded={isMenuOpen}
+                    title={collapsed ? item.label : undefined}
                     className={`
-                      w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all
+                      w-full flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                       ${isMenuOpen || isAnyChildActive
-                        ? "bg-[#FCD34D]/20 text-white"
-                        : "text-white/50 hover:bg-white/5 hover:text-white"
+                        ? "bg-white/[0.09] text-white ring-1 ring-inset ring-white/[0.1]"
+                        : "text-white/65 hover:-translate-y-px hover:bg-white/[0.07] hover:text-white"
                       }
                     `}
                   >
-                    <Icon className={`w-5 h-5 shrink-0 ${isMenuOpen || isAnyChildActive ? "text-[#FCD34D]" : ""}`} />
+                    <Icon className={`h-5 w-5 shrink-0 ${isMenuOpen || isAnyChildActive ? "text-[#FFD52E]" : ""}`} />
 
                     {!collapsed && (
                       <>
                         <span className="flex-1 text-left text-sm font-semibold tracking-wide">
                           {item.label}
                           {item.label === "Orders" && orderCounts.all > 0 && (
-                            <span className="ml-2 inline-block bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-[#FFD52E] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[#210839]">
                               {orderCounts.all}
                             </span>
                           )}
                         </span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""
+                          className={`h-4 w-4 transition-transform duration-200 ${isMenuOpen ? "rotate-180 text-[#FFD52E]" : ""
                             }`}
                         />
                       </>
@@ -251,12 +258,12 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   {/* ===== SUB MENU ===== */}
                   {!collapsed && (
                     <div
-                      className={`ml-4 pl-4  border-white/5 space-y-1 overflow-y-auto hide-scrollbar transition-all duration-300
-                      ${isMenuOpen ? "max-h-60 opacity-100 py-1" : "max-h-0 opacity-0"}`}
+                      className={`ml-4 space-y-1 overflow-y-auto border-l border-white/10 pl-3 hide-scrollbar transition-all duration-300
+                      ${isMenuOpen ? "max-h-60 py-1 opacity-100" : "max-h-0 opacity-0"}`}
                     >
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
-                        const isActive = location.pathname === sub.path;
+                        const isActive = isPathActive(location.pathname, sub.path);
 
                         // Get count badge for this item
                         let badgeCount = 0;
@@ -270,18 +277,19 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             key={sub.path}
                             to={sub.path}
                             onClick={() => isOpen && onClose()}
+                            aria-current={isActive ? "page" : undefined}
                             className={`
-                              flex items-center gap-3 px-4 py-2.5 rounded-md text-xs font-medium tracking-wide transition-all
-                              ${(location.pathname === sub.path || (sub.path !== "/admin" && location.pathname.startsWith(sub.path)))
-                                ? "bg-gradient-to-r from-[#D4AF37] to-[#FBBF24] text-white shadow-lg shadow-[#D4AF37]/20"
-                                : "text-white/40 hover:text-white hover:bg-white/5"
+                              flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium tracking-wide transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                              ${isActive
+                                ? "bg-[#FFC928] text-[#210839] shadow-md shadow-amber-400/20"
+                                : "text-white/65 hover:bg-white/[0.07] hover:text-white"
                               }
                             `}
                           >
-                            <SubIcon className={`w-5 h-6 shrink-0 ${(location.pathname === sub.path || (sub.path !== "/admin" && location.pathname.startsWith(sub.path))) ? "text-white" : ""}`} />
+                            <SubIcon className={`h-4 w-4 shrink-0 ${isActive ? "text-[#210839]" : ""}`} />
                             <span className="flex-1">{sub.label}</span>
                             {badgeCount > 0 && (
-                              <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-fit">
+                              <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-[#FFD52E] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[#210839]">
                                 {badgeCount}
                               </span>
                             )}
@@ -302,19 +310,21 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 key={item.path}
                 to={item.path}
                 end={item.exact}
+                title={collapsed ? item.label : undefined}
+                aria-current={isActive ? "page" : undefined}
                 onClick={() => {
                   setOpenMenu(null);
                   if (isOpen) onClose();
                 }}
                 className={`
-                  flex items-center gap-3 px-4 py-3 rounded-md transition-all
+                  flex items-center gap-3 rounded-xl px-4 py-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                   ${isActive
-                    ? "bg-gradient-to-r from-[#D4AF37] to-[#FBBF24] text-white shadow-xl shadow-[#D4AF37]/20"
-                    : "text-white/50 hover:bg-white/5 hover:text-white"
+                    ? "bg-[#FFC928] text-[#210839] shadow-lg shadow-amber-400/20 ring-1 ring-inset ring-amber-100/25"
+                    : "text-white/65 hover:-translate-y-px hover:bg-white/[0.07] hover:text-white"
                   }
                 `}
               >
-                <Icon className={`w-5 h-6 shrink-0 ${isActive ? "text-white" : ""}`} />
+                <Icon className={`h-5 w-5 shrink-0 ${isActive ? "text-[#210839]" : ""}`} />
                 {!collapsed && <span className="text-sm font-semibold tracking-wide">{item.label}</span>}
               </NavLink>
             );
@@ -323,16 +333,16 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
         {/* ========== FOOTER / PROFILE ========== */}
         {!collapsed && (
-          <div className="p-4 mx-3 mb-6 bg-[#21094E]/50 rounded-2xl border border-white/10 relative">
+          <div className="relative mx-3 mb-4 shrink-0 rounded-2xl border border-fuchsia-300/15 bg-[#260A4D] p-4 shadow-lg shadow-black/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
-                <p className="font-bold text-black text-lg">{(profileName || "Admin User").charAt(0).toUpperCase()}</p>
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFF4BE] to-[#FFD52E] ring-1 ring-white/20">
+                <p className="text-lg font-bold text-[#24103E]">{(profileName || "Admin User").charAt(0).toUpperCase()}</p>
               </div>
               <div className="overflow-hidden flex-1">
                 <p className="text-sm font-semibold text-white truncate">{(profileName || "Admin User")}</p>
-                <p className="text-[10px] text-gray-400 font-medium truncate">Super Admin</p>
+                <p className="text-[10px] font-medium text-white/55 truncate">Super Admin</p>
               </div>
-              <ChevronDown className="w-4 h-4 text-white/50" />
+              <ChevronDown className="h-4 w-4 text-white/55" />
             </div>
           </div>
         )}
@@ -340,13 +350,14 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         {/* ========== COLLAPSE BUTTON ========== */}
         <button
           onClick={onToggleCollapse}
+          aria-label={collapsed ? "Expand admin navigation" : "Collapse admin navigation"}
           className="
             hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2
             w-6 h-6 rounded-full
-            bg-white border border-slate-200
-            shadow-[0_4px_10px_rgba(0,0,0,0.1)]
+            bg-[#FFF4BE] border border-amber-300/70
+            shadow-[0_4px_14px_rgba(15,0,35,0.24)]
             items-center justify-center
-            text-slate-500 hover:text-blue-600 hover:scale-110 transition-all z-50
+            text-[#3D1762] hover:bg-[#FFD52E] hover:scale-110 transition-all z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD52E]
           "
         >
           <ChevronLeft
