@@ -84,18 +84,19 @@ function Login() {
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-background via-surface to-secondary-light/20 font-sans text-text-primary selection:bg-primary selection:text-surface lg:grid lg:h-screen lg:min-h-[680px] lg:grid-cols-2 lg:bg-secondary-dark">
-      <img
-        src="/images/loginbanner.png"
-        alt=""
+    <main className="relative h-dvh overflow-hidden bg-gradient-to-br from-gradient-middle via-primary-dark to-secondary-dark font-sans text-text-primary selection:bg-primary selection:text-surface lg:grid lg:grid-cols-2">
+      <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 hidden h-full w-full object-cover object-center lg:block"
+        className="pointer-events-none absolute -left-28 -top-32 h-80 w-80 rounded-full bg-secondary-light/50 blur-3xl"
       />
-      <div className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-secondary-dark/10 via-transparent to-secondary-dark/10 lg:block" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-36 right-[35%] h-96 w-96 rounded-full bg-gradient-middle/35 blur-3xl"
+      />
 
-      <section className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8 sm:px-8 lg:min-h-0 lg:justify-start lg:px-0 lg:py-0">
-        <div className="w-full max-w-[460px] rounded-[30px] border border-surface/80 bg-surface/95 px-6 py-7 shadow-[0_24px_80px_rgba(40,0,120,0.2)] backdrop-blur-xl sm:px-10 sm:py-8 lg:ml-[5.7vw] lg:px-9 lg:py-7">
-          <div className="mb-6 text-center lg:mb-7">
+      <section className="relative z-10 flex h-full min-h-0 items-center justify-center px-4 py-3 sm:px-8 sm:py-4 lg:justify-start lg:px-0 lg:py-0">
+        <div className="max-h-[calc(100dvh-24px)] w-full max-w-[460px] overflow-y-auto rounded-[30px] border border-surface/80 bg-surface/95 px-6 py-5 shadow-[0_24px_80px_rgba(40,0,120,0.2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-10 sm:py-7 lg:ml-[5.7vw] lg:px-9 lg:py-6">
+          <div className="mb-5 text-center lg:mb-6">
             <img
               src="/images/logo.jpeg"
               alt="Our Tech Tamil logo"
@@ -111,7 +112,7 @@ function Login() {
               </p>
               <span className="h-px flex-1 bg-primary-light/70" />
             </div>
-            <h1 className="mt-7 text-3xl font-extrabold tracking-tight text-text-primary">
+            <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-text-primary">
               Welcome <span className="text-primary">Back</span>
             </h1>
             <p className="mt-1 text-sm text-text-secondary">
@@ -119,7 +120,7 @@ function Login() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 lg:space-y-[18px]">
+          <form onSubmit={handleSubmit} className="space-y-3.5 lg:space-y-4">
             <label className="relative block">
               <span className="sr-only">Email or phone number</span>
               <UserRound
@@ -233,8 +234,9 @@ function Login() {
         </div>
       </section>
 
-      <aside className="relative z-10 hidden min-h-screen overflow-hidden lg:block">
-        <div className="mx-auto max-w-[600px] px-8 pt-[10vh] text-center">
+      <aside className="relative z-10 hidden h-full min-h-0 overflow-hidden lg:block">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-secondary-dark/20" />
+        <div className="relative z-10 mx-auto max-w-[600px] px-8 pt-[10vh] text-center">
           <h2 className="text-4xl font-black italic leading-[1.08] text-surface xl:text-5xl">
             Upgrade Your
             <br />
@@ -265,6 +267,11 @@ function Login() {
             </div>
           </div>
         </div>
+        <img
+          src="/images/loginbanner.png"
+          alt="Laptop, headphones, smartphone and other technology products"
+          className="pointer-events-none absolute bottom-0 right-0 z-[1] h-[58vh] w-auto max-w-none object-contain object-right-bottom"
+        />
       </aside>
     </main>
   );
