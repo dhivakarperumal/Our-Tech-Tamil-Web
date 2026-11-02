@@ -611,10 +611,21 @@ const Category = () => {
                                             className="w-full bg-white border border-gray-200 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-sm"
                                         />
                                     </div>
-                                    <CategoryTypeDropdown
-                                        value={formData.categoryType}
-                                        onChange={(categoryType) => setFormData((current) => ({ ...current, categoryType }))}
-                                    />
+                                    <div>
+                                        <label htmlFor="category-type" className="mb-1.5 block text-xs font-bold text-gray-700">Category Type</label>
+                                        <select
+                                            id="category-type"
+                                            name="categoryType"
+                                            value={formData.categoryType}
+                                            onChange={handleInputChange}
+                                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition-all focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                                        >
+                                            <option value="">Select category type</option>
+                                            {CATEGORY_TYPES.map((categoryType) => (
+                                                <option key={categoryType} value={categoryType}>{categoryType}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-700 mb-1.5">Description</label>
                                         <textarea
