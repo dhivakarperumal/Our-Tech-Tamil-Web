@@ -25,6 +25,12 @@ import imageCompression from "browser-image-compression";
 import { toast, Toaster } from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 
+const CATEGORY_TYPES = [
+    "Gadgets & Electronics",
+    "Natural Products",
+    "Clothing & Fashion",
+];
+
 const Category = () => {
     const { user } = useAuth();
     // ---- Global State ----
@@ -60,6 +66,7 @@ const Category = () => {
     const [formData, setFormData] = useState({
         catId: "",
         name: "",
+        categoryType: "",
         description: "",
         subcategory: "",
         images: []
@@ -95,13 +102,20 @@ const Category = () => {
         setCurrentPage(1);
     };
 
-    const handleAddSubcategory = (e) => {
-        if (e.key === 'Enter' && subInput.trim()) {
-            e.preventDefault();
-            if (!subcategories.includes(subInput.trim())) {
-                setSubcategories([...subcategories, subInput.trim()]);
-            }
+    const addSubcategory = () => {
+        const subcategory = subInput.trim();
+        if (subcategory) {
+            setSubcategories(current =>
+                current.includes(subcategory) ? current : [...current, subcategory]
+            );
             setSubInput("");
+        }
+    };
+
+    const handleAddSubcategory = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addSubcategory();
         }
     };
 
@@ -114,34 +128,27 @@ const Category = () => {
     };
 
     const handleImageUpload = async (e) => {
-        try {
-            const files = Array.from(e.target.files);
-            const imagesArray = await Promise.all(
-                files.map(async (file) => {
-                    const compressed = await imageCompression(file, {
-                        maxSizeMB: 0.2,
-                        maxWidthOrHeight: 600,
-                    });
-                    return imageCompression.getDataUrlFromFile(compressed);
-                })
-            );
+        const file = e.target.files?.[0];
+        e.target.value = "";
+        if (!file) return;
 
-            setFormData((p) => ({
-                ...p,
-                images: [...(Array.isArray(p.images) ? p.images : []), ...imagesArray],
-            }));
-            toast.success("Images added!");
+        try {
+            const compressed = await imageCompression(file, {
+                maxSizeMB: 0.2,
+                maxWidthOrHeight: 600,
+            });
+            const image = await imageCompression.getDataUrlFromFile(compressed);
+
+            setFormData(p => ({ ...p, images: [image] }));
+            toast.success("Category image updated!");
         } catch (error) {
             console.error("Image upload failed:", error);
             toast.error("Image upload failed");
         }
     };
 
-    const removeImage = (indexToRemove) => {
-        setFormData(p => ({
-            ...p,
-            images: p.images.filter((_, idx) => idx !== indexToRemove)
-        }));
+    const removeImage = () => {
+        setFormData(p => ({ ...p, images: [] }));
     };
 
     const handleSaveCategory = async () => {
@@ -189,7 +196,7 @@ const Category = () => {
     };
 
     const resetModalForm = () => {
-        setFormData({ catId: "", name: "", description: "", subcategory: "", images: [] });
+        setFormData({ catId: "", name: "", categoryType: "", description: "", subcategory: "", images: [] });
         setSubcategories([]);
         setIsEditing(false);
     };
@@ -213,9 +220,12 @@ const Category = () => {
         setFormData({
             catId: category.catId,
             name: category.name,
+            categoryType: category.categoryType || "",
             description: category.description,
             subcategory: "",
-            images: Array.isArray(category.images) ? category.images : (category.images ? [category.images] : [])
+            images: Array.isArray(category.images)
+                ? category.images.slice(0, 1)
+                : (category.images ? [category.images] : [])
         });
         setSubcategories(category.subcategory || []);
         setIsEditing(true);
@@ -371,6 +381,7 @@ const Category = () => {
                                                     </div>
                                                     <div>
                                                         <h4 className="text-sm font-bold text-slate-800 mb-0.5">{cat.name}</h4>
+                                                        {cat.categoryType && <span className="inline-block mb-1 px-2 py-0.5 rounded bg-violet-50 text-violet-700 text-[10px] font-bold">{cat.categoryType}</span>}
                                                         <p className="text-[11px] text-gray-400 font-medium">ID: {cat.catId || "N/A"}</p>
                                                     </div>
                                                 </div>
@@ -432,6 +443,7 @@ const Category = () => {
 
                                 <div className="flex-1">
                                     <h3 className="text-sm font-bold text-slate-800 mb-1">{cat.name}</h3>
+                                    {cat.categoryType && <span className="inline-block mb-2 px-2 py-0.5 rounded bg-violet-50 text-violet-700 text-[10px] font-bold">{cat.categoryType}</span>}
                                     <p className="text-xs text-gray-500 mb-4 line-clamp-2">
                                         {cat.description || "No description provided."}
                                     </p>
@@ -539,6 +551,20 @@ const Category = () => {
                                         />
                                     </div>
                                     <div>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1.5">Category Type</label>
+                                        <select
+                                            name="categoryType"
+                                            value={formData.categoryType}
+                                            onChange={handleInputChange}
+                                            className="w-full bg-white border border-gray-200 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-sm"
+                                        >
+                                            <option value="">Select category type</option>
+                                            {CATEGORY_TYPES.map(type => (
+                                                <option key={type} value={type}>{type}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
                                         <label className="block text-xs font-bold text-gray-700 mb-1.5">Description</label>
                                         <textarea
                                             name="description"
@@ -557,7 +583,7 @@ const Category = () => {
                                     <div>
                                         <label className="flex items-center justify-between text-xs font-bold text-gray-700 mb-1.5">
                                             <span>Subcategories</span>
-                                            <span className="text-[10px] text-gray-400 font-medium">Press enter to add</span>
+                                            <span className="text-[10px] text-gray-400 font-medium">Press Enter or + to add</span>
                                         </label>
                                         <div className="bg-white border border-gray-200 rounded-xl p-2 min-h-[100px] focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500 transition-all">
                                             <div className="flex flex-wrap gap-2 mb-2">
@@ -573,46 +599,58 @@ const Category = () => {
                                                     </span>
                                                 ))}
                                             </div>
-                                            <input
-                                                type="text"
-                                                value={subInput}
-                                                onChange={(e) => setSubInput(e.target.value)}
-                                                onKeyDown={handleAddSubcategory}
-                                                placeholder={subcategories.length === 0 ? "Type and press Enter..." : "Add another..."}
-                                                className="w-full bg-transparent border-none outline-none text-slate-800 px-1 py-1 text-sm font-medium placeholder:text-gray-400"
-                                            />
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="text"
+                                                    value={subInput}
+                                                    onChange={(e) => setSubInput(e.target.value)}
+                                                    onKeyDown={handleAddSubcategory}
+                                                    placeholder={subcategories.length === 0 ? "Type and press Enter..." : "Add another..."}
+                                                    className="min-w-0 flex-1 bg-transparent border-none outline-none text-slate-800 px-1 py-1 text-sm font-medium placeholder:text-gray-400"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={addSubcategory}
+                                                    disabled={!subInput.trim()}
+                                                    aria-label="Add subcategory"
+                                                    className="admin-button-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-lg disabled:cursor-not-allowed"
+                                                >
+                                                    <FiPlus size={16} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 
                                     {/* Image Dropzone */}
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1.5">Category Images</label>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1.5">Category Image</label>
                                         {formData.images && formData.images.length > 0 ? (
-                                            <div className="grid grid-cols-3 gap-2 mb-2">
-                                                {formData.images.map((imgUrl, idx) => (
-                                                    <div key={idx} className="relative group w-full h-20 rounded-xl overflow-hidden border border-gray-200">
-                                                        <img src={imgUrl} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
-                                                        <button
-                                                            onClick={() => removeImage(idx)}
-                                                            className="admin-button-danger absolute top-1 right-1 p-1 rounded opacity-0 group-hover:opacity-100 transition-all shadow-sm"
-                                                        >
-                                                            <FiX size={12} />
-                                                        </button>
-                                                    </div>
-                                                ))}
-                                                <label className="w-full h-20 border-2 border-dashed border-gray-300 hover:border-purple-400 hover:bg-purple-50/50 rounded-xl cursor-pointer flex flex-col items-center justify-center transition-all">
-                                                    <FiPlus className="text-lg text-purple-500 mb-0.5" />
-                                                    <span className="text-[10px] font-bold text-gray-500">Add More</span>
-                                                    <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                                            <div className="flex items-center gap-3">
+                                                <img
+                                                    src={formData.images[0]}
+                                                    alt="Category"
+                                                    className="h-20 w-20 rounded-xl border border-gray-200 object-cover"
+                                                />
+                                                <label className="admin-button-secondary cursor-pointer rounded-lg px-3 py-2 text-xs font-bold">
+                                                    Change Image
+                                                    <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                                                 </label>
+                                                <button
+                                                    type="button"
+                                                    onClick={removeImage}
+                                                    aria-label="Remove category image"
+                                                    className="admin-button-danger rounded-lg p-2"
+                                                >
+                                                    <FiX size={14} />
+                                                </button>
                                             </div>
                                         ) : (
                                             <label className="relative border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-purple-50/50 hover:border-purple-400 rounded-xl overflow-hidden transition-all cursor-pointer flex flex-col items-center justify-center p-6 text-center min-h-[100px]">
-                                                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                                                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                                                 <div className="w-8 h-8 bg-white shadow-sm rounded-full flex items-center justify-center mb-2 text-purple-500">
                                                     <FiUploadCloud size={16} />
                                                 </div>
-                                                <p className="text-xs font-bold text-slate-700">Upload Images</p>
+                                                <p className="text-xs font-bold text-slate-700">Upload Image</p>
                                                 <p className="text-[10px] text-gray-500 mt-0.5 font-medium">PNG, JPG up to 5MB</p>
                                             </label>
                                         )}

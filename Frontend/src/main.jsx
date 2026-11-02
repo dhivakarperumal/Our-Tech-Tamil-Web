@@ -1,4 +1,4 @@
-import React, { StrictMode } from "react";
+import React from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
@@ -24,6 +24,11 @@ const AdminProfile = React.lazy(() => import("./Admin/Settings/Profile.jsx"));
 const AdminCategories = React.lazy(() => import("./Admin/Categories/Category.jsx"));
 const AdminUsers = React.lazy(() => import("./Admin/Customers/Users.jsx"));
 const AdminBanners = React.lazy(() => import("./Admin/Banners/Banners.jsx"));
+const AllProducts = React.lazy(() => import("./Admin/Products/AllProducts.jsx"));
+const AddProducts = React.lazy(() => import("./Admin/Products/AddProducts.jsx"));
+const ProductDetail = React.lazy(() => import("./Admin/Products/ProductDetail.jsx"));
+const StockDetails = React.lazy(() => import("./Admin/Stocks/StockDetails.jsx"));
+const AddStock = React.lazy(() => import("./Admin/Stocks/AddStock.jsx"));
 
 const ErrorPage = React.lazy(() => import("./Admin/Pages/ErrorPage.jsx"));
 
@@ -53,7 +58,13 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Dashboard /> },
       { path: "profile", element: <AdminProfile /> },
+      { path: "products/all", element: <AllProducts /> },
+      { path: "products/add", element: <AddProducts /> },
+      { path: "products/edit/:id", element: <AddProducts /> },
       { path: "products/category", element: <AdminCategories /> },
+      { path: "products/stock", element: <StockDetails /> },
+      { path: "products/stock/add", element: <AddStock /> },
+      { path: "products/:id", element: <ProductDetail /> },
       { path: "users/all", element: <AdminUsers /> },
       { path: "banners", element: <AdminBanners /> },
     ],
