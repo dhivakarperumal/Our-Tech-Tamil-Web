@@ -289,12 +289,14 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             className={`
                               flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-medium tracking-wide transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                               ${isActive
-                                ? "bg-[#FFC928] text-[#210839] shadow-sm shadow-amber-400/20"
-                                : "text-white/65 hover:bg-white/[0.07] hover:text-white"
+                                ? "bg-[#FFC928] text-[#210839]"
+                                : "text-white/65 hover:text-white"
                               }
                             `}
                           >
-                            <SubIcon className={`h-4 w-4 shrink-0 ${isActive ? "text-[#210839]" : ""}`} />
+                            <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${isActive ? "bg-[#1F0A3C]/10 text-[#1F0A3C]" : "bg-white/[0.07] text-violet-200"}`}>
+                              <SubIcon className="h-4 w-4" />
+                            </span>
                             <span className="flex-1">{sub.label}</span>
                             {badgeCount > 0 && (
                               <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-[#FFD52E] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[#210839]">
