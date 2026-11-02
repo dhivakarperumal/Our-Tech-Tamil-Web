@@ -4,6 +4,7 @@ import {
   BadgeCheck,
   CircleAlert,
   Edit2,
+  Eye,
   ImagePlus,
   LayoutGrid,
   List,
@@ -54,6 +55,7 @@ const Services = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingServiceId, setEditingServiceId] = useState(null);
+  const [viewService, setViewService] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
@@ -79,18 +81,21 @@ const Services = () => {
   }, []);
 
   useEffect(() => {
-    if (!isAddModalOpen) return undefined;
+    if (!isAddModalOpen && !viewService) return undefined;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const handleKeyDown = (event) => {
-      if (event.key === "Escape" && !saving && !uploadingImage) setIsAddModalOpen(false);
+      if (event.key === "Escape" && !saving && !uploadingImage) {
+        setIsAddModalOpen(false);
+        setViewService(null);
+      }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isAddModalOpen, saving, uploadingImage]);
+  }, [isAddModalOpen, viewService, saving, uploadingImage]);
 
   const uploadServiceImage = async (event) => {
     const file = event.target.files?.[0];
@@ -365,6 +370,9 @@ const Services = () => {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex justify-end gap-1">
+                        <button type="button" onClick={() => setViewService(service)} aria-label={`View ${service.name}`} title="View service details" className="rounded-lg p-2 text-slate-400 transition hover:bg-violet-50 hover:text-violet-700">
+                          <Eye className="h-4 w-4" />
+                        </button>
                         <button type="button" onClick={() => openEditServiceModal(service)} aria-label={`Edit ${service.name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-violet-50 hover:text-violet-700">
                           <Edit2 className="h-4 w-4" />
                         </button>
@@ -406,6 +414,15 @@ const Services = () => {
                   </div>
                 </div>
                 <div className="flex shrink-0 flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setViewService(service)}
+                    aria-label={`View ${service.name}`}
+                    title="View service details"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-50 hover:text-violet-700"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => openEditServiceModal(service)}
@@ -643,6 +660,98 @@ const Services = () => {
                   {saving ? "Saving..." : editingServiceId ? "Update service" : "Add service"}
                 </button>
               </div>
+            </footer>
+          </section>
+        </div>,
+        document.body
+      )}
+
+      {viewService && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-3 backdrop-blur-sm sm:p-5"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setViewService(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="service-view-title"
+            className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25"
+          >
+            <header className="flex items-start justify-between gap-4 border-b border-slate-100 bg-gradient-to-r from-white to-violet-50/70 px-5 py-4 sm:px-7">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Service details</p>
+                <h2 id="service-view-title" className="mt-1 text-lg font-bold text-slate-900">{viewService.title}</h2>
+                <p className="mt-1 text-xs font-medium text-violet-700">{viewService.service_id}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewService(null)}
+                aria-label="Close service details"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-900"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </header>
+            <div className="space-y-5 p-5 sm:p-7">
+              {viewService.image_url && (
+                <img
+                  src={getServiceImageUrl(viewService.image_url)}
+                  alt={viewService.title}
+                  className="aspect-video w-full rounded-2xl bg-slate-100 object-cover"
+                />
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-semibold text-slate-900">{viewService.name}</p>
+                  {viewService.subtitle && <p className="mt-1 text-sm text-slate-500">{viewService.subtitle}</p>}
+                </div>
+                <span className={`rounded-full px-3 py-1 text-xs font-bold ${viewService.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                  {viewService.status}
+                </span>
+              </div>
+              {(viewService.price != null || viewService.duration) && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {viewService.price != null && (
+                    <div className="rounded-xl bg-violet-50 p-3">
+                      <p className="text-xs font-semibold text-violet-600">Price</p>
+                      <p className="mt-1 font-bold text-slate-900">₹{Number(viewService.price).toLocaleString("en-IN")}</p>
+                    </div>
+                  )}
+                  {viewService.duration && (
+                    <div className="rounded-xl bg-slate-50 p-3">
+                      <p className="text-xs font-semibold text-slate-500">Duration</p>
+                      <p className="mt-1 font-bold text-slate-900">{viewService.duration}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              {viewService.description && (
+                <div>
+                  <h3 className="mb-2 text-sm font-bold text-slate-800">Description</h3>
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600">{viewService.description}</p>
+                </div>
+              )}
+              {viewService.note && (
+                <div>
+                  <h3 className="mb-2 text-sm font-bold text-slate-800">Note</h3>
+                  <p className="whitespace-pre-wrap rounded-xl bg-amber-50 p-3 text-sm leading-6 text-amber-900">{viewService.note}</p>
+                </div>
+              )}
+            </div>
+            <footer className="flex justify-end border-t border-slate-100 px-5 py-4 sm:px-7">
+              <button
+                type="button"
+                onClick={() => {
+                  const service = viewService;
+                  setViewService(null);
+                  openEditServiceModal(service);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-violet-800"
+              >
+                <Edit2 className="h-4 w-4" />Edit service
+              </button>
             </footer>
           </section>
         </div>,
