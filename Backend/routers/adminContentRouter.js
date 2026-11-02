@@ -6,7 +6,9 @@ function createAdminContentRouter(controller) {
   router.use(requireAdmin);
 
   router.get("/services", controller.listServices);
+  router.get("/services/next-id", controller.getNextServiceId);
   router.post("/services", controller.createService);
+  router.put("/services/:id", controller.updateService);
   router.delete("/services/:id", controller.deleteService);
   router.get("/youtube-videos", controller.listYoutubeVideos);
   router.post("/youtube-videos", controller.createYoutubeVideo);

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Image, ImagePlus, Loader2, Plus, Trash2, Wrench, X } from "lucide-react";
+import { Edit2, ImagePlus, Loader2, Plus, Trash2, Wrench, X } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api";
 import StatusDropdown from "../StatusDropdown";
@@ -34,10 +34,12 @@ const Services = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [loadingServiceId, setLoadingServiceId] = useState(false);
   const [imagePreview, setImagePreview] = useState("");
   const imagePreviewRef = useRef("");
   const [deletingId, setDeletingId] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState(null);
 
   const loadServices = async () => {
     try {
@@ -121,7 +123,7 @@ const Services = () => {
     event.preventDefault();
     setSaving(true);
     try {
-      const { data } = await api.post("/admin/content/services", {
+      const servicePayload = {
         ...form,
         service_id: form.service_id.trim(),
         name: form.name.trim(),
@@ -131,17 +133,23 @@ const Services = () => {
         note: form.note.trim(),
         duration: form.duration.trim(),
         image_url: form.image_url.trim(),
-      });
-      setServices((current) => [data.service, ...current]);
+      };
+      const { data } = editingServiceId
+        ? await api.put(`/admin/content/services/${editingServiceId}`, servicePayload)
+        : await api.post("/admin/content/services", servicePayload);
+      setServices((current) => editingServiceId
+        ? current.map((service) => service.id === data.service.id ? data.service : service)
+        : [data.service, ...current]);
       setForm(emptyService);
+      setEditingServiceId(null);
       if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
       imagePreviewRef.current = "";
       setImagePreview("");
       setIsAddModalOpen(false);
-      toast.success("Service added.");
+      toast.success(editingServiceId ? "Service updated." : "Service added.");
     } catch (error) {
-      console.error("Failed to add service:", error);
-      toast.error(error.response?.data?.message || "Could not add this service.");
+      console.error(editingServiceId ? "Failed to update service:" : "Failed to add service:", error);
+      toast.error(error.response?.data?.message || `Could not ${editingServiceId ? "update" : "add"} this service.`);
     } finally {
       setSaving(false);
     }
@@ -160,6 +168,43 @@ const Services = () => {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const openAddServiceModal = async () => {
+    setLoadingServiceId(true);
+    try {
+      const { data } = await api.get("/admin/content/services/next-id");
+      if (typeof data.service_id !== "string" || !data.service_id) {
+        throw new Error("The server did not return a Service ID.");
+      }
+      setForm({ ...emptyService, service_id: data.service_id });
+      setEditingServiceId(null);
+      setImagePreview("");
+      setIsAddModalOpen(true);
+    } catch (error) {
+      console.error("Failed to generate Service ID:", error);
+      toast.error(error.response?.data?.message || error.message || "Could not generate a Service ID.");
+    } finally {
+      setLoadingServiceId(false);
+    }
+  };
+
+  const openEditServiceModal = (service) => {
+    setForm({
+      service_id: service.service_id || "",
+      name: service.name || "",
+      title: service.title || "",
+      subtitle: service.subtitle || "",
+      description: service.description || "",
+      note: service.note || "",
+      price: service.price == null ? "" : String(service.price),
+      duration: service.duration || "",
+      image_url: service.image_url || "",
+      status: service.status || "Active",
+    });
+    setEditingServiceId(service.id);
+    setImagePreview("");
+    setIsAddModalOpen(true);
   };
 
   return (
@@ -182,7 +227,8 @@ const Services = () => {
             </div>
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={openAddServiceModal}
+              disabled={loadingServiceId}
               className="inline-flex items-center gap-2 rounded-xl bg-[#FFD52E] px-4 py-3 text-sm font-bold text-[#210839] shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-[#FFE36A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-violet-900"
             >
               <Plus className="h-4 w-4" />
@@ -239,15 +285,25 @@ const Services = () => {
                     {service.duration && <span>{service.duration}</span>}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => deleteService(service)}
-                  disabled={deletingId === service.id}
-                  aria-label={`Delete ${service.name}`}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-                >
-                  {deletingId === service.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                </button>
+                <div className="flex shrink-0 flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => openEditServiceModal(service)}
+                    aria-label={`Edit ${service.name}`}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-50 hover:text-violet-700"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteService(service)}
+                    disabled={deletingId === service.id}
+                    aria-label={`Delete ${service.name}`}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                  >
+                    {deletingId === service.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  </button>
+                </div>
               </article>
             ))}
           </div>
@@ -274,8 +330,8 @@ const Services = () => {
                 </span>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Service management</p>
-                  <h2 id="add-service-title" className="mt-0.5 font-bold text-slate-900">Add a service</h2>
-                  <p className="text-xs text-slate-500">Create a service listing. Fields marked * are required.</p>
+                  <h2 id="add-service-title" className="mt-0.5 font-bold text-slate-900">{editingServiceId ? "Edit service" : "Add a service"}</h2>
+                  <p className="text-xs text-slate-500">{editingServiceId ? "Update this service listing." : "Create a service listing."} Fields marked * are required.</p>
                 </div>
               </div>
               <button
@@ -296,16 +352,12 @@ const Services = () => {
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-slate-700">
-                  Service ID *
+                  Service ID (Auto-generated)
                   <input
-                    required
-                    minLength={2}
-                    maxLength={40}
-                    pattern="[A-Za-z0-9][A-Za-z0-9_-]{1,39}"
+                    readOnly
                     value={form.service_id}
-                    onChange={(event) => setForm({ ...form, service_id: event.target.value })}
-                    placeholder="e.g. SRV-001"
-                    className={inputClass}
+                    placeholder="Generating..."
+                    className={`${inputClass} cursor-not-allowed bg-slate-50`}
                   />
                 </label>
                 <label className="block text-sm font-semibold text-slate-700">
@@ -407,7 +459,7 @@ const Services = () => {
               <div className="block text-sm font-semibold text-slate-700">
                 Service image
                 <div className="mt-2 flex flex-wrap items-center gap-3">
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 transition hover:bg-violet-100">
+                  <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 transition hover:bg-violet-100">
                     {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
                     {uploadingImage ? "Uploading image..." : imagePreview ? "Change image" : "Choose image"}
                     <input
@@ -446,26 +498,6 @@ const Services = () => {
                     </>
                   )}
                 </div>
-                <label className="mt-3 block text-xs font-medium text-slate-500">
-                  Or paste an image URL
-                  <span className="relative block">
-                    <Image className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      inputMode="url"
-                      maxLength={2048}
-                      value={form.image_url}
-                      onChange={(event) => {
-                        if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
-                        imagePreviewRef.current = "";
-                        setImagePreview("");
-                        setForm((current) => ({ ...current, image_url: event.target.value }));
-                      }}
-                      placeholder="https://example.com/service.jpg"
-                      className={`${inputClass} pl-10`}
-                    />
-                  </span>
-                </label>
               </div>
 
             </form>
@@ -487,8 +519,8 @@ const Services = () => {
                   disabled={saving || uploadingImage}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-700/15 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  {saving ? "Saving..." : "Add service"}
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editingServiceId ? <Edit2 className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                  {saving ? "Saving..." : editingServiceId ? "Update service" : "Add service"}
                 </button>
               </div>
             </footer>

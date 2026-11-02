@@ -1,3 +1,5 @@
+const crypto = require("node:crypto");
+
 const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 const SERVICE_STATUSES = new Set(["Active", "Inactive"]);
 const DOCUMENT_TYPES = new Set([
@@ -101,6 +103,42 @@ function parseJsonArray(value) {
   }
 }
 
+function parseServiceInput(body) {
+  const service = {
+    name: typeof body.name === "string" ? body.name.trim() : "",
+    title: typeof body.title === "string" ? body.title.trim() : "",
+    subtitle: typeof body.subtitle === "string" ? body.subtitle.trim() : "",
+    description: typeof body.description === "string" ? body.description.trim() : "",
+    note: typeof body.note === "string" ? body.note.trim() : "",
+    duration: typeof body.duration === "string" ? body.duration.trim() : "",
+    image_url: typeof body.image_url === "string" ? body.image_url.trim() : "",
+    status: body.status || "Active",
+    price: body.price === "" || body.price == null ? null : Number(body.price),
+  };
+
+  if (service.name.length < 2 || service.name.length > 120) {
+    return { error: "Service name must be between 2 and 120 characters." };
+  }
+  if (service.title.length < 2 || service.title.length > 160) {
+    return { error: "Service title must be between 2 and 160 characters." };
+  }
+  if (service.subtitle.length > 240 || service.description.length > 5000 ||
+      service.note.length > 5000 || service.duration.length > 80) {
+    return { error: "Subtitle, description, note, or duration is too long." };
+  }
+  if (service.price !== null &&
+      (!Number.isFinite(service.price) || service.price < 0 || service.price > 99999999.99)) {
+    return { error: "Enter a valid service price." };
+  }
+  if (!validateOptionalUrl(service.image_url)) {
+    return { error: "Image URL must be a valid HTTP or HTTPS URL." };
+  }
+  if (!SERVICE_STATUSES.has(service.status)) {
+    return { error: "Choose a valid service status." };
+  }
+  return { service };
+}
+
 function createAdminContentController(pool) {
   return {
     async listServices(request, response, next) {
@@ -114,55 +152,89 @@ function createAdminContentController(pool) {
       }
     },
 
-    async createService(request, response, next) {
-      const body = request.body || {};
-      const serviceId = typeof body.service_id === "string" ? body.service_id.trim().toUpperCase() : "";
-      const name = typeof body.name === "string" ? body.name.trim() : "";
-      const title = typeof body.title === "string" ? body.title.trim() : "";
-      const subtitle = typeof body.subtitle === "string" ? body.subtitle.trim() : "";
-      const description = typeof body.description === "string" ? body.description.trim() : "";
-      const note = typeof body.note === "string" ? body.note.trim() : "";
-      const duration = typeof body.duration === "string" ? body.duration.trim() : "";
-      const imageUrl = typeof body.image_url === "string" ? body.image_url.trim() : "";
-      const status = body.status || "Active";
-      const price = body.price === "" || body.price == null ? null : Number(body.price);
-
-      if (!/^[A-Z0-9][A-Z0-9_-]{1,39}$/.test(serviceId)) {
-        return response.status(400).json({ message: "Service ID must be 2-40 letters, numbers, hyphens, or underscores." });
-      }
-      if (name.length < 2 || name.length > 120) {
-        return response.status(400).json({ message: "Service name must be between 2 and 120 characters." });
-      }
-      if (title.length < 2 || title.length > 160) {
-        return response.status(400).json({ message: "Service title must be between 2 and 160 characters." });
-      }
-      if (subtitle.length > 240 || description.length > 5000 || note.length > 5000 || duration.length > 80) {
-        return response.status(400).json({ message: "Subtitle, description, note, or duration is too long." });
-      }
-      if (price !== null && (!Number.isFinite(price) || price < 0 || price > 99999999.99)) {
-        return response.status(400).json({ message: "Enter a valid service price." });
-      }
-      if (!validateOptionalUrl(imageUrl)) {
-        return response.status(400).json({ message: "Image URL must be a valid HTTP or HTTPS URL." });
-      }
-      if (!SERVICE_STATUSES.has(status)) {
-        return response.status(400).json({ message: "Choose a valid service status." });
-      }
-
+    async getNextServiceId(request, response, next) {
       try {
-        const [result] = await pool.execute(
+        const [rows] = await pool.query("SELECT COALESCE(MAX(id), 0) + 1 AS nextId FROM admin_services");
+        const nextId = Number(rows[0]?.nextId) || 1;
+        return response.json({ service_id: `SRV-${String(nextId).padStart(5, "0")}` });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
+    async createService(request, response, next) {
+      const { service, error: validationError } = parseServiceInput(request.body || {});
+      if (validationError) return response.status(400).json({ message: validationError });
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const temporaryServiceId = `TMP-${crypto.randomUUID()}`;
+        const [result] = await connection.execute(
           "INSERT INTO admin_services (service_id, name, title, subtitle, description, note, price, duration, image_url, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          [serviceId, name, title, subtitle || null, description || null, note || null, price, duration || null, imageUrl || null, status],
+          [temporaryServiceId, service.name, service.title, service.subtitle || null, service.description || null, service.note || null, service.price, service.duration || null, service.image_url || null, service.status],
         );
-        const [services] = await pool.execute(
+        const serviceId = `SRV-${String(result.insertId).padStart(5, "0")}`;
+        await connection.execute(
+          "UPDATE admin_services SET service_id = ? WHERE id = ?",
+          [serviceId, result.insertId],
+        );
+        const [services] = await connection.execute(
           "SELECT id, service_id, name, title, subtitle, description, note, price, duration, image_url, status, created_at FROM admin_services WHERE id = ?",
           [result.insertId],
         );
+        await connection.commit();
         return response.status(201).json({ service: services[0] });
       } catch (error) {
+        if (connection) await connection.rollback();
         if (error.code === "ER_DUP_ENTRY") {
-          return response.status(409).json({ message: "That Service ID is already in use." });
+          return response.status(409).json({ message: "Could not generate a unique Service ID. Please try again." });
         }
+        return next(error);
+      } finally {
+        connection?.release();
+      }
+    },
+
+    async updateService(request, response, next) {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) {
+        return response.status(400).json({ message: "Invalid service id." });
+      }
+
+      const { service, error: validationError } = parseServiceInput(request.body || {});
+      if (validationError) return response.status(400).json({ message: validationError });
+
+      try {
+        const [result] = await pool.execute(
+          `UPDATE admin_services
+           SET name = ?, title = ?, subtitle = ?, description = ?, note = ?, price = ?, duration = ?, image_url = ?, status = ?
+           WHERE id = ?`,
+          [
+            service.name,
+            service.title,
+            service.subtitle || null,
+            service.description || null,
+            service.note || null,
+            service.price,
+            service.duration || null,
+            service.image_url || null,
+            service.status,
+            id,
+          ],
+        );
+        if (!result.affectedRows) {
+          const [existing] = await pool.execute("SELECT id FROM admin_services WHERE id = ? LIMIT 1", [id]);
+          if (!existing.length) return response.status(404).json({ message: "Service not found." });
+        }
+
+        const [services] = await pool.execute(
+          "SELECT id, service_id, name, title, subtitle, description, note, price, duration, image_url, status, created_at FROM admin_services WHERE id = ? LIMIT 1",
+          [id],
+        );
+        return response.json({ service: services[0] });
+      } catch (error) {
         return next(error);
       }
     },
