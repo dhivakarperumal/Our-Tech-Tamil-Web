@@ -1,5 +1,13 @@
 function createAuthController(authService) {
   return {
+    async listUsers(request, response, next) {
+      try {
+        return response.json(await authService.listUsers());
+      } catch (error) {
+        return next(error);
+      }
+    },
+
     async register(request, response, next) {
       const body = request.body || {};
       const username = typeof body.username === "string" ? body.username.trim() : "";

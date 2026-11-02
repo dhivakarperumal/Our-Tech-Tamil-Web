@@ -7,6 +7,158 @@ function createPool() {
 
 async function initializeDatabase(pool) {
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS categories (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      cat_id VARCHAR(64) NOT NULL UNIQUE,
+      name VARCHAR(191) NOT NULL,
+      category_type VARCHAR(100) NULL,
+      description TEXT NOT NULL,
+      subcategory JSON NOT NULL,
+      images JSON NOT NULL,
+      user_id VARCHAR(255) NULL,
+      status VARCHAR(32) NOT NULL DEFAULT 'Active',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS products (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(191) NOT NULL,
+      product_code VARCHAR(100) NOT NULL UNIQUE,
+      slug VARCHAR(220) NOT NULL UNIQUE,
+      cat_type VARCHAR(100) NULL,
+      category VARCHAR(191) NOT NULL,
+      subcategory VARCHAR(191) NULL,
+      brand VARCHAR(120) NULL,
+      model_number VARCHAR(120) NULL,
+      description TEXT NOT NULL,
+      mrp DECIMAL(12, 2) NOT NULL,
+      offer DECIMAL(5, 2) NOT NULL DEFAULT 0,
+      offer_price DECIMAL(12, 2) NOT NULL,
+      total_stock INT UNSIGNED NOT NULL DEFAULT 0,
+      unit VARCHAR(32) NOT NULL DEFAULT 'Piece',
+      stock_status VARCHAR(32) NOT NULL DEFAULT 'Out of Stock',
+      images JSON NOT NULL,
+      size_chart VARCHAR(512) NULL,
+      connectivity VARCHAR(100) NULL,
+      weight DECIMAL(10, 3) NULL,
+      dimensions VARCHAR(191) NULL,
+      power_battery TEXT NULL,
+      specifications JSON NULL,
+      natural_product_type VARCHAR(100) NULL,
+      ingredients TEXT NULL,
+      net_quantity DECIMAL(12, 3) NULL,
+      quantity_unit VARCHAR(32) NOT NULL DEFAULT 'g',
+      manufacturing_date DATE NULL,
+      expiry_date DATE NULL,
+      shelf_life VARCHAR(100) NULL,
+      organic_certification VARCHAR(191) NULL,
+      storage_instructions TEXT NULL,
+      country_of_origin VARCHAR(100) NULL,
+      video VARCHAR(512) NULL,
+      warranty VARCHAR(191) NULL,
+      return_policy TEXT NULL,
+      featured BOOLEAN NOT NULL DEFAULT FALSE,
+      trending BOOLEAN NOT NULL DEFAULT FALSE,
+      new_arrival BOOLEAN NOT NULL DEFAULT FALSE,
+      status VARCHAR(32) NOT NULL DEFAULT 'Active',
+      variants JSON NOT NULL,
+      rating DECIMAL(2, 1) NOT NULL DEFAULT 5,
+      gender VARCHAR(32) NULL,
+      material VARCHAR(191) NULL,
+      wash_care TEXT NULL,
+      available_sizes JSON NULL,
+      available_colors JSON NULL,
+      pattern VARCHAR(100) NULL,
+      saree_length VARCHAR(100) NULL,
+      blouse_length VARCHAR(100) NULL,
+      top_length VARCHAR(100) NULL,
+      bottom_length VARCHAR(100) NULL,
+      dupatta_length VARCHAR(100) NULL,
+      gown_length VARCHAR(100) NULL,
+      sleeve_type VARCHAR(100) NULL,
+      neck_type VARCHAR(100) NULL,
+      fit_type VARCHAR(100) NULL,
+      work_type VARCHAR(100) NULL,
+      zari_color VARCHAR(100) NULL,
+      age VARCHAR(64) NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      KEY products_category_idx (category),
+      KEY products_cat_type_idx (cat_type),
+      KEY products_stock_status_idx (stock_status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  const [productColumnRows] = await pool.execute(
+    `SELECT COLUMN_NAME, DATA_TYPE
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products'`,
+  );
+  const productColumns = new Set(productColumnRows.map(column => column.COLUMN_NAME));
+  const productMigrations = [
+    ["slug", "ALTER TABLE products ADD COLUMN slug VARCHAR(220) NULL"],
+    ["cat_type", "ALTER TABLE products ADD COLUMN cat_type VARCHAR(100) NULL"],
+    ["brand", "ALTER TABLE products ADD COLUMN brand VARCHAR(120) NULL"],
+    ["model_number", "ALTER TABLE products ADD COLUMN model_number VARCHAR(120) NULL"],
+    ["unit", "ALTER TABLE products ADD COLUMN unit VARCHAR(32) NOT NULL DEFAULT 'Piece'"],
+    ["stock_status", "ALTER TABLE products ADD COLUMN stock_status VARCHAR(32) NOT NULL DEFAULT 'Out of Stock'"],
+    ["images", "ALTER TABLE products ADD COLUMN images JSON NULL"],
+    ["size_chart", "ALTER TABLE products ADD COLUMN size_chart VARCHAR(512) NULL"],
+    ["connectivity", "ALTER TABLE products ADD COLUMN connectivity VARCHAR(100) NULL"],
+    ["weight", "ALTER TABLE products ADD COLUMN weight DECIMAL(10, 3) NULL"],
+    ["dimensions", "ALTER TABLE products ADD COLUMN dimensions VARCHAR(191) NULL"],
+    ["power_battery", "ALTER TABLE products ADD COLUMN power_battery TEXT NULL"],
+    ["specifications", "ALTER TABLE products ADD COLUMN specifications JSON NULL"],
+    ["natural_product_type", "ALTER TABLE products ADD COLUMN natural_product_type VARCHAR(100) NULL"],
+    ["ingredients", "ALTER TABLE products ADD COLUMN ingredients TEXT NULL"],
+    ["net_quantity", "ALTER TABLE products ADD COLUMN net_quantity DECIMAL(12, 3) NULL"],
+    ["quantity_unit", "ALTER TABLE products ADD COLUMN quantity_unit VARCHAR(32) NOT NULL DEFAULT 'g'"],
+    ["manufacturing_date", "ALTER TABLE products ADD COLUMN manufacturing_date DATE NULL"],
+    ["expiry_date", "ALTER TABLE products ADD COLUMN expiry_date DATE NULL"],
+    ["shelf_life", "ALTER TABLE products ADD COLUMN shelf_life VARCHAR(100) NULL"],
+    ["organic_certification", "ALTER TABLE products ADD COLUMN organic_certification VARCHAR(191) NULL"],
+    ["storage_instructions", "ALTER TABLE products ADD COLUMN storage_instructions TEXT NULL"],
+    ["country_of_origin", "ALTER TABLE products ADD COLUMN country_of_origin VARCHAR(100) NULL"],
+    ["video", "ALTER TABLE products ADD COLUMN video VARCHAR(512) NULL"],
+    ["warranty", "ALTER TABLE products ADD COLUMN warranty VARCHAR(191) NULL"],
+    ["return_policy", "ALTER TABLE products ADD COLUMN return_policy TEXT NULL"],
+    ["featured", "ALTER TABLE products ADD COLUMN featured BOOLEAN NOT NULL DEFAULT FALSE"],
+    ["trending", "ALTER TABLE products ADD COLUMN trending BOOLEAN NOT NULL DEFAULT FALSE"],
+    ["new_arrival", "ALTER TABLE products ADD COLUMN new_arrival BOOLEAN NOT NULL DEFAULT FALSE"],
+    ["variants", "ALTER TABLE products ADD COLUMN variants JSON NULL"],
+    ["gender", "ALTER TABLE products ADD COLUMN gender VARCHAR(32) NULL"],
+    ["available_sizes", "ALTER TABLE products ADD COLUMN available_sizes JSON NULL"],
+    ["available_colors", "ALTER TABLE products ADD COLUMN available_colors JSON NULL"],
+    ["pattern", "ALTER TABLE products ADD COLUMN pattern VARCHAR(100) NULL"],
+    ["wash_care", "ALTER TABLE products ADD COLUMN wash_care TEXT NULL"],
+    ["created_at", "ALTER TABLE products ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"],
+    ["updated_at", "ALTER TABLE products ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"],
+  ];
+
+  for (const [column, statement] of productMigrations) {
+    if (!productColumns.has(column)) {
+      await pool.query(statement);
+    }
+  }
+
+  const washCareColumn = productColumnRows.find(column => column.COLUMN_NAME === "wash_care");
+  if (washCareColumn && washCareColumn.DATA_TYPE.toLowerCase() !== "text") {
+    await pool.query("ALTER TABLE products MODIFY COLUMN wash_care TEXT NULL");
+  }
+
+  await pool.query(`
+    UPDATE products
+    SET stock_status = CASE
+      WHEN total_stock = 0 THEN 'Out of Stock'
+      WHEN total_stock < 10 THEN 'Low Stock'
+      ELSE 'In Stock'
+    END
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       user_id VARCHAR(255) NOT NULL UNIQUE,

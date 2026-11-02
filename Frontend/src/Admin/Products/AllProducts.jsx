@@ -1,24 +1,19 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useAdmin } from "../../PrivateRouter/AdminContext";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
-import { FaRupeeSign } from "react-icons/fa";
 import {
     FiPlus,
     FiSearch,
-    FiFilter,
     FiEdit2,
     FiTrash2,
     FiEye,
     FiBox,
     FiGrid,
     FiList,
-    FiChevronRight,
     FiPackage,
-    FiLayout,
-    FiDatabase
 } from "react-icons/fi";
 
 const AllProducts = () => {
@@ -48,39 +43,7 @@ const AllProducts = () => {
     const [updatingStock, setUpdatingStock] = useState(false);
 
     const [pagination, setPagination] = useState(pageData?.pagination || { total: 0, totalPages: 1 });
-    const [stats, setStats] = useState(pageData?.stats || { total: 0, active: 0, lowStock: 0, outOfStock: 0 });
-
-    // Rapid Add Modal
-    const [isRapidAddOpen, setIsRapidAddOpen] = useState(false);
-    const [rapidSaving, setRapidSaving] = useState(false);
-    const [rapidProd, setRapidProd] = useState({ name: "", mrp: "", status: "Active" });
-
-    const handleRapidAdd = async (e, shouldContinue = false) => {
-        if (e) e.preventDefault();
-        if (!rapidProd.name || !rapidProd.mrp) return toast.error("Essentials missing!");
-
-        setRapidSaving(true);
-        try {
-            await api.post("/products", {
-                ...rapidProd,
-                category: "Saree",
-                total_stock: "0",
-                variants: []
-            });
-            toast.success("Boutique addition live!");
-            if (shouldContinue) {
-                setRapidProd({ name: "", mrp: "", status: "Active" });
-            } else {
-                setIsRapidAddOpen(false);
-                setRapidProd({ name: "", mrp: "", status: "Active" });
-            }
-            fetchProducts();
-        } catch (error) {
-            toast.error("Process failed.");
-        } finally {
-            setRapidSaving(false);
-        }
-    };
+    const [stats, setStats] = useState(pageData?.stats || { total: 0, active: 0, inactive: 0, lowStock: 0, outOfStock: 0 });
 
     const fetchProducts = async () => {
         const params = {
@@ -97,12 +60,12 @@ const AllProducts = () => {
             const data = response.data;
             let finalData = {};
             if (Array.isArray(data)) {
-                finalData = { products: data, pagination: { total: data.length, totalPages: 1 }, stats: { total: 0, active: 0, lowStock: 0, outOfStock: 0 } };
+                finalData = { products: data, pagination: { total: data.length, totalPages: 1 }, stats: { total: 0, active: 0, inactive: 0, lowStock: 0, outOfStock: 0 } };
             } else {
                 finalData = {
                     products: Array.isArray(data.products) ? data.products : [],
                     pagination: data.pagination || { total: 0, totalPages: 1 },
-                    stats: data.stats || { total: 0, active: 0, lowStock: 0, outOfStock: 0 }
+                    stats: data.stats || { total: 0, active: 0, inactive: 0, lowStock: 0, outOfStock: 0 }
                 };
             }
             setProducts(finalData.products);
@@ -149,7 +112,9 @@ const AllProducts = () => {
             await api.put(`/products/${currentProduct.id}`, updatedProduct);
 
             toast.success("Stock updated instantly!");
-            setProducts(products.map(p => p.id === currentProduct.id ? { ...p, total_stock: parseInt(newStock), status: parseInt(newStock) === 0 ? 'Out of Stock' : parseInt(newStock) < 10 ? 'Low Stock' : 'Active' } : p));
+            const quantity = parseInt(newStock, 10);
+            const stockStatus = quantity === 0 ? "Out of Stock" : quantity < 10 ? "Low Stock" : "In Stock";
+            setProducts(products.map(p => p.id === currentProduct.id ? { ...p, total_stock: quantity, stock_status: stockStatus } : p));
             setCurrentProduct(null);
         } catch (error) {
             toast.error("Failed to update stock");
@@ -164,6 +129,7 @@ const AllProducts = () => {
             case "Active": return "bg-emerald-50 text-emerald-600 border-emerald-100";
             case "Low Stock": return "bg-amber-50 text-amber-600 border-amber-100";
             case "Out of Stock": return "bg-rose-50 text-rose-600 border-rose-100";
+            case "Inactive": return "bg-gray-50 text-gray-600 border-gray-100";
             default: return "bg-gray-50 text-gray-600 border-gray-100";
         }
     };
@@ -227,9 +193,9 @@ const AllProducts = () => {
                     {/* Stats Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {[
-                            { label: "Total Products", value: stats.total, sub: "All saree products",    icon: <FiBox size={22} />,          gradient: "from-[#240046] to-[#7b2cbf]" },
+                            { label: "Total Products", value: stats.total, sub: "All product listings", icon: <FiBox size={22} />,          gradient: "from-[#240046] to-[#7b2cbf]" },
                             { label: "Active",         value: stats.active, sub: "Active products",     icon: <FiCheckCircle />,             gradient: "from-emerald-400 to-teal-500" },
-                            { label: "Inactive",       value: stats.outOfStock || 0, sub: "Inactive products", icon: <FiAlertCircle />,      gradient: "from-orange-400 to-amber-500" },
+                            { label: "Inactive",       value: stats.inactive || 0, sub: "Inactive products", icon: <FiAlertCircle />,      gradient: "from-orange-400 to-amber-500" },
                             { label: "Low Stock",      value: stats.lowStock, sub: "Products low in stock", icon: <FiXCircle />,             gradient: "from-rose-400 to-pink-500" },
                         ].map((stat, i) => (
                             <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:shadow-md transition-all">
@@ -251,7 +217,7 @@ const AllProducts = () => {
                             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
                             <input
                                 type="text"
-                                placeholder="Search sarees by name, SKU..."
+                                placeholder="Search products by name, SKU, brand..."
                                 className="w-1/2 pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#7b2cbf] focus:bg-white transition-all text-sm font-medium text-slate-700"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -278,7 +244,7 @@ const AllProducts = () => {
                         onClick={() => navigate("/admin/products/add")}
                         className="flex items-center gap-2 bg-gradient-to-r from-[#240046] to-[#7b2cbf] hover:from-[#10002b] hover:to-[#5a189a] text-white px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg shadow-purple-900/30 active:scale-95"
                     >
-                        <FiPlus size={16} /> Add New Saree
+                        <FiPlus size={16} /> Add New Product
                     </button>
                 </div>
                     </div>
@@ -294,8 +260,8 @@ const AllProducts = () => {
                                                 <input type="checkbox" className="rounded border-[#FCD34D]/40 accent-[#FCD34D]" />
                                             </th>
                                             <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-12">S.No.</th>
-                                            <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider">Saree</th>
-                                            <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider">Category</th>
+                                            <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider">Product</th>
+                                            <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider">Type / Category</th>
                                             <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider">Price</th>
                                             <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider">Stock</th>
                                             <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider">Status</th>
@@ -329,9 +295,10 @@ const AllProducts = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#240046]/10 text-[#7b2cbf] border border-[#7b2cbf]/20">
-                                                        {product.category || '—'}
-                                                    </span>
+                                                    <div className="flex flex-col items-start gap-1">
+                                                        {product.cat_type && <span className="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-violet-50 text-violet-700">{product.cat_type}</span>}
+                                                        <span className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#240046]/10 text-[#7b2cbf] border border-[#7b2cbf]/20">{product.category || '—'}</span>
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <p className="text-sm font-bold text-slate-800">₹{parseFloat(product.offer_price || product.discount_price || product.mrp || 0).toLocaleString('en-IN')}</p>
@@ -344,8 +311,9 @@ const AllProducts = () => {
                                                         onClick={() => { setCurrentProduct(product); setNewStock(product.total_stock || "0"); }}
                                                         className="text-sm font-bold text-slate-700 hover:text-[#7b2cbf] underline decoration-dotted decoration-gray-300 transition-colors"
                                                     >
-                                                        {product.total_stock ?? product.stock ?? 0}
+                                                        {product.total_stock ?? product.stock ?? 0} {product.unit || "Piece"}
                                                     </button>
+                                                    <p className="mt-1 text-[10px] font-semibold text-gray-500">{product.stock_status || "—"}</p>
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <span className={`px-3 py-1 rounded-lg text-[11px] font-bold border ${getStatusStyle(product.status)}`}>
@@ -386,7 +354,7 @@ const AllProducts = () => {
                             {/* Table Footer / Pagination */}
                             <div className="px-5 py-4 border-t border-gray-100 flex items-center justify-between">
                                 <p className="text-xs text-gray-500 font-medium">
-                                    Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, pagination.total)} of {pagination.total} sarees
+                                    Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, pagination.total)} of {pagination.total} products
                                 </p>
                                 <div className="flex items-center gap-2">
                                     <button
@@ -451,12 +419,12 @@ const AllProducts = () => {
                                         </div>
                                     </div>
                                     <div className="p-4">
-                                        <p className="text-[10px] text-[#7b2cbf] font-bold uppercase tracking-widest">{product.category}</p>
+                                        <p className="text-[10px] text-[#7b2cbf] font-bold uppercase tracking-widest">{product.cat_type || "Product"} · {product.category}</p>
                                         <h4 className="text-sm font-bold text-slate-800 truncate mt-0.5">{product.name}</h4>
                                         <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
                                             <div>
                                                 <p className="text-base font-black text-slate-800">₹{parseFloat(product.offer_price || product.mrp || 0).toLocaleString('en-IN')}</p>
-                                                <p className="text-[10px] text-gray-400">Stock: {product.total_stock ?? 0}</p>
+                                                <p className="text-[10px] text-gray-400">Stock: {product.total_stock ?? 0} {product.unit || "Piece"}</p>
                                             </div>
                                             <Link to={`/admin/products/${product.id}`} className="px-3 py-1.5 bg-[#240046]/10 text-[#7b2cbf] rounded-lg text-xs font-bold hover:bg-[#240046] hover:text-[#FCD34D] transition-all">
                                                 View
@@ -496,7 +464,7 @@ const AllProducts = () => {
                             <div className="space-y-4">
                                 <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center justify-between">
                                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Current Inventory</span>
-                                    <span className="text-lg font-black text-slate-800">{currentProduct.total_stock} Units</span>
+                                    <span className="text-lg font-black text-slate-800">{currentProduct.total_stock} {currentProduct.unit || "Piece"}</span>
                                 </div>
 
                                 <div className="space-y-2">
@@ -535,78 +503,6 @@ const AllProducts = () => {
                 )
             )}
 
-            {/* RAPID PRODUCT ADD MODAL */}
-            {isRapidAddOpen && (
-                createPortal(
-                <div className="fixed inset-0 z-[100] flex h-screen w-screen items-center justify-center bg-transparent p-4">
-                    <div className="absolute inset-0 z-0 bg-slate-900/60 backdrop-blur-[3px]" onClick={() => setIsRapidAddOpen(false)}></div>
-                    <div className="relative z-10 bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-                        <div className="bg-gradient-to-r from-[#1F0A3C] to-[#3c096c] p-8 text-white relative">
-                            <div className="absolute top-0 right-0 p-8 opacity-10"><FiBox size={80} /></div>
-                            <h2 className="text-2xl font-black italic uppercase tracking-tight">Rapid Addition</h2>
-                            <p className="text-xs text-[#FCD34D]/60 font-bold uppercase tracking-widest mt-1">Instant AJAX Listing</p>
-                        </div>
-
-                        <div className="p-8 space-y-6">
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Title</label>
-                                    <input
-                                        autoFocus
-                                        type="text"
-                                        className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent focus:border-[#7b2cbf]/30 rounded-2xl outline-none font-bold text-slate-800 transition-all"
-                                        placeholder="e.g. Traditional Silk"
-                                        value={rapidProd.name}
-                                        onChange={(e) => setRapidProd({ ...rapidProd, name: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Price (MRP)</label>
-                                    <div className="relative">
-                                        <FaRupeeSign className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400" />
-                                        <input
-                                            type="number"
-                                            className="w-full pl-12 pr-6 py-4 bg-gray-50 border-2 border-transparent focus:border-[#7b2cbf]/30 rounded-2xl outline-none font-bold text-slate-800 transition-all"
-                                            placeholder="2999"
-                                            value={rapidProd.mrp}
-                                            onChange={(e) => setRapidProd({ ...rapidProd, mrp: e.target.value })}
-                                            required
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col gap-3">
-                                <button
-                                    onClick={(e) => handleRapidAdd(e, true)}
-                                    disabled={rapidSaving}
-                                    className="w-full py-5 bg-white border-2 border-[#7b2cbf]/20 hover:bg-[#240046]/5 text-[#7b2cbf] rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 flex items-center justify-center gap-3"
-                                >
-                                    List & Add Another
-                                </button>
-                                <button
-                                    onClick={(e) => handleRapidAdd(e, false)}
-                                    disabled={rapidSaving}
-                                    className="w-full py-5 bg-gradient-to-r from-[#1F0A3C] to-[#7b2cbf] hover:from-[#10002b] hover:to-[#5a189a] text-[#FCD34D] rounded-2xl font-black uppercase tracking-widest text-xs transition-all active:scale-95 shadow-xl shadow-purple-900/20 flex items-center justify-center gap-3"
-                                >
-                                    {rapidSaving ? <div className="w-4 h-4 border-2 border-t-[#FCD34D] rounded-full animate-spin"></div> : "Save & Close"}
-                                </button>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={() => setIsRapidAddOpen(false)}
-                                className="w-full py-2 text-[10px] font-black text-gray-400 hover:text-slate-800 uppercase tracking-widest transition-colors"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-                )
-            )}
         </div>
     );
 };

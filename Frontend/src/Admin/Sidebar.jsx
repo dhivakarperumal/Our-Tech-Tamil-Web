@@ -7,12 +7,12 @@ import {
   Users,
   MessageSquare,
   Megaphone,
+  Wrench,
+  CreditCard,
   X,
-  ShoppingBag,
   ChevronDown,
   ChevronLeft,
   Home,
-  Tag,
   PlusCircle,
   List,
   Layers,
@@ -55,10 +55,12 @@ const navItems = [
       { path: "/admin/products/stock", label: "Stock Details", icon: Archive },
     ],
   },
+  
 
- 
+  { path: "/admin/service", label: "Service", icon: Wrench },
+  { path: "/admin/Youtube", label: "Youtube Video", icon: Video },
 
-  { path: "/admin/orders/billing", label: "Billing", icon: PlusCircle },
+  { path: "/admin/orders/billing", label: "Billing", icon: CreditCard },
   { path: "/admin/users/all", label: "Customers", icon: Users },
   {
     label: "Dealers",
@@ -79,6 +81,13 @@ const navItems = [
   },
   { path: "/", label: "Back Home", icon: Home },
 ];
+
+const isPathActive = (currentPath, path) => {
+  const normalizedPath = path.toLowerCase();
+  const normalizedCurrentPath = currentPath.toLowerCase();
+  return normalizedCurrentPath === normalizedPath
+    || normalizedCurrentPath.startsWith(`${normalizedPath}/`);
+};
 
 /* ================= SIDEBAR ================= */
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
@@ -116,41 +125,31 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     const interval = setInterval(fetchOrderCounts, 30000);
     return () => clearInterval(interval);
   }, []);
-  /* ================= ACTIVE ROUTE MAP ================= */
-  const activeRouteMap = {
-    "/admin/products": ["/admin/products/all", "/admin/products/add", "/admin/products/category"],
-    "/admin/orders": ["/admin/orders/all", "/admin/orders/new", "/admin/orders/billing", "/admin/orders/delivery", "/admin/orders/cancelled"],
-    "/admin/users": ["/admin/users/all"],
-  };
 
   /* ================= HELPERS & LOGIC ================= */
   const isActiveRoute = (item) => {
-    const currentPath = location.pathname;
-
-    // 1. Strict exact match for root routes to prevent Dashboard/BackHome overlap
     if (item.path === "/" || item.path === "/admin" || item.exact) {
-      return currentPath === item.path;
+      return location.pathname.toLowerCase() === item.path.toLowerCase();
     }
 
-    // 2. Dropdown parent check: check if any child is perfectly active or a sub-path
     if (item.children) {
-      return item.children.some(child =>
-        currentPath === child.path || currentPath.startsWith(child.path + "/")
-      );
+      return item.children.some(child => isPathActive(location.pathname, child.path));
     }
 
-    // 3. Normal item check: match exact or match as a parent path (with boundary)
-    if (item.path) {
-      return currentPath === item.path || currentPath.startsWith(item.path + "/");
-    }
-
-    return false;
+    return item.path ? isPathActive(location.pathname, item.path) : false;
   };
 
   const [openMenu, setOpenMenu] = useState(() => {
     const activeItem = navItems.find(item => item.children && isActiveRoute(item));
     return activeItem ? activeItem.label : null;
   });
+
+  useEffect(() => {
+    const activeItem = navItems.find(item =>
+      item.children?.some(child => isPathActive(location.pathname, child.path))
+    );
+    setOpenMenu(activeItem ? activeItem.label : null);
+  }, [location.pathname]);
 
   /* Dropdown logic - only one open at a time */
   const toggleMenu = (label) => {
@@ -170,7 +169,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       <aside
         className={`
         fixed top-0 left-0 z-50 h-full
-        bg-[#1F0A3C] border-r border-white/5
+        admin-sidebar border-r border-white/5
         font-sans
         
         flex flex-col transition-all duration-300
@@ -179,35 +178,42 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         ${collapsed ? "lg:w-20 w-full" : "w-full lg:w-72"}
       `}
       >
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_10%_0%,rgba(168,85,247,0.16),transparent_38%),radial-gradient(ellipse_at_100%_100%,rgba(126,34,206,0.14),transparent_35%)]" />
         {/* ========== LOGO ========== */}
        <div className="relative overflow-hidden px-4 pt-5 pb-5 border-b border-white/10">
           <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500/15 via-transparent to-cyan-500/5" />
           <div className="relative flex items-center gap-3">
-            <div className="w-11 h-11 rounded-3xl bg-white border border-emerald-300/10 flex items-center justify-center shadow-2xl shadow-emerald-500/10 overflow-hidden">
-              <ShoppingBag className="w-6 h-6 text-[#1F0A3C]" aria-hidden="true" />
+            <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary-light via-secondary-light to-accent p-[2px] shadow-lg shadow-primary/30">
+              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[14px] bg-white">
+                <img
+                  src="/images/logo.jpeg"
+                  alt="Our Tech Tamil"
+                  className="h-full w-full object-cover"
+                />
+              </div>
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-[#D4AF37] mb-1">
-                  Our Tech Tamil
+                <p className="whitespace-nowrap text-sm font-extrabold tracking-tight text-white">
+                  Our Tech <span className="text-accent">Tamil</span>
                 </p>
-                <p className="text-sm font-semibold tracking-wide text-white">
+                <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-white/60">
                   Admin Panel
                 </p>
               </div>
             )}
+            <button
+              onClick={onClose}
+              aria-label="Close admin navigation"
+              className="ml-auto rounded-xl border border-transparent p-2 text-white/60 transition-colors hover:border-white/10 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD52E] lg:hidden"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-
-          <button
-            onClick={onClose}
-            className="ml-auto p-2 rounded-xl text-white/40 hover:bg-white/5 lg:hidden border border-transparent hover:border-white/10 transition-all"
-          >
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
         {/* ========== NAVIGATION ========== */}
-        <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto hide-scrollbar">
+        <nav aria-label="Admin navigation" className="relative z-10 min-h-0 flex-1 space-y-1.5 overflow-y-auto px-3 py-5 hide-scrollbar">
           {navItems.map((item) => {
             const Icon = item.icon;
 
@@ -220,28 +226,33 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 <div key={item.label} className="space-y-1">
                   <button
                     onClick={() => toggleMenu(item.label)}
+                    aria-label={item.label}
+                    aria-expanded={isMenuOpen}
+                    title={collapsed ? item.label : undefined}
                     className={`
-                      w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all
+                      group w-full flex items-center gap-3 rounded-xl border px-3 py-2.5 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
                       ${isMenuOpen || isAnyChildActive
-                        ? "bg-[#FCD34D]/20 text-white"
-                        : "text-white/50 hover:bg-white/5 hover:text-white"
+                        ? "border-fuchsia-300/25 bg-white/[0.09] text-white shadow-[0_8px_24px_rgba(8,0,20,0.12)]"
+                        : "border-white/[0.08] bg-white/[0.035] text-white/75 hover:border-fuchsia-300/25 hover:bg-white/[0.07] hover:text-white"
                       }
                     `}
                   >
-                    <Icon className={`w-5 h-5 shrink-0 ${isMenuOpen || isAnyChildActive ? "text-[#FCD34D]" : ""}`} />
+                    <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${isMenuOpen || isAnyChildActive ? "bg-fuchsia-400/15 text-[#FFD52E]" : "bg-white/[0.07] text-violet-200 group-hover:bg-fuchsia-400/15 group-hover:text-white"}`}>
+                      <Icon className="h-5 w-5" />
+                    </span>
 
                     {!collapsed && (
                       <>
                         <span className="flex-1 text-left text-sm font-semibold tracking-wide">
                           {item.label}
                           {item.label === "Orders" && orderCounts.all > 0 && (
-                            <span className="ml-2 inline-block bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                            <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-[#FFD52E] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[#210839]">
                               {orderCounts.all}
                             </span>
                           )}
                         </span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""
+                          className={`h-4 w-4 text-white/55 transition-transform duration-200 ${isMenuOpen ? "rotate-180 text-[#FFD52E]" : ""
                             }`}
                         />
                       </>
@@ -251,12 +262,12 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   {/* ===== SUB MENU ===== */}
                   {!collapsed && (
                     <div
-                      className={`ml-4 pl-4  border-white/5 space-y-1 overflow-y-auto hide-scrollbar transition-all duration-300
-                      ${isMenuOpen ? "max-h-60 opacity-100 py-1" : "max-h-0 opacity-0"}`}
+                      className={`ml-4 space-y-1 overflow-y-auto border-l border-fuchsia-300/20 pl-3 hide-scrollbar transition-all duration-300
+                      ${isMenuOpen ? "max-h-60 py-1 opacity-100" : "max-h-0 opacity-0"}`}
                     >
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
-                        const isActive = location.pathname === sub.path;
+                        const isActive = isPathActive(location.pathname, sub.path);
 
                         // Get count badge for this item
                         let badgeCount = 0;
@@ -270,18 +281,19 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             key={sub.path}
                             to={sub.path}
                             onClick={() => isOpen && onClose()}
+                            aria-current={isActive ? "page" : undefined}
                             className={`
-                              flex items-center gap-3 px-4 py-2.5 rounded-md text-xs font-medium tracking-wide transition-all
-                              ${(location.pathname === sub.path || (sub.path !== "/admin" && location.pathname.startsWith(sub.path)))
-                                ? "bg-gradient-to-r from-[#D4AF37] to-[#FBBF24] text-white shadow-lg shadow-[#D4AF37]/20"
-                                : "text-white/40 hover:text-white hover:bg-white/5"
+                              flex items-center gap-3 rounded-lg px-3 py-2.5 text-xs font-medium tracking-wide transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                              ${isActive
+                                ? "bg-[#FFC928] text-[#210839] shadow-md shadow-amber-400/20"
+                                : "text-white/65 hover:bg-white/[0.07] hover:text-white"
                               }
                             `}
                           >
-                            <SubIcon className={`w-5 h-6 shrink-0 ${(location.pathname === sub.path || (sub.path !== "/admin" && location.pathname.startsWith(sub.path))) ? "text-white" : ""}`} />
+                            <SubIcon className={`h-4 w-4 shrink-0 ${isActive ? "text-[#210839]" : ""}`} />
                             <span className="flex-1">{sub.label}</span>
                             {badgeCount > 0 && (
-                              <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-fit">
+                              <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-[#FFD52E] px-1.5 py-0.5 text-[10px] font-bold leading-none text-[#210839]">
                                 {badgeCount}
                               </span>
                             )}
@@ -297,42 +309,62 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             /* ===== NORMAL ITEM ===== */
             const isActive = isActiveRoute(item);
 
+            const sectionLabel = item.path === "/admin"
+              ? "Main Menu"
+              : item.path === "/"
+                ? "Navigation"
+                : null;
+
             return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                end={item.exact}
-                onClick={() => {
-                  setOpenMenu(null);
-                  if (isOpen) onClose();
-                }}
-                className={`
-                  flex items-center gap-3 px-4 py-3 rounded-md transition-all
-                  ${isActive
-                    ? "bg-gradient-to-r from-[#D4AF37] to-[#FBBF24] text-white shadow-xl shadow-[#D4AF37]/20"
-                    : "text-white/50 hover:bg-white/5 hover:text-white"
-                  }
-                `}
-              >
-                <Icon className={`w-5 h-6 shrink-0 ${isActive ? "text-white" : ""}`} />
-                {!collapsed && <span className="text-sm font-semibold tracking-wide">{item.label}</span>}
-              </NavLink>
+              <div key={item.path} className="space-y-2">
+                {sectionLabel && !collapsed && (
+                  <div className={`flex items-center gap-3 px-3 ${item.path === "/" ? "pt-5" : "pb-1"}`}>
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-300/80">
+                      {sectionLabel}
+                    </span>
+                    <span className="h-px flex-1 bg-gradient-to-r from-fuchsia-300/35 to-transparent" />
+                  </div>
+                )}
+                <NavLink
+                  to={item.path}
+                  end={item.exact}
+                  title={collapsed ? item.label : undefined}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={() => {
+                    setOpenMenu(null);
+                    if (isOpen) onClose();
+                  }}
+                  className={`
+                    group flex items-center gap-3 rounded-xl border transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#FFD52E]
+                    ${collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2.5"}
+                    ${isActive
+                      ? "border-amber-200/70 bg-gradient-to-r from-[#FFD52E] via-[#FFC928] to-[#FFB900] text-[#210839] shadow-[0_8px_22px_rgba(255,185,0,0.2)]"
+                      : "border-white/[0.08] bg-white/[0.035] text-white/75 hover:border-fuchsia-300/25 hover:bg-white/[0.07] hover:text-white"
+                    }
+                  `}
+                >
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors ${isActive ? "bg-white/25 text-[#210839]" : "bg-white/[0.07] text-violet-200 group-hover:bg-fuchsia-400/15 group-hover:text-white"}`}>
+                    <Icon className="h-5 w-5" />
+                  </span>
+                  {!collapsed && <span className="text-sm font-semibold tracking-wide">{item.label}</span>}
+                </NavLink>
+              </div>
             );
           })}
         </nav>
 
         {/* ========== FOOTER / PROFILE ========== */}
         {!collapsed && (
-          <div className="p-4 mx-3 mb-6 bg-[#21094E]/50 rounded-2xl border border-white/10 relative">
+          <div className="relative z-10 mx-3 mb-4 shrink-0 rounded-2xl border border-fuchsia-300/20 bg-[#260A4D]/95 p-4 shadow-lg shadow-black/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-amber-50 flex items-center justify-center flex-shrink-0">
-                <p className="font-bold text-black text-lg">{(profileName || "Admin User").charAt(0).toUpperCase()}</p>
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFF4BE] to-[#FFD52E] ring-1 ring-white/20">
+                <p className="text-lg font-bold text-[#24103E]">{(profileName || "Admin User").charAt(0).toUpperCase()}</p>
               </div>
               <div className="overflow-hidden flex-1">
                 <p className="text-sm font-semibold text-white truncate">{(profileName || "Admin User")}</p>
-                <p className="text-[10px] text-gray-400 font-medium truncate">Super Admin</p>
+                <p className="text-[10px] font-medium text-white/55 truncate">Super Admin</p>
               </div>
-              <ChevronDown className="w-4 h-4 text-white/50" />
+              <ChevronDown className="h-4 w-4 text-white/55" />
             </div>
           </div>
         )}
@@ -340,13 +372,14 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         {/* ========== COLLAPSE BUTTON ========== */}
         <button
           onClick={onToggleCollapse}
+          aria-label={collapsed ? "Expand admin navigation" : "Collapse admin navigation"}
           className="
             hidden lg:flex absolute -right-3 top-1/2 -translate-y-1/2
             w-6 h-6 rounded-full
-            bg-white border border-slate-200
-            shadow-[0_4px_10px_rgba(0,0,0,0.1)]
+            bg-[#FFF4BE] border border-amber-300/70
+            shadow-[0_4px_14px_rgba(15,0,35,0.24)]
             items-center justify-center
-            text-slate-500 hover:text-blue-600 hover:scale-110 transition-all z-50
+            text-[#3D1762] hover:bg-[#FFD52E] hover:scale-110 transition-all z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FFD52E]
           "
         >
           <ChevronLeft
