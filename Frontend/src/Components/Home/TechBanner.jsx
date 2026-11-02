@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../api";
+import PageContainer from "../CommenComponents/PageContainer";
 
 function isPublished(value) {
   return value === true || Number(value) === 1;
@@ -58,17 +59,17 @@ const TechBanner = () => {
   if (banners.length === 0) return null;
 
   return (
-    <section className="w-full py-3">
-      <div className="mx-auto max-w-[1450px] overflow-x-auto px-2 sm:px-4">
-        <div className="grid min-w-[690px] grid-cols-3 gap-2 md:min-w-0">
+    <section className="w-full">
+      <PageContainer className="py-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-2">
           {banners.map((banner) => {
             const theme = getTheme(banner.title);
             const destination = banner.destination_link || "/shop";
             const content = (
               <>
-                <div className="relative z-10 flex w-[60%] flex-col justify-center pl-5">
+                <div className="relative z-10 flex w-[62%] flex-col justify-center pl-5 sm:pl-4 lg:pl-6">
                   <h3
-                    className={`text-[15px] font-extrabold tracking-tight ${
+                    className={`text-[15px] font-extrabold leading-tight tracking-tight sm:text-[14px] lg:text-base ${
                       theme === "laptop" ? "text-text-primary" : "text-surface"
                     }`}
                   >
@@ -78,7 +79,7 @@ const TechBanner = () => {
 
                   {banner.subtitle && (
                     <p
-                      className={`text-[11px] font-medium ${
+                      className={`text-[11px] font-medium leading-tight sm:text-[10px] lg:text-xs ${
                         theme === "laptop" ? "text-text-secondary" : "text-surface/80"
                       }`}
                     >
@@ -88,8 +89,8 @@ const TechBanner = () => {
 
                   {banner.description && (
                     <p
-                      className={`mt-0.5 text-[15px] font-black ${
-                        theme === "laptop" ? "text-gradient-middle" : "text-accent"
+                      className={`mt-0.5 text-[15px] font-black leading-tight sm:text-[13px] lg:text-base ${
+                        theme === "laptop" ? "text-primary-dark" : "text-accent"
                       }`}
                     >
                       {banner.description}
@@ -97,7 +98,7 @@ const TechBanner = () => {
                   )}
 
                   <span
-                    className={`mt-1 flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[9px] font-bold transition-all duration-300 group-hover:gap-2 ${
+                    className={`mt-2 flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[9px] font-bold transition-all duration-300 group-hover:gap-2 sm:mt-1.5 ${
                       theme === "laptop"
                         ? "bg-surface text-primary-dark hover:bg-primary hover:text-surface"
                         : "bg-surface text-primary-dark hover:bg-accent"
@@ -108,41 +109,26 @@ const TechBanner = () => {
                   </span>
                 </div>
 
-                {theme === "audio" && (
-                  <svg
-                    aria-hidden="true"
-                    viewBox="0 0 76 42"
-                    className="absolute right-[22%] top-1/2 z-10 h-10 w-[76px] -translate-y-1/2"
-                  >
-                    <path
-                      d="M1 22h8l5-8 7 17 7-25 8 34 8-23 7 14 6-9 5 4h13"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      className="text-accent"
-                    />
-                  </svg>
-                )}
-                <div className="absolute right-0 top-0 flex h-full w-[46%] items-center justify-center">
+                <div className="absolute right-1 top-0 flex h-full w-[44%] items-center justify-center sm:w-[46%]">
                   <img
                     src={getImageUrl(banner.desktop_image)}
                     alt={banner.title}
-                    className={`h-full w-full object-contain p-1 mix-blend-multiply transition-transform duration-500 group-hover:scale-110 ${
+                    className={`h-[92%] w-full object-contain p-1 transition-transform duration-500 group-hover:scale-110 ${
                       theme === "gaming"
-                        ? "scale-150"
+                        ? "scale-110"
                         : theme === "audio"
-                          ? "relative z-20 scale-125"
+                          ? "scale-110"
                           : ""
                     }`}
                   />
                 </div>
               </>
             );
-            const className = `group relative flex h-[132px] min-w-0 overflow-hidden rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+            const className = `group relative flex h-[116px] min-w-0 overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:h-[108px] lg:h-[116px] ${
               theme === "gaming"
                 ? "bg-gradient-to-r from-secondary-dark via-primary to-primary-dark"
                 : theme === "laptop"
-                  ? "bg-gradient-to-r from-secondary-light/30 via-background to-secondary-light/50"
+                  ? "bg-gradient-to-r from-[#f7d8f6] via-[#fceafb] to-[#e9c8f5]"
                   : "bg-gradient-to-r from-secondary-dark via-secondary to-gradient-middle"
             }`;
 
@@ -163,7 +149,7 @@ const TechBanner = () => {
             );
           })}
         </div>
-      </div>
+      </PageContainer>
     </section>
   );
 };
