@@ -203,25 +203,17 @@ const AddProducts = () => {
     // Track if total stock was manually edited
     const [isStockManuallyEdited, setIsStockManuallyEdited] = useState(false);
 
-    // Keep the discount percentage in sync with MRP and the editable offer price.
+    // Calculate offer price from the manually entered MRP and discount percentage.
     useEffect(() => {
         const mrpValue = parseFloat(formData.mrp) || 0;
-        const offerPriceValue = formData.offer_price === "" ? mrpValue : parseFloat(formData.offer_price);
-        if (mrpValue > 0) {
-            const calculatedOffer = Number.isFinite(offerPriceValue)
-                ? Math.min(100, Math.max(0, ((mrpValue - offerPriceValue) / mrpValue) * 100))
-                : 0;
-            setFormData(prev => {
-                const nextOfferPrice = prev.offer_price === "" ? mrpValue.toFixed(2) : prev.offer_price;
-                const nextOffer = calculatedOffer.toFixed(2);
-                return prev.offer_price === nextOfferPrice && prev.offer === nextOffer
-                    ? prev
-                    : { ...prev, offer_price: nextOfferPrice, offer: nextOffer };
-            });
-        } else if (formData.offer !== "0.00") {
-            setFormData(prev => ({ ...prev, offer: "0.00" }));
-        }
-    }, [formData.mrp, formData.offer_price, formData.offer]);
+        const offerValue = Math.min(100, Math.max(0, parseFloat(formData.offer) || 0));
+        const nextOfferPrice = mrpValue > 0
+            ? (mrpValue * (1 - offerValue / 100)).toFixed(2)
+            : "";
+        setFormData(prev => prev.offer_price === nextOfferPrice
+            ? prev
+            : { ...prev, offer_price: nextOfferPrice });
+    }, [formData.mrp, formData.offer]);
 
     // Keep total stock synchronized with color quantities or clothing size quantities.
     useEffect(() => {
@@ -367,6 +359,11 @@ const AddProducts = () => {
             [name]: value,
             ...(name === "name" ? { slug: createSlug(value) } : {}),
         }));
+    };
+
+    const handleOfferPercentageChange = (e) => {
+        const percentage = Math.min(100, Math.max(0, Number(e.target.value) || 0));
+        setFormData(prev => ({ ...prev, offer: String(percentage) }));
     };
 
     const addSpecification = () => {
@@ -886,17 +883,17 @@ const AddProducts = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Offer (%) · Auto</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Offer (%)</label>
                                     <div className="relative">
                                         <FiPercent className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500 w-3.5 h-3.5" />
-                                        <input type="number" value={formData.offer} readOnly className="w-full pl-7 pr-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg text-sm font-bold text-amber-700 cursor-not-allowed" />
+                                        <input type="number" min="0" max="100" step="0.01" value={formData.offer} onChange={handleOfferPercentageChange} className="w-full pl-7 pr-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg outline-none focus:bg-white focus:border-amber-400 text-sm font-bold text-amber-700" />
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Offer Price</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Offer Price · Auto</label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600 font-bold text-sm">₹</span>
-                                        <input type="number" name="offer_price" min="0" step="0.01" value={formData.offer_price} onChange={handleFormChange} className="w-full pl-7 pr-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-lg outline-none focus:bg-white focus:border-emerald-400 text-sm font-bold text-emerald-700" />
+                                        <input type="number" name="offer_price" value={formData.offer_price} readOnly className="w-full pl-7 pr-3 py-2.5 bg-emerald-50 border border-emerald-200 rounded-lg text-sm font-bold text-emerald-700 cursor-not-allowed" />
                                     </div>
                                 </div>
                                 <div className="space-y-1">
