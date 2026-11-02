@@ -7,7 +7,11 @@ const Loader = () => {
         <div className="w-24 h-24 rounded-full border-t-2 border-b-2 border-[#D99A32] animate-spin"></div>
         <div className="absolute top-0 left-0 w-24 h-24 rounded-full border-l-2 border-r-2 border-[#A85B20] animate-pulse"></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className="w-10 h-10 bg-gradient-to-tr from-[#D99A32] to-[#A85B20] rounded-xl rotate-45 animate-bounce shadow-xl shadow-[#A85B20]/20"></div>
+          <img
+            src="/images/logo1.png"
+            alt="Our Tech Tamil logo"
+            className="h-12 w-12 object-contain animate-pulse"
+          />
         </div>
       </div>
 
