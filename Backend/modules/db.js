@@ -7,6 +7,40 @@ function createPool() {
 
 async function initializeDatabase(pool) {
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS banners (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(160) NOT NULL,
+      subtitle VARCHAR(240) NULL,
+      description TEXT NULL,
+      destination_link VARCHAR(2048) NULL,
+      target_section VARCHAR(16) NOT NULL DEFAULT 'hero',
+      is_published BOOLEAN NOT NULL DEFAULT TRUE,
+      desktop_image VARCHAR(512) NOT NULL,
+      mobile_image VARCHAR(512) NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      KEY banners_section_status_idx (target_section, is_published),
+      KEY banners_created_at_idx (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  const [bannerColumnRows] = await pool.execute(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'banners'`,
+  );
+  const bannerColumns = new Set(bannerColumnRows.map((column) => column.COLUMN_NAME));
+  if (!bannerColumns.has("created_at")) {
+    await pool.query(
+      "ALTER TABLE banners ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP",
+    );
+  }
+  if (!bannerColumns.has("updated_at")) {
+    await pool.query(
+      "ALTER TABLE banners ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP",
+    );
+  }
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS categories (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       cat_id VARCHAR(64) NOT NULL UNIQUE,
