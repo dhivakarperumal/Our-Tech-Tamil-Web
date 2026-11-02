@@ -56,14 +56,14 @@ function HomeBanners() {
     .filter(Boolean);
 
   return (
-    <section className="relative isolate overflow-hidden bg-gradient-to-br from-[#faf5ff] via-[#f2e7ff] to-[#c99af4]">
+    <section className="relative isolate flex min-h-[90vh] flex-col overflow-hidden bg-gradient-to-br from-[#faf5ff] via-[#f2e7ff] to-[#c99af4] lg:h-[90vh] lg:min-h-[600px]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_68%_48%,rgba(164,91,232,0.34),transparent_38%),radial-gradient(ellipse_at_26%_0%,rgba(255,255,255,0.9),transparent_55%)]" />
       <div className="pointer-events-none absolute -left-[8%] -top-[57%] h-[82%] w-[62%] rounded-[50%] bg-white/45" />
       <div className="pointer-events-none absolute -bottom-[44%] -left-[8%] h-[58%] w-[72%] -rotate-6 rounded-[50%] bg-white/35" />
       <div className="pointer-events-none absolute -bottom-[50%] -right-[12%] h-[72%] w-[70%] rotate-[-8deg] rounded-[50%] bg-violet-400/30" />
 
-      <PageContainer className="relative py-8 sm:py-10 lg:py-12">
-        <div className="grid min-h-[620px] items-center gap-3 lg:min-h-[610px] lg:grid-cols-[0.98fr_1.02fr] xl:gap-0">
+      <PageContainer className="relative flex flex-1 items-center py-6 sm:py-8 lg:py-6">
+        <div className="grid w-full items-center gap-3 lg:grid-cols-[0.98fr_1.02fr] xl:gap-0">
           <div className="relative z-10 py-4 lg:py-0">
             <a
               href="#shop-by-category"
@@ -114,7 +114,7 @@ function HomeBanners() {
             </a>
           </div>
 
-          <div className="relative z-10 flex min-h-[320px] items-end justify-center sm:min-h-[430px] lg:min-h-[560px]">
+          <div className="relative z-10 flex min-h-[320px] items-end justify-center sm:min-h-[430px] lg:min-h-0">
             {heroImage ? (
               <picture className="relative z-10 block w-full">
                 {heroBanner?.mobile_image && (
@@ -126,7 +126,7 @@ function HomeBanners() {
                 <img
                   src={heroImage}
                   alt={heroTitle}
-                  className="mx-auto max-h-[500px] w-full object-contain drop-shadow-[0_20px_28px_rgba(67,30,116,0.2)] sm:max-h-[540px]"
+                  className="mx-auto max-h-[500px] w-full object-contain drop-shadow-[0_20px_28px_rgba(67,30,116,0.2)] sm:max-h-[540px] lg:max-h-[65vh]"
                 />
               </picture>
             ) : (
