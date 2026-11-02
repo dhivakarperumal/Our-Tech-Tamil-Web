@@ -127,6 +127,7 @@ function createAdminContentRouter(controller) {
     });
   });
   router.post("/youtube-videos", controller.createYoutubeVideo);
+  router.put("/youtube-videos/:id", controller.updateYoutubeVideo);
   router.delete("/youtube-videos/:id", controller.deleteYoutubeVideo);
 
   return router;

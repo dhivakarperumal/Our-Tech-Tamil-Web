@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import {
   BadgeCheck,
   CircleAlert,
+  Eye,
   ExternalLink,
   FileText,
   ImagePlus,
@@ -10,6 +11,7 @@ import {
   List,
   Loader2,
   Link2,
+  Pencil,
   Plus,
   Search,
   Trash2,
@@ -81,6 +83,8 @@ const YoutubeVideos = () => {
   const [loadingVideoCode, setLoadingVideoCode] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingVideoId, setEditingVideoId] = useState(null);
+  const [viewVideo, setViewVideo] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
@@ -106,12 +110,13 @@ const YoutubeVideos = () => {
   }, []);
 
   useEffect(() => {
-    if (!isAddModalOpen) return undefined;
+    if (!isAddModalOpen && !viewVideo) return undefined;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const handleKeyDown = (event) => {
       if (event.key === "Escape" && !saving && !uploadingThumbnail && !uploadingDocuments) {
         setIsAddModalOpen(false);
+        setViewVideo(null);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -119,7 +124,7 @@ const YoutubeVideos = () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isAddModalOpen, saving, uploadingThumbnail, uploadingDocuments]);
+  }, [isAddModalOpen, viewVideo, saving, uploadingThumbnail, uploadingDocuments]);
 
   const updateApplicationLink = (index, field, value) => {
     setForm((current) => ({
@@ -213,6 +218,7 @@ const YoutubeVideos = () => {
         throw new Error("The server did not return a Video ID.");
       }
       setForm({ ...emptyVideo, video_code: data.video_code });
+      setEditingVideoId(null);
       setIsAddModalOpen(true);
     } catch (error) {
       console.error("Failed to generate Video ID:", error);
@@ -220,6 +226,22 @@ const YoutubeVideos = () => {
     } finally {
       setLoadingVideoCode(false);
     }
+  };
+
+  const openEditVideoModal = (video) => {
+    setForm({
+      ...emptyVideo,
+      ...video,
+      application_links: parseJsonArray(video.application_links).length
+        ? parseJsonArray(video.application_links)
+        : [{ title: "", url: "" }],
+      documents: parseJsonArray(video.documents),
+      follow_up_notes: video.follow_up_notes || "",
+      thumbnail_image: video.thumbnail_image || "",
+      thumbnail_url: video.thumbnail_url || "",
+    });
+    setEditingVideoId(video.id);
+    setIsAddModalOpen(true);
   };
 
   const submitVideo = async (event) => {
@@ -232,30 +254,37 @@ const YoutubeVideos = () => {
       return;
     }
     setSaving(true);
+    const payload = {
+      ...form,
+      video_code: form.video_code.trim(),
+      title: form.title.trim(),
+      video_url: form.video_url.trim(),
+      description: form.description.trim(),
+      thumbnail_url: form.thumbnail_url.trim(),
+      application_links: form.application_links
+        .filter((link) => link.title.trim() || link.url.trim())
+        .map((link) => ({ title: link.title.trim(), url: link.url.trim() })),
+      follow_up_notes: form.follow_up_notes.trim(),
+    };
     try {
-      const { data } = await api.post("/admin/content/youtube-videos", {
-        ...form,
-        video_code: form.video_code.trim(),
-        title: form.title.trim(),
-        video_url: form.video_url.trim(),
-        description: form.description.trim(),
-        thumbnail_url: form.thumbnail_url.trim(),
-        application_links: form.application_links
-          .filter((link) => link.title.trim() || link.url.trim())
-          .map((link) => ({ title: link.title.trim(), url: link.url.trim() })),
-        follow_up_notes: form.follow_up_notes.trim(),
-      });
-      setVideos((current) => [{
+      const { data } = editingVideoId
+        ? await api.put(`/admin/content/youtube-videos/${editingVideoId}`, payload)
+        : await api.post("/admin/content/youtube-videos", payload);
+      const savedVideo = {
         ...data.video,
         application_links: parseJsonArray(data.video.application_links),
         documents: parseJsonArray(data.video.documents),
-      }, ...current]);
+      };
+      setVideos((current) => editingVideoId
+        ? current.map((video) => video.id === editingVideoId ? savedVideo : video)
+        : [savedVideo, ...current]);
       setForm(emptyVideo);
+      setEditingVideoId(null);
       setIsAddModalOpen(false);
-      toast.success("YouTube video added.");
+      toast.success(editingVideoId ? "YouTube video updated." : "YouTube video added.");
     } catch (error) {
-      console.error("Failed to add YouTube video:", error);
-      toast.error(error.response?.data?.message || "Could not add this video.");
+      console.error("Failed to save YouTube video:", error);
+      toast.error(error.response?.data?.message || "Could not save this video.");
     } finally {
       setSaving(false);
     }
@@ -378,7 +407,7 @@ const YoutubeVideos = () => {
           <section
             role="dialog"
             aria-modal="true"
-            aria-labelledby="add-youtube-title"
+            aria-labelledby="youtube-form-title"
             className="my-0 flex h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25 sm:my-auto sm:h-[min(90dvh,52rem)] sm:max-h-[calc(100dvh-2.5rem)]"
           >
             <div className="z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white via-white to-violet-50/70 px-5 py-4 sm:px-7">
@@ -388,15 +417,15 @@ const YoutubeVideos = () => {
                 </span>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Video management</p>
-                  <h2 id="add-youtube-title" className="mt-0.5 font-bold text-slate-900">Add a YouTube video</h2>
-                  <p className="text-xs text-slate-500">Add a video, application links, and supporting details.</p>
+                  <h2 id="youtube-form-title" className="mt-0.5 font-bold text-slate-900">{editingVideoId ? "Edit YouTube video" : "Add a YouTube video"}</h2>
+                  <p className="text-xs text-slate-500">{editingVideoId ? "Update the video and its supporting details." : "Add a video, application links, and supporting details."}</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAddModalOpen(false)}
                 disabled={saving || uploadingThumbnail || uploadingDocuments}
-                aria-label="Close add YouTube video dialog"
+                aria-label="Close YouTube video form"
                 className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-white hover:text-slate-900 hover:shadow-sm disabled:opacity-50"
               >
                 <X className="h-5 w-5" />
@@ -616,7 +645,7 @@ const YoutubeVideos = () => {
             </form>
 
             <footer className="z-10 flex shrink-0 flex-col-reverse gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7">
-              <p className="text-xs text-slate-500">Add a YouTube link to create this video entry.</p>
+              <p className="text-xs text-slate-500">{editingVideoId ? "Save your changes to update this video." : "Add a YouTube link to create this video entry."}</p>
               <div className="flex flex-col-reverse gap-2 sm:flex-row">
                 <button
                   type="button"
@@ -632,8 +661,8 @@ const YoutubeVideos = () => {
                   disabled={saving || uploadingThumbnail || uploadingDocuments}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-700/15 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  {saving ? "Saving video..." : "Add video"}
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editingVideoId ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                  {saving ? "Saving video..." : editingVideoId ? "Save changes" : "Add video"}
                 </button>
               </div>
             </footer>
@@ -642,7 +671,117 @@ const YoutubeVideos = () => {
         document.body
       )}
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      {viewVideo && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-3 backdrop-blur-sm sm:p-5"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setViewVideo(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="youtube-view-title"
+            className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25"
+          >
+            <header className="flex items-start justify-between gap-4 border-b border-slate-100 bg-gradient-to-r from-white to-violet-50/70 px-5 py-4 sm:px-7">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Video details</p>
+                <h2 id="youtube-view-title" className="mt-1 text-lg font-bold text-slate-900">{viewVideo.title}</h2>
+                <p className="mt-1 text-xs font-medium text-violet-700">{viewVideo.video_code || `YT-${String(viewVideo.id).padStart(5, "0")}`}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewVideo(null)}
+                aria-label="Close video details"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-900"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </header>
+            <div className="space-y-5 p-5 sm:p-7">
+              <img
+                src={resolveMediaUrl(viewVideo.thumbnail_image || viewVideo.thumbnail_url || `https://img.youtube.com/vi/${viewVideo.video_id}/hqdefault.jpg`)}
+                alt={`${viewVideo.title} thumbnail`}
+                className="aspect-video w-full rounded-2xl bg-slate-950 object-cover"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className={`rounded-full px-3 py-1 text-xs font-bold ${viewVideo.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                  {viewVideo.status}
+                </span>
+                <a
+                  href={viewVideo.video_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-100"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open on YouTube
+                </a>
+              </div>
+              {viewVideo.description && <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600">{viewVideo.description}</p>}
+              {viewVideo.application_links?.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-sm font-bold text-slate-800">Application links</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {viewVideo.application_links.map((link, index) => (
+                      <a
+                        key={`${link.url}-${index}`}
+                        href={link.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-violet-100 px-3 py-2 text-xs font-semibold text-violet-700 hover:bg-violet-50"
+                      >
+                        {link.title}<ExternalLink className="h-3 w-3" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {viewVideo.documents?.length > 0 && (
+                <div>
+                  <h3 className="mb-2 text-sm font-bold text-slate-800">Supporting documents</h3>
+                  <ul className="space-y-2">
+                    {viewVideo.documents.map((document, index) => (
+                      <li key={`${document.name}-${index}`}>
+                        <a
+                          href={resolveMediaUrl(document.url || document.data)}
+                          download={document.name}
+                          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-violet-700"
+                        >
+                          <FileText className="h-4 w-4" />{document.name}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {viewVideo.follow_up_notes && (
+                <div>
+                  <h3 className="mb-2 text-sm font-bold text-slate-800">Follow-up notes</h3>
+                  <p className="whitespace-pre-wrap rounded-xl bg-amber-50 p-3 text-sm leading-6 text-amber-900">{viewVideo.follow_up_notes}</p>
+                </div>
+              )}
+            </div>
+            <footer className="flex justify-end gap-2 border-t border-slate-100 px-5 py-4 sm:px-7">
+              <button
+                type="button"
+                onClick={() => {
+                  const video = viewVideo;
+                  setViewVideo(null);
+                  openEditVideoModal(video);
+                }}
+                className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-violet-800"
+              >
+                <Pencil className="h-4 w-4" />Edit video
+              </button>
+            </footer>
+          </section>
+        </div>,
+        document.body
+      )}
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-0 shadow-sm">
         {loading ? (
           <div className="flex min-h-48 items-center justify-center rounded-2xl border border-slate-200 bg-white text-violet-700 shadow-sm">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -697,6 +836,25 @@ const YoutubeVideos = () => {
                       </span>
                     </td>
                     <td className="px-4 py-4 text-right">
+                      <div className="flex justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setViewVideo(video)}
+                        aria-label={`View ${video.title}`}
+                        title="View video details"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-50 hover:text-violet-700"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openEditVideoModal(video)}
+                        aria-label={`Edit ${video.title}`}
+                        title="Edit video"
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-50 hover:text-violet-700"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => deleteVideo(video)}
@@ -706,6 +864,7 @@ const YoutubeVideos = () => {
                       >
                         {deletingId === video.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                       </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -748,15 +907,36 @@ const YoutubeVideos = () => {
                       </div>
                       <h3 className="line-clamp-2 font-semibold text-slate-900">{video.title}</h3>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => deleteVideo(video)}
-                      disabled={deletingId === video.id}
-                      aria-label={`Delete ${video.title}`}
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-                    >
-                      {deletingId === video.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                    </button>
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setViewVideo(video)}
+                        aria-label={`View ${video.title}`}
+                        title="View video details"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-50 hover:text-violet-700"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openEditVideoModal(video)}
+                        aria-label={`Edit ${video.title}`}
+                        title="Edit video"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-50 hover:text-violet-700"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => deleteVideo(video)}
+                        disabled={deletingId === video.id}
+                        aria-label={`Delete ${video.title}`}
+                        title="Delete video"
+                        className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                      >
+                        {deletingId === video.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </button>
+                    </div>
                   </div>
                   {video.description && <p className="mt-2 line-clamp-2 text-sm text-slate-500">{video.description}</p>}
                   {video.application_links?.length > 0 && (

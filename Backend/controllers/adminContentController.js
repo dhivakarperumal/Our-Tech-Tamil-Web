@@ -96,6 +96,52 @@ function validateDocuments(value) {
   );
 }
 
+function parseYoutubeVideoInput(body) {
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  const description = typeof body.description === "string" ? body.description.trim() : "";
+  const thumbnailImage = body.thumbnail_image || "";
+  const thumbnailUrl = typeof body.thumbnail_url === "string" ? body.thumbnail_url.trim() : "";
+  const applicationLinks = body.application_links;
+  const documents = body.documents;
+  const followUpNotes = typeof body.follow_up_notes === "string" ? body.follow_up_notes.trim() : "";
+  const status = body.status || "Active";
+  const parsedVideo = parseYoutubeUrl(body.video_url);
+
+  if (title.length < 2 || title.length > 160) return { error: "Video title must be between 2 and 160 characters." };
+  if (!parsedVideo) return { error: "Enter a valid YouTube video URL." };
+  if (description.length > 5000) return { error: "Description must be 5,000 characters or fewer." };
+  if (followUpNotes.length > 5000) return { error: "Follow-up notes must be 5,000 characters or fewer." };
+  if (thumbnailImage
+    && !validateDataFile(thumbnailImage, new Set(["image/jpeg", "image/png", "image/webp"]), 3 * 1024 * 1024)
+    && !validateUploadedYoutubeAsset(thumbnailImage, "youtube", "jpg|png|webp")
+    && !validateUploadedYoutubeAsset(thumbnailImage, "youtube-videos", "jpg|png|webp")) {
+    return { error: "Upload a PNG, JPEG, or WEBP thumbnail no larger than 3 MB." };
+  }
+  if (!validateOptionalUrl(thumbnailUrl)) return { error: "Thumbnail URL must be a valid HTTP or HTTPS URL." };
+  if (!validateApplicationLinks(applicationLinks)) {
+    return { error: "Add up to 20 application links with a title and valid HTTP or HTTPS URL." };
+  }
+  if (!validateDocuments(documents)) {
+    return { error: "Upload up to 4 supported documents, each no larger than 1 MB." };
+  }
+  if (!SERVICE_STATUSES.has(status)) return { error: "Choose a valid video status." };
+
+  return {
+    video: {
+      title,
+      videoUrl: parsedVideo.url,
+      videoId: parsedVideo.videoId,
+      thumbnailImage,
+      thumbnailUrl,
+      description,
+      applicationLinks,
+      documents,
+      followUpNotes,
+      status,
+    },
+  };
+}
+
 function parseJsonArray(value) {
   if (Array.isArray(value)) return value;
   if (typeof value !== "string" || !value) return [];
@@ -288,47 +334,8 @@ function createAdminContentController(pool) {
     },
 
     async createYoutubeVideo(request, response, next) {
-      const body = request.body || {};
-      const title = typeof body.title === "string" ? body.title.trim() : "";
-      const description = typeof body.description === "string" ? body.description.trim() : "";
-      const thumbnailImage = body.thumbnail_image || "";
-      const thumbnailUrl = typeof body.thumbnail_url === "string" ? body.thumbnail_url.trim() : "";
-      const applicationLinks = body.application_links;
-      const documents = body.documents;
-      const followUpNotes = typeof body.follow_up_notes === "string" ? body.follow_up_notes.trim() : "";
-      const status = body.status || "Active";
-      const parsedVideo = parseYoutubeUrl(body.video_url);
-
-      if (title.length < 2 || title.length > 160) {
-        return response.status(400).json({ message: "Video title must be between 2 and 160 characters." });
-      }
-      if (!parsedVideo) {
-        return response.status(400).json({ message: "Enter a valid YouTube video URL." });
-      }
-      if (description.length > 5000) {
-        return response.status(400).json({ message: "Description must be 5,000 characters or fewer." });
-      }
-      if (followUpNotes.length > 5000) {
-        return response.status(400).json({ message: "Follow-up notes must be 5,000 characters or fewer." });
-      }
-      if (thumbnailImage
-        && !validateDataFile(thumbnailImage, new Set(["image/jpeg", "image/png", "image/webp"]), 3 * 1024 * 1024)
-        && !validateUploadedYoutubeAsset(thumbnailImage, "youtube", "jpg|png|webp")
-        && !validateUploadedYoutubeAsset(thumbnailImage, "youtube-videos", "jpg|png|webp")) {
-        return response.status(400).json({ message: "Upload a PNG, JPEG, or WEBP thumbnail no larger than 3 MB." });
-      }
-      if (!validateOptionalUrl(thumbnailUrl)) {
-        return response.status(400).json({ message: "Thumbnail URL must be a valid HTTP or HTTPS URL." });
-      }
-      if (!validateApplicationLinks(applicationLinks)) {
-        return response.status(400).json({ message: "Add up to 20 application links with a title and valid HTTP or HTTPS URL." });
-      }
-      if (!validateDocuments(documents)) {
-        return response.status(400).json({ message: "Upload up to 4 supported documents, each no larger than 1 MB." });
-      }
-      if (!SERVICE_STATUSES.has(status)) {
-        return response.status(400).json({ message: "Choose a valid video status." });
-      }
+      const { video, error: validationError } = parseYoutubeVideoInput(request.body || {});
+      if (validationError) return response.status(400).json({ message: validationError });
 
       let connection;
       try {
@@ -339,16 +346,16 @@ function createAdminContentController(pool) {
           "INSERT INTO admin_youtube_videos (video_code, title, video_url, video_id, thumbnail_image, thumbnail_url, description, application_links, documents, follow_up_notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
             temporaryVideoCode,
-            title,
-            parsedVideo.url,
-            parsedVideo.videoId,
-            thumbnailImage || null,
-            thumbnailUrl || null,
-            description || null,
-            JSON.stringify(applicationLinks),
-            JSON.stringify(documents),
-            followUpNotes || null,
-            status,
+            video.title,
+            video.videoUrl,
+            video.videoId,
+            video.thumbnailImage || null,
+            video.thumbnailUrl || null,
+            video.description || null,
+            JSON.stringify(video.applicationLinks),
+            JSON.stringify(video.documents),
+            video.followUpNotes || null,
+            video.status,
           ],
         );
         const videoCode = `YT-${String(result.insertId).padStart(5, "0")}`;
@@ -385,6 +392,55 @@ function createAdminContentController(pool) {
         return next(error);
       } finally {
         connection?.release();
+      }
+    },
+
+    async updateYoutubeVideo(request, response, next) {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) {
+        return response.status(400).json({ message: "Invalid video id." });
+      }
+
+      const { video, error: validationError } = parseYoutubeVideoInput(request.body || {});
+      if (validationError) return response.status(400).json({ message: validationError });
+
+      try {
+        await pool.execute(
+          `UPDATE admin_youtube_videos
+           SET title = ?, video_url = ?, video_id = ?, thumbnail_image = ?, thumbnail_url = ?,
+               description = ?, application_links = ?, documents = ?, follow_up_notes = ?, status = ?
+           WHERE id = ?`,
+          [
+            video.title,
+            video.videoUrl,
+            video.videoId,
+            video.thumbnailImage || null,
+            video.thumbnailUrl || null,
+            video.description || null,
+            JSON.stringify(video.applicationLinks),
+            JSON.stringify(video.documents),
+            video.followUpNotes || null,
+            video.status,
+            id,
+          ],
+        );
+        const [videos] = await pool.execute(
+          "SELECT id, video_code, title, video_url, video_id, thumbnail_image, thumbnail_url, description, application_links, documents, follow_up_notes, status, created_at FROM admin_youtube_videos WHERE id = ? LIMIT 1",
+          [id],
+        );
+        if (!videos[0]) return response.status(404).json({ message: "YouTube video not found." });
+        return response.json({
+          video: {
+            ...videos[0],
+            application_links: parseJsonArray(videos[0].application_links),
+            documents: parseJsonArray(videos[0].documents),
+          },
+        });
+      } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+          return response.status(409).json({ message: "This YouTube video has already been added." });
+        }
+        return next(error);
       }
     },
 
