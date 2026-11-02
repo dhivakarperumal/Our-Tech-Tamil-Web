@@ -9,7 +9,8 @@ const banners = [
     offer: "Up to 40% OFF",
     button: "Shop Gaming",
     image:
-      "https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=500&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=500&auto=format&fit=crop",
+    imageAlt: "Gaming controller",
     theme: "gaming",
   },
   {
@@ -20,6 +21,7 @@ const banners = [
     button: "Explore Laptops",
     image:
       "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=500&auto=format&fit=crop",
+    imageAlt: "Laptop",
     theme: "laptop",
   },
   {
@@ -30,30 +32,31 @@ const banners = [
     button: "Shop Audio",
     image:
       "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&auto=format&fit=crop",
+    imageAlt: "Over-ear headphones",
     theme: "audio",
   },
 ];
 
 const TechBanner = () => {
   return (
-    <section className="w-full py-5">
-      <div className="mx-auto grid max-w-[1450px] grid-cols-1 gap-3 px-4 sm:grid-cols-2 lg:grid-cols-3">
+    <section className="w-full py-4">
+      <div className="mx-auto grid max-w-[1450px] grid-cols-1 gap-2 px-4 sm:grid-cols-2 md:grid-cols-3">
 
         {banners.map((banner) => (
           <div
             key={banner.id}
-            className={`group relative flex h-[125px] overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:h-[135px] ${
+            className={`group relative flex h-[108px] min-w-0 overflow-hidden rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:h-[116px] ${
               banner.theme === "gaming"
-              ? "bg-gradient-to-r from-primary-dark via-primary to-secondary-dark"
+                ? "bg-gradient-to-r from-secondary-dark via-primary to-primary-dark"
                 : banner.theme === "laptop"
-                ? "bg-gradient-to-r from-background via-border to-secondary-light"
-                : "bg-gradient-to-r from-secondary-dark via-secondary to-gradient-middle"
+                  ? "bg-gradient-to-r from-surface via-background to-secondary-light/30"
+                  : "bg-gradient-to-r from-secondary-dark via-secondary to-gradient-middle"
             }`}
           >
             {/* Text Content */}
-            <div className="relative z-10 flex w-[58%] flex-col justify-center pl-5 sm:pl-6">
+            <div className="relative z-10 flex w-[60%] flex-col justify-center pl-4 sm:pl-5">
               <h3
-                className={`text-base font-extrabold tracking-tight ${
+                className={`text-sm font-extrabold tracking-tight sm:text-base ${
                   banner.theme === "laptop"
                     ? "text-text-primary"
                     : "text-surface"
@@ -64,7 +67,7 @@ const TechBanner = () => {
               </h3>
 
               <p
-                className={`mt-0.5 text-xs font-medium ${
+                className={`text-[11px] font-medium sm:text-xs ${
                   banner.theme === "laptop"
                     ? "text-text-secondary"
                     : "text-surface/80"
@@ -74,7 +77,7 @@ const TechBanner = () => {
               </p>
 
               <p
-                className={`mt-1 text-sm font-black ${
+                className={`mt-0.5 text-sm font-black sm:text-base ${
                   banner.theme === "laptop"
                     ? "text-primary"
                     : "text-accent"
@@ -84,7 +87,7 @@ const TechBanner = () => {
               </p>
 
               <button
-                className={`mt-2 flex w-fit items-center gap-1 rounded-full px-3 py-1.5 text-[10px] font-bold transition-all duration-300 group-hover:gap-2 ${
+                className={`mt-1 flex w-fit items-center gap-1 rounded-full px-2.5 py-1 text-[9px] font-bold transition-all duration-300 group-hover:gap-2 sm:text-[10px] ${
                   banner.theme === "laptop"
                     ? "bg-surface text-primary-dark hover:bg-primary hover:text-surface"
                     : "bg-surface text-primary-dark hover:bg-accent"
@@ -96,11 +99,27 @@ const TechBanner = () => {
             </div>
 
             {/* Product Image */}
+            {banner.theme === "audio" && (
+              <div
+                aria-hidden="true"
+                className="absolute right-[27%] top-1/2 flex -translate-y-1/2 items-center gap-1 opacity-70"
+              >
+                {[12, 20, 30, 18, 26, 14].map((height, index) => (
+                  <span
+                    key={index}
+                    className="w-1 rounded-full bg-accent"
+                    style={{ height: `${height}px` }}
+                  />
+                ))}
+              </div>
+            )}
             <div className="absolute right-0 top-0 flex h-full w-[46%] items-center justify-center">
               <img
                 src={banner.image}
-                alt={banner.title}
-                className="h-[90%] w-full object-contain p-2 transition-transform duration-500 group-hover:scale-110"
+                alt={banner.imageAlt}
+                className={`h-[96%] w-full object-contain p-1 transition-transform duration-500 group-hover:scale-110 ${
+                  banner.theme === "audio" ? "relative z-10" : ""
+                }`}
               />
             </div>
 
