@@ -71,6 +71,8 @@ const Category = () => {
     // ---- Modal State ----
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isSavingCategory, setIsSavingCategory] = useState(false);
+    const [isImageUploading, setIsImageUploading] = useState(false);
     const [formData, setFormData] = useState({
         catId: "",
         name: "",
@@ -88,14 +90,14 @@ const Category = () => {
         const previousOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
         const handleKeyDown = (event) => {
-            if (event.key === "Escape" && !isSavingCategory) setIsModalOpen(false);
+            if (event.key === "Escape" && !isSavingCategory && !isImageUploading) setIsModalOpen(false);
         };
         window.addEventListener("keydown", handleKeyDown);
         return () => {
             document.body.style.overflow = previousOverflow;
             window.removeEventListener("keydown", handleKeyDown);
         };
-    }, [isModalOpen, isSavingCategory]);
+    }, [isModalOpen, isSavingCategory, isImageUploading]);
 
     // ---- Derived Data (Search & Pagination) ----
     const filteredCategories = useMemo(() => {
@@ -549,7 +551,7 @@ const Category = () => {
                     className="fixed inset-0 flex items-start justify-center overflow-y-auto overscroll-contain bg-slate-950/65 p-3 backdrop-blur-sm sm:items-center sm:p-5"
                     style={{ zIndex: 9999 }}
                     onMouseDown={(event) => {
-                        if (event.target === event.currentTarget && !isSavingCategory) setIsModalOpen(false);
+                        if (event.target === event.currentTarget && !isSavingCategory && !isImageUploading) setIsModalOpen(false);
                     }}
                 >
                     <section
@@ -576,7 +578,7 @@ const Category = () => {
                             <button
                                 onClick={() => setIsModalOpen(false)}
                                 type="button"
-                                disabled={isSavingCategory}
+                                disabled={isSavingCategory || isImageUploading}
                                 aria-label="Close category dialog"
                                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-slate-500 transition hover:bg-white hover:text-slate-900 hover:shadow-sm disabled:opacity-50"
                             >
@@ -609,10 +611,20 @@ const Category = () => {
                                             className="w-full bg-white border border-gray-200 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-sm"
                                         />
                                     </div>
-                                    <CategoryTypeDropdown
-                                        value={formData.categoryType}
-                                        onChange={(categoryType) => setFormData((current) => ({ ...current, categoryType }))}
-                                    />
+                                    <div>
+                                        <label htmlFor="category-type" className="mb-1.5 block text-xs font-bold text-gray-700">Category Type</label>
+                                        <select
+                                            id="category-type"
+                                            value={formData.categoryType}
+                                            onChange={(event) => setFormData((current) => ({ ...current, categoryType: event.target.value }))}
+                                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition-all focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+                                        >
+                                            <option value="">Select category type</option>
+                                            {CATEGORY_TYPES.map((categoryType) => (
+                                                <option key={categoryType} value={categoryType}>{categoryType}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-700 mb-1.5">Description</label>
                                         <textarea
@@ -716,7 +728,7 @@ const Category = () => {
                             <button
                                 type="button"
                                 onClick={() => setIsModalOpen(false)}
-                                disabled={isSavingCategory}
+                                disabled={isSavingCategory || isImageUploading}
                                 className="admin-button-secondary rounded-xl px-5 py-3 text-sm font-semibold transition-all disabled:opacity-50"
                             >
                                 Cancel
@@ -724,7 +736,7 @@ const Category = () => {
                             <button
                                 type="button"
                                 onClick={handleSaveCategory}
-                                disabled={!formData.name || isImageUploading}
+                                disabled={!formData.name || isImageUploading || isSavingCategory}
                                 className="admin-button-primary px-6 py-2.5 text-sm font-bold rounded-xl shadow-md active:scale-95 flex items-center gap-2"
                             >
                                 {isImageUploading ? 'Uploading image...' : isEditing ? 'Update Category' : 'Save Category'}

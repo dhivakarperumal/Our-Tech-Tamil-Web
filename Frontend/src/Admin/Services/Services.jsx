@@ -56,7 +56,7 @@ const Services = () => {
   const [editingServiceId, setEditingServiceId] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [viewMode, setViewMode] = useState("grid");
+  const [viewMode, setViewMode] = useState("table");
 
   const loadServices = async () => {
     try {
@@ -340,32 +340,32 @@ const Services = () => {
             <table className="w-full min-w-[760px] text-left">
               <thead className="bg-violet-950 text-xs uppercase tracking-wide text-white">
                 <tr>
-                  <th className="px-4 py-3">S. No.</th>
-                  <th className="px-4 py-3">Service</th>
-                  <th className="px-4 py-3">Service ID</th>
-                  <th className="px-4 py-3">Price</th>
-                  <th className="px-4 py-3">Duration</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th className="px-4 py-4">S. No.</th>
+                  <th className="px-4 py-4">Service</th>
+                  <th className="px-4 py-4">Service ID</th>
+                  <th className="px-4 py-4">Price</th>
+                  <th className="px-4 py-4">Duration</th>
+                  <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredServices.map((service, index) => (
                   <tr key={service.id} className="text-sm text-slate-700 hover:bg-violet-50/40">
-                    <td className="px-4 py-3 font-semibold text-slate-500">{index + 1}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4 font-semibold text-slate-500">{index + 1}</td>
+                    <td className="px-4 py-4">
                       <p className="font-semibold text-slate-900">{service.title}</p>
                       <p className="text-xs text-slate-500">{service.name}</p>
                     </td>
-                    <td className="px-4 py-3 font-medium text-violet-700">{service.service_id}</td>
-                    <td className="px-4 py-3">{service.price == null ? "—" : `₹${Number(service.price).toLocaleString("en-IN")}`}</td>
-                    <td className="px-4 py-3">{service.duration || "—"}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4 font-medium text-violet-700">{service.service_id}</td>
+                    <td className="px-4 py-4">{service.price == null ? "—" : `₹${Number(service.price).toLocaleString("en-IN")}`}</td>
+                    <td className="px-4 py-4">{service.duration || "—"}</td>
+                    <td className="px-4 py-4">
                       <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${service.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
                         {service.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-4">
                       <div className="flex justify-end gap-1">
                         <button type="button" onClick={() => openEditServiceModal(service)} aria-label={`Edit ${service.name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-violet-50 hover:text-violet-700">
                           <Edit2 className="h-4 w-4" />

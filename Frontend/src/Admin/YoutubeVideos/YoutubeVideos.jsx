@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  BadgeCheck,
+  CircleAlert,
   ExternalLink,
   FileText,
+  Image,
   ImagePlus,
+  LayoutGrid,
+  List,
   Loader2,
   Link2,
   Plus,
+  Search,
   Trash2,
   Upload,
   Video,
@@ -76,6 +82,9 @@ const YoutubeVideos = () => {
   const [loadingVideoCode, setLoadingVideoCode] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [viewMode, setViewMode] = useState("table");
 
   const loadVideos = async () => {
     try {
@@ -268,36 +277,97 @@ const YoutubeVideos = () => {
     }
   };
 
+  const activeVideoCount = videos.filter((video) => video.status === "Active").length;
+  const inactiveVideoCount = videos.length - activeVideoCount;
+  const videosWithThumbnailsCount = videos.filter((video) => Boolean(video.thumbnail_image || video.thumbnail_url)).length;
+  const filteredVideos = videos.filter((video) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query || [
+      video.title,
+      video.video_code,
+      video.video_url,
+      video.description,
+    ].some((value) => String(value || "").toLowerCase().includes(query));
+    const matchesStatus = statusFilter === "All" || video.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="mx-auto max-w-7xl space-y-7 pb-10">
-      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#250744] via-[#3B0A68] to-[#7410A2] p-6 text-white shadow-xl shadow-violet-950/10 sm:p-8">
-        <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full bg-fuchsia-400/15 blur-3xl" />
-        <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-[#FFD52E]">
-            <Video className="h-7 w-7" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#FFD52E]">Admin workspace</p>
-            <h1 className="mt-1 text-2xl font-bold sm:text-3xl">YouTube videos</h1>
-            <p className="mt-1 text-sm text-white/70">Add and manage videos for your storefront.</p>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="hidden rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-center sm:block">
-              <p className="text-2xl font-bold">{videos.length}</p>
-              <p className="text-xs text-white/65">Total videos</p>
+      <section aria-label="YouTube video summary" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Total Videos", value: videos.length, detail: "All video listings", Icon: Video, color: "bg-violet-700" },
+          { label: "Active", value: activeVideoCount, detail: "Available videos", Icon: BadgeCheck, color: "bg-emerald-500" },
+          { label: "Inactive", value: inactiveVideoCount, detail: "Hidden videos", Icon: CircleAlert, color: "bg-amber-500" },
+          { label: "With Thumbnail", value: videosWithThumbnailsCount, detail: "Videos with an uploaded thumbnail", Icon: Image, color: "bg-pink-500" },
+        ].map(({ label, value, detail, Icon, color }) => (
+          <article key={label} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+            <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm ${color}`}>
+              <Icon className="h-6 w-6" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-400">{label}</p>
+              <p className="text-3xl font-black leading-tight text-slate-800">{value}</p>
+              <p className="truncate text-xs text-slate-400">{detail}</p>
             </div>
+          </article>
+        ))}
+      </section>
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5 xl:flex-row xl:items-center xl:justify-between">
+        <label className="relative block w-full xl:max-w-md">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search videos by title, ID..."
+            aria-label="Search YouTube videos"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+          />
+        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            aria-label="Filter videos by status"
+            className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 outline-none focus:border-violet-300"
+          >
+            <option value="All">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
             <button
               type="button"
-              onClick={openAddVideoModal}
-              disabled={loadingVideoCode}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#FFD52E] px-4 py-3 text-sm font-bold text-[#210839] shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-[#FFE36A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-violet-900"
+              onClick={() => setViewMode("grid")}
+              aria-label="Grid view"
+              aria-pressed={viewMode === "grid"}
+              className={`rounded-lg p-2.5 transition ${viewMode === "grid" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
             >
-              <Plus className="h-4 w-4" />
-              Add video
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              aria-label="Table view"
+              aria-pressed={viewMode === "table"}
+              className={`rounded-lg p-2.5 transition ${viewMode === "table" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+            >
+              <List className="h-4 w-4" />
             </button>
           </div>
+          <button
+            type="button"
+            onClick={openAddVideoModal}
+            disabled={loadingVideoCode}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-800 to-fuchsia-700 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-60 sm:flex-none"
+          >
+            {loadingVideoCode ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            Add video
+          </button>
         </div>
-      </header>
+      </div>
 
       {isAddModalOpen && createPortal(
         <div
@@ -575,29 +645,79 @@ const YoutubeVideos = () => {
         document.body
       )}
 
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="font-bold text-slate-900">Your videos</h2>
-            <p className="mt-1 text-xs text-slate-500">YouTube videos saved to your admin library.</p>
-          </div>
-          <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">{videos.length} total</span>
-        </div>
-
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         {loading ? (
           <div className="flex min-h-48 items-center justify-center rounded-2xl border border-slate-200 bg-white text-violet-700 shadow-sm">
             <Loader2 className="h-6 w-6 animate-spin" />
             <span className="ml-2 text-sm text-slate-500">Loading videos...</span>
           </div>
         ) : videos.length === 0 ? (
-          <div className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white px-5 text-center">
+          <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-5 text-center">
             <Video className="h-8 w-8 text-violet-300" />
             <p className="mt-3 font-semibold text-slate-700">No videos yet</p>
-            <p className="mt-1 text-sm text-slate-500">Add your first YouTube video using the form above.</p>
+            <p className="mt-1 text-sm text-slate-500">Add your first YouTube video to get started.</p>
+          </div>
+        ) : filteredVideos.length === 0 ? (
+          <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-5 text-center">
+            <Search className="h-8 w-8 text-violet-300" />
+            <p className="mt-3 font-semibold text-slate-700">No matching videos</p>
+            <p className="mt-1 text-sm text-slate-500">Try another search or status filter.</p>
+          </div>
+        ) : viewMode === "table" ? (
+          <div className="overflow-x-auto rounded-xl border border-slate-100">
+            <table className="w-full min-w-[760px] text-left">
+              <thead className="bg-violet-950 text-xs uppercase tracking-wide text-white">
+                <tr>
+                  <th className="px-4 py-4">S. No.</th>
+                  <th className="px-4 py-4">Video</th>
+                  <th className="px-4 py-4">Video ID</th>
+                  <th className="px-4 py-4">Thumbnail</th>
+                  <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredVideos.map((video, index) => (
+                  <tr key={video.id} className="text-sm text-slate-700 hover:bg-violet-50/40">
+                    <td className="px-4 py-4 font-semibold text-slate-500">{index + 1}</td>
+                    <td className="px-4 py-4">
+                      <a href={video.video_url} target="_blank" rel="noreferrer" className="font-semibold text-slate-900 hover:text-violet-700">
+                        {video.title}
+                      </a>
+                      <p className="max-w-sm truncate text-xs text-slate-500">{video.video_url}</p>
+                    </td>
+                    <td className="px-4 py-4 font-medium text-violet-700">{video.video_code || `YT-${String(video.id).padStart(5, "0")}`}</td>
+                    <td className="px-4 py-4">
+                      <img
+                        src={resolveMediaUrl(video.thumbnail_image || video.thumbnail_url || `https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`)}
+                        alt=""
+                        className="h-12 w-20 rounded-lg border border-slate-200 object-cover"
+                      />
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${video.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                        {video.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <button
+                        type="button"
+                        onClick={() => deleteVideo(video)}
+                        disabled={deletingId === video.id}
+                        aria-label={`Delete ${video.title}`}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                      >
+                        {deletingId === video.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {videos.map((video) => (
+            {filteredVideos.map((video) => (
               <article key={video.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-violet-950/5">
                 <a
                   href={video.video_url}
