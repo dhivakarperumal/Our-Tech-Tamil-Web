@@ -1,6 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Image, ImagePlus, Loader2, Plus, Trash2, Wrench, X } from "lucide-react";
+import {
+  BadgeCheck,
+  CircleAlert,
+  Edit2,
+  ImagePlus,
+  LayoutGrid,
+  List,
+  Loader2,
+  Plus,
+  Search,
+  Trash2,
+  Wrench,
+  X,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api";
 import StatusDropdown from "../StatusDropdown";
@@ -22,7 +35,8 @@ const inputClass = "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4
 
 const getServiceImageUrl = (image) => {
   if (!image || /^(https?:|data:|blob:)/i.test(image)) return image;
-  const configuredBackendUrl = import.meta.env.VITE_BACKEND_URL || api.defaults.baseURL || window.location.origin;
+  const configuredBackendUrl = import.meta.env.VITE_BACKEND_URL
+    || (api.defaults.baseURL?.startsWith("http") ? api.defaults.baseURL : "http://localhost:5000");
   const backendOrigin = new URL(configuredBackendUrl, window.location.origin).origin;
   const imagePath = image.replace(/\\/g, "/").replace(/^\/+/, "");
   return new URL(imagePath, `${backendOrigin}/`).href;
@@ -34,10 +48,15 @@ const Services = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [loadingServiceId, setLoadingServiceId] = useState(false);
   const [imagePreview, setImagePreview] = useState("");
   const imagePreviewRef = useRef("");
   const [deletingId, setDeletingId] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingServiceId, setEditingServiceId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [viewMode, setViewMode] = useState("table");
 
   const loadServices = async () => {
     try {
@@ -94,11 +113,11 @@ const Services = () => {
     setForm((current) => ({ ...current, image_url: "" }));
 
     const imageForm = new FormData();
-    imageForm.append("images", file);
+    imageForm.append("file", file);
     setUploadingImage(true);
     try {
-      const { data } = await api.post("/products/upload", imageForm);
-      const uploadedImage = data?.images?.[0];
+      const { data } = await api.post("/admin/content/services/upload-image", imageForm);
+      const uploadedImage = data?.image;
       if (typeof uploadedImage !== "string" || !uploadedImage) {
         throw new Error("The image upload did not return a saved image.");
       }
@@ -121,7 +140,7 @@ const Services = () => {
     event.preventDefault();
     setSaving(true);
     try {
-      const { data } = await api.post("/admin/content/services", {
+      const servicePayload = {
         ...form,
         service_id: form.service_id.trim(),
         name: form.name.trim(),
@@ -131,17 +150,23 @@ const Services = () => {
         note: form.note.trim(),
         duration: form.duration.trim(),
         image_url: form.image_url.trim(),
-      });
-      setServices((current) => [data.service, ...current]);
+      };
+      const { data } = editingServiceId
+        ? await api.put(`/admin/content/services/${editingServiceId}`, servicePayload)
+        : await api.post("/admin/content/services", servicePayload);
+      setServices((current) => editingServiceId
+        ? current.map((service) => service.id === data.service.id ? data.service : service)
+        : [data.service, ...current]);
       setForm(emptyService);
+      setEditingServiceId(null);
       if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
       imagePreviewRef.current = "";
       setImagePreview("");
       setIsAddModalOpen(false);
-      toast.success("Service added.");
+      toast.success(editingServiceId ? "Service updated." : "Service added.");
     } catch (error) {
-      console.error("Failed to add service:", error);
-      toast.error(error.response?.data?.message || "Could not add this service.");
+      console.error(editingServiceId ? "Failed to update service:" : "Failed to add service:", error);
+      toast.error(error.response?.data?.message || `Could not ${editingServiceId ? "update" : "add"} this service.`);
     } finally {
       setSaving(false);
     }
@@ -162,45 +187,135 @@ const Services = () => {
     }
   };
 
+  const openAddServiceModal = async () => {
+    setLoadingServiceId(true);
+    try {
+      const { data } = await api.get("/admin/content/services/next-id");
+      if (typeof data.service_id !== "string" || !data.service_id) {
+        throw new Error("The server did not return a Service ID.");
+      }
+      setForm({ ...emptyService, service_id: data.service_id });
+      setEditingServiceId(null);
+      setImagePreview("");
+      setIsAddModalOpen(true);
+    } catch (error) {
+      console.error("Failed to generate Service ID:", error);
+      toast.error(error.response?.data?.message || error.message || "Could not generate a Service ID.");
+    } finally {
+      setLoadingServiceId(false);
+    }
+  };
+
+  const openEditServiceModal = (service) => {
+    setForm({
+      service_id: service.service_id || "",
+      name: service.name || "",
+      title: service.title || "",
+      subtitle: service.subtitle || "",
+      description: service.description || "",
+      note: service.note || "",
+      price: service.price == null ? "" : String(service.price),
+      duration: service.duration || "",
+      image_url: service.image_url || "",
+      status: service.status || "Active",
+    });
+    setEditingServiceId(service.id);
+    setImagePreview("");
+    setIsAddModalOpen(true);
+  };
+
+  const activeServiceCount = services.filter((service) => service.status === "Active").length;
+  const inactiveServiceCount = services.length - activeServiceCount;
+  const filteredServices = services.filter((service) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query || [
+      service.name,
+      service.title,
+      service.subtitle,
+      service.service_id,
+      service.description,
+    ].some((value) => String(value || "").toLowerCase().includes(query));
+    const matchesStatus = statusFilter === "All" || service.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="mx-auto max-w-7xl space-y-7 pb-10">
-      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#250744] via-[#3B0A68] to-[#7410A2] p-6 text-white shadow-xl shadow-violet-950/10 sm:p-8">
-        <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full bg-fuchsia-400/15 blur-3xl" />
-        <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-[#FFD52E]">
-            <Wrench className="h-7 w-7" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#FFD52E]">Admin workspace</p>
-            <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Services</h1>
-            <p className="mt-1 text-sm text-white/70">Create and manage the services offered to your customers.</p>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="hidden rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-center sm:block">
-              <p className="text-2xl font-bold">{services.length}</p>
-              <p className="text-xs text-white/65">Total services</p>
+      <section aria-label="Service summary" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {[
+          { label: "Total Services", value: services.length, detail: "All service listings", Icon: Wrench, color: "bg-violet-700" },
+          { label: "Active", value: activeServiceCount, detail: "Available services", Icon: BadgeCheck, color: "bg-emerald-500" },
+          { label: "Inactive", value: inactiveServiceCount, detail: "Hidden services", Icon: CircleAlert, color: "bg-amber-500" },
+        ].map(({ label, value, detail, Icon, color }) => (
+          <article key={label} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+            <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm ${color}`}>
+              <Icon className="h-6 w-6" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-400">{label}</p>
+              <p className="text-3xl font-black leading-tight text-slate-800">{value}</p>
+              <p className="truncate text-xs text-slate-400">{detail}</p>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5 xl:flex-row xl:items-center xl:justify-between">
+          <label className="relative block w-full xl:max-w-md">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search services by name, ID, title..."
+              aria-label="Search services"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+            />
+          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              aria-label="Filter services by status"
+              className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 outline-none focus:border-violet-300"
+            >
+              <option value="All">All statuses</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+            <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                aria-label="Grid view"
+                aria-pressed={viewMode === "grid"}
+                className={`rounded-lg p-2.5 transition ${viewMode === "grid" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                aria-label="Table view"
+                aria-pressed={viewMode === "table"}
+                className={`rounded-lg p-2.5 transition ${viewMode === "table" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+              >
+                <List className="h-4 w-4" />
+              </button>
             </div>
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#FFD52E] px-4 py-3 text-sm font-bold text-[#210839] shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-[#FFE36A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-violet-900"
+              onClick={openAddServiceModal}
+              disabled={loadingServiceId}
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-800 to-fuchsia-700 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-60 sm:flex-none"
             >
-              <Plus className="h-4 w-4" />
+              {loadingServiceId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               Add service
             </button>
           </div>
-        </div>
-      </header>
+      </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-5 flex items-center justify-between gap-4">
-          <div>
-            <h2 className="font-bold text-slate-900">Your services</h2>
-            <p className="mt-1 text-xs text-slate-500">Saved services appear here.</p>
-          </div>
-          <span className="shrink-0 rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">{services.length} total</span>
-        </div>
-
         {loading ? (
           <div className="flex min-h-48 items-center justify-center text-violet-700">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -212,9 +327,60 @@ const Services = () => {
             <p className="mt-3 font-semibold text-slate-700">No services yet</p>
             <p className="mt-1 text-sm text-slate-500">Add your first service to get started.</p>
           </div>
+        ) : filteredServices.length === 0 ? (
+          <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-5 text-center">
+            <Search className="h-8 w-8 text-violet-300" />
+            <p className="mt-3 font-semibold text-slate-700">No matching services</p>
+            <p className="mt-1 text-sm text-slate-500">Try another search or status filter.</p>
+          </div>
+        ) : viewMode === "table" ? (
+          <div className="overflow-x-auto rounded-xl border border-slate-100">
+            <table className="w-full min-w-[760px] text-left">
+              <thead className="bg-violet-950 text-xs uppercase tracking-wide text-white">
+                <tr>
+                  <th className="px-4 py-4">S. No.</th>
+                  <th className="px-4 py-4">Service</th>
+                  <th className="px-4 py-4">Service ID</th>
+                  <th className="px-4 py-4">Price</th>
+                  <th className="px-4 py-4">Duration</th>
+                  <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredServices.map((service, index) => (
+                  <tr key={service.id} className="text-sm text-slate-700 hover:bg-violet-50/40">
+                    <td className="px-4 py-4 font-semibold text-slate-500">{index + 1}</td>
+                    <td className="px-4 py-4">
+                      <p className="font-semibold text-slate-900">{service.title}</p>
+                      <p className="text-xs text-slate-500">{service.name}</p>
+                    </td>
+                    <td className="px-4 py-4 font-medium text-violet-700">{service.service_id}</td>
+                    <td className="px-4 py-4">{service.price == null ? "—" : `₹${Number(service.price).toLocaleString("en-IN")}`}</td>
+                    <td className="px-4 py-4">{service.duration || "—"}</td>
+                    <td className="px-4 py-4">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${service.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                        {service.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
+                      <div className="flex justify-end gap-1">
+                        <button type="button" onClick={() => openEditServiceModal(service)} aria-label={`Edit ${service.name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-violet-50 hover:text-violet-700">
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button type="button" onClick={() => deleteService(service)} disabled={deletingId === service.id} aria-label={`Delete ${service.name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50">
+                          {deletingId === service.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
-            {services.map((service) => (
+            {filteredServices.map((service) => (
               <article key={service.id} className="flex gap-4 rounded-xl border border-slate-100 p-4 transition hover:border-violet-200 hover:bg-violet-50/30">
                 {service.image_url ? (
                   <img src={getServiceImageUrl(service.image_url)} alt="" className="h-16 w-16 shrink-0 rounded-lg bg-slate-100 object-cover" />
@@ -239,15 +405,25 @@ const Services = () => {
                     {service.duration && <span>{service.duration}</span>}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => deleteService(service)}
-                  disabled={deletingId === service.id}
-                  aria-label={`Delete ${service.name}`}
-                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
-                >
-                  {deletingId === service.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                </button>
+                <div className="flex shrink-0 flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={() => openEditServiceModal(service)}
+                    aria-label={`Edit ${service.name}`}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-violet-50 hover:text-violet-700"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteService(service)}
+                    disabled={deletingId === service.id}
+                    aria-label={`Delete ${service.name}`}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                  >
+                    {deletingId === service.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  </button>
+                </div>
               </article>
             ))}
           </div>
@@ -274,8 +450,8 @@ const Services = () => {
                 </span>
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Service management</p>
-                  <h2 id="add-service-title" className="mt-0.5 font-bold text-slate-900">Add a service</h2>
-                  <p className="text-xs text-slate-500">Create a service listing. Fields marked * are required.</p>
+                  <h2 id="add-service-title" className="mt-0.5 font-bold text-slate-900">{editingServiceId ? "Edit service" : "Add a service"}</h2>
+                  <p className="text-xs text-slate-500">{editingServiceId ? "Update this service listing." : "Create a service listing."} Fields marked * are required.</p>
                 </div>
               </div>
               <button
@@ -296,16 +472,12 @@ const Services = () => {
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-slate-700">
-                  Service ID *
+                  Service ID (Auto-generated)
                   <input
-                    required
-                    minLength={2}
-                    maxLength={40}
-                    pattern="[A-Za-z0-9][A-Za-z0-9_-]{1,39}"
+                    readOnly
                     value={form.service_id}
-                    onChange={(event) => setForm({ ...form, service_id: event.target.value })}
-                    placeholder="e.g. SRV-001"
-                    className={inputClass}
+                    placeholder="Generating..."
+                    className={`${inputClass} cursor-not-allowed bg-slate-50`}
                   />
                 </label>
                 <label className="block text-sm font-semibold text-slate-700">
@@ -407,7 +579,7 @@ const Services = () => {
               <div className="block text-sm font-semibold text-slate-700">
                 Service image
                 <div className="mt-2 flex flex-wrap items-center gap-3">
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 transition hover:bg-violet-100">
+                  <label className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800 transition hover:bg-violet-100">
                     {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
                     {uploadingImage ? "Uploading image..." : imagePreview ? "Change image" : "Choose image"}
                     <input
@@ -446,26 +618,6 @@ const Services = () => {
                     </>
                   )}
                 </div>
-                <label className="mt-3 block text-xs font-medium text-slate-500">
-                  Or paste an image URL
-                  <span className="relative block">
-                    <Image className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      inputMode="url"
-                      maxLength={2048}
-                      value={form.image_url}
-                      onChange={(event) => {
-                        if (imagePreviewRef.current) URL.revokeObjectURL(imagePreviewRef.current);
-                        imagePreviewRef.current = "";
-                        setImagePreview("");
-                        setForm((current) => ({ ...current, image_url: event.target.value }));
-                      }}
-                      placeholder="https://example.com/service.jpg"
-                      className={`${inputClass} pl-10`}
-                    />
-                  </span>
-                </label>
               </div>
 
             </form>
@@ -487,8 +639,8 @@ const Services = () => {
                   disabled={saving || uploadingImage}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-700 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-violet-700/15 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  {saving ? "Saving..." : "Add service"}
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editingServiceId ? <Edit2 className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                  {saving ? "Saving..." : editingServiceId ? "Update service" : "Add service"}
                 </button>
               </div>
             </footer>
