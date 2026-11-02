@@ -188,6 +188,8 @@ const AddProducts = () => {
     const isClothingCategory = /clothing|apparel|fashion|garment|textile|ethnic wear|traditional wear|footwear/i
         .test(`${formData.cat_type} ${selectedCategory?.name || ""}`);
     const isGadgetCategory = /gadget|electronic/i.test(`${formData.cat_type} ${selectedCategory?.name || ""}`);
+    const isNaturalCategory = /natural/i.test(`${formData.cat_type} ${selectedCategory?.name || ""}`);
+    const usesSideBySideProductLayout = isClothingCategory || isGadgetCategory;
     const isFootwearCategory = /footwear/i.test(`${formData.cat_type} ${selectedCategory?.name || ""}`);
     const isFreeSizeCategory = /free size|one size|material/i.test(selectedCategory?.name || "");
     const sizeOptions = !isClothingCategory
@@ -711,8 +713,8 @@ const AddProducts = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className={`space-y-5 lg:order-1 ${isClothingCategory ? "lg:col-span-1" : "lg:col-span-2"}`}>
-                    <div className={`grid grid-cols-1 gap-5 ${isClothingCategory ? "lg:grid-cols-1" : "lg:grid-cols-2"}`}>
+                <div className={`space-y-5 lg:order-1 ${usesSideBySideProductLayout ? "lg:col-span-1" : "lg:col-span-2"}`}>
+                    <div className={`grid grid-cols-1 gap-5 ${usesSideBySideProductLayout ? "lg:grid-cols-1" : "lg:grid-cols-2"}`}>
                     {/* Primary Categorization & Identity */}
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                         <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-[#1F0A3C]/5">
@@ -785,15 +787,14 @@ const AddProducts = () => {
                                 </div>
                             </div>
 
-                            <div className="space-y-1">
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Status</label>
-                                <select name="status" value={formData.status} onChange={handleFormChange} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-800">
-                                    <option value="Active">Active</option>
-                                    <option value="Inactive">Inactive</option>
-                                </select>
-                            </div>
-
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <label className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-semibold text-gray-700">
+                                    <span>Product Status</span>
+                                    <select name="status" value={formData.status} onChange={handleFormChange} className="min-w-0 rounded-md bg-gray-50 px-2 py-1 text-sm font-semibold text-gray-800">
+                                        <option value="Active">Active</option>
+                                        <option value="Inactive">Inactive</option>
+                                    </select>
+                                </label>
                                 {[
                                     ["featured", "Featured Product"],
                                     ["trending", "Trending Product"],
@@ -1043,7 +1044,8 @@ const AddProducts = () => {
                 </div>
 
                 {/* Color and stock variants */}
-                <div className={`space-y-4 lg:order-2 ${isClothingCategory ? "lg:col-span-1" : "lg:col-span-2"}`}>
+                {!isNaturalCategory && (
+                <div className={`space-y-4 lg:order-2 ${usesSideBySideProductLayout ? "lg:col-span-1" : "lg:col-span-2"}`}>
                     <div className="flex items-center justify-between sticky  z-20 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
                         <div className="flex items-center  gap-2">
                             <FiBox className="text-[#1F0A3C] w-4 h-4" />
@@ -1146,6 +1148,7 @@ const AddProducts = () => {
                         </div>
                     ))}
                 </div>
+                )}
 
                 {/* Bottom Global Action Button */}
                 <div className="lg:col-span-2 lg:order-4 pt-5 pb-10 border-t border-gray-200 mt-2">
