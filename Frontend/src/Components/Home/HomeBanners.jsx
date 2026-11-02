@@ -63,55 +63,55 @@ function HomeBanners() {
       <div className="pointer-events-none absolute -bottom-[50%] -right-[12%] h-[72%] w-[70%] rotate-[-8deg] rounded-[50%] bg-violet-400/30" />
 
       <PageContainer className="relative py-8 sm:py-10 lg:py-12">
-        <div className="mx-auto grid min-h-[620px] max-w-[1500px] items-center gap-3 lg:min-h-[610px] lg:grid-cols-[0.98fr_1.02fr] xl:gap-0">
+        <div className="grid min-h-[620px] items-center gap-3 lg:min-h-[610px] lg:grid-cols-[0.98fr_1.02fr] xl:gap-0">
           <div className="relative z-10 py-4 lg:py-0">
-              <a
-                href="#shop-by-category"
-                className="mb-7 inline-flex items-center gap-2 rounded-full bg-[#ead8ff] px-5 py-2.5 text-base font-bold text-[#35116d] transition hover:bg-[#dfc5ff]"
-              >
-                <ShoppingBag className="h-5 w-5" />
-                <span>Shop by Categories</span>
-              </a>
+            <a
+              href="#shop-by-category"
+              className="mb-7 inline-flex items-center gap-2 rounded-full bg-[#ead8ff] px-5 py-2.5 text-base font-bold text-[#35116d] transition hover:bg-[#dfc5ff]"
+            >
+              <ShoppingBag className="h-5 w-5" />
+              <span>Shop by Categories</span>
+            </a>
 
-              <h1 className="max-w-[700px] text-[2.8rem] font-black leading-[0.98] tracking-[-0.055em] text-[#24104f] sm:text-6xl xl:text-[4.25rem]">
-                {heroTitle}
-              </h1>
+            <h1 className="max-w-[700px] text-[2.8rem] font-black leading-[0.98] tracking-[-0.055em] text-[#24104f] sm:text-6xl xl:text-[4.25rem]">
+              {heroTitle}
+            </h1>
 
-              <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-[#22213b] sm:text-base">
-                {heroItems.map((item, index) => (
-                  <div key={`${item}-${index}`} className="flex items-center gap-4">
-                    <span>{item}</span>
-                    {index < heroItems.length - 1 && <span className="text-[#4c326f]">|</span>}
-                  </div>
-                ))}
-              </div>
+            <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-medium text-[#22213b] sm:text-base">
+              {heroItems.map((item, index) => (
+                <div key={`${item}-${index}`} className="flex items-center gap-4">
+                  <span>{item}</span>
+                  {index < heroItems.length - 1 && <span className="text-[#4c326f]">|</span>}
+                </div>
+              ))}
+            </div>
 
-              <div className="mt-8 flex flex-wrap items-center gap-4 sm:gap-5">
-                {[
-                  { icon: Truck, title: "Fast", subtitle: "Delivery" },
-                  { icon: ShieldCheck, title: "Secure", subtitle: "Payments" },
-                  { icon: Clock3, title: "24/7", subtitle: "Support" },
-                ].map(({ icon: Icon, title, subtitle }, index) => (
-                  <div key={title} className="flex items-center gap-2.5 text-[#26134c]">
-                    {index > 0 && <span className="mr-1 hidden h-12 w-px bg-violet-500/40 sm:block" />}
-                    <span className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full border-2 border-white/90 bg-white/25 text-[#4b16a3] shadow-[inset_0_0_16px_rgba(255,255,255,0.55)]">
-                      <Icon className="h-6 w-6" strokeWidth={2} />
-                    </span>
-                    <span className="flex flex-col text-[15px] leading-tight">
-                      <strong className="font-extrabold">{title}</strong>
-                      <span className="font-semibold">{subtitle}</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
+            <div className="mt-8 flex flex-wrap items-center gap-4 sm:gap-5">
+              {[
+                { icon: Truck, title: "Fast", subtitle: "Delivery" },
+                { icon: ShieldCheck, title: "Secure", subtitle: "Payments" },
+                { icon: Clock3, title: "24/7", subtitle: "Support" },
+              ].map(({ icon: Icon, title, subtitle }, index) => (
+                <div key={title} className="flex items-center gap-2.5 text-[#26134c]">
+                  {index > 0 && <span className="mr-1 hidden h-12 w-px bg-violet-500/40 sm:block" />}
+                  <span className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full border-2 border-white/90 bg-white/25 text-[#4b16a3] shadow-[inset_0_0_16px_rgba(255,255,255,0.55)]">
+                    <Icon className="h-6 w-6" strokeWidth={2} />
+                  </span>
+                  <span className="flex flex-col text-[15px] leading-tight">
+                    <strong className="font-extrabold">{title}</strong>
+                    <span className="font-semibold">{subtitle}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
 
-              <a
-                href={heroBanner?.destination_link || "#shop-by-category"}
-                className="mt-9 inline-flex min-w-[250px] items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-7 py-4 text-xl font-extrabold text-white shadow-[0_14px_28px_rgba(103,21,181,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_32px_rgba(103,21,181,0.36)]"
-              >
-                <span>Shop Now</span>
-                <ArrowRight className="h-6 w-6" />
-              </a>
+            <a
+              href={heroBanner?.destination_link || "#shop-by-category"}
+              className="mt-9 inline-flex min-w-[250px] items-center justify-center gap-3 rounded-full bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-7 py-4 text-xl font-extrabold text-white shadow-[0_14px_28px_rgba(103,21,181,0.28)] transition hover:-translate-y-0.5 hover:shadow-[0_18px_32px_rgba(103,21,181,0.36)]"
+            >
+              <span>Shop Now</span>
+              <ArrowRight className="h-6 w-6" />
+            </a>
           </div>
 
           <div className="relative z-10 flex min-h-[320px] items-end justify-center sm:min-h-[430px] lg:min-h-[560px]">
