@@ -103,6 +103,14 @@ const sampleDashboardData = {
         cancelled: 7,
         delivery: 31,
     },
+    revenueSummary: {
+        total: 485000,
+        today: 12500,
+    },
+    contentSummary: {
+        services: 0,
+        youtubeVideos: 0,
+    },
     dataAvailability: { orders: true, sales: true },
 };
 
@@ -236,6 +244,8 @@ const Dashboard = () => {
     const ordersAvailable = dataAvailability.orders !== false;
     const salesAvailable = dataAvailability.sales !== false;
     const orderSummary = visibleDashboardData.orderSummary || sampleDashboardData.orderSummary;
+    const revenueSummary = visibleDashboardData.revenueSummary || sampleDashboardData.revenueSummary;
+    const contentSummary = visibleDashboardData.contentSummary || sampleDashboardData.contentSummary;
 
     // ── Bar Chart: Real Revenue Trends ──────────────────────────────
     const barChartData = {
@@ -637,6 +647,34 @@ const Dashboard = () => {
                     );
                 })}
             </div>
+
+            <section className="space-y-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    {[
+                        { label: "Total Revenue", value: `₹${Number(revenueSummary.total || 0).toLocaleString("en-IN")}`, icon: <FaRupeeSign size={21} />, style: { icon_bg: "bg-gradient-to-br from-amber-100 to-orange-100", icon_color: "text-amber-700", accent: "bg-gradient-to-b from-amber-400 to-orange-600", glow: "from-amber-200/70" } },
+                        { label: "Today Revenue", value: `₹${Number(revenueSummary.today || 0).toLocaleString("en-IN")}`, icon: <CalendarDays size={21} />, style: { icon_bg: "bg-gradient-to-br from-cyan-100 to-sky-100", icon_color: "text-cyan-700", accent: "bg-gradient-to-b from-cyan-400 to-sky-600", glow: "from-cyan-200/70" } },
+                        { label: "Services", value: Number(contentSummary.services || 0).toLocaleString("en-IN"), icon: <FiCheckCircle size={21} />, style: { icon_bg: "bg-gradient-to-br from-indigo-100 to-violet-100", icon_color: "text-indigo-700", accent: "bg-gradient-to-b from-indigo-400 to-violet-600", glow: "from-indigo-200/70" } },
+                        { label: "YouTube Videos", value: Number(contentSummary.youtubeVideos || 0).toLocaleString("en-IN"), icon: <Video size={21} />, style: { icon_bg: "bg-gradient-to-br from-red-100 to-rose-100", icon_color: "text-red-700", accent: "bg-gradient-to-b from-red-400 to-rose-600", glow: "from-rose-200/70" } },
+                    ].map((stat) => (
+                        <article key={stat.label} className="group relative overflow-hidden rounded-2xl border border-white/80 bg-white/90 p-5 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.45)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_36px_-22px_rgba(76,29,149,0.3)]">
+                            <div aria-hidden="true" className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${stat.style.glow} to-transparent opacity-60 transition duration-500 group-hover:scale-150 group-hover:opacity-100`} />
+                            <div className={`absolute inset-y-0 left-0 w-1.5 ${stat.style.accent}`} />
+                            <div className="relative flex items-start justify-between gap-3">
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-500">{stat.label}</p>
+                                    <p className="mt-2 text-3xl font-black tracking-tight text-slate-900 sm:text-[2rem]">{stat.value}</p>
+                                </div>
+                                <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${stat.style.icon_bg} ${stat.style.icon_color} shadow-sm ring-1 ring-white/80`}>
+                                    {stat.icon}
+                                </div>
+                            </div>
+                            <div className="relative mt-4 border-t border-slate-100 pt-3 text-xs font-medium text-slate-400">
+                                Current total
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            </section>
 
             <section className="space-y-3">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">

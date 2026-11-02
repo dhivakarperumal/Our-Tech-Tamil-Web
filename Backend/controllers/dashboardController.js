@@ -18,7 +18,7 @@ function firstProductImage(value) {
 function createDashboardController(pool) {
   return async function getDashboard(request, response, next) {
     try {
-      const [[productRows], [customerRows], [lowStockRows]] = await Promise.all([
+      const [[productRows], [customerRows], [lowStockRows], [serviceRows], [youtubeRows]] = await Promise.all([
         pool.execute(`
           SELECT
             COUNT(*) AS total,
@@ -38,10 +38,14 @@ function createDashboardController(pool) {
           ORDER BY total_stock ASC, name ASC
           LIMIT 8
         `),
+        pool.execute("SELECT COUNT(*) AS total FROM admin_services"),
+        pool.execute("SELECT COUNT(*) AS total FROM admin_youtube_videos"),
       ]);
 
       const products = productRows[0] || {};
       const customers = customerRows[0] || {};
+      const services = serviceRows[0] || {};
+      const youtubeVideos = youtubeRows[0] || {};
       const toCount = (value) => Number(value) || 0;
       const productCount = toCount(products.total);
       const activeProductCount = toCount(products.active);
@@ -65,6 +69,10 @@ function createDashboardController(pool) {
         })),
         revenueTrends: [],
         orderStatusCounts: {},
+        contentSummary: {
+          services: toCount(services.total),
+          youtubeVideos: toCount(youtubeVideos.total),
+        },
         dataAvailability: {
           orders: false,
           sales: false,
