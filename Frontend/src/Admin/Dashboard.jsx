@@ -97,6 +97,12 @@ const sampleDashboardData = {
         Delivered: 86,
         Cancelled: 7,
     },
+    orderSummary: {
+        total: 178,
+        today: 2,
+        cancelled: 7,
+        delivery: 31,
+    },
     dataAvailability: { orders: true, sales: true },
 };
 
@@ -229,6 +235,7 @@ const Dashboard = () => {
     const dashboardOrderCounts = orderStatusCounts && typeof orderStatusCounts === "object" ? orderStatusCounts : {};
     const ordersAvailable = dataAvailability.orders !== false;
     const salesAvailable = dataAvailability.sales !== false;
+    const orderSummary = visibleDashboardData.orderSummary || sampleDashboardData.orderSummary;
 
     // ── Bar Chart: Real Revenue Trends ──────────────────────────────
     const barChartData = {
@@ -347,6 +354,12 @@ const Dashboard = () => {
         { icon_bg: "bg-gradient-to-br from-amber-100 to-orange-100", icon_color: "text-amber-700", accent: "bg-gradient-to-b from-yellow-400 to-orange-500", stroke: "#d97706", glow: "from-amber-200/70" },
         { icon_bg: "bg-gradient-to-br from-emerald-100 to-teal-100", icon_color: "text-emerald-700", accent: "bg-gradient-to-b from-emerald-400 to-teal-600", stroke: "#059669", glow: "from-emerald-200/70" },
         { icon_bg: "bg-gradient-to-br from-rose-100 to-pink-100", icon_color: "text-rose-700", accent: "bg-gradient-to-b from-rose-400 to-pink-600", stroke: "#e11d48", glow: "from-rose-200/70" },
+    ];
+    const orderCardStyles = [
+        { icon_bg: "bg-gradient-to-br from-violet-100 to-fuchsia-100", icon_color: "text-violet-700", accent: "bg-gradient-to-b from-fuchsia-500 to-violet-700", glow: "from-violet-200/70" },
+        { icon_bg: "bg-gradient-to-br from-sky-100 to-cyan-100", icon_color: "text-sky-700", accent: "bg-gradient-to-b from-sky-400 to-cyan-600", glow: "from-sky-200/70" },
+        { icon_bg: "bg-gradient-to-br from-rose-100 to-pink-100", icon_color: "text-rose-700", accent: "bg-gradient-to-b from-rose-400 to-red-600", glow: "from-rose-200/70" },
+        { icon_bg: "bg-gradient-to-br from-emerald-100 to-teal-100", icon_color: "text-emerald-700", accent: "bg-gradient-to-b from-emerald-400 to-teal-600", glow: "from-emerald-200/70" },
     ];
 
     return (
@@ -624,6 +637,39 @@ const Dashboard = () => {
                     );
                 })}
             </div>
+
+            <section className="space-y-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                    {[
+                        { label: "Total Orders", value: orderSummary.total, icon: <FiShoppingBag size={21} /> },
+                        { label: "Today Orders", value: orderSummary.today, icon: <CalendarDays size={21} /> },
+                        { label: "Cancelled Orders", value: orderSummary.cancelled, icon: <FiAlertTriangle size={21} /> },
+                        { label: "Delivery Orders", value: orderSummary.delivery, icon: <FaTruck size={21} /> },
+                    ].map((stat, index) => {
+                        const style = orderCardStyles[index];
+                        return (
+                            <article key={stat.label} className="group relative overflow-hidden rounded-2xl border border-white/80 bg-white/90 p-5 shadow-[0_8px_24px_-20px_rgba(15,23,42,0.45)] backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-[0_18px_36px_-22px_rgba(76,29,149,0.3)]">
+                                <div aria-hidden="true" className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${style.glow} to-transparent opacity-60 transition duration-500 group-hover:scale-150 group-hover:opacity-100`} />
+                                <div className={`absolute inset-y-0 left-0 w-1.5 ${style.accent}`} />
+                                <div className="relative flex items-start justify-between gap-3">
+                                    <div>
+                                        <p className="text-sm font-semibold text-slate-500">{stat.label}</p>
+                                        <p className="mt-2 text-3xl font-black tracking-tight text-slate-900 sm:text-[2rem]">
+                                            {Number(stat.value || 0).toLocaleString("en-IN")}
+                                        </p>
+                                    </div>
+                                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${style.icon_bg} ${style.icon_color} shadow-sm ring-1 ring-white/80`}>
+                                        {stat.icon}
+                                    </div>
+                                </div>
+                                <div className="relative mt-4 border-t border-slate-100 pt-3 text-xs font-medium text-slate-400">
+                                    Current total
+                                </div>
+                            </article>
+                        );
+                    })}
+                </div>
+            </section>
 
             {/* Quick Actions */}
             <section style={{ animationDelay: "390ms" }} className="ott-dashboard-enter ott-dashboard-panel rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_3px_12px_-8px_rgba(15,23,42,0.3)]">
