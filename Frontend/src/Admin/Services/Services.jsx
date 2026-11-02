@@ -36,7 +36,8 @@ const inputClass = "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4
 
 const getServiceImageUrl = (image) => {
   if (!image || /^(https?:|data:|blob:)/i.test(image)) return image;
-  const configuredBackendUrl = import.meta.env.VITE_BACKEND_URL || api.defaults.baseURL || window.location.origin;
+  const configuredBackendUrl = import.meta.env.VITE_BACKEND_URL
+    || (api.defaults.baseURL?.startsWith("http") ? api.defaults.baseURL : "http://localhost:5000");
   const backendOrigin = new URL(configuredBackendUrl, window.location.origin).origin;
   const imagePath = image.replace(/\\/g, "/").replace(/^\/+/, "");
   return new URL(imagePath, `${backendOrigin}/`).href;
@@ -113,11 +114,11 @@ const Services = () => {
     setForm((current) => ({ ...current, image_url: "" }));
 
     const imageForm = new FormData();
-    imageForm.append("images", file);
+    imageForm.append("file", file);
     setUploadingImage(true);
     try {
-      const { data } = await api.post("/products/upload", imageForm);
-      const uploadedImage = data?.images?.[0];
+      const { data } = await api.post("/admin/content/services/upload-image", imageForm);
+      const uploadedImage = data?.image;
       if (typeof uploadedImage !== "string" || !uploadedImage) {
         throw new Error("The image upload did not return a saved image.");
       }

@@ -63,9 +63,9 @@ function validateDataFile(value, allowedTypes, maxBytes) {
   return Math.floor((match[2].length * 3) / 4) <= maxBytes;
 }
 
-function validateUploadedYoutubeAsset(value, extensions) {
+function validateUploadedYoutubeAsset(value, folder, extensions) {
   return typeof value === "string"
-    && new RegExp(`^/uploads/youtube-videos/[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\\.(?:${extensions})$`, "i").test(value);
+    && new RegExp(`^/uploads/${folder}/[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\\.(?:${extensions})$`, "i").test(value);
 }
 
 function validateApplicationLinks(value) {
@@ -91,7 +91,7 @@ function validateDocuments(value) {
     && typeof document.type === "string"
     && (
       validateDataFile(document.data, DOCUMENT_TYPES, 1024 * 1024)
-      || validateUploadedYoutubeAsset(document.url, "pdf|doc|docx|xls|xlsx|rtf|txt")
+      || validateUploadedYoutubeAsset(document.url, "youtube-videos", "pdf|doc|docx|xls|xlsx|rtf|txt")
     ),
   );
 }
@@ -313,7 +313,8 @@ function createAdminContentController(pool) {
       }
       if (thumbnailImage
         && !validateDataFile(thumbnailImage, new Set(["image/jpeg", "image/png", "image/webp"]), 3 * 1024 * 1024)
-        && !validateUploadedYoutubeAsset(thumbnailImage, "jpg|png|webp")) {
+        && !validateUploadedYoutubeAsset(thumbnailImage, "youtube", "jpg|png|webp")
+        && !validateUploadedYoutubeAsset(thumbnailImage, "youtube-videos", "jpg|png|webp")) {
         return response.status(400).json({ message: "Upload a PNG, JPEG, or WEBP thumbnail no larger than 3 MB." });
       }
       if (!validateOptionalUrl(thumbnailUrl)) {

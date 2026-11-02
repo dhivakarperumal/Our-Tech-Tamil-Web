@@ -6,7 +6,11 @@ const multer = require("multer");
 const requireAdmin = require("../middleware/requireAdmin");
 
 const uploadDirectory = path.join(__dirname, "..", "uploads", "youtube-videos");
+const youtubeImageDirectory = path.join(__dirname, "..", "uploads", "youtube");
+const servicesUploadDirectory = path.join(__dirname, "..", "uploads", "services");
 fs.mkdirSync(uploadDirectory, { recursive: true });
+fs.mkdirSync(youtubeImageDirectory, { recursive: true });
+fs.mkdirSync(servicesUploadDirectory, { recursive: true });
 
 const imageExtensions = {
   "image/jpeg": ".jpg",
@@ -22,6 +26,12 @@ const documentExtensions = {
   "application/rtf": ".rtf",
   "text/rtf": ".rtf",
   "text/plain": ".txt",
+};
+const serviceImageExtensions = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
 };
 
 function createUploader(extensions, fileSize, maxFiles = 1) {
@@ -44,7 +54,41 @@ function createUploader(extensions, fileSize, maxFiles = 1) {
   });
 }
 
-const uploadThumbnail = createUploader(imageExtensions, 3 * 1024 * 1024);
+const uploadServiceImage = multer({
+  storage: multer.diskStorage({
+    destination: servicesUploadDirectory,
+    filename(request, file, callback) {
+      callback(null, `${crypto.randomUUID()}${serviceImageExtensions[file.mimetype]}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter(request, file, callback) {
+    if (!serviceImageExtensions[file.mimetype]) {
+      const error = new Error("Upload a PNG, JPEG, WEBP, or GIF service image.");
+      error.status = 400;
+      return callback(error);
+    }
+    return callback(null, true);
+  },
+});
+
+const uploadThumbnail = multer({
+  storage: multer.diskStorage({
+    destination: youtubeImageDirectory,
+    filename(request, file, callback) {
+      callback(null, `${crypto.randomUUID()}${imageExtensions[file.mimetype]}`);
+    },
+  }),
+  limits: { fileSize: 3 * 1024 * 1024, files: 1 },
+  fileFilter(request, file, callback) {
+    if (!imageExtensions[file.mimetype]) {
+      const error = new Error("Upload a PNG, JPEG, or WEBP thumbnail.");
+      error.status = 400;
+      return callback(error);
+    }
+    return callback(null, true);
+  },
+});
 const uploadDocuments = createUploader(documentExtensions, 1024 * 1024, 4);
 
 function createAdminContentRouter(controller) {
@@ -53,6 +97,12 @@ function createAdminContentRouter(controller) {
 
   router.get("/services", controller.listServices);
   router.get("/services/next-id", controller.getNextServiceId);
+  router.post("/services/upload-image", uploadServiceImage.single("file"), (request, response) => {
+    if (!request.file) {
+      return response.status(400).json({ message: "Choose a service image to upload." });
+    }
+    return response.status(201).json({ image: `/uploads/services/${request.file.filename}` });
+  });
   router.post("/services", controller.createService);
   router.put("/services/:id", controller.updateService);
   router.delete("/services/:id", controller.deleteService);
@@ -62,7 +112,7 @@ function createAdminContentRouter(controller) {
     if (!request.file) {
       return response.status(400).json({ message: "Choose a thumbnail image to upload." });
     }
-    return response.status(201).json({ image: `/uploads/youtube-videos/${request.file.filename}` });
+    return response.status(201).json({ image: `/uploads/youtube/${request.file.filename}` });
   });
   router.post("/youtube-videos/upload-documents", uploadDocuments.array("files", 4), (request, response) => {
     if (!request.files?.length) {
