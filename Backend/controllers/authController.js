@@ -1,4 +1,6 @@
 function createAuthController(authService) {
+  const assignableRoles = new Set(["user", "admin"]);
+
   return {
     async listUsers(request, response, next) {
       try {
@@ -29,8 +31,43 @@ function createAuthController(authService) {
       }
 
       try {
-        const user = await authService.register({ username, email, phone, password });
+        const user = await authService.register({ username, email, phone, password, role: "customer" });
         return response.status(201).json({ message: "Registration successful.", user });
+      } catch (error) {
+        if (error.code === "ER_DUP_ENTRY") {
+          return response.status(409).json({ message: "An account with this email or phone already exists." });
+        }
+        return next(error);
+      }
+    },
+
+    async createUser(request, response, next) {
+      const body = request.body || {};
+      const username = typeof body.username === "string" ? body.username.trim() : "";
+      const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+      const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+      const password = typeof body.password === "string" ? body.password : "";
+      const role = typeof body.role === "string" ? body.role.toLowerCase() : "";
+
+      if (username.length < 2 || username.length > 120) {
+        return response.status(400).json({ message: "Username must be between 2 and 120 characters." });
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 191) {
+        return response.status(400).json({ message: "Enter a valid email address." });
+      }
+      if (phone && (phone.length < 6 || phone.length > 32)) {
+        return response.status(400).json({ message: "Phone number must be between 6 and 32 characters." });
+      }
+      if (password.length < 8 || password.length > 72) {
+        return response.status(400).json({ message: "Password must be between 8 and 72 characters." });
+      }
+      if (!assignableRoles.has(role)) {
+        return response.status(400).json({ message: "Choose a valid user role." });
+      }
+
+      try {
+        const user = await authService.register({ username, email, phone: phone || null, password, role });
+        return response.status(201).json({ message: "User created successfully.", user });
       } catch (error) {
         if (error.code === "ER_DUP_ENTRY") {
           return response.status(409).json({ message: "An account with this email or phone already exists." });

@@ -131,7 +131,7 @@ const Users = ({ initialTab = "All" }) => {
                 await api.put(`/auth/users/${editUserId}`, { ...formData, role: formData.role.toLowerCase() });
                 toast.success("User updated successfully!");
             } else {
-                await api.post("/auth/register", { ...formData, role: formData.role.toLowerCase() });
+                await api.post("/auth/users", { ...formData, role: formData.role.toLowerCase() });
                 toast.success("User registered successfully!");
             }
             setIsModalOpen(false);
@@ -656,6 +656,20 @@ const Users = ({ initialTab = "All" }) => {
                                         placeholder="+91 98765 43210"
                                         className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                                     />
+                                </div>
+                                <div>
+                                    <label htmlFor="customer-role" className="mb-2 block text-[11px] font-bold uppercase tracking-widest text-gray-500">Role *</label>
+                                    <select
+                                        id="customer-role"
+                                        name="role"
+                                        required
+                                        value={formData.role}
+                                        onChange={handleInputChange}
+                                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-800 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                                    >
+                                        <option value="user">User</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
                                 </div>
                                 {!isEditing && (
                                     <div>

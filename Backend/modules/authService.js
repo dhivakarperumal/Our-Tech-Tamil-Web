@@ -46,12 +46,12 @@ function createAuthService(pool) {
       return users.map(toPublicUser);
     },
 
-    async register({ username, email, phone, password }) {
+    async register({ username, email, phone, password, role = "customer" }) {
       const passwordHash = await bcrypt.hash(password, 12);
       const userId = randomUUID();
       await pool.execute(
-        "INSERT INTO users (user_id, username, email, phone, password_hash, status) VALUES (?, ?, ?, ?, ?, 'active')",
-        [userId, username, email, phone, passwordHash],
+        "INSERT INTO users (user_id, username, email, phone, password_hash, role, status) VALUES (?, ?, ?, ?, ?, ?, 'active')",
+        [userId, username, email, phone, passwordHash, role],
       );
       const [users] = await pool.execute(
         `SELECT ${USER_COLUMNS} FROM users WHERE user_id = ?`,
