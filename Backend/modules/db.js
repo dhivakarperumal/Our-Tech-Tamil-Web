@@ -92,6 +92,25 @@ async function initializeDatabase(pool) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS reviews (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      product_id BIGINT UNSIGNED NOT NULL,
+      user_name VARCHAR(160) NOT NULL,
+      user_email VARCHAR(191) NULL,
+      rating TINYINT UNSIGNED NOT NULL,
+      comment TEXT NOT NULL,
+      review_image VARCHAR(512) NULL,
+      admin_reply TEXT NULL,
+      status ENUM('Pending', 'Published', 'Flagged') NOT NULL DEFAULT 'Pending',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      KEY reviews_product_idx (product_id),
+      KEY reviews_status_idx (status),
+      KEY reviews_created_at_idx (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
   const [productColumnRows] = await pool.execute(
     `SELECT COLUMN_NAME, DATA_TYPE
      FROM INFORMATION_SCHEMA.COLUMNS

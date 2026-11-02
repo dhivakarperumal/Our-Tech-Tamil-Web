@@ -89,8 +89,8 @@ const Reviews = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await api.get("/products");
-      setProducts(res.data || []);
+      const res = await api.get("/products", { params: { limit: 100 } });
+      setProducts(Array.isArray(res.data.products) ? res.data.products : []);
     } catch (err) {
       console.error("Failed to fetch products:", err);
     }
