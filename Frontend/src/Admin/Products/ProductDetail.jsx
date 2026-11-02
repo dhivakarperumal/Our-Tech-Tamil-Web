@@ -2,13 +2,11 @@ import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast } from "react-hot-toast";
-import { QRCodeCanvas } from "qrcode.react";
 import {
     FiArrowLeft,
     FiEdit,
     FiTrash2,
 } from "react-icons/fi";
-import { BsQrCode } from "react-icons/bs";
 
 const resolveMediaUrl = (media) => {
     if (!media || typeof media !== "string") return "";
@@ -249,30 +247,6 @@ const ProductDetail = () => {
                                 </div>
                             </div>
                         )}
-
-                        {/* Product Passport (QR Code) */}
-                        <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-bold text-slate-800 uppercase tracking-widest text-xs">Product Passport</h3>
-                                <BsQrCode className="text-blue-500" size={18} />
-                            </div>
-                            <div className="flex flex-col items-center justify-center gap-4 bg-gray-50/50 p-6 rounded-[2rem] border border-dashed border-gray-200">
-                                <div className="p-4 bg-white rounded-3xl shadow-sm border border-gray-100">
-                                    <QRCodeCanvas
-                                        value={window.location.href}
-                                        size={120}
-                                        level={"H"}
-                                        includeMargin={false}
-                                        className="rounded-lg"
-                                    />
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-tight">Digital Authenticity</p>
-                                    <p className="text-[9px] font-bold text-blue-500 uppercase mt-1 tracking-tighter">Scan to view product details</p>
-                                </div>
-                            </div>
-                        </div>
-
 
                     </div>
                 </div>
