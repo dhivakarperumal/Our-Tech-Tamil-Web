@@ -49,18 +49,11 @@ const documentTypesByExtension = {
   rtf: "application/rtf",
 };
 
-const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.onload = () => {
-    if (typeof reader.result !== "string") {
-      reject(new Error(`Could not read ${file.name} as a file.`));
-      return;
-    }
-    resolve(reader.result);
-  };
-  reader.onerror = () => reject(new Error(`Could not read ${file.name}.`));
-  reader.readAsDataURL(file);
-});
+const resolveMediaUrl = (value) => {
+  if (typeof value !== "string" || !value || /^(https?:|data:|blob:)/i.test(value)) return value;
+  const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
+  return `${backendUrl}${value.startsWith("/") ? value : `/${value}`}`;
+};
 
 const parseJsonArray = (value) => {
   if (Array.isArray(value)) return value;
@@ -80,6 +73,7 @@ const YoutubeVideos = () => {
   const [saving, setSaving] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [uploadingDocuments, setUploadingDocuments] = useState(false);
+  const [loadingVideoCode, setLoadingVideoCode] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
@@ -144,12 +138,17 @@ const YoutubeVideos = () => {
 
     setUploadingThumbnail(true);
     try {
-      const thumbnailImage = await readFileAsDataUrl(file);
-      setForm((current) => ({ ...current, thumbnail_image: thumbnailImage, thumbnail_url: "" }));
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      const { data } = await api.post("/admin/content/youtube-videos/upload-thumbnail", uploadData);
+      if (typeof data.image !== "string" || !data.image) {
+        throw new Error("The thumbnail upload did not return a saved image.");
+      }
+      setForm((current) => ({ ...current, thumbnail_image: data.image, thumbnail_url: "" }));
       toast.success("Thumbnail image ready.");
     } catch (error) {
-      console.error("Could not read thumbnail image:", error);
-      toast.error(error.message || "Could not read the thumbnail image.");
+      console.error("Could not upload thumbnail image:", error);
+      toast.error(error.response?.data?.message || error.message || "Could not upload the thumbnail image.");
     } finally {
       setUploadingThumbnail(false);
       event.target.value = "";
@@ -181,19 +180,37 @@ const YoutubeVideos = () => {
 
     setUploadingDocuments(true);
     try {
-      const documents = await Promise.all(selectedFiles.map(async (file) => ({
-        name: file.name,
-        type: getDocumentType(file),
-        data: await readFileAsDataUrl(file),
-      })));
-      setForm((current) => ({ ...current, documents: [...current.documents, ...documents] }));
-      toast.success(`${documents.length} document${documents.length === 1 ? "" : "s"} attached.`);
+      const uploadData = new FormData();
+      selectedFiles.forEach((file) => uploadData.append("files", file));
+      const { data } = await api.post("/admin/content/youtube-videos/upload-documents", uploadData);
+      if (!Array.isArray(data.documents) || data.documents.length !== selectedFiles.length) {
+        throw new Error("The document upload did not return all saved documents.");
+      }
+      setForm((current) => ({ ...current, documents: [...current.documents, ...data.documents] }));
+      toast.success(`${data.documents.length} document${data.documents.length === 1 ? "" : "s"} attached.`);
     } catch (error) {
-      console.error("Could not read supporting documents:", error);
-      toast.error(error.message || "Could not read the selected documents.");
+      console.error("Could not upload supporting documents:", error);
+      toast.error(error.response?.data?.message || error.message || "Could not upload the selected documents.");
     } finally {
       setUploadingDocuments(false);
       event.target.value = "";
+    }
+  };
+
+  const openAddVideoModal = async () => {
+    setLoadingVideoCode(true);
+    try {
+      const { data } = await api.get("/admin/content/youtube-videos/next-id");
+      if (typeof data.video_code !== "string" || !data.video_code) {
+        throw new Error("The server did not return a Video ID.");
+      }
+      setForm({ ...emptyVideo, video_code: data.video_code });
+      setIsAddModalOpen(true);
+    } catch (error) {
+      console.error("Failed to generate Video ID:", error);
+      toast.error(error.response?.data?.message || error.message || "Could not generate a Video ID.");
+    } finally {
+      setLoadingVideoCode(false);
     }
   };
 
@@ -271,7 +288,8 @@ const YoutubeVideos = () => {
             </div>
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={openAddVideoModal}
+              disabled={loadingVideoCode}
               className="inline-flex items-center gap-2 rounded-xl bg-[#FFD52E] px-4 py-3 text-sm font-bold text-[#210839] shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-[#FFE36A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-violet-900"
             >
               <Plus className="h-4 w-4" />
@@ -325,16 +343,12 @@ const YoutubeVideos = () => {
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-slate-700">
-                  Video ID *
+                  Video ID (Auto-generated)
                   <input
-                    required
-                    minLength={2}
-                    maxLength={40}
-                    pattern="[A-Za-z0-9][A-Za-z0-9_-]{1,39}"
+                    readOnly
                     value={form.video_code}
-                    onChange={(event) => setForm({ ...form, video_code: event.target.value })}
-                    placeholder="e.g. JOB-VIDEO-001"
-                    className={inputClass}
+                    placeholder="Generating..."
+                    className={`${inputClass} cursor-not-allowed bg-slate-50`}
                   />
                 </label>
                 <label className="block text-sm font-semibold text-slate-700">
@@ -370,7 +384,7 @@ const YoutubeVideos = () => {
                     <ImagePlus className="h-4 w-4 text-violet-700" />
                     Thumbnail image
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500">Upload a PNG, JPEG, or WEBP (max 3 MB), or provide an image URL.</p>
+                  <p className="mt-1 text-xs text-slate-500">Upload a PNG, JPEG, or WEBP (max 3 MB).</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-800 transition hover:bg-violet-100">
@@ -387,7 +401,7 @@ const YoutubeVideos = () => {
                   {(form.thumbnail_image || form.thumbnail_url) && (
                     <>
                       <img
-                        src={form.thumbnail_image || form.thumbnail_url}
+                        src={resolveMediaUrl(form.thumbnail_image || form.thumbnail_url)}
                         alt="Video thumbnail preview"
                         className="h-12 w-20 rounded-lg border border-slate-200 object-cover"
                       />
@@ -401,17 +415,6 @@ const YoutubeVideos = () => {
                     </>
                   )}
                 </div>
-                <label className="mt-3 block text-xs font-medium text-slate-500">
-                  Or paste thumbnail URL
-                  <input
-                    type="url"
-                    maxLength={2048}
-                    value={form.thumbnail_url}
-                    onChange={(event) => setForm({ ...form, thumbnail_url: event.target.value, thumbnail_image: "" })}
-                    placeholder="https://example.com/thumbnail.jpg"
-                    className={inputClass}
-                  />
-                </label>
               </section>
 
               <section className="space-y-3 rounded-2xl border border-slate-200 p-4">
@@ -604,7 +607,7 @@ const YoutubeVideos = () => {
                   className="group relative block aspect-video bg-slate-950"
                 >
                   <img
-                    src={video.thumbnail_image || video.thumbnail_url || `https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`}
+                    src={resolveMediaUrl(video.thumbnail_image || video.thumbnail_url || `https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`)}
                     alt=""
                     loading="lazy"
                     className="h-full w-full object-cover opacity-90 transition group-hover:opacity-75"
@@ -660,7 +663,7 @@ const YoutubeVideos = () => {
                       {video.documents.map((document, index) => (
                         <a
                           key={`${document.name}-${index}`}
-                          href={document.data}
+                          href={resolveMediaUrl(document.url || document.data)}
                           download={document.name}
                           className="flex items-center gap-2 text-xs font-medium text-slate-600 transition hover:text-violet-700"
                         >

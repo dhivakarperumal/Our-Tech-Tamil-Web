@@ -1,6 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Edit2, ImagePlus, Loader2, Plus, Trash2, Wrench, X } from "lucide-react";
+import {
+  BadgeCheck,
+  CircleAlert,
+  Edit2,
+  Image,
+  ImagePlus,
+  LayoutGrid,
+  List,
+  Loader2,
+  Plus,
+  Search,
+  Trash2,
+  Wrench,
+  X,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../../api";
 import StatusDropdown from "../StatusDropdown";
@@ -40,6 +54,9 @@ const Services = () => {
   const [deletingId, setDeletingId] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingServiceId, setEditingServiceId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [viewMode, setViewMode] = useState("grid");
 
   const loadServices = async () => {
     try {
@@ -207,46 +224,100 @@ const Services = () => {
     setIsAddModalOpen(true);
   };
 
+  const activeServiceCount = services.filter((service) => service.status === "Active").length;
+  const inactiveServiceCount = services.length - activeServiceCount;
+  const servicesWithImagesCount = services.filter((service) => Boolean(service.image_url)).length;
+  const filteredServices = services.filter((service) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query || [
+      service.name,
+      service.title,
+      service.subtitle,
+      service.service_id,
+      service.description,
+    ].some((value) => String(value || "").toLowerCase().includes(query));
+    const matchesStatus = statusFilter === "All" || service.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="mx-auto max-w-7xl space-y-7 pb-10">
-      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#250744] via-[#3B0A68] to-[#7410A2] p-6 text-white shadow-xl shadow-violet-950/10 sm:p-8">
-        <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full bg-fuchsia-400/15 blur-3xl" />
-        <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-[#FFD52E]">
-            <Wrench className="h-7 w-7" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#FFD52E]">Admin workspace</p>
-            <h1 className="mt-1 text-2xl font-bold sm:text-3xl">Services</h1>
-            <p className="mt-1 text-sm text-white/70">Create and manage the services offered to your customers.</p>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="hidden rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-center sm:block">
-              <p className="text-2xl font-bold">{services.length}</p>
-              <p className="text-xs text-white/65">Total services</p>
+      <section aria-label="Service summary" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          { label: "Total Services", value: services.length, detail: "All service listings", Icon: Wrench, color: "bg-violet-700" },
+          { label: "Active", value: activeServiceCount, detail: "Available services", Icon: BadgeCheck, color: "bg-emerald-500" },
+          { label: "Inactive", value: inactiveServiceCount, detail: "Hidden services", Icon: CircleAlert, color: "bg-amber-500" },
+          { label: "With Image", value: servicesWithImagesCount, detail: "Services with an image", Icon: Image, color: "bg-pink-500" },
+        ].map(({ label, value, detail, Icon, color }) => (
+          <article key={label} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+            <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm ${color}`}>
+              <Icon className="h-6 w-6" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-400">{label}</p>
+              <p className="text-3xl font-black leading-tight text-slate-800">{value}</p>
+              <p className="truncate text-xs text-slate-400">{detail}</p>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5 xl:flex-row xl:items-center xl:justify-between">
+          <label className="relative block w-full xl:max-w-md">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search services by name, ID, title..."
+              aria-label="Search services"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+            />
+          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              aria-label="Filter services by status"
+              className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 outline-none focus:border-violet-300"
+            >
+              <option value="All">All statuses</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+            <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                aria-label="Grid view"
+                aria-pressed={viewMode === "grid"}
+                className={`rounded-lg p-2.5 transition ${viewMode === "grid" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("table")}
+                aria-label="Table view"
+                aria-pressed={viewMode === "table"}
+                className={`rounded-lg p-2.5 transition ${viewMode === "table" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+              >
+                <List className="h-4 w-4" />
+              </button>
             </div>
             <button
               type="button"
               onClick={openAddServiceModal}
               disabled={loadingServiceId}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#FFD52E] px-4 py-3 text-sm font-bold text-[#210839] shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-[#FFE36A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-violet-900"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-800 to-fuchsia-700 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-60 sm:flex-none"
             >
-              <Plus className="h-4 w-4" />
+              {loadingServiceId ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               Add service
             </button>
           </div>
-        </div>
-      </header>
+      </div>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <div className="mb-5 flex items-center justify-between gap-4">
-          <div>
-            <h2 className="font-bold text-slate-900">Your services</h2>
-            <p className="mt-1 text-xs text-slate-500">Saved services appear here.</p>
-          </div>
-          <span className="shrink-0 rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">{services.length} total</span>
-        </div>
-
         {loading ? (
           <div className="flex min-h-48 items-center justify-center text-violet-700">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -258,9 +329,60 @@ const Services = () => {
             <p className="mt-3 font-semibold text-slate-700">No services yet</p>
             <p className="mt-1 text-sm text-slate-500">Add your first service to get started.</p>
           </div>
+        ) : filteredServices.length === 0 ? (
+          <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-5 text-center">
+            <Search className="h-8 w-8 text-violet-300" />
+            <p className="mt-3 font-semibold text-slate-700">No matching services</p>
+            <p className="mt-1 text-sm text-slate-500">Try another search or status filter.</p>
+          </div>
+        ) : viewMode === "table" ? (
+          <div className="overflow-x-auto rounded-xl border border-slate-100">
+            <table className="w-full min-w-[760px] text-left">
+              <thead className="bg-violet-950 text-xs uppercase tracking-wide text-white">
+                <tr>
+                  <th className="px-4 py-3">S. No.</th>
+                  <th className="px-4 py-3">Service</th>
+                  <th className="px-4 py-3">Service ID</th>
+                  <th className="px-4 py-3">Price</th>
+                  <th className="px-4 py-3">Duration</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredServices.map((service, index) => (
+                  <tr key={service.id} className="text-sm text-slate-700 hover:bg-violet-50/40">
+                    <td className="px-4 py-3 font-semibold text-slate-500">{index + 1}</td>
+                    <td className="px-4 py-3">
+                      <p className="font-semibold text-slate-900">{service.title}</p>
+                      <p className="text-xs text-slate-500">{service.name}</p>
+                    </td>
+                    <td className="px-4 py-3 font-medium text-violet-700">{service.service_id}</td>
+                    <td className="px-4 py-3">{service.price == null ? "—" : `₹${Number(service.price).toLocaleString("en-IN")}`}</td>
+                    <td className="px-4 py-3">{service.duration || "—"}</td>
+                    <td className="px-4 py-3">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${service.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>
+                        {service.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-1">
+                        <button type="button" onClick={() => openEditServiceModal(service)} aria-label={`Edit ${service.name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-violet-50 hover:text-violet-700">
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button type="button" onClick={() => deleteService(service)} disabled={deletingId === service.id} aria-label={`Delete ${service.name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50">
+                          {deletingId === service.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
-            {services.map((service) => (
+            {filteredServices.map((service) => (
               <article key={service.id} className="flex gap-4 rounded-xl border border-slate-100 p-4 transition hover:border-violet-200 hover:bg-violet-50/30">
                 {service.image_url ? (
                   <img src={getServiceImageUrl(service.image_url)} alt="" className="h-16 w-16 shrink-0 rounded-lg bg-slate-100 object-cover" />

@@ -63,6 +63,11 @@ function validateDataFile(value, allowedTypes, maxBytes) {
   return Math.floor((match[2].length * 3) / 4) <= maxBytes;
 }
 
+function validateUploadedYoutubeAsset(value, extensions) {
+  return typeof value === "string"
+    && new RegExp(`^/uploads/youtube-videos/[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\\.(?:${extensions})$`, "i").test(value);
+}
+
 function validateApplicationLinks(value) {
   if (!Array.isArray(value) || value.length > 20) return false;
   return value.every((link) =>
@@ -84,12 +89,11 @@ function validateDocuments(value) {
     && document.name.trim().length >= 1
     && document.name.trim().length <= 180
     && typeof document.type === "string"
-    && validateDataFile(document.data, DOCUMENT_TYPES, 1024 * 1024),
+    && (
+      validateDataFile(document.data, DOCUMENT_TYPES, 1024 * 1024)
+      || validateUploadedYoutubeAsset(document.url, "pdf|doc|docx|xls|xlsx|rtf|txt")
+    ),
   );
-}
-
-function validateVideoCode(value) {
-  return typeof value === "string" && /^[A-Z0-9][A-Z0-9_-]{1,39}$/.test(value);
 }
 
 function parseJsonArray(value) {
@@ -273,9 +277,18 @@ function createAdminContentController(pool) {
       }
     },
 
+    async getNextYoutubeVideoCode(request, response, next) {
+      try {
+        const [rows] = await pool.query("SELECT COALESCE(MAX(id), 0) + 1 AS nextId FROM admin_youtube_videos");
+        const nextId = Number(rows[0]?.nextId) || 1;
+        return response.json({ video_code: `YT-${String(nextId).padStart(5, "0")}` });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
     async createYoutubeVideo(request, response, next) {
       const body = request.body || {};
-      const videoCode = typeof body.video_code === "string" ? body.video_code.trim().toUpperCase() : "";
       const title = typeof body.title === "string" ? body.title.trim() : "";
       const description = typeof body.description === "string" ? body.description.trim() : "";
       const thumbnailImage = body.thumbnail_image || "";
@@ -286,9 +299,6 @@ function createAdminContentController(pool) {
       const status = body.status || "Active";
       const parsedVideo = parseYoutubeUrl(body.video_url);
 
-      if (!validateVideoCode(videoCode)) {
-        return response.status(400).json({ message: "Video ID must be 2-40 letters, numbers, hyphens, or underscores." });
-      }
       if (title.length < 2 || title.length > 160) {
         return response.status(400).json({ message: "Video title must be between 2 and 160 characters." });
       }
@@ -301,7 +311,9 @@ function createAdminContentController(pool) {
       if (followUpNotes.length > 5000) {
         return response.status(400).json({ message: "Follow-up notes must be 5,000 characters or fewer." });
       }
-      if (thumbnailImage && !validateDataFile(thumbnailImage, new Set(["image/jpeg", "image/png", "image/webp"]), 3 * 1024 * 1024)) {
+      if (thumbnailImage
+        && !validateDataFile(thumbnailImage, new Set(["image/jpeg", "image/png", "image/webp"]), 3 * 1024 * 1024)
+        && !validateUploadedYoutubeAsset(thumbnailImage, "jpg|png|webp")) {
         return response.status(400).json({ message: "Upload a PNG, JPEG, or WEBP thumbnail no larger than 3 MB." });
       }
       if (!validateOptionalUrl(thumbnailUrl)) {
@@ -317,11 +329,15 @@ function createAdminContentController(pool) {
         return response.status(400).json({ message: "Choose a valid video status." });
       }
 
+      let connection;
       try {
-        const [result] = await pool.execute(
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const temporaryVideoCode = `TMP-${crypto.randomUUID()}`;
+        const [result] = await connection.execute(
           "INSERT INTO admin_youtube_videos (video_code, title, video_url, video_id, thumbnail_image, thumbnail_url, description, application_links, documents, follow_up_notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
           [
-            videoCode,
+            temporaryVideoCode,
             title,
             parsedVideo.url,
             parsedVideo.videoId,
@@ -334,10 +350,16 @@ function createAdminContentController(pool) {
             status,
           ],
         );
-        const [videos] = await pool.execute(
+        const videoCode = `YT-${String(result.insertId).padStart(5, "0")}`;
+        await connection.execute(
+          "UPDATE admin_youtube_videos SET video_code = ? WHERE id = ?",
+          [videoCode, result.insertId],
+        );
+        const [videos] = await connection.execute(
           "SELECT id, video_code, title, video_url, video_id, thumbnail_image, thumbnail_url, description, application_links, documents, follow_up_notes, status, created_at FROM admin_youtube_videos WHERE id = ?",
           [result.insertId],
         );
+        await connection.commit();
         return response.status(201).json({
           video: {
             ...videos[0],
@@ -346,13 +368,22 @@ function createAdminContentController(pool) {
           },
         });
       } catch (error) {
+        if (connection) {
+          try {
+            await connection.rollback();
+          } catch (rollbackError) {
+            console.error("Failed to roll back YouTube video creation:", rollbackError);
+          }
+        }
         if (error.code === "ER_DUP_ENTRY") {
           const message = error.message?.includes("video_code")
-            ? "That Video ID is already in use."
+            ? "Could not generate a unique Video ID. Please try again."
             : "This YouTube video has already been added.";
           return response.status(409).json({ message });
         }
         return next(error);
+      } finally {
+        connection?.release();
       }
     },
 
