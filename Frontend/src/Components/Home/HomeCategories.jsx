@@ -64,6 +64,8 @@ function HomeCategories() {
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [carouselLayout, setCarouselLayout] = useState({ slidesPerView: 1, slideWidth: 96 });
+  const carouselContainerRef = useRef(null);
   const swiperRef = useRef(null);
 
   useEffect(() => {
@@ -92,6 +94,25 @@ function HomeCategories() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (loading || showAll || !carouselContainerRef.current) return undefined;
+
+    const container = carouselContainerRef.current;
+    const updateSlidesPerView = () => {
+      const availableWidth = container.clientWidth - 80;
+      const slideWidth = window.matchMedia("(min-width: 640px)").matches ? 112 : 96;
+      setCarouselLayout({
+        slidesPerView: Math.max(1, Math.floor((availableWidth + 8) / (slideWidth + 8))),
+        slideWidth,
+      });
+    };
+
+    updateSlidesPerView();
+    const observer = new ResizeObserver(updateSlidesPerView);
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [loading, showAll]);
 
   const slideCopies = categories.length > 1
     ? Math.max(2, Math.ceil(16 / categories.length))
@@ -179,7 +200,7 @@ function HomeCategories() {
             ))}
           </div>
         ) : (
-          <div style={{ paddingRight: "80px" }}>
+          <div ref={carouselContainerRef} style={{ paddingRight: "80px" }}>
             <Swiper
               modules={[Autoplay]}
               onSwiper={(swiper) => {
@@ -197,7 +218,10 @@ function HomeCategories() {
                   : false
               }
               navigation={false}
-              className="home-category-swiper"
+              className="home-category-swiper !ml-0 !mr-auto"
+              style={{
+                width: `${carouselLayout.slidesPerView * (carouselLayout.slideWidth + 8) - 8}px`,
+              }}
               aria-label="Shop by category"
             >
               {slides.map((category) => (
