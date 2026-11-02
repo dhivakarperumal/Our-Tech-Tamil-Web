@@ -170,7 +170,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       <aside
         className={`
         fixed top-0 left-0 z-50 h-full
-        bg-[#1F0A3C] border-r border-white/5
+        admin-sidebar border-r border-white/5
         font-sans
         
         flex flex-col transition-all duration-300
@@ -184,7 +184,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           <div className="pointer-events-none absolute inset-x-0 top-0 h-24 bg-gradient-to-br from-emerald-500/15 via-transparent to-cyan-500/5" />
           <div className="relative flex items-center gap-3">
             <div className="w-11 h-11 rounded-3xl bg-white border border-emerald-300/10 flex items-center justify-center shadow-2xl shadow-emerald-500/10 overflow-hidden">
-              <ShoppingBag className="w-6 h-6 text-[#1F0A3C]" aria-hidden="true" />
+              <ShoppingBag className="w-6 h-6 text-primary-dark" aria-hidden="true" />
             </div>
             {!collapsed && (
               <div className="overflow-hidden">

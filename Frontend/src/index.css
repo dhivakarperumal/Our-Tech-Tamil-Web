@@ -57,6 +57,15 @@
   );
 }
 
+.admin-sidebar {
+  background: linear-gradient(
+    180deg,
+    var(--color-secondary-dark),
+    var(--color-primary-dark),
+    var(--color-primary)
+  );
+}
+
 
 @layer utilities {
   .animate-in {
