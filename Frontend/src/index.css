@@ -79,12 +79,7 @@
 }
 
 .admin-sidebar {
-  background: linear-gradient(
-    180deg,
-    var(--color-secondary-dark),
-    var(--color-primary-dark),
-    var(--color-primary)
-  );
+  background-color: #210839;
 }
 
 .admin-table-header {
