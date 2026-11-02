@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
+  BadgeCheck,
+  CircleAlert,
   ExternalLink,
   FileText,
   ImagePlus,
+  LayoutGrid,
+  List,
   Loader2,
   Link2,
   Plus,
+  Search,
   Trash2,
   Upload,
   Video,
@@ -49,18 +54,11 @@ const documentTypesByExtension = {
   rtf: "application/rtf",
 };
 
-const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.onload = () => {
-    if (typeof reader.result !== "string") {
-      reject(new Error(`Could not read ${file.name} as a file.`));
-      return;
-    }
-    resolve(reader.result);
-  };
-  reader.onerror = () => reject(new Error(`Could not read ${file.name}.`));
-  reader.readAsDataURL(file);
-});
+const resolveMediaUrl = (value) => {
+  if (typeof value !== "string" || !value || /^(https?:|data:|blob:)/i.test(value)) return value;
+  const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
+  return `${backendUrl}${value.startsWith("/") ? value : `/${value}`}`;
+};
 
 const parseJsonArray = (value) => {
   if (Array.isArray(value)) return value;
@@ -80,8 +78,12 @@ const YoutubeVideos = () => {
   const [saving, setSaving] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
   const [uploadingDocuments, setUploadingDocuments] = useState(false);
+  const [loadingVideoCode, setLoadingVideoCode] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [viewMode, setViewMode] = useState("table");
 
   const loadVideos = async () => {
     try {
@@ -144,12 +146,17 @@ const YoutubeVideos = () => {
 
     setUploadingThumbnail(true);
     try {
-      const thumbnailImage = await readFileAsDataUrl(file);
-      setForm((current) => ({ ...current, thumbnail_image: thumbnailImage, thumbnail_url: "" }));
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      const { data } = await api.post("/admin/content/youtube-videos/upload-thumbnail", uploadData);
+      if (typeof data.image !== "string" || !data.image) {
+        throw new Error("The thumbnail upload did not return a saved image.");
+      }
+      setForm((current) => ({ ...current, thumbnail_image: data.image, thumbnail_url: "" }));
       toast.success("Thumbnail image ready.");
     } catch (error) {
-      console.error("Could not read thumbnail image:", error);
-      toast.error(error.message || "Could not read the thumbnail image.");
+      console.error("Could not upload thumbnail image:", error);
+      toast.error(error.response?.data?.message || error.message || "Could not upload the thumbnail image.");
     } finally {
       setUploadingThumbnail(false);
       event.target.value = "";
@@ -181,19 +188,37 @@ const YoutubeVideos = () => {
 
     setUploadingDocuments(true);
     try {
-      const documents = await Promise.all(selectedFiles.map(async (file) => ({
-        name: file.name,
-        type: getDocumentType(file),
-        data: await readFileAsDataUrl(file),
-      })));
-      setForm((current) => ({ ...current, documents: [...current.documents, ...documents] }));
-      toast.success(`${documents.length} document${documents.length === 1 ? "" : "s"} attached.`);
+      const uploadData = new FormData();
+      selectedFiles.forEach((file) => uploadData.append("files", file));
+      const { data } = await api.post("/admin/content/youtube-videos/upload-documents", uploadData);
+      if (!Array.isArray(data.documents) || data.documents.length !== selectedFiles.length) {
+        throw new Error("The document upload did not return all saved documents.");
+      }
+      setForm((current) => ({ ...current, documents: [...current.documents, ...data.documents] }));
+      toast.success(`${data.documents.length} document${data.documents.length === 1 ? "" : "s"} attached.`);
     } catch (error) {
-      console.error("Could not read supporting documents:", error);
-      toast.error(error.message || "Could not read the selected documents.");
+      console.error("Could not upload supporting documents:", error);
+      toast.error(error.response?.data?.message || error.message || "Could not upload the selected documents.");
     } finally {
       setUploadingDocuments(false);
       event.target.value = "";
+    }
+  };
+
+  const openAddVideoModal = async () => {
+    setLoadingVideoCode(true);
+    try {
+      const { data } = await api.get("/admin/content/youtube-videos/next-id");
+      if (typeof data.video_code !== "string" || !data.video_code) {
+        throw new Error("The server did not return a Video ID.");
+      }
+      setForm({ ...emptyVideo, video_code: data.video_code });
+      setIsAddModalOpen(true);
+    } catch (error) {
+      console.error("Failed to generate Video ID:", error);
+      toast.error(error.response?.data?.message || error.message || "Could not generate a Video ID.");
+    } finally {
+      setLoadingVideoCode(false);
     }
   };
 
@@ -251,35 +276,95 @@ const YoutubeVideos = () => {
     }
   };
 
+  const activeVideoCount = videos.filter((video) => video.status === "Active").length;
+  const inactiveVideoCount = videos.length - activeVideoCount;
+  const filteredVideos = videos.filter((video) => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query || [
+      video.title,
+      video.video_code,
+      video.video_url,
+      video.description,
+    ].some((value) => String(value || "").toLowerCase().includes(query));
+    const matchesStatus = statusFilter === "All" || video.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="mx-auto max-w-7xl space-y-7 pb-10">
-      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#250744] via-[#3B0A68] to-[#7410A2] p-6 text-white shadow-xl shadow-violet-950/10 sm:p-8">
-        <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full bg-fuchsia-400/15 blur-3xl" />
-        <div className="relative flex items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-[#FFD52E]">
-            <Video className="h-7 w-7" />
-          </div>
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#FFD52E]">Admin workspace</p>
-            <h1 className="mt-1 text-2xl font-bold sm:text-3xl">YouTube videos</h1>
-            <p className="mt-1 text-sm text-white/70">Add and manage videos for your storefront.</p>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <div className="hidden rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-center sm:block">
-              <p className="text-2xl font-bold">{videos.length}</p>
-              <p className="text-xs text-white/65">Total videos</p>
+      <section aria-label="YouTube video summary" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {[
+          { label: "Total Videos", value: videos.length, detail: "All video listings", Icon: Video, color: "bg-violet-700" },
+          { label: "Active", value: activeVideoCount, detail: "Available videos", Icon: BadgeCheck, color: "bg-emerald-500" },
+          { label: "Inactive", value: inactiveVideoCount, detail: "Hidden videos", Icon: CircleAlert, color: "bg-amber-500" },
+        ].map(({ label, value, detail, Icon, color }) => (
+          <article key={label} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+            <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm ${color}`}>
+              <Icon className="h-6 w-6" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-400">{label}</p>
+              <p className="text-3xl font-black leading-tight text-slate-800">{value}</p>
+              <p className="truncate text-xs text-slate-400">{detail}</p>
             </div>
+          </article>
+        ))}
+      </section>
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-5 xl:flex-row xl:items-center xl:justify-between">
+        <label className="relative block w-full xl:max-w-md">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="search"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            placeholder="Search videos by title, ID..."
+            aria-label="Search YouTube videos"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm text-slate-700 outline-none transition focus:border-violet-300 focus:bg-white focus:ring-2 focus:ring-violet-100"
+          />
+        </label>
+        <div className="flex flex-wrap items-center gap-3">
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value)}
+            aria-label="Filter videos by status"
+            className="min-w-36 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 outline-none focus:border-violet-300"
+          >
+            <option value="All">All statuses</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-[#FFD52E] px-4 py-3 text-sm font-bold text-[#210839] shadow-lg shadow-amber-500/20 transition hover:-translate-y-0.5 hover:bg-[#FFE36A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-violet-900"
+              onClick={() => setViewMode("grid")}
+              aria-label="Grid view"
+              aria-pressed={viewMode === "grid"}
+              className={`rounded-lg p-2.5 transition ${viewMode === "grid" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
             >
-              <Plus className="h-4 w-4" />
-              Add video
+              <LayoutGrid className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              aria-label="Table view"
+              aria-pressed={viewMode === "table"}
+              className={`rounded-lg p-2.5 transition ${viewMode === "table" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+            >
+              <List className="h-4 w-4" />
             </button>
           </div>
+          <button
+            type="button"
+            onClick={openAddVideoModal}
+            disabled={loadingVideoCode}
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-800 to-fuchsia-700 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:brightness-110 disabled:opacity-60 sm:flex-none"
+          >
+            {loadingVideoCode ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+            Add video
+          </button>
         </div>
-      </header>
+      </div>
 
       {isAddModalOpen && createPortal(
         <div
@@ -325,16 +410,12 @@ const YoutubeVideos = () => {
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-slate-700">
-                  Video ID *
+                  Video ID (Auto-generated)
                   <input
-                    required
-                    minLength={2}
-                    maxLength={40}
-                    pattern="[A-Za-z0-9][A-Za-z0-9_-]{1,39}"
+                    readOnly
                     value={form.video_code}
-                    onChange={(event) => setForm({ ...form, video_code: event.target.value })}
-                    placeholder="e.g. JOB-VIDEO-001"
-                    className={inputClass}
+                    placeholder="Generating..."
+                    className={`${inputClass} cursor-not-allowed bg-slate-50`}
                   />
                 </label>
                 <label className="block text-sm font-semibold text-slate-700">
@@ -370,7 +451,7 @@ const YoutubeVideos = () => {
                     <ImagePlus className="h-4 w-4 text-violet-700" />
                     Thumbnail image
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500">Upload a PNG, JPEG, or WEBP (max 3 MB), or provide an image URL.</p>
+                  <p className="mt-1 text-xs text-slate-500">Upload a PNG, JPEG, or WEBP (max 3 MB).</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-semibold text-violet-800 transition hover:bg-violet-100">
@@ -387,7 +468,7 @@ const YoutubeVideos = () => {
                   {(form.thumbnail_image || form.thumbnail_url) && (
                     <>
                       <img
-                        src={form.thumbnail_image || form.thumbnail_url}
+                        src={resolveMediaUrl(form.thumbnail_image || form.thumbnail_url)}
                         alt="Video thumbnail preview"
                         className="h-12 w-20 rounded-lg border border-slate-200 object-cover"
                       />
@@ -401,17 +482,6 @@ const YoutubeVideos = () => {
                     </>
                   )}
                 </div>
-                <label className="mt-3 block text-xs font-medium text-slate-500">
-                  Or paste thumbnail URL
-                  <input
-                    type="url"
-                    maxLength={2048}
-                    value={form.thumbnail_url}
-                    onChange={(event) => setForm({ ...form, thumbnail_url: event.target.value, thumbnail_image: "" })}
-                    placeholder="https://example.com/thumbnail.jpg"
-                    className={inputClass}
-                  />
-                </label>
               </section>
 
               <section className="space-y-3 rounded-2xl border border-slate-200 p-4">
@@ -572,29 +642,79 @@ const YoutubeVideos = () => {
         document.body
       )}
 
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="font-bold text-slate-900">Your videos</h2>
-            <p className="mt-1 text-xs text-slate-500">YouTube videos saved to your admin library.</p>
-          </div>
-          <span className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700">{videos.length} total</span>
-        </div>
-
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
         {loading ? (
           <div className="flex min-h-48 items-center justify-center rounded-2xl border border-slate-200 bg-white text-violet-700 shadow-sm">
             <Loader2 className="h-6 w-6 animate-spin" />
             <span className="ml-2 text-sm text-slate-500">Loading videos...</span>
           </div>
         ) : videos.length === 0 ? (
-          <div className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white px-5 text-center">
+          <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-5 text-center">
             <Video className="h-8 w-8 text-violet-300" />
             <p className="mt-3 font-semibold text-slate-700">No videos yet</p>
-            <p className="mt-1 text-sm text-slate-500">Add your first YouTube video using the form above.</p>
+            <p className="mt-1 text-sm text-slate-500">Add your first YouTube video to get started.</p>
+          </div>
+        ) : filteredVideos.length === 0 ? (
+          <div className="flex min-h-48 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-5 text-center">
+            <Search className="h-8 w-8 text-violet-300" />
+            <p className="mt-3 font-semibold text-slate-700">No matching videos</p>
+            <p className="mt-1 text-sm text-slate-500">Try another search or status filter.</p>
+          </div>
+        ) : viewMode === "table" ? (
+          <div className="overflow-x-auto rounded-xl border border-slate-100">
+            <table className="w-full min-w-[760px] text-left">
+              <thead className="bg-violet-950 text-xs uppercase tracking-wide text-white">
+                <tr>
+                  <th className="px-4 py-4">S. No.</th>
+                  <th className="px-4 py-4">Video</th>
+                  <th className="px-4 py-4">Video ID</th>
+                  <th className="px-4 py-4">Thumbnail</th>
+                  <th className="px-4 py-4">Status</th>
+                  <th className="px-4 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredVideos.map((video, index) => (
+                  <tr key={video.id} className="text-sm text-slate-700 hover:bg-violet-50/40">
+                    <td className="px-4 py-4 font-semibold text-slate-500">{index + 1}</td>
+                    <td className="px-4 py-4">
+                      <a href={video.video_url} target="_blank" rel="noreferrer" className="font-semibold text-slate-900 hover:text-violet-700">
+                        {video.title}
+                      </a>
+                      <p className="max-w-sm truncate text-xs text-slate-500">{video.video_url}</p>
+                    </td>
+                    <td className="px-4 py-4 font-medium text-violet-700">{video.video_code || `YT-${String(video.id).padStart(5, "0")}`}</td>
+                    <td className="px-4 py-4">
+                      <img
+                        src={resolveMediaUrl(video.thumbnail_image || video.thumbnail_url || `https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`)}
+                        alt=""
+                        className="h-12 w-20 rounded-lg border border-slate-200 object-cover"
+                      />
+                    </td>
+                    <td className="px-4 py-4">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${video.status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                        {video.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4 text-right">
+                      <button
+                        type="button"
+                        onClick={() => deleteVideo(video)}
+                        disabled={deletingId === video.id}
+                        aria-label={`Delete ${video.title}`}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                      >
+                        {deletingId === video.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         ) : (
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {videos.map((video) => (
+            {filteredVideos.map((video) => (
               <article key={video.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-violet-950/5">
                 <a
                   href={video.video_url}
@@ -604,7 +724,7 @@ const YoutubeVideos = () => {
                   className="group relative block aspect-video bg-slate-950"
                 >
                   <img
-                    src={video.thumbnail_image || video.thumbnail_url || `https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`}
+                    src={resolveMediaUrl(video.thumbnail_image || video.thumbnail_url || `https://img.youtube.com/vi/${video.video_id}/hqdefault.jpg`)}
                     alt=""
                     loading="lazy"
                     className="h-full w-full object-cover opacity-90 transition group-hover:opacity-75"
@@ -660,7 +780,7 @@ const YoutubeVideos = () => {
                       {video.documents.map((document, index) => (
                         <a
                           key={`${document.name}-${index}`}
-                          href={document.data}
+                          href={resolveMediaUrl(document.url || document.data)}
                           download={document.name}
                           className="flex items-center gap-2 text-xs font-medium text-slate-600 transition hover:text-violet-700"
                         >
