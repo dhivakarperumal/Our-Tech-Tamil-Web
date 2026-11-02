@@ -71,6 +71,8 @@ const Category = () => {
     // ---- Modal State ----
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [isSavingCategory, setIsSavingCategory] = useState(false);
+    const [isImageUploading, setIsImageUploading] = useState(false);
     const [formData, setFormData] = useState({
         catId: "",
         name: "",
