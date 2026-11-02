@@ -20,12 +20,14 @@ function createResponse() {
 }
 
 test("dashboard returns real inventory/customer totals and normalized low-stock items", async () => {
+  let customerQuery = "";
   const pool = {
     async execute(query) {
       if (query.includes("COUNT(*) AS total") && query.includes("FROM products")) {
         return [[{ total: "24", active: "19", lowStock: "2" }]];
       }
       if (query.includes("FROM users")) {
+        customerQuery = query;
         return [[{ total: "7" }]];
       }
       if (query.includes("FROM products") && query.includes("total_stock < 10")) {
@@ -42,6 +44,7 @@ test("dashboard returns real inventory/customer totals and normalized low-stock 
 
   await createDashboardController(pool)({}, response, next);
 
+  assert.match(customerQuery, /role IN \('customer', 'user'\) AND status = 'active'/);
   assert.deepEqual(response.body.stats.map(({ label, value }) => [label, value]), [
     ["Products", "24"],
     ["Active products", "19"],
