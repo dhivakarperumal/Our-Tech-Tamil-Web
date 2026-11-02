@@ -51,6 +51,8 @@ const getHeaderProductImage = (product) => {
 
 const pageTitles = {
   "/admin": "Dashboard",
+  "/admin/service": "Services",
+  "/admin/youtube-videos": "YouTube Videos",
   "/admin/products/all": "All Products",
   "/admin/products/add": "Add Product",
   "/admin/products/edit": "Edit Product",

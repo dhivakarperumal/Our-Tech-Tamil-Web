@@ -58,7 +58,7 @@ const navItems = [
   
 
   { path: "/admin/service", label: "Service", icon: Wrench },
-  { path: "/admin/Youtube", label: "Youtube Video", icon: Video },
+  { path: "/admin/youtube-videos", label: "Youtube Video", icon: Video },
 
   { path: "/admin/orders/billing", label: "Billing", icon: CreditCard },
   { path: "/admin/users/all", label: "Customers", icon: Users },
