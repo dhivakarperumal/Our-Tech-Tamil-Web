@@ -3,7 +3,7 @@ import React from "react";
 const OfferBanner = () => {
   return (
     <section className="w-full px-2 pb-4 sm:px-4">
-      <div className="group relative mx-auto flex h-[112px] max-w-[1450px] overflow-hidden rounded-xl bg-gradient-to-r from-primary-dark via-primary to-gradient-middle shadow-sm sm:h-[120px]">
+      <div className="group relative mx-auto flex h-[140px] max-w-[1450px] overflow-hidden rounded-xl bg-gradient-to-r from-primary-dark via-primary to-gradient-middle shadow-sm sm:h-[150px]">
         <div
           aria-hidden="true"
           className="pointer-events-none absolute -bottom-16 left-[28%] h-28 w-[42%] rotate-[-8deg] rounded-[50%] bg-gradient-to-r from-accent via-accent-light to-primary-light opacity-90"
@@ -94,7 +94,7 @@ const OfferBanner = () => {
           </g>
         </svg>
 
-        <div className="absolute right-2 top-1/2 z-20 flex h-[76px] w-[58px] -translate-y-1/2 rotate-[8deg] flex-col items-center justify-center rounded-lg bg-gradient-to-b from-accent to-accent-dark text-center text-primary-dark shadow-lg sm:right-4 sm:h-[86px] sm:w-[66px]">
+        <div className="absolute right-2 top-1/2 z-20 flex h-[96px] w-[66px] -translate-y-1/2 rotate-[8deg] flex-col items-center justify-center rounded-lg bg-gradient-to-b from-accent to-accent-dark text-center text-primary-dark shadow-lg sm:right-4 sm:h-[108px] sm:w-[74px]">
           <span className="text-[11px] font-black leading-none sm:text-xs">MEGA</span>
           <span className="mt-0.5 text-lg font-black leading-none sm:text-xl">SALE</span>
           <span className="mt-0.5 text-[9px] font-extrabold leading-none sm:text-[10px]">

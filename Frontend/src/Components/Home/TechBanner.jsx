@@ -45,7 +45,7 @@ const TechBanner = () => {
         {banners.map((banner) => (
           <div
             key={banner.id}
-            className={`group relative flex h-[102px] min-w-0 overflow-hidden rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
+            className={`group relative flex h-[132px] min-w-0 overflow-hidden rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${
               banner.theme === "gaming"
                 ? "bg-gradient-to-r from-secondary-dark via-primary to-primary-dark"
                 : banner.theme === "laptop"
