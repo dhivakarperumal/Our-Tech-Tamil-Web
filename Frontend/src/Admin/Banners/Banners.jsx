@@ -27,7 +27,7 @@ const emptyForm = {
   mobile_image: null,
 };
 
-const inputClassName = "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-orange-400 focus:ring-4 focus:ring-orange-100";
+const inputClassName = "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-primary focus:ring-4 focus:ring-primary/10";
 const labelClassName = "text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400";
 
 function getImageUrl(image) {
@@ -83,7 +83,7 @@ function ImagePicker({ label, icon: Icon, image, onChange, required }) {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="group mt-2 flex h-32 w-full flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/70 transition hover:border-orange-300 hover:bg-orange-50/40"
+        className="group mt-2 flex h-32 w-full flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/70 transition hover:border-primary-light hover:bg-primary/5"
       >
         {preview ? (
           <img
@@ -93,7 +93,7 @@ function ImagePicker({ label, icon: Icon, image, onChange, required }) {
           />
         ) : (
           <>
-            <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm transition group-hover:text-orange-500">
+            <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-400 shadow-sm transition group-hover:text-primary">
               <Icon size={19} />
             </span>
             <span className="text-[10px] font-bold uppercase tracking-wide text-slate-700">
@@ -191,7 +191,7 @@ function BannerModal({ banner, saving, onClose, onSubmit }) {
         className="flex max-h-[min(94dvh,820px)] w-full max-w-[620px] flex-col overflow-hidden rounded-[26px] bg-white shadow-2xl"
       >
         <header className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 sm:px-7">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white shadow-lg shadow-orange-500/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-gradient-middle text-accent shadow-lg shadow-primary/20">
             <ImagePlus size={20} />
           </div>
           <div>
@@ -229,7 +229,6 @@ function BannerModal({ banner, saving, onClose, onSubmit }) {
                 icon={Smartphone}
                 image={form.mobile_image}
                 onChange={(image) => setField("mobile_image", image)}
-                required
               />
             </div>
           </fieldset>
@@ -303,7 +302,7 @@ function BannerModal({ banner, saving, onClose, onSubmit }) {
                     aria-pressed={form.target_section === value}
                     className={`rounded-lg px-3 py-3 text-[10px] font-bold uppercase tracking-wide transition ${
                       form.target_section === value
-                        ? "bg-white text-orange-600 shadow-sm"
+                        ? "bg-white text-primary shadow-sm"
                         : "text-slate-400 hover:text-slate-700"
                     }`}
                   >
@@ -321,11 +320,11 @@ function BannerModal({ banner, saving, onClose, onSubmit }) {
                 onClick={() => setField("is_published", !form.is_published)}
                 className={`mt-2 flex w-full items-center justify-center gap-2 rounded-xl border px-3 py-3 text-[10px] font-bold uppercase tracking-wide transition ${
                   form.is_published
-                    ? "border-orange-200 bg-orange-50 text-orange-600"
+                    ? "border-accent/50 bg-accent/10 text-primary"
                     : "border-slate-200 bg-slate-50 text-slate-500"
                 }`}
               >
-                <span className={`h-1.5 w-1.5 rounded-full ${form.is_published ? "bg-orange-500" : "bg-slate-400"}`} />
+                <span className={`h-1.5 w-1.5 rounded-full ${form.is_published ? "bg-primary" : "bg-slate-400"}`} />
                 {form.is_published ? "Published on website" : "Saved as draft"}
               </button>
             </fieldset>
@@ -344,7 +343,7 @@ function BannerModal({ banner, saving, onClose, onSubmit }) {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-dark via-primary to-gradient-middle px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <UploadCloud size={16} />}
             {saving ? "Saving..." : banner ? "Save changes" : "Create promotion"}
@@ -435,14 +434,14 @@ function Banners() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-10 sm:space-y-7">
-      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#391334] via-[#762542] to-[#C1421C] p-5 text-white shadow-xl shadow-orange-950/10 sm:p-8">
-        <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full bg-orange-300/20 blur-3xl" />
+      <header className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-dark via-primary to-gradient-middle p-5 text-white shadow-xl shadow-primary-dark/20 sm:p-8">
+        <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full bg-accent/20 blur-3xl" />
         <div className="relative flex flex-wrap items-center gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-orange-200 sm:h-14 sm:w-14">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-accent sm:h-14 sm:w-14">
             <Megaphone className="h-6 w-6 sm:h-7 sm:w-7" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-200 sm:text-xs">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent sm:text-xs">
               Marketing management
             </p>
             <h1 className="mt-1 text-xl font-bold sm:text-3xl">Promotion banners</h1>
@@ -458,7 +457,7 @@ function Banners() {
             <button
               type="button"
               onClick={openCreateModal}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-orange-400 px-4 py-3 text-sm font-bold text-[#3b1b20] shadow-lg shadow-orange-950/20 transition hover:-translate-y-0.5 hover:bg-orange-300 sm:flex-none"
+              className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-primary-dark shadow-lg shadow-primary-dark/20 transition hover:-translate-y-0.5 hover:bg-accent-light sm:flex-none"
             >
               <Plus size={17} />
               New promotion
@@ -473,19 +472,19 @@ function Banners() {
             <h2 className="font-bold text-slate-900">Your promotions</h2>
             <p className="mt-1 text-xs text-slate-500">Manage creative, destination, and visibility.</p>
           </div>
-          <span className="shrink-0 rounded-full bg-orange-50 px-3 py-1 text-xs font-bold text-orange-700">
+          <span className="shrink-0 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
             {banners.filter((banner) => getPublishedValue(banner.is_published)).length} published
           </span>
         </div>
 
         {loading ? (
-          <div className="flex min-h-48 items-center justify-center text-orange-600">
+          <div className="flex min-h-48 items-center justify-center text-primary">
             <Loader2 className="h-6 w-6 animate-spin" />
             <span className="ml-2 text-sm text-slate-500">Loading promotions...</span>
           </div>
         ) : banners.length === 0 ? (
           <div className="flex min-h-56 flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/70 px-5 text-center">
-            <Image className="h-9 w-9 text-orange-300" />
+            <Image className="h-9 w-9 text-primary-light" />
             <p className="mt-3 font-semibold text-slate-700">No promotions yet</p>
             <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">
               Add desktop and mobile visuals, choose where the banner belongs, and publish it when ready.
@@ -493,7 +492,7 @@ function Banners() {
             <button
               type="button"
               onClick={openCreateModal}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-orange-600"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-dark via-primary to-gradient-middle px-4 py-2.5 text-xs font-bold text-white transition hover:brightness-110"
             >
               <Plus size={15} />
               Create your first promotion
@@ -504,7 +503,7 @@ function Banners() {
             {banners.map((banner) => (
               <article
                 key={banner.id}
-                className="overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-orange-200 hover:shadow-md"
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-primary-light/40 hover:shadow-md hover:shadow-primary/5"
               >
                 <div className="relative h-40 bg-slate-100 sm:h-48">
                   {banner.desktop_image ? (
@@ -546,7 +545,7 @@ function Banners() {
                         target={/^https?:\/\//i.test(banner.destination_link) ? "_blank" : undefined}
                         rel="noreferrer"
                         aria-label="Open banner destination"
-                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600 transition hover:bg-orange-100"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition hover:bg-primary/15"
                       >
                         <ArrowUpRight size={17} />
                       </a>
@@ -576,7 +575,7 @@ function Banners() {
                       <button
                         type="button"
                         onClick={() => openEditModal(banner)}
-                        className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-orange-700"
+                        className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 transition hover:border-primary-light/40 hover:bg-primary/5 hover:text-primary"
                       >
                         Edit
                       </button>
