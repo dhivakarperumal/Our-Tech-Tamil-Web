@@ -1,5 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { Mail, MapPin, Phone } from "lucide-react";
 import {
   FaFacebookF,
   FaInstagram,
@@ -15,8 +16,8 @@ const Footer = () => {
 
   return (
     <footer className="site-footer mt-20 text-white">
-      <PageContainer>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-10 py-10 sm:grid-cols-3 lg:grid-cols-[1.7fr_0.8fr_0.8fr_0.8fr_0.9fr_1.2fr] lg:gap-8 lg:py-8">
+      <PageContainer className="!max-w-none !px-[5%] lg:!px-[3%]">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-10 py-10 sm:grid-cols-3 lg:grid-cols-[1.7fr_0.8fr_0.8fr_0.8fr_0.9fr] lg:gap-8 lg:py-8">
           <div className="col-span-2 sm:col-span-3 lg:col-span-1">
             <Link
               to="/"
@@ -86,14 +87,34 @@ const Footer = () => {
             <h2 className="mb-3 text-sm font-bold">Contact Information</h2>
             <ul className="flex flex-col gap-2">
               <li>
-                <a href="tel:+919876543210" className={linkClass}>
-                  Mobile: +91 98765 43210
+                <a
+                  href="tel:+919876543210"
+                  aria-label="Call +91 98765 43210"
+                  className={`inline-flex items-center gap-2 break-all ${linkClass}`}
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15 text-accent">
+                    <Phone size={15} aria-hidden="true" />
+                  </span>
+                  +91 98765 43210
                 </a>
               </li>
               <li>
-                <a href="mailto:support@ourtechtamil.com" className={linkClass}>
-                  Email: support@ourtechtamil.com
+                <a
+                  href="mailto:support@ourtechtamil.com"
+                  aria-label="Email support@ourtechtamil.com"
+                  className={`inline-flex items-center gap-2 break-all ${linkClass}`}
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15 text-accent">
+                    <Mail size={15} aria-hidden="true" />
+                  </span>
+                  support@ourtechtamil.com
                 </a>
+              </li>
+              <li className="flex items-start gap-2 text-sm text-white/85">
+                <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15 text-accent">
+                  <MapPin size={15} aria-hidden="true" />
+                </span>
+                <span>122, Tirupathur Lorem ipsum dolor sit amet consectetur.</span>
               </li>
             </ul>
           </div>
