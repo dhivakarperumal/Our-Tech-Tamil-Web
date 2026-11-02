@@ -49,6 +49,11 @@ function OfferBanner() {
     .filter(Boolean)
     .join(" ")
     .match(/(?:up to\s*)?\d{1,3}\s*%\s*off|from\s*₹?\s*[\d,]+/i)?.[0];
+  const descriptionText = (banner.description || "")
+    .split(/\r?\n/)
+    .filter((line) => !/mega\s*sale/i.test(line))
+    .join("\n")
+    .trim();
   const content = (
     <>
       <div
@@ -65,13 +70,13 @@ function OfferBanner() {
           {banner.title}
         </h2>
         {banner.subtitle && (
-          <p className="mt-2 max-w-lg text-lg font-extrabold leading-tight text-accent sm:text-xl lg:text-3xl">
+          <p className="mt-2 max-w-lg text-sm font-extrabold leading-tight text-accent sm:text-base lg:text-xl">
             {banner.subtitle}
           </p>
         )}
-        {banner.description && (
-          <p className="mt-3 max-w-lg whitespace-pre-line text-xs font-medium leading-relaxed text-white/95 sm:text-sm lg:text-base">
-            {banner.description}
+        {descriptionText && (
+          <p className="mt-2 max-w-lg whitespace-pre-line text-[11px] font-medium leading-relaxed text-white/95 sm:text-xs lg:text-sm">
+            {descriptionText}
           </p>
         )}
         <span className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-extrabold text-primary-dark shadow-lg transition group-hover:-translate-y-0.5 group-hover:bg-accent sm:px-7 sm:py-3 sm:text-base">
