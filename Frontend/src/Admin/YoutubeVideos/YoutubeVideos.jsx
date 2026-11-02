@@ -5,7 +5,6 @@ import {
   CircleAlert,
   ExternalLink,
   FileText,
-  Image,
   ImagePlus,
   LayoutGrid,
   List,
@@ -279,7 +278,6 @@ const YoutubeVideos = () => {
 
   const activeVideoCount = videos.filter((video) => video.status === "Active").length;
   const inactiveVideoCount = videos.length - activeVideoCount;
-  const videosWithThumbnailsCount = videos.filter((video) => Boolean(video.thumbnail_image || video.thumbnail_url)).length;
   const filteredVideos = videos.filter((video) => {
     const query = searchQuery.trim().toLowerCase();
     const matchesSearch = !query || [
@@ -294,12 +292,11 @@ const YoutubeVideos = () => {
 
   return (
     <div className="mx-auto max-w-7xl space-y-7 pb-10">
-      <section aria-label="YouTube video summary" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section aria-label="YouTube video summary" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {[
           { label: "Total Videos", value: videos.length, detail: "All video listings", Icon: Video, color: "bg-violet-700" },
           { label: "Active", value: activeVideoCount, detail: "Available videos", Icon: BadgeCheck, color: "bg-emerald-500" },
           { label: "Inactive", value: inactiveVideoCount, detail: "Hidden videos", Icon: CircleAlert, color: "bg-amber-500" },
-          { label: "With Thumbnail", value: videosWithThumbnailsCount, detail: "Videos with an uploaded thumbnail", Icon: Image, color: "bg-pink-500" },
         ].map(({ label, value, detail, Icon, color }) => (
           <article key={label} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
             <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm ${color}`}>
