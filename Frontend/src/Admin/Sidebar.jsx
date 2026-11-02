@@ -57,11 +57,10 @@ const navItems = [
   },
   
 
-  { path: "/admin/service", label: "Service", icon: Wrench },
-  { path: "/admin/youtube-videos", label: "Youtube Video", icon: Video },
+
 
   { path: "/admin/orders/billing", label: "Billing", icon: CreditCard },
-  { path: "/admin/users/all", label: "Customers", icon: Users },
+  
   {
     label: "Dealers",
     icon: Handshake,
@@ -74,9 +73,11 @@ const navItems = [
     label: "Marketing Management",
     icon: Megaphone,
     children: [
+      { path: "/admin/service", label: "Service", icon: Wrench },
+      { path: "/admin/youtube-videos", label: "Youtube Video", icon: Video },
       { path: "/admin/banners", label: "Promotion Banners", icon: Image },
-      { path: "/admin/videos", label: "Showcase Videos", icon: Video },
       { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
+      { path: "/admin/users/all", label: "Customers", icon: Users },
     ],
   },
   { path: "/", label: "Back Home", icon: Home },
@@ -266,7 +267,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   {/* ===== SUB MENU ===== */}
                   {!isCollapsed && (
                     <div
-                      className={`ml-4 space-y-1 overflow-y-auto border-l border-fuchsia-300/25 pl-3 hide-scrollbar transition-all duration-300
+                      className={`ml-4 space-y-1 overflow-y-auto  pl-3 hide-scrollbar transition-all duration-300
                       ${isMenuOpen ? "max-h-60 py-1 opacity-100" : "max-h-0 opacity-0"}`}
                     >
                       {item.children.map((sub) => {
