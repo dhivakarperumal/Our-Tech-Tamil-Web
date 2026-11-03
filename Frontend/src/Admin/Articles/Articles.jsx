@@ -3,12 +3,14 @@ import { createPortal } from "react-dom";
 import {
   ArrowUpRight,
   FilePlus2,
+  Hash,
   ImagePlus,
   Link2,
   Loader2,
   Pencil,
   Plus,
   ShoppingBag,
+  Sparkles,
   Star,
   Trash2,
   Upload,
@@ -31,6 +33,7 @@ const emptyForm = {
 };
 
 const inputClass = "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100";
+const fieldLabelClass = "block text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500";
 const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
 
 const getImageUrl = (image) => {
@@ -287,14 +290,20 @@ const Articles = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="content-form-title"
-            className="my-0 flex h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25 sm:my-auto sm:h-[min(90dvh,52rem)] sm:max-h-[calc(100dvh-2.5rem)]"
+            className="my-0 flex h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25 sm:my-auto sm:h-[min(90dvh,58rem)] sm:max-h-[calc(100dvh-2.5rem)]"
           >
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white via-white to-violet-50/70 px-5 py-4 sm:px-7">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Content management</p>
-                <h2 id="content-form-title" className="mt-0.5 font-bold text-slate-900">
-                  {editingId ? "Edit content" : "Add article or product review"}
-                </h2>
+            <div className="relative flex shrink-0 items-center justify-between overflow-hidden border-b border-violet-100 bg-gradient-to-r from-violet-950 via-violet-900 to-fuchsia-800 px-5 py-4 sm:px-7">
+              <div className="pointer-events-none absolute -right-8 -top-14 h-40 w-40 rounded-full border-[24px] border-white/[0.06]" />
+              <div className="relative flex min-w-0 items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-violet-100 shadow-inner">
+                  {isArticle ? <FilePlus2 className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-200">Content studio</p>
+                  <h2 id="content-form-title" className="truncate font-bold text-white">
+                    {editingId ? "Edit content" : `Create ${isArticle ? "an article" : "a product review"}`}
+                  </h2>
+                </div>
               </div>
               <button
                 type="button"
@@ -304,15 +313,20 @@ const Articles = () => {
                 }}
                 disabled={saving || uploadingImage}
                 aria-label="Close form"
-                className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+                className="relative rounded-xl border border-white/15 bg-white/10 p-2 text-white/75 transition hover:bg-white/20 hover:text-white disabled:opacity-50"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
             <form onSubmit={submitForm} className="flex min-h-0 flex-1 basis-0 flex-col overflow-hidden">
-              <div className="min-h-0 flex-1 space-y-5 overflow-x-hidden overflow-y-auto overscroll-y-contain p-5 sm:p-7">
+              <div className="min-h-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto overscroll-y-contain bg-slate-50/80 p-4 sm:space-y-5 sm:p-6">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
         <div>
-          <p className="text-sm font-bold text-slate-800">Choose content type</p>
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-violet-600" />
+            <p className="text-sm font-bold text-slate-800">Choose a content type</p>
+          </div>
+          <p className="mt-1 text-xs text-slate-500">Start by selecting what you want to publish.</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {[
               { value: "article", label: "Article", description: "Create an article with a title and image", Icon: FilePlus2 },
@@ -320,10 +334,10 @@ const Articles = () => {
             ].map(({ value, label, description, Icon }) => (
               <label
                 key={value}
-                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition ${
+                className={`group flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition duration-200 ${
                   form.content_type === value
-                    ? "border-violet-400 bg-violet-50 ring-2 ring-violet-100"
-                    : "border-slate-200 hover:border-violet-200"
+                    ? "border-violet-400 bg-gradient-to-br from-violet-50 to-fuchsia-50 shadow-sm ring-2 ring-violet-100"
+                    : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/40"
                 } ${editingId ? "cursor-not-allowed opacity-70" : ""}`}
               >
                 <input
@@ -335,23 +349,30 @@ const Articles = () => {
                   onChange={() => setForm({ ...emptyForm, content_type: value })}
                   className="mt-1 accent-violet-700"
                 />
-                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-violet-700" />
-                <span>
+                <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${form.content_type === value ? "bg-violet-700 text-white shadow-md shadow-violet-900/20" : "bg-slate-100 text-slate-500 group-hover:bg-violet-100 group-hover:text-violet-700"}`}>
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="pt-0.5">
                   <span className="block text-sm font-bold text-slate-800">{label}</span>
-                  <span className="mt-1 block text-xs text-slate-500">{description}</span>
+                  <span className="mt-1 block text-xs leading-relaxed text-slate-500">{description}</span>
                 </span>
               </label>
             ))}
           </div>
         </div>
+        </section>
 
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="text-sm font-semibold text-slate-700">
-            ID
-            <input value={form.content_id || "Generating..."} readOnly className={`${inputClass} bg-slate-50 font-semibold text-violet-700`} />
+          <label className={fieldLabelClass}>
+            Content ID
+            <span className="relative block">
+              <Hash className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-violet-500" />
+              <input value={form.content_id || "Generating..."} readOnly className={`${inputClass} mt-2 border-violet-100 bg-violet-50/60 pl-10 font-bold tracking-wide text-violet-800`} />
+            </span>
           </label>
           {isArticle ? (
-            <label className="text-sm font-semibold text-slate-700">
+            <label className={fieldLabelClass}>
               Title
               <input
                 required
@@ -360,11 +381,11 @@ const Articles = () => {
                 value={form.title}
                 onChange={(event) => updateForm("title", event.target.value)}
                 placeholder="Enter article title"
-                className={inputClass}
+                className={`${inputClass} font-medium`}
               />
             </label>
           ) : (
-            <label className="text-sm font-semibold text-slate-700">
+            <label className={fieldLabelClass}>
               Product name
               <input
                 required
@@ -373,28 +394,34 @@ const Articles = () => {
                 value={form.product_name}
                 onChange={(event) => updateForm("product_name", event.target.value)}
                 placeholder="Enter product name"
-                className={inputClass}
+                className={`${inputClass} font-medium`}
               />
             </label>
           )}
         </div>
+        </section>
 
-        <label className="block text-sm font-semibold text-slate-700">
-          Description
-          <textarea
-            required
-            maxLength={5000}
-            rows={5}
-            value={form.description}
-            onChange={(event) => updateForm("description", event.target.value)}
-            placeholder={isArticle ? "Write the article description..." : "Write the product review..."}
-            className={inputClass}
-          />
-        </label>
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+          <label className={fieldLabelClass}>
+            {isArticle ? "Article description" : "Review description"}
+            <textarea
+              required
+              maxLength={5000}
+              rows={4}
+              value={form.description}
+              onChange={(event) => updateForm("description", event.target.value)}
+              placeholder={isArticle ? "Write a clear, engaging description for your article..." : "Share your honest product review..."}
+              className={`${inputClass} mt-2 resize-y leading-relaxed`}
+            />
+            <span className="mt-1 block text-right text-[11px] font-medium normal-case tracking-normal text-slate-400">
+              {form.description.length.toLocaleString()} / 5,000 characters
+            </span>
+          </label>
+        </section>
 
         {!isArticle && (
           <>
-            <section className="rounded-2xl border border-slate-200 p-4 sm:p-5">
+            <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="flex items-center gap-2 font-bold text-slate-800">
@@ -405,17 +432,17 @@ const Articles = () => {
                 <button
                   type="button"
                   onClick={() => addRow("product_features", { name: "", value: "" })}
-                  className="inline-flex items-center gap-2 rounded-xl border border-violet-200 px-3 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-50"
+                  className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
                 >
                   <Plus className="h-4 w-4" /> Add feature
                 </button>
               </div>
               <div className="mt-4 space-y-3">
                 {form.product_features.length === 0 && (
-                  <p className="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">No product features added.</p>
+                  <p className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-500">No features yet. Add product specifications such as material, size, or battery life.</p>
                 )}
                 {form.product_features.map((feature, index) => (
-                  <div key={`feature-${index}`} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto] items-center gap-3 rounded-xl bg-slate-50 p-3">
+                  <div key={`feature-${index}`} className="grid grid-cols-1 items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto] sm:gap-3">
                     <input
                       maxLength={120}
                       value={feature.name}
@@ -448,7 +475,7 @@ const Articles = () => {
           </>
         )}
 
-        <section className="rounded-2xl border border-slate-200 p-4 sm:p-5">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <h3 className="flex items-center gap-2 font-bold text-slate-800">
@@ -459,14 +486,14 @@ const Articles = () => {
                 <button
                   type="button"
                   onClick={() => addRow("buy_links", { name: "", url: "" })}
-                  className="inline-flex items-center gap-2 rounded-xl border border-violet-200 px-3 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-50"
+                  className="inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-white px-3 py-2 text-sm font-semibold text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
                 >
                   <Plus className="h-4 w-4" /> Add link
                 </button>
               </div>
               <div className="mt-4 space-y-3">
                 {form.buy_links.map((link, index) => (
-                  <div key={`buy-link-${index}`} className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto] items-center gap-3 rounded-xl bg-slate-50 p-3">
+                  <div key={`buy-link-${index}`} className="grid grid-cols-1 items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto] sm:gap-3">
                     <input
                       maxLength={120}
                       value={link.name}
@@ -516,10 +543,10 @@ const Articles = () => {
                   />
                 </span>
               </label>
-              <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <p className="flex items-center gap-2 self-end rounded-xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800">
                 <ArrowUpRight className="h-4 w-4 shrink-0" />
-                Add several named buy links above, such as Amazon and Flipkart.
-              </div>
+                Use ratings from 1 to 5.
+              </p>
             </div>
             <label className="block text-sm font-semibold text-slate-700">
               More details
@@ -535,18 +562,30 @@ const Articles = () => {
           </>
         )}
 
-        <div>
-          <span className="text-sm font-semibold text-slate-700">{isArticle ? "Article image" : "Product image"}</span>
-          <div className="mt-2 flex flex-wrap items-center gap-4">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
+                <ImagePlus className="h-4 w-4 text-violet-700" />
+                {isArticle ? "Cover image" : "Product image"}
+              </h3>
+              <p className="mt-1 text-xs text-slate-500">Choose a clear image to make your content stand out.</p>
+            </div>
+            {form.image_url && <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">Image ready</span>}
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-4 rounded-xl border border-dashed border-violet-200 bg-gradient-to-r from-violet-50/70 to-white p-4">
             {form.image_url ? (
-              <img src={getImageUrl(form.image_url)} alt="Selected content" className="h-24 w-24 rounded-xl border border-slate-200 object-cover" />
+              <img src={getImageUrl(form.image_url)} alt="Selected content" className="h-24 w-24 rounded-xl border border-white object-cover shadow-md ring-1 ring-slate-200" />
             ) : (
-              <span className="flex h-24 w-24 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-slate-400">
-                <ImagePlus className="h-7 w-7" />
+              <span className="flex h-24 w-24 items-center justify-center rounded-xl border border-white bg-white text-violet-400 shadow-sm ring-1 ring-slate-200">
+                <ImagePlus className="h-8 w-8" />
               </span>
             )}
-            <div className="flex flex-wrap gap-2">
-              <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-violet-50 hover:text-violet-700">
+            <div className="min-w-[12rem] flex-1">
+              <p className="text-sm font-semibold text-slate-800">{form.image_url ? "Your image is ready" : "Upload a cover image"}</p>
+              <p className="mt-1 text-xs leading-relaxed text-slate-500">PNG, JPEG, WEBP, or GIF · Up to 5 MB</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-900">
                 {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                 {uploadingImage ? "Uploading..." : form.image_url ? "Change image" : "Upload image"}
                 <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={uploadImage} disabled={uploadingImage} className="sr-only" />
@@ -556,26 +595,32 @@ const Articles = () => {
                   <X className="h-4 w-4" /> Remove
                 </button>
               )}
+              </div>
             </div>
           </div>
-          <p className="mt-2 text-xs text-slate-500">PNG, JPEG, WEBP, or GIF; maximum size 5 MB.</p>
-        </div>
+        </section>
 
               </div>
-              <div className="flex shrink-0 flex-wrap gap-3 border-t border-slate-100 bg-white px-5 py-4 sm:px-7">
+              <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-white/95 px-5 py-3.5 backdrop-blur sm:px-7">
+                <span className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-600">
+                  <Hash className="h-3.5 w-3.5 text-violet-600" />
+                  {form.content_id || "Generating ID..."}
+                </span>
+                <div className="flex flex-wrap gap-2">
           <button
             type="submit"
             disabled={saving || uploadingImage || !form.content_id}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-800 to-fuchsia-700 px-5 py-3 text-sm font-bold text-white shadow-md transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-w-36 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-800 to-fuchsia-700 px-5 py-3 text-sm font-bold text-white shadow-md shadow-violet-900/20 transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FilePlus2 className="h-4 w-4" />}
             {saving ? "Saving..." : editingId ? "Update content" : `Add ${isArticle ? "article" : "product review"}`}
           </button>
           {editingId && (
-            <button type="button" onClick={resetForm} className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50">
+            <button type="button" onClick={resetForm} className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:bg-slate-50">
               Cancel edit
             </button>
           )}
+                </div>
         </div>
             </form>
           </section>
