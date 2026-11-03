@@ -17,7 +17,7 @@ import {
 } from "react-icons/fi";
 import { FaRupeeSign, FaTshirt, FaTruck } from "react-icons/fa";
 import { Bar, Doughnut } from 'react-chartjs-2';
-import { ArrowRight, CalendarDays, Image, RefreshCw, Sparkles, Video } from "lucide-react";
+import { ArrowRight, CalendarDays, FilePlus2, Image, RefreshCw, Sparkles, Video } from "lucide-react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -715,6 +715,8 @@ const Dashboard = () => {
                     {[
                         { label: "Add product", icon: <FiBox size={19} />, path: "/admin/products/add", tone: "from-violet-100 to-fuchsia-100 text-violet-700 group-hover:from-violet-600 group-hover:to-fuchsia-600" },
                         { label: "Add combo", icon: <FiShoppingBag size={19} />, path: "/admin/products/combos/add", tone: "from-fuchsia-100 to-pink-100 text-fuchsia-700 group-hover:from-fuchsia-600 group-hover:to-pink-600" },
+                        { label: "Add order", icon: <FiShoppingBag size={19} />, path: "/admin/orders/shop-create", tone: "from-teal-100 to-cyan-100 text-teal-700 group-hover:from-teal-600 group-hover:to-cyan-600" },
+                        { label: "Articles", icon: <FilePlus2 size={19} />, path: "/admin/articles", tone: "from-purple-100 to-fuchsia-100 text-purple-700 group-hover:from-purple-600 group-hover:to-fuchsia-600" },
                         { label: "Hero section", icon: <Sparkles size={19} />, path: "/admin/banners", tone: "from-indigo-100 to-violet-100 text-indigo-700 group-hover:from-indigo-600 group-hover:to-violet-600" },
                         { label: "Banners", icon: <Image size={19} />, path: "/admin/banners", tone: "from-sky-100 to-cyan-100 text-sky-700 group-hover:from-sky-600 group-hover:to-cyan-600" },
                         { label: "Coupons", icon: <FiTag size={19} />, path: "/admin/coupons", tone: "from-amber-100 to-yellow-100 text-amber-700 group-hover:from-amber-500 group-hover:to-yellow-500" },
@@ -882,14 +884,14 @@ const Dashboard = () => {
                         <p className="mt-1 text-xs text-slate-500">The latest orders recorded in your store.</p>
                     </div>
                     <div className="overflow-x-auto">
-                        <table className="w-full min-w-[620px] text-left text-sm">
-                            <thead>
-                                <tr className="admin-table-header text-[10px] uppercase tracking-[0.12em]">
-                                    <th className="pb-3 font-bold">Order</th>
-                                    <th className="pb-3 font-bold">Customer</th>
-                                    <th className="pb-3 font-bold">Date</th>
-                                    <th className="pb-3 font-bold">Amount</th>
-                                    <th className="pb-3 font-bold">Status</th>
+                        <table className="w-full min-w-[620px] border-separate border-spacing-0 text-left text-sm">
+                            <thead className="admin-table-header text-[10px] uppercase tracking-[0.12em]">
+                                <tr>
+                                    <th className="rounded-tl-xl px-4 py-4 font-bold">Order</th>
+                                    <th className="px-4 py-4 font-bold">Customer</th>
+                                    <th className="px-4 py-4 font-bold">Date</th>
+                                    <th className="px-4 py-4 font-bold">Amount</th>
+                                    <th className="rounded-tr-xl px-4 py-4 font-bold">Status</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
