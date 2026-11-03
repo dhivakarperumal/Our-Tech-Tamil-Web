@@ -82,7 +82,7 @@ function Shop() {
   const [sortBy, setSortBy] = useState("popular");
   const [pagination, setPagination] = useState({ filterKey: "", page: 1 });
   const [listView, setListView] = useState(false);
-  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [showAllCategories, setShowAllCategories] = useState(() => Boolean(urlCategory));
   const [showAllBrands, setShowAllBrands] = useState(false);
 
   useEffect(() => {

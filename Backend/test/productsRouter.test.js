@@ -42,6 +42,41 @@ test("latest product code follows the largest existing OTP SKU", async (t) => {
   assert.match(latestCodeQuery, /MAX\(CAST\(SUBSTRING\(product_code, 4\) AS UNSIGNED\)\)/);
 });
 
+test("public product search returns matching active products", async (t) => {
+  const queries = [];
+  const pool = {
+    async execute(query, parameters) {
+      queries.push({ query, parameters });
+      if (query.startsWith("SELECT COUNT(*)")) return [[{ total: 1 }]];
+      return [[{
+        id: 8,
+        name: "Wireless Headphones",
+        product_code: "OTP0008",
+        images: "[]",
+        variants: "[]",
+        available_sizes: "[]",
+        available_colors: "[]",
+        specifications: "[]",
+        featured: 0,
+        trending: 0,
+        new_arrival: 0,
+      }]];
+    },
+  };
+  const server = await startTestServer(t, pool);
+  const response = await fetch(`${server.url}/public?search=headphones&limit=6`);
+  const result = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(result.products[0].name, "Wireless Headphones");
+  assert.deepEqual(result.pagination, { total: 1, totalPages: 1 });
+  assert.equal(queries.length, 2);
+  assert.deepEqual(queries[0].parameters, Array(8).fill("%headphones%"));
+  assert.deepEqual(queries[1].parameters, [...Array(8).fill("%headphones%"), 6, 0]);
+  assert.match(queries[0].query, /status = 'Active'/);
+  assert.match(queries[1].query, /product_code LIKE \?/);
+});
+
 test("product creation assigns a free URL slug when another product has the same name", async (t) => {
   let insertedValues;
   const pool = {

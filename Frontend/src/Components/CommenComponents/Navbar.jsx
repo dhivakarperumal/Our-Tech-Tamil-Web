@@ -41,6 +41,13 @@ const Navbar = () => {
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
   const [searchState, setSearchState] = useState({ route: "", value: "" });
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState({
+    query: "",
+    products: [],
+    loading: false,
+    error: false,
+  });
   const urlSearch = location.pathname === "/shop"
     ? new URLSearchParams(location.search).get("search") || ""
     : "";
@@ -50,6 +57,8 @@ const Navbar = () => {
   const menuRef = useRef(null);
   const categoryRef = useRef(null);
   const pagesRef = useRef(null);
+  const suggestionQuery = search.trim();
+  const currentSuggestions = suggestions.query === suggestionQuery ? suggestions : null;
 
   const confirmLogout = () => {
     logout();
@@ -63,11 +72,51 @@ const Navbar = () => {
       if (menuRef.current && !menuRef.current.contains(event.target)) setUserMenu(false);
       if (categoryRef.current && !categoryRef.current.contains(event.target)) setCategoryMenu(false);
       if (pagesRef.current && !pagesRef.current.contains(event.target)) setPagesMenu(false);
+      if (!(event.target instanceof Element) || !event.target.closest("[data-navbar-search]")) {
+        setSearchOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (!searchOpen || suggestionQuery.length < 2) return undefined;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await api.get("/products/public", {
+          params: { search: suggestionQuery, limit: 6 },
+          signal: controller.signal,
+        });
+        if (!controller.signal.aborted) {
+          setSuggestions({
+            query: suggestionQuery,
+            products: Array.isArray(response.data?.products) ? response.data.products : [],
+            loading: false,
+            error: false,
+          });
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Failed to fetch product search suggestions:", error);
+          setSuggestions({
+            query: suggestionQuery,
+            products: [],
+            loading: false,
+            error: true,
+          });
+        }
+      }
+    }, 250);
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [searchOpen, suggestionQuery]);
 
   useEffect(() => {
     let active = true;
@@ -124,13 +173,82 @@ const Navbar = () => {
 
   const handleSearchChange = (event) => {
     const value = event.target.value;
+    const query = value.trim();
+    setSearchOpen(true);
+    setSuggestions({
+      query,
+      products: [],
+      loading: query.length >= 2,
+      error: false,
+    });
     navigateToSearch(value, location.pathname === "/shop");
   };
 
   const submitSearch = (event) => {
     event.preventDefault();
     navigateToSearch(search, location.pathname === "/shop");
+    setSearchOpen(false);
     setMobileMenu(false);
+  };
+
+  const renderSearchSuggestions = (id) => {
+    if (!searchOpen || !search.trim()) return null;
+
+    return (
+      <div
+        role="listbox"
+        id={id}
+        aria-label="Product search suggestions"
+        className="absolute left-0 right-0 top-full z-[70] mt-2 overflow-hidden rounded-xl border border-[#e7dff0] bg-white py-1 shadow-[0_12px_30px_rgba(38,13,66,0.2)]"
+      >
+        {suggestionQuery.length < 2 ? (
+          <p className="px-4 py-3 text-sm text-gray-500">Type at least 2 characters to search.</p>
+        ) : currentSuggestions?.loading || !currentSuggestions ? (
+          <p className="px-4 py-3 text-sm text-gray-500">Searching products...</p>
+        ) : currentSuggestions.error ? (
+          <p className="px-4 py-3 text-sm text-red-600">Could not load suggestions. Please try again.</p>
+        ) : currentSuggestions.products.length ? (
+          <>
+            {currentSuggestions.products.map((product) => (
+              <button
+                key={product.id}
+                type="button"
+                role="option"
+                aria-selected="false"
+                onClick={() => {
+                  setSearchOpen(false);
+                  setMobileMenu(false);
+                  navigate(`/product/${product.id}`);
+                }}
+                className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition hover:bg-[#faf7ff]"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-gray-800">{product.name}</span>
+                  <span className="mt-0.5 block truncate text-xs text-gray-500">
+                    {[product.brand, product.category || product.cat_type].filter(Boolean).join(" · ") || "View product"}
+                  </span>
+                </span>
+                <span className="shrink-0 text-sm font-bold text-primary">
+                  ₹{Number(product.offer_price ?? product.mrp ?? 0).toLocaleString("en-IN")}
+                </span>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                navigateToSearch(search, location.pathname === "/shop");
+                setSearchOpen(false);
+              }}
+              className="w-full border-t border-[#eee8f5] px-4 py-2.5 text-left text-xs font-bold text-primary hover:bg-[#faf7ff]"
+            >
+              See all search results
+            </button>
+          </>
+        ) : (
+          <p className="px-4 py-3 text-sm text-gray-500">No matching products found.</p>
+        )}
+      </div>
+    );
   };
 
   const navClass = ({ isActive }) =>
@@ -201,7 +319,7 @@ const Navbar = () => {
 
           <span className="hidden h-12 w-px shrink-0 bg-[#d8cce4] xl:block" aria-hidden="true" />
 
-          <form onSubmit={submitSearch} role="search" className="hidden min-w-0 max-w-[680px] flex-1 xl:flex">
+          <form onSubmit={submitSearch} role="search" data-navbar-search className="relative hidden min-w-0 max-w-[680px] flex-1 xl:flex">
             <label htmlFor="desktop-product-search" className="sr-only">Search products</label>
             <div className="flex w-full items-center overflow-hidden rounded-full border border-[#e7dff0] bg-white shadow-inner focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/10">
               <Search size={19} className="ml-4 shrink-0 text-[#4c3b64]" aria-hidden="true" />
@@ -209,13 +327,20 @@ const Navbar = () => {
                 id="desktop-product-search"
                 value={search}
                 onChange={handleSearchChange}
+                onFocus={() => setSearchOpen(true)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setSearchOpen(false);
+                }}
                 placeholder="Search for products, brands and more..."
+                aria-autocomplete="list"
+                aria-controls="desktop-product-suggestions"
                 className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-gray-800 outline-none placeholder:text-gray-500"
               />
               <button type="submit" className="bg-gradient-to-r from-[#9d1db9] to-[#4b00c8] px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-110">
                 Search
               </button>
             </div>
+            {renderSearchSuggestions("desktop-product-suggestions")}
           </form>
 
           <span className="hidden h-12 w-px shrink-0 bg-[#d8cce4] xl:block" aria-hidden="true" />
@@ -252,7 +377,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        <form onSubmit={submitSearch} role="search" className="pb-1.5 xl:hidden">
+        <form onSubmit={submitSearch} role="search" data-navbar-search className="relative pb-1.5 xl:hidden">
           <label htmlFor="mobile-product-search" className="sr-only">Search products</label>
           <div className="flex items-center overflow-hidden rounded-full border border-[#e7dff0] bg-white">
             <Search size={17} className="ml-3 shrink-0 text-[#4c3b64]" aria-hidden="true" />
@@ -260,13 +385,20 @@ const Navbar = () => {
               id="mobile-product-search"
               value={search}
               onChange={handleSearchChange}
+              onFocus={() => setSearchOpen(true)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") setSearchOpen(false);
+              }}
               placeholder="Search products, brands and more..."
+              aria-autocomplete="list"
+              aria-controls="mobile-product-suggestions"
               className="min-w-0 flex-1 bg-transparent px-2.5 py-2 text-xs text-gray-800 outline-none placeholder:text-gray-500"
             />
             <button type="submit" aria-label="Search" className="bg-gradient-to-r from-[#9d1db9] to-[#4b00c8] px-4 py-2.5 text-white">
               <Search size={15} aria-hidden="true" />
             </button>
           </div>
+          {renderSearchSuggestions("mobile-product-suggestions")}
         </form>
       </PageContainer>
       </nav>
@@ -331,7 +463,7 @@ const Navbar = () => {
                     {categories.length ? categories.map((category) => (
                       <NavLink
                         key={category.id}
-                        to={`/category/${category.slug || category.name}`}
+                        to={`/shop?category=${encodeURIComponent(category.name)}`}
                         onClick={() => setCategoryMenu(false)}
                         className={({ isActive }) =>
                           `group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition ${
@@ -420,7 +552,7 @@ const Navbar = () => {
                 {categories.map((category) => (
                   <NavLink
                     key={category.id}
-                    to={`/category/${category.slug || category.name}`}
+                    to={`/shop?category=${encodeURIComponent(category.name)}`}
                     onClick={() => { setMobileCategory(false); setMobileMenu(false); }}
                     className="flex items-center justify-between rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"
                   >
