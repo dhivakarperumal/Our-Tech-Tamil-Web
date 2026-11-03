@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { ArrowLeft, ChevronLeft, ChevronRight, ImagePlus, Minus, Package, Plus, ShoppingCart, Star, UserRound, X, Zap } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, ImagePlus, MessageSquare, Minus, Package, Plus, ShoppingCart, Star, UserRound, X, Zap } from "lucide-react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -847,9 +847,15 @@ function ProductDetails() {
                 </div>
                 <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-text-secondary">{review.comment}</p>
                 {review.admin_reply && (
-                  <p className="mt-3 rounded-lg bg-[#faf8ff] p-3 text-sm text-text-secondary">
-                    <span className="font-bold text-text-primary">Store reply: </span>{review.admin_reply}
-                  </p>
+                  <div className="mt-4 rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50/90 to-fuchsia-50/70 p-3 text-left sm:p-4">
+                    <p className="flex items-center justify-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wide text-violet-800 sm:justify-start">
+                      <MessageSquare size={14} aria-hidden="true" />
+                      Response from our team
+                    </p>
+                    <p className="mt-1.5 whitespace-pre-line break-words text-sm leading-relaxed text-slate-700">
+                      {review.admin_reply}
+                    </p>
+                  </div>
                 )}
               </article>
               </SwiperSlide>

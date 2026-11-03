@@ -217,12 +217,12 @@ function HomeReviews() {
                       </p>
                     </div>
                     {review.admin_reply && (
-                      <div className="mt-2 flex items-center gap-2 rounded-lg border border-violet-100 bg-gradient-to-br from-violet-50 to-fuchsia-50/50 px-2.5 py-1.5">
-                        <p className="flex shrink-0 items-center gap-1 text-[9px] font-extrabold text-primary">
-                          <MessageSquare size={13} aria-hidden="true" />
-                          Store reply
+                      <div className="mt-3 rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50/90 to-fuchsia-50/70 p-3 sm:p-3.5">
+                        <p className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wide text-violet-800">
+                          <MessageSquare size={14} aria-hidden="true" />
+                          Response from our team
                         </p>
-                        <p className="line-clamp-1 min-w-0 whitespace-pre-line break-words text-[10px] leading-4 text-text-secondary">
+                        <p className="mt-1.5 whitespace-pre-line break-words text-xs leading-relaxed text-slate-700">
                           {review.admin_reply}
                         </p>
                       </div>
