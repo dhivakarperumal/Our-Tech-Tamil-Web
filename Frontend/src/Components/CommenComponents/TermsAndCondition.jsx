@@ -172,12 +172,9 @@ const TermsAndConditions = () => {
 
             {/* ── Hero Intro Card ── */}
             <div className="relative flex flex-col gap-4 overflow-hidden rounded-2xl bg-[#ede4fb] px-6 py-6 sm:flex-row sm:items-center sm:gap-6 sm:px-8 sm:py-7">
-              {/* icon */}
               <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white shadow-sm text-primary">
                 <Scale size={26} />
               </div>
-
-              {/* text */}
               <div className="flex-1 min-w-0">
                 <h1 className="text-xl font-extrabold text-[#17122b] sm:text-2xl">
                   Welcome to Our Tech
@@ -188,12 +185,10 @@ const TermsAndConditions = () => {
                   website and services.
                 </p>
               </div>
-
-              {/* Last Updated badge — top right */}
-              <div className="flex shrink-0 flex-col items-end self-start sm:items-center sm:self-auto">
+              <div className="flex shrink-0 self-start sm:self-auto">
                 <div className="flex items-center gap-2 rounded-xl border border-[#d5c2f5] bg-white px-4 py-2.5 text-xs shadow-sm">
                   <CalendarDays size={15} className="text-primary" />
-                  <div className="text-right">
+                  <div>
                     <p className="text-[11px] font-semibold text-[#525b70]">Last Updated</p>
                     <p className="font-extrabold text-[#17122b]">12 Oct 2026</p>
                   </div>
@@ -205,23 +200,23 @@ const TermsAndConditions = () => {
             {sections.map(({ num, icon: Icon, title, bullets }) => (
               <div
                 key={num}
-                className="flex gap-5 rounded-2xl border border-[#e4d8f8] bg-white px-6 py-5 shadow-sm sm:gap-7 sm:px-8 sm:py-6"
+                className="flex items-start rounded-2xl border border-[#e4d8f8] bg-white shadow-sm overflow-hidden"
               >
-                {/* Left: number + icon stacked */}
-                <div className="flex shrink-0 flex-col items-center gap-2">
-                  <span className="text-sm font-extrabold leading-none text-primary">{num}</span>
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#ede4fb] text-primary">
-                    <Icon size={21} />
+                {/* Left panel — number + icon */}
+                <div className="flex w-24 shrink-0 flex-col items-center justify-start gap-2 bg-[#faf7ff] px-4 py-5 sm:w-28 sm:py-6">
+                  <span className="text-sm font-extrabold tracking-wide text-primary">{num}</span>
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#ede4fb] text-primary">
+                    <Icon size={22} />
                   </div>
                 </div>
 
-                {/* Right: title + bullets */}
-                <div className="flex-1 min-w-0">
+                {/* Right panel — title + bullets */}
+                <div className="flex-1 min-w-0 px-5 py-5 sm:px-7 sm:py-6">
                   <h2 className="text-base font-extrabold text-[#17122b] sm:text-lg">{title}</h2>
                   <ul className="mt-3 space-y-2">
                     {bullets.map((b, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-sm leading-6 text-[#525b70]">
-                        <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                         {b}
                       </li>
                     ))}
@@ -232,7 +227,6 @@ const TermsAndConditions = () => {
 
             {/* ── Still Have Questions CTA ── */}
             <div className="relative flex flex-col items-start justify-between gap-6 overflow-hidden rounded-2xl bg-gradient-to-r from-[#4B00C8] via-[#7b00d4] to-[#B000D8] px-7 py-7 sm:flex-row sm:items-center sm:px-10 sm:py-8">
-              {/* content */}
               <div className="flex items-start gap-4 z-10">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20">
                   <Headphones size={24} className="text-white" />
@@ -247,8 +241,6 @@ const TermsAndConditions = () => {
                   </p>
                 </div>
               </div>
-
-              {/* button */}
               <Link
                 to="/contact"
                 className="z-10 inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-extrabold text-primary shadow transition hover:bg-[#f0e7ff]"
@@ -256,8 +248,6 @@ const TermsAndConditions = () => {
                 Contact Us
                 <ArrowRight size={16} />
               </Link>
-
-              {/* decorative blobs */}
               <div className="pointer-events-none absolute -right-12 -top-12 h-52 w-52 rounded-full bg-white/5" />
               <div className="pointer-events-none absolute -bottom-10 right-32 h-36 w-36 rounded-full bg-white/5" />
             </div>
