@@ -44,8 +44,13 @@ function optionalText(value, field, maxLength) {
 }
 
 function parseAddress(body) {
+  const email = optionalText(body.email ?? body.customer_email, "Email", 191);
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw httpError(400, "Enter a valid email address.");
+  }
   return {
     recipient_name: requiredText(body.recipient_name, "Full name", 160),
+    email,
     phone: requiredText(body.phone, "Phone number", 32),
     street_address: requiredText(body.street_address, "Street address", 512),
     city: requiredText(body.city, "City", 120),
@@ -60,6 +65,7 @@ function addressValues(userId, address) {
   return [
     userId,
     address.recipient_name,
+    address.email,
     address.phone,
     address.street_address,
     address.city,
@@ -73,6 +79,7 @@ function addressValues(userId, address) {
 async function findMatchingAddress(executor, userId, address, excludeId = null) {
   const fields = [
     "recipient_name",
+    "email",
     "phone",
     "street_address",
     "city",
@@ -104,6 +111,7 @@ async function lockActiveUser(connection, userId) {
 function toAddressValues(address) {
   return {
     recipient_name: address.recipient_name,
+    email: address.email,
     phone: address.phone,
     street_address: address.street_address,
     city: address.city,
@@ -119,6 +127,7 @@ function uniqueAddresses(addresses) {
   return addresses.filter((address) => {
     const keyValues = [
       address.recipient_name,
+      address.email,
       address.phone,
       address.street_address,
       address.city,
@@ -406,7 +415,7 @@ function createCheckoutRouter(pool) {
   router.get("/addresses", async (request, response, next) => {
     try {
       const [addresses] = await pool.execute(
-        `SELECT id, recipient_name, phone, street_address, city, district,
+        `SELECT id, recipient_name, email, phone, street_address, city, district,
                 state, country, zip_code
          FROM addresses
          WHERE user_id = ? AND is_active = TRUE
@@ -432,8 +441,8 @@ function createCheckoutRouter(pool) {
       }
       const [result] = await connection.execute(
         `INSERT INTO addresses
-          (user_id, recipient_name, phone, street_address, city, district, state, country, zip_code)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (user_id, recipient_name, email, phone, street_address, city, district, state, country, zip_code)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         addressValues(userId, address),
       );
       await connection.commit();
@@ -468,11 +477,12 @@ function createCheckoutRouter(pool) {
       }
       await connection.execute(
         `UPDATE addresses
-         SET recipient_name = ?, phone = ?, street_address = ?, city = ?, district = ?,
+         SET recipient_name = ?, email = ?, phone = ?, street_address = ?, city = ?, district = ?,
              state = ?, country = ?, zip_code = ?
          WHERE id = ? AND user_id = ? AND is_active = TRUE`,
         [
           address.recipient_name,
+          address.email,
           address.phone,
           address.street_address,
           address.city,
@@ -767,8 +777,8 @@ function createCheckoutRouter(pool) {
       if (!addressId) {
         const [addressResult] = await connection.execute(
           `INSERT INTO addresses
-            (user_id, recipient_name, phone, street_address, city, district, state, country, zip_code)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (user_id, recipient_name, email, phone, street_address, city, district, state, country, zip_code)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           addressValues(userId, address),
         );
         addressId = addressResult.insertId;

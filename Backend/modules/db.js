@@ -440,6 +440,7 @@ async function initializeDatabase(pool) {
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       user_id VARCHAR(255) NULL,
       recipient_name VARCHAR(160) NOT NULL,
+      email VARCHAR(191) NULL,
       phone VARCHAR(32) NOT NULL,
       street_address VARCHAR(512) NOT NULL,
       city VARCHAR(120) NOT NULL,
@@ -457,9 +458,15 @@ async function initializeDatabase(pool) {
      FROM INFORMATION_SCHEMA.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'addresses'`,
   );
-  if (!new Set(addressColumns.map((column) => column.COLUMN_NAME)).has("is_active")) {
+  const existingAddressColumns = new Set(addressColumns.map((column) => column.COLUMN_NAME));
+  if (!existingAddressColumns.has("is_active")) {
     await pool.query(
       "ALTER TABLE addresses ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE AFTER zip_code",
+    );
+  }
+  if (!existingAddressColumns.has("email")) {
+    await pool.query(
+      "ALTER TABLE addresses ADD COLUMN email VARCHAR(191) NULL AFTER recipient_name",
     );
   }
 

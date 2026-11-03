@@ -47,12 +47,12 @@ function createPool({ stock = 5, quantity = 2, coupon = null } = {}) {
     if (query.includes("COUNT(*) AS order_count")) {
       return [[{ order_count: orders.filter((order) => order.user_id === params[0]).length }]];
     }
-    if (query.includes("SELECT id, recipient_name, phone")) {
+    if (query.includes("SELECT id, recipient_name, email, phone")) {
       const userId = params[0];
       return [addresses
         .filter((address) => address.user_id === userId && address.is_active !== false)
-        .map(({ id, recipient_name, phone, street_address, city, district, state, country, zip_code }) => ({
-          id, recipient_name, phone, street_address, city, district, state, country, zip_code,
+        .map(({ id, recipient_name, email, phone, street_address, city, district, state, country, zip_code }) => ({
+          id, recipient_name, email, phone, street_address, city, district, state, country, zip_code,
         }))];
     }
     if (query.includes("SELECT id FROM addresses WHERE id = ? AND user_id = ?")) {
@@ -72,7 +72,7 @@ function createPool({ stock = 5, quantity = 2, coupon = null } = {}) {
       const [userId, ...values] = params;
       const excludeId = query.includes("id <> ?") ? values.pop() : null;
       const fields = [
-        "recipient_name", "phone", "street_address", "city",
+        "recipient_name", "email", "phone", "street_address", "city",
         "district", "state", "country", "zip_code",
       ];
       const existing = addresses.find((address) =>
@@ -87,12 +87,13 @@ function createPool({ stock = 5, quantity = 2, coupon = null } = {}) {
     }
     if (query.includes("INSERT INTO addresses")) {
       const [
-        user_id, recipient_name, phone, street_address, city, district, state, country, zip_code,
+        user_id, recipient_name, email, phone, street_address, city, district, state, country, zip_code,
       ] = params;
       addresses.push({
         id: addresses.reduce((maximum, address) => Math.max(maximum, address.id), 30) + 1,
         user_id,
         recipient_name,
+        email,
         phone,
         street_address,
         city,
@@ -115,7 +116,7 @@ function createPool({ stock = 5, quantity = 2, coupon = null } = {}) {
     }
     if (query.includes("UPDATE addresses")) {
       const [
-        recipient_name, phone, street_address, city, district, state, country, zip_code, id, user_id,
+        recipient_name, email, phone, street_address, city, district, state, country, zip_code, id, user_id,
       ] = params;
       const address = addresses.find((item) =>
         String(item.id) === String(id) &&
@@ -124,7 +125,7 @@ function createPool({ stock = 5, quantity = 2, coupon = null } = {}) {
       );
       if (!address) return [{ affectedRows: 0 }];
       Object.assign(address, {
-        recipient_name, phone, street_address, city, district, state, country, zip_code,
+        recipient_name, email, phone, street_address, city, district, state, country, zip_code,
       });
       return [{ affectedRows: 1 }];
     }
@@ -347,6 +348,7 @@ test("saved checkout addresses are listed only for the authenticated customer", 
   assert.equal(customerAddressesResponse.status, 200);
   assert.equal(customerAddresses.length, 1);
   assert.equal(customerAddresses[0].street_address, address.street_address);
+  assert.equal(customerAddresses[0].email, address.customer_email);
 
   const otherCustomerResponse = await fetch(`${url}/addresses`, {
     headers: authHeaders("other-customer"),
@@ -367,6 +369,7 @@ test("customers can create, update, and delete only their own saved addresses", 
   const created = await createdResponse.json();
   assert.equal(createdResponse.status, 201, JSON.stringify(created));
   assert.equal(created.street_address, address.street_address);
+  assert.equal(created.email, address.customer_email);
 
   const duplicateResponse = await createAddress({
     ...address,
@@ -427,6 +430,13 @@ test("checkout rejects unauthenticated customers and invalid addresses", async (
     body: JSON.stringify({ ...address, street_address: "" }),
   });
   assert.equal(invalidAddress.status, 400);
+
+  const invalidEmail = await fetch(`${url}/addresses`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ ...address, email: "not-an-email" }),
+  });
+  assert.equal(invalidEmail.status, 400);
 });
 
 test("Razorpay order and payment verification use server-calculated totals", async (t) => {

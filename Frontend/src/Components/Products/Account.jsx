@@ -27,6 +27,7 @@ import api from "../../api";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import PageContainer from "../CommenComponents/PageContainer";
 import PageHeader from "../CommenComponents/PageHeader";
+import indianStates from "./indianStates";
 
 function getInitials(name) {
   if (!name) return "";
@@ -348,6 +349,7 @@ function ChangePassword() {
 
 const EMPTY_ADDRESS = {
   recipient_name: "",
+  email: "",
   phone: "",
   street_address: "",
   city: "",
@@ -362,7 +364,7 @@ function MyAddresses({ user }) {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState(null);
-  const [form, setForm] = useState(EMPTY_ADDRESS);
+  const [form, setForm] = useState(function() { return { ...EMPTY_ADDRESS, email: user?.email || "" }; });
   const [saving, setSaving] = useState(false);
 
   useEffect(function() {
@@ -386,7 +388,10 @@ function MyAddresses({ user }) {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     function closeOnEscape(event) {
-      if (event.key === "Escape" && !saving) resetForm();
+      if (event.key === "Escape" && !saving) {
+        setEditingAddressId(null);
+        setForm({ ...EMPTY_ADDRESS, email: user?.email || "" });
+      }
     }
     document.addEventListener("keydown", closeOnEscape);
 
@@ -394,15 +399,15 @@ function MyAddresses({ user }) {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", closeOnEscape);
     };
-  }, [editingAddressId, saving]);
+  }, [editingAddressId, saving, user?.email]);
 
   function resetForm() {
     setEditingAddressId(null);
-    setForm(EMPTY_ADDRESS);
+    setForm({ ...EMPTY_ADDRESS, email: user?.email || "" });
   }
 
   function addAddress() {
-    setForm(EMPTY_ADDRESS);
+    setForm({ ...EMPTY_ADDRESS, email: user?.email || "" });
     setEditingAddressId("new");
   }
 
@@ -410,6 +415,7 @@ function MyAddresses({ user }) {
     setEditingAddressId(address.id);
     setForm({
       recipient_name: address.recipient_name || "",
+      email: address.email || user?.email || "",
       phone: address.phone || "",
       street_address: address.street_address || "",
       city: address.city || "",
@@ -509,6 +515,7 @@ function MyAddresses({ user }) {
               <div className="grid gap-4 overflow-y-auto p-5 sm:grid-cols-2 sm:px-7">
                 <Field label="Full name" required><InputBox icon={User} name="recipient_name" value={form.recipient_name} onChange={changeAddress} maxLength={160} required /></Field>
                 <Field label="Phone number" required><InputBox icon={Phone} name="phone" type="tel" value={form.phone} onChange={changeAddress} maxLength={32} required /></Field>
+                <Field label="Email"><InputBox icon={Mail} name="email" type="email" value={form.email} onChange={changeAddress} maxLength={191} autoComplete="email" /></Field>
                 <div className="sm:col-span-2">
                   <Field label="Street address" required>
                     <textarea name="street_address" value={form.street_address} onChange={changeAddress} maxLength={512} required className="min-h-20 w-full rounded-xl border border-[#e2d3f5] bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
@@ -516,7 +523,13 @@ function MyAddresses({ user }) {
                 </div>
                 <Field label="City" required><InputBox name="city" value={form.city} onChange={changeAddress} maxLength={120} required /></Field>
                 <Field label="District"><InputBox name="district" value={form.district} onChange={changeAddress} maxLength={120} /></Field>
-                <Field label="State" required><InputBox name="state" value={form.state} onChange={changeAddress} maxLength={120} required /></Field>
+                <Field label="State" required>
+                  <SelectBox icon={MapPin} name="state" value={form.state} onChange={changeAddress} required>
+                    <option value="" disabled>Select a state or union territory</option>
+                    {form.state && !indianStates.includes(form.state) && <option value={form.state}>{form.state}</option>}
+                    {indianStates.map(function(state) { return <option key={state} value={state}>{state}</option>; })}
+                  </SelectBox>
+                </Field>
                 <Field label="Postal code" required><InputBox name="zip_code" value={form.zip_code} onChange={changeAddress} maxLength={24} required /></Field>
                 <Field label="Country" required><InputBox name="country" value={form.country} onChange={changeAddress} maxLength={120} required /></Field>
               </div>
