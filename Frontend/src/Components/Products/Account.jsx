@@ -285,7 +285,7 @@ function MyOrders({ user }) {
                       </div>
                     </div>
 
-                    <div className="col-start-1 row-start-2 min-w-0 pl-1 text-left sm:col-auto sm:row-auto sm:pl-0 sm:text-center">
+                    <div className="col-start-1 row-start-2 min-w-0 pl-1 text-left sm:col-auto sm:row-auto sm:pl-0">
                       <p className="text-[9px] font-semibold text-slate-500">Total Amount</p>
                       <p className="text-xs font-extrabold text-[#7100b5]">₹{Number(order.total_amount || 0).toLocaleString("en-IN")}</p>
                     </div>
