@@ -15,6 +15,7 @@ import {
   Tag,
 } from "lucide-react";
 import PageContainer from "./PageContainer";
+import PageHeader from "./PageHeader";
 
 /* ─── Stat Card ─────────────────────────────────────────── */
 const StatCard = ({ icon: Icon, value, label }) => (
@@ -59,63 +60,7 @@ const AboutUs = () => {
   return (
     <div className="bg-[#faf9fc] pb-0">
 
-      {/* ── HERO ─────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#ede0ff] to-[#e8d5ff] py-16">
-        {/* decorative blobs */}
-        <div className="pointer-events-none absolute -top-16 -right-16 h-72 w-72 rounded-full bg-gradient-to-br from-primary/20 to-gradient-middle/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-10 -left-10 h-56 w-56 rounded-full bg-gradient-to-br from-gradient-middle/20 to-primary/10 blur-2xl" />
-
-        <PageContainer>
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            {/* Left */}
-            <div className="space-y-5">
-              <span className="inline-block rounded-full border border-primary/25 bg-white/70 px-4 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur">
-                About Us
-              </span>
-              <h1 className="text-4xl font-extrabold leading-tight text-[#1a0745] sm:text-5xl">
-                Your Trusted <br className="hidden sm:block" />
-                <span className="bg-gradient-to-r from-primary to-gradient-middle bg-clip-text text-transparent">
-                  Gadgets Store
-                </span>
-              </h1>
-              <p className="max-w-md text-base text-gray-600 leading-relaxed">
-                We bring a wide range of quality tech products to your
-                fingertips — from electronics to accessories, all in one place.
-              </p>
-              <Link
-                to="/shop"
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-gradient-middle px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:brightness-110 hover:-translate-y-0.5"
-              >
-                Shop Now →
-              </Link>
-            </div>
-
-            {/* Right – decorative graphic */}
-            <div className="flex justify-center">
-              <div className="relative flex h-64 w-64 items-center justify-center sm:h-80 sm:w-80">
-                {/* glow ring */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/30 to-gradient-middle/20 blur-2xl" />
-                {/* inner circle */}
-                <div className="relative flex h-52 w-52 flex-col items-center justify-center gap-3 rounded-full bg-gradient-to-br from-primary to-gradient-middle shadow-2xl sm:h-64 sm:w-64">
-                  <ShoppingBag size={56} className="text-white/90" />
-                  <span className="text-lg font-extrabold text-white">Our Tech</span>
-                  <span className="text-xs font-semibold text-white/70 tracking-widest uppercase">Gadgets Store</span>
-                </div>
-                {/* floating badges */}
-                <span className="absolute top-2 right-2 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-xl text-2xl">
-                  🎮
-                </span>
-                <span className="absolute bottom-4 left-0 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-xl text-xl">
-                  💻
-                </span>
-                <span className="absolute top-10 -left-2 flex h-12 w-12 items-center justify-center rounded-full bg-accent shadow-xl text-xl">
-                  🎧
-                </span>
-              </div>
-            </div>
-          </div>
-        </PageContainer>
-      </section>
+     <PageHeader title="About Us" />
 
       {/* ── WHO WE ARE ───────────────────────────────────────── */}
       <section className="py-16">
