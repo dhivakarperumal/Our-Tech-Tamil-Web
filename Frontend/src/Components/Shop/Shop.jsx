@@ -424,10 +424,21 @@ function Shop() {
     + (minPrice > 0 || currentMaxPrice < priceLimit ? 1 : 0)
     + (minRating > 0 ? 1 : 0) + Number(discountOnly) + Number(inStockOnly);
 
-  const toggleValue = (value, values, setValues) => {
-    setValues(values.includes(value)
-      ? values.filter((item) => item !== value)
-      : [...values, value]);
+  const isCategorySelected = (category) => selectedCategories.some((selectedCategory) => {
+    const optionValue = category.trim().toLowerCase();
+    const selectedValue = selectedCategory.trim().toLowerCase();
+    return optionValue === selectedValue || optionValue.endsWith(` · ${selectedValue}`);
+  });
+  const toggleCategory = (category) => {
+    if (isCategorySelected(category)) {
+      setSelectedCategories((current) => current.filter((selectedCategory) => {
+        const optionValue = category.trim().toLowerCase();
+        const selectedValue = selectedCategory.trim().toLowerCase();
+        return optionValue !== selectedValue && !optionValue.endsWith(` · ${selectedValue}`);
+      }));
+      return;
+    }
+    setSelectedCategories((current) => [...current, category]);
   };
 
   const clearFilters = () => {
@@ -606,8 +617,8 @@ function Shop() {
                   <label key={category} className="flex cursor-pointer items-center gap-2 text-[11px] text-[#504760]">
                     <input
                       type="checkbox"
-                      checked={selectedCategories.includes(category)}
-                      onChange={() => toggleValue(category, selectedCategories, setSelectedCategories)}
+                      checked={isCategorySelected(category)}
+                      onChange={() => toggleCategory(category)}
                       className="h-3.5 w-3.5 accent-[#4b00c8]"
                     />
                     <span className="min-w-0 flex-1 truncate">{category}</span>
