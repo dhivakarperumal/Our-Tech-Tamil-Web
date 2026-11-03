@@ -298,7 +298,7 @@ function MyOrders({ user }) {
                       type="button"
                       onClick={function(){ setSelectedOrder(order); }}
                       aria-label={"View details for order " + (order.order_id || order.id)}
-                      className="col-start-2 row-start-2 flex items-center justify-center gap-1.5 rounded-lg border border-[#a52cda] px-3 py-2 text-[10px] font-extrabold text-[#7900bd] transition hover:bg-gradient-to-r hover:from-[#8c12c6] hover:to-[#6500a9] hover:text-white sm:col-auto sm:row-auto sm:min-w-[98px]"
+                      className="col-start-2 row-start-2 flex items-center justify-center gap-1.5 rounded-lg border border-[#7900bd] bg-gradient-to-r from-[#8c12c6] to-[#6500a9] px-3 py-2 text-[10px] font-extrabold text-white transition hover:bg-none hover:from-white hover:to-white hover:text-[#7900bd] sm:col-auto sm:row-auto sm:min-w-[98px]"
                     >
                       View Details <ChevronRight size={13} />
                     </button>
