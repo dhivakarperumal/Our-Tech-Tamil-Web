@@ -18,6 +18,7 @@ function HomeReviews() {
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
   const swiperRef = useRef(null);
+  const [openStoreReplies, setOpenStoreReplies] = useState(() => new Set());
 
   useEffect(() => {
     let active = true;
@@ -107,9 +108,14 @@ function HomeReviews() {
               }}
               aria-label="Customer reviews"
             >
-              {reviews.map((review) => (
-                <SwiperSlide key={review.id} className="!h-auto">
-                  <article className="h-full rounded-2xl border border-border bg-white p-4 shadow-sm">
+              {reviews.map((review) => {
+                const hasStoreReply = typeof review.admin_reply === "string" && review.admin_reply.trim().length > 0;
+                const isStoreReplyOpen = openStoreReplies.has(review.id);
+                const storeReplyId = `store-reply-${review.id}`;
+
+                return (
+                  <SwiperSlide key={review.id} className="!h-auto">
+                    <article className="h-full rounded-2xl border border-border bg-white p-4 shadow-sm">
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-3">
                         {review.review_image && (
@@ -152,20 +158,38 @@ function HomeReviews() {
                 <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-text-secondary">
                   {review.comment}
                 </p>
-                {review.admin_reply && (
+                {hasStoreReply && (
                   <div className="mt-4 rounded-xl bg-[#faf7ff] p-3">
-                    <p className="flex items-center gap-1.5 text-[11px] font-bold text-primary">
+                    <button
+                      type="button"
+                      aria-expanded={isStoreReplyOpen}
+                      aria-controls={storeReplyId}
+                      onClick={() => {
+                        setOpenStoreReplies((current) => {
+                          const next = new Set(current);
+                          if (next.has(review.id)) next.delete(review.id);
+                          else next.add(review.id);
+                          return next;
+                        });
+                      }}
+                      className="flex w-full items-center gap-1.5 text-left text-[11px] font-bold text-primary"
+                    >
                       <MessageSquare size={13} aria-hidden="true" />
                       Store reply
-                    </p>
-                    <p className="mt-1 whitespace-pre-line break-words text-xs leading-5 text-text-secondary">
+                    </button>
+                    <p
+                      id={storeReplyId}
+                      hidden={!isStoreReplyOpen}
+                      className="mt-2 whitespace-pre-line break-words text-xs leading-5 text-text-secondary"
+                    >
                       {review.admin_reply}
                     </p>
                   </div>
                 )}
-                  </article>
-                </SwiperSlide>
-              ))}
+                    </article>
+                  </SwiperSlide>
+                );
+              })}
             </Swiper>
           </div>
         )}
