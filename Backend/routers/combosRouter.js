@@ -189,7 +189,7 @@ function createCombosRouter(pool) {
         `SELECT id, name, code, category_type, category, subcategory, description,
                 gallery_images, status, products, mrp, offer_price, final_price,
                 total_savings, available_stock, stock_status, track_inventory,
-                allow_backorders, minimum_order_quantity, maximum_order_quantity
+                allow_backorders, minimum_order_quantity, maximum_order_quantity, rating
          FROM combos WHERE status = 'Active' ORDER BY created_at DESC, id DESC`,
       );
       return response.json({
@@ -214,6 +214,7 @@ function createCombosRouter(pool) {
           allow_backorders: combo.allow_backorders,
           minimum_order_quantity: combo.minimum_order_quantity,
           maximum_order_quantity: combo.maximum_order_quantity,
+          rating: Number(combo.rating) || 0,
         })),
       });
     } catch (error) {

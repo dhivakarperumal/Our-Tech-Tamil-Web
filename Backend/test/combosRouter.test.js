@@ -69,6 +69,7 @@ test("public combo listing returns active combos without admin authentication", 
         final_price: 450,
         available_stock: 6,
         stock_status: "Low Stock",
+        rating: "4.5",
       }]];
     },
   });
@@ -76,6 +77,7 @@ test("public combo listing returns active combos without admin authentication", 
   const result = await response.json();
   assert.equal(response.status, 200);
   assert.equal(result.combos[0].name, "Kitchen bundle");
+  assert.equal(result.combos[0].rating, 4.5);
   assert.deepEqual(result.combos[0].gallery_images, ["/uploads/combos/kitchen.jpg"]);
 });
 

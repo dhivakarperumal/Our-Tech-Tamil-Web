@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Boxes, Heart, Package, ShoppingCart, Zap } from "lucide-react";
+import { Boxes, Heart, Package, ShoppingCart, Star, Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
@@ -71,6 +71,7 @@ function Combos() {
                 const price = Number(combo.final_price ?? combo.offer_price ?? 0);
                 const mrp = Number(combo.mrp ?? 0);
                 const count = Array.isArray(combo.products) ? combo.products.length : 0;
+                const rating = Math.min(5, Math.max(0, Number(combo.rating) || 0));
                 const minQuantity = Math.max(1, Number(combo.minimum_order_quantity) || 1);
                 const trackInventory = Number(combo.track_inventory) === 1;
                 const allowBackorders = Number(combo.allow_backorders) === 1;
@@ -92,6 +93,17 @@ function Combos() {
                     <div className="p-5">
                       <p className="text-[11px] font-bold uppercase tracking-wider text-violet-700">{combo.category_type || "Combo"}{combo.category ? ` · ${combo.category}` : ""}</p>
                       <h3 className="mt-1 truncate text-lg font-bold text-slate-900"><Link to={`/combos/${combo.id}`} className="hover:text-violet-700">{combo.name}</Link></h3>
+                      <div className="mt-2 flex items-center gap-1" role="img" aria-label={`Rating ${rating.toFixed(1)} out of 5`}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={15}
+                            aria-hidden="true"
+                            className={star <= rating ? "fill-amber-400 text-amber-400" : "fill-slate-100 text-slate-300"}
+                          />
+                        ))}
+                        <span className="ml-1 text-xs font-semibold text-slate-600">{rating.toFixed(1)} / 5</span>
+                      </div>
                       {combo.description && <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-500">{combo.description}</p>}
                       <div className="mt-4 flex items-end justify-between border-t border-slate-100 pt-4">
                         <div>
