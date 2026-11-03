@@ -219,8 +219,6 @@ function Shop() {
   const [filtersOpen, setFiltersOpen] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 1024,
   );
-  const [categoriesExpanded, setCategoriesExpanded] = useState(() => Boolean(urlCategory));
-  const showAllCategories = categoriesExpanded || Boolean(urlCategory);
   const [showAllBrands, setShowAllBrands] = useState(false);
   const productsPerPage = isDesktop && filtersOpen ? 8 : 10;
 
@@ -458,7 +456,6 @@ function Shop() {
     setBrandSearch("");
   };
 
-  const categoryOptions = showAllCategories ? categories : categories.slice(0, 5);
   const brandOptions = (showAllBrands ? brands : brands.slice(0, 5))
     .filter(([brand]) => brand.toLowerCase().includes(brandSearch.toLowerCase()));
   const firstProduct = combinedResults.length ? (page - 1) * productsPerPage + 1 : 0;
@@ -612,7 +609,7 @@ function Shop() {
 
             <FilterSection title="Categories" icon={Grid2X2}>
               <div className="space-y-2">
-                {categoryOptions.map(([category, count]) => (
+                {categories.map(([category, count]) => (
                   <label key={category} className="flex cursor-pointer items-center gap-2 text-[11px] text-[#504760]">
                     <input
                       type="checkbox"
@@ -624,15 +621,6 @@ function Shop() {
                     <span className="text-[10px] text-[#8d8499]">({count})</span>
                   </label>
                 ))}
-                {categories.length > 5 && (
-                  <button
-                    type="button"
-                    onClick={() => setCategoriesExpanded((current) => !current)}
-                    className="pt-0.5 text-[10px] font-bold text-[#4b00c8]"
-                  >
-                    {showAllCategories ? "Show Less" : "Show More"}
-                  </button>
-                )}
               </div>
             </FilterSection>
 
