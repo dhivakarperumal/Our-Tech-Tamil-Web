@@ -17,8 +17,6 @@ import PageHeader from "../CommenComponents/PageHeader";
 import ProductCard from "../Products/ProductCard";
 import { fetchAllPublicProducts } from "../Products/publicProducts";
 
-const PRODUCTS_PER_PAGE = 12;
-
 function getCategory(product) {
   return [product.cat_type, product.category].filter(Boolean).join(" · ") || "Other";
 }
@@ -89,6 +87,7 @@ function Shop() {
   );
   const [showAllCategories, setShowAllCategories] = useState(() => Boolean(urlCategory));
   const [showAllBrands, setShowAllBrands] = useState(false);
+  const productsPerPage = filtersOpen ? 8 : 10;
 
   useEffect(() => {
     let active = true;
@@ -183,7 +182,7 @@ function Shop() {
     sortBy,
   ]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / productsPerPage));
   const filterKey = JSON.stringify({
     effectiveSearchQuery,
     selectedCategories,
@@ -194,11 +193,12 @@ function Shop() {
     discountOnly,
     inStockOnly,
     sortBy,
+    productsPerPage,
   });
   const page = pagination.filterKey === filterKey
     ? Math.min(pagination.page, totalPages)
     : 1;
-  const visibleProducts = filteredProducts.slice((page - 1) * PRODUCTS_PER_PAGE, page * PRODUCTS_PER_PAGE);
+  const visibleProducts = filteredProducts.slice((page - 1) * productsPerPage, page * productsPerPage);
   const activeFiltersCount = selectedCategories.length + selectedBrands.length
     + (minPrice > 0 || currentMaxPrice < priceLimit ? 1 : 0)
     + (minRating > 0 ? 1 : 0) + Number(discountOnly) + Number(inStockOnly);
@@ -223,8 +223,8 @@ function Shop() {
   const categoryOptions = showAllCategories ? categories : categories.slice(0, 5);
   const brandOptions = (showAllBrands ? brands : brands.slice(0, 5))
     .filter(([brand]) => brand.toLowerCase().includes(brandSearch.toLowerCase()));
-  const firstProduct = filteredProducts.length ? (page - 1) * PRODUCTS_PER_PAGE + 1 : 0;
-  const lastProduct = Math.min(page * PRODUCTS_PER_PAGE, filteredProducts.length);
+  const firstProduct = filteredProducts.length ? (page - 1) * productsPerPage + 1 : 0;
+  const lastProduct = Math.min(page * productsPerPage, filteredProducts.length);
   const changePage = (nextPage) => {
     setPagination({ filterKey, page: Math.max(1, Math.min(nextPage, totalPages)) });
     productsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
