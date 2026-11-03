@@ -203,11 +203,8 @@ function Shop() {
       };
     });
   };
-  const [selectedBrands, setSelectedBrands] = useState([]);
-  const [brandSearch, setBrandSearch] = useState("");
   const [minPrice, setMinPrice] = useState(0);
   const [maxPrice, setMaxPrice] = useState(null);
-  const [minRating, setMinRating] = useState(0);
   const [discountOnly, setDiscountOnly] = useState(false);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [sortBy, setSortBy] = useState("popular");
@@ -219,7 +216,6 @@ function Shop() {
   const [filtersOpen, setFiltersOpen] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 1024,
   );
-  const [showAllBrands, setShowAllBrands] = useState(false);
   const productsPerPage = isDesktop && filtersOpen ? 8 : 10;
 
   useEffect(() => {
@@ -293,13 +289,6 @@ function Shop() {
     return [...counts.entries()].sort((first, second) => first[0].localeCompare(second[0]));
   }, [products, combos]);
 
-  const brands = useMemo(() => {
-    const counts = new Map();
-    products.forEach((product) => {
-      if (product.brand) counts.set(product.brand, (counts.get(product.brand) || 0) + 1);
-    });
-    return [...counts.entries()].sort((first, second) => first[0].localeCompare(second[0]));
-  }, [products]);
   const hasProductsForSelectedSubcategory = !urlSubcategory || products.some((product) => {
     const categoryValues = [getCategory(product), product.category, product.subcategory]
       .filter(Boolean)
@@ -315,7 +304,6 @@ function Shop() {
     const matching = products.filter((product) => {
       const category = getCategory(product);
       const price = getPrice(product);
-      const rating = Number(product.rating) || 0;
       const available = Number(product.total_stock) > 0
         || String(product.stock_status || "").toLowerCase() === "in stock";
       const productCategoryValues = [category, product.category, product.subcategory]
@@ -340,10 +328,8 @@ function Shop() {
           productCategoryValues.includes(String(selectedCategory).trim().toLowerCase())))
         && (!urlSubcategory || !hasProductsForSelectedSubcategory
           || String(product.subcategory || "").trim().toLowerCase() === urlSubcategory.trim().toLowerCase())
-        && (!selectedBrands.length || selectedBrands.includes(product.brand))
         && price >= minPrice
         && price <= currentMaxPrice
-        && (!minRating || rating >= minRating)
         && (!discountOnly || getDiscount(product) > 0)
         && (!inStockOnly || available);
     });
@@ -360,10 +346,8 @@ function Shop() {
     urlSubcategory,
     hasProductsForSelectedSubcategory,
     selectedCategories,
-    selectedBrands,
     minPrice,
     currentMaxPrice,
-    minRating,
     discountOnly,
     inStockOnly,
     sortBy,
@@ -373,7 +357,6 @@ function Shop() {
     const query = effectiveSearchQuery;
     const matching = combos.filter((combo) => {
       const price = getPrice(combo);
-      const rating = Number(combo.rating) || 0;
       const available = Number(combo.track_inventory) !== 1
         || Number(combo.allow_backorders) === 1
         || Number(combo.available_stock) >= Math.max(1, Number(combo.minimum_order_quantity) || 1);
@@ -385,13 +368,11 @@ function Shop() {
         .some((value) => String(value).toLowerCase().includes(query));
       const mrp = Number(combo.mrp) || 0;
       return matchesSearch
-        && !selectedBrands.length
         && (!selectedCategories.length || selectedCategories.some((category) => categoryValues.includes(String(category).trim().toLowerCase())))
         && (!urlSubcategory || !hasProductsForSelectedSubcategory
           || String(combo.subcategory || "").trim().toLowerCase() === urlSubcategory.trim().toLowerCase())
         && price >= minPrice
         && price <= currentMaxPrice
-        && (!minRating || rating >= minRating)
         && (!discountOnly || mrp > price)
         && (!inStockOnly || available);
     });
@@ -404,12 +385,10 @@ function Shop() {
     combos,
     effectiveSearchQuery,
     selectedCategories,
-    selectedBrands,
     urlSubcategory,
     hasProductsForSelectedSubcategory,
     minPrice,
     currentMaxPrice,
-    minRating,
     discountOnly,
     inStockOnly,
     sortBy,
@@ -422,10 +401,8 @@ function Shop() {
   const filterKey = JSON.stringify({
     effectiveSearchQuery,
     selectedCategories,
-    selectedBrands,
     minPrice,
     currentMaxPrice,
-    minRating,
     discountOnly,
     inStockOnly,
     sortBy,
@@ -435,9 +412,9 @@ function Shop() {
     ? Math.min(pagination.page, totalPages)
     : 1;
   const visibleResults = combinedResults.slice((page - 1) * productsPerPage, page * productsPerPage);
-  const activeFiltersCount = selectedCategories.length + selectedBrands.length
+  const activeFiltersCount = selectedCategories.length
     + (minPrice > 0 || currentMaxPrice < priceLimit ? 1 : 0)
-    + (minRating > 0 ? 1 : 0) + Number(discountOnly) + Number(inStockOnly);
+    + Number(discountOnly) + Number(inStockOnly);
 
   const toggleValue = (value, values, setValues) => {
     setValues(values.includes(value)
@@ -447,17 +424,12 @@ function Shop() {
 
   const clearFilters = () => {
     setSelectedCategories([]);
-    setSelectedBrands([]);
     setMinPrice(0);
     setMaxPrice(null);
-    setMinRating(0);
     setDiscountOnly(false);
     setInStockOnly(false);
-    setBrandSearch("");
   };
 
-  const brandOptions = (showAllBrands ? brands : brands.slice(0, 5))
-    .filter(([brand]) => brand.toLowerCase().includes(brandSearch.toLowerCase()));
   const firstProduct = combinedResults.length ? (page - 1) * productsPerPage + 1 : 0;
   const lastProduct = Math.min(page * productsPerPage, combinedResults.length);
   const changePage = (nextPage) => {
@@ -666,68 +638,6 @@ function Shop() {
                     className="h-1 w-full cursor-pointer accent-[#4b00c8]"
                   />
                 </label>
-              </div>
-            </FilterSection>
-
-            <FilterSection title="Brand" icon={Tag}>
-              <label className="flex items-center gap-2 rounded-md border border-[#eee8f5] px-2 py-1.5 text-[#8a8198]">
-                <Search size={12} aria-hidden="true" />
-                <span className="sr-only">Search brands</span>
-                <input
-                  type="search"
-                  placeholder="Search brand..."
-                  value={brandSearch}
-                  onChange={(event) => setBrandSearch(event.target.value)}
-                  className="min-w-0 flex-1 text-[10px] outline-none placeholder:text-[#9b93a8]"
-                />
-              </label>
-              <div className="mt-3 space-y-2">
-                {brandOptions.map(([brand, count]) => (
-                  <label key={brand} className="flex cursor-pointer items-center gap-2 text-[11px] text-[#504760]">
-                    <input
-                      type="checkbox"
-                      checked={selectedBrands.includes(brand)}
-                      onChange={() => toggleValue(brand, selectedBrands, setSelectedBrands)}
-                      className="h-3.5 w-3.5 accent-[#4b00c8]"
-                    />
-                    <span className="min-w-0 flex-1 truncate">{brand}</span>
-                    <span className="text-[10px] text-[#8d8499]">({count})</span>
-                  </label>
-                ))}
-                {brands.length > 5 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowAllBrands((current) => !current)}
-                    className="pt-0.5 text-[10px] font-bold text-[#4b00c8]"
-                  >
-                    {showAllBrands ? "Show Less" : "Show More"}
-                  </button>
-                )}
-                {brandOptions.length === 0 && (
-                  <p className="text-[10px] text-[#8d8499]">No brands found.</p>
-                )}
-              </div>
-            </FilterSection>
-
-            <FilterSection title="Rating" icon={Star} defaultOpen={false}>
-              <div className="space-y-2">
-                {[4, 3, 2, 1].map((rating) => (
-                  <label key={rating} className="flex cursor-pointer items-center gap-2 text-[11px] text-[#504760]">
-                    <input
-                      type="radio"
-                      name="shop-rating"
-                      checked={minRating === rating}
-                      onChange={() => setMinRating(rating)}
-                      className="h-3.5 w-3.5 accent-[#4b00c8]"
-                    />
-                    <span className="flex items-center gap-1">{rating}+ <Star size={11} className="fill-[#f3b51b] text-[#f3b51b]" aria-hidden="true" /></span>
-                  </label>
-                ))}
-                {minRating > 0 && (
-                  <button type="button" onClick={() => setMinRating(0)} className="text-[10px] font-bold text-[#4b00c8]">
-                    Clear rating
-                  </button>
-                )}
               </div>
             </FilterSection>
 
