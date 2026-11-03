@@ -2,7 +2,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import {
   Camera,
-  ChevronRight,
   KeyRound,
   Lock,
   LogOut,
@@ -142,7 +141,7 @@ function MyOrders({ user }) {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [search, setSearch] = useState("");
-  const [expanded, setExpanded] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
 
   useEffect(function() {
@@ -156,6 +155,15 @@ function MyOrders({ user }) {
     return function() { active = false; };
   }, [user?.user_id]);
 
+  useEffect(function() {
+    if (!selectedOrder) return undefined;
+    function closeOnEscape(event) {
+      if (event.key === "Escape") setSelectedOrder(null);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return function() { window.removeEventListener("keydown", closeOnEscape); };
+  }, [selectedOrder]);
+
   const filtered = orders.filter(function(o) {
     var q = search.trim().toLowerCase();
     if (!q) return true;
@@ -167,6 +175,14 @@ function MyOrders({ user }) {
     if (/^(https?:|data:|blob:)/i.test(img)) return img;
     return backendUrl + (img.startsWith("/") ? img : "/" + img);
   }
+
+  var selectedOrderStep = selectedOrder
+    ? (selectedOrder.status === "Processing" || selectedOrder.status === "New")
+      ? 0
+      : selectedOrder.status === "Shipped"
+        ? 2
+        : Math.max(0, ORDER_STEPS.indexOf(selectedOrder.status || "Order Placed"))
+    : 0;
 
   return (
     <div className="rounded-2xl border border-[#e9def5] bg-white p-6 sm:p-8">
@@ -204,11 +220,9 @@ function MyOrders({ user }) {
             <div className="mt-4 space-y-3">
               {filtered.map(function(order) {
                 var status  = order.status || "Order Placed";
-                var stepIdx = (status === "Processing" || status === "New") ? 0 : status === "Shipped" ? 2 : Math.max(0, ORDER_STEPS.indexOf(status));
-                var isOpen  = expanded === order.id;
                 return (
                   <div key={order.id} className="overflow-hidden rounded-2xl border border-[#e9def5] bg-[#faf8ff] shadow-sm">
-                    <button type="button" onClick={function(){ setExpanded(isOpen ? null : order.id); }} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                    <button type="button" onClick={function(){ setSelectedOrder(order); }} aria-label={"View details for order " + (order.order_id || order.id)} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-[#f5efff]">
                       <div className="min-w-0">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Order ID</p>
                         <p className="mt-0.5 font-extrabold text-[#1a0745]">#{order.order_id || order.id}</p>
@@ -217,65 +231,147 @@ function MyOrders({ user }) {
                       <div className="flex shrink-0 items-center gap-3">
                         <span className={"rounded-full border px-3 py-1 text-[11px] font-bold " + statusBadgeClass(status)}>{status}</span>
                         <strong className="text-sm text-[#1a0745]">Rs.{Number(order.total_amount || 0).toLocaleString("en-IN")}</strong>
-                        <ChevronRight size={16} className={"text-gray-400 transition-transform duration-200 " + (isOpen ? "rotate-90" : "")} />
+                        <Eye size={16} className="text-primary" />
                       </div>
                     </button>
-                    {isOpen && (
-                      <div className="border-t border-[#e9def5] px-5 pb-5 pt-4">
-                        {status !== "Cancelled" && (
-                          <div className="mb-5">
-                            <ol className="flex items-start justify-between gap-1">
-                              {ORDER_STEPS.map(function(s, i) {
-                                var done = stepIdx >= i;
-                                return (
-                                  <li key={s} className="flex flex-1 flex-col items-center gap-1 text-center">
-                                    <span className={"flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition " + (done ? "bg-primary text-white" : "bg-gray-100 text-gray-400")}>{done ? "v" : i+1}</span>
-                                    <span className={"text-[10px] font-semibold leading-tight " + (done ? "text-primary" : "text-gray-400")}>{s}</span>
-                                  </li>
-                                );
-                              })}
-                            </ol>
-                          </div>
-                        )}
-                        {status === "Cancelled" && (
-                          <p className="mb-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-600">{order.cancellation_reason || "This order was cancelled."}</p>
-                        )}
-                        {order.items && order.items.length > 0 && (
-                          <div className="mb-4 space-y-2">
-                            <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-gray-400">Items</p>
-                            {order.items.map(function(item, idx) {
-                              var src = imgSrc(item.image);
-                              return (
-                                <div key={idx} className="flex items-center gap-3 rounded-xl border border-[#ede5f8] bg-white p-3">
-                                  {src ? <img src={src} alt={item.product_name} className="h-12 w-12 rounded-lg border border-[#e2d3f5] object-contain" /> : <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary"><Package size={20} /></span>}
-                                  <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-bold text-[#1a0745]">{item.product_name}</p>
-                                    <p className="text-xs text-gray-400">Qty: {item.quantity}{item.variant_color ? " - " + item.variant_color : ""}{item.variant_size ? " - " + item.variant_size : ""}</p>
-                                  </div>
-                                  <p className="shrink-0 text-sm font-bold text-primary">Rs.{Number(item.total || 0).toLocaleString("en-IN")}</p>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                        {(order.tracking_number || order.courier_name) && (
-                          <div className="mt-2 rounded-xl border border-[#ede5f8] bg-white p-3 text-xs text-gray-600">
-                            {order.tracking_number && <p>Tracking: <strong className="text-[#1a0745]">{order.tracking_number}</strong></p>}
-                            {order.courier_name    && <p>Courier: <strong className="text-[#1a0745]">{order.courier_name}</strong></p>}
-                          </div>
-                        )}
-                        <div className="mt-3 flex items-center justify-between border-t border-[#e9def5] pt-3">
-                          <span className="text-xs text-gray-400">Payment: <strong className="text-gray-600">{order.payment_method || "-"}</strong><span className="mx-2">-</span><strong className={order.payment_status === "Paid" ? "text-emerald-600" : "text-amber-600"}>{order.payment_status || "Pending"}</strong></span>
-                          <strong className="text-sm text-primary">Total: Rs.{Number(order.total_amount || 0).toLocaleString("en-IN")}</strong>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
           )}
         </>
+      )}
+      {selectedOrder && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4"
+          onClick={function(event) {
+            if (event.target === event.currentTarget) setSelectedOrder(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="order-dialog-title"
+            className="flex max-h-[90dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-2xl"
+          >
+            <header className="flex items-start justify-between gap-4 border-b border-[#f0e8ff] p-5 sm:px-7">
+              <div>
+                <h3 id="order-dialog-title" className="text-lg font-extrabold text-[#1a0745]">
+                  Order #{selectedOrder.order_id || selectedOrder.id}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">Placed on {formatDate(selectedOrder.created_at)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={function(){ setSelectedOrder(null); }}
+                aria-label="Close order details"
+                className="rounded-lg p-2 text-gray-500 transition hover:bg-[#faf7ff] hover:text-primary"
+              >
+                <X size={20} />
+              </button>
+            </header>
+            <div className="min-h-0 space-y-5 overflow-y-auto p-5 sm:p-7">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <section className="rounded-xl border border-[#ede5f8] bg-[#faf8ff] p-4">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400">Customer</h4>
+                  <p className="mt-3 font-bold text-[#1a0745]">{selectedOrder.customer_name || user?.username || "Customer"}</p>
+                  <p className="mt-1 break-all text-sm text-gray-600">{selectedOrder.customer_email || user?.email || "-"}</p>
+                  <p className="mt-1 text-sm text-gray-600">{selectedOrder.customer_phone || "-"}</p>
+                </section>
+                <section className="rounded-xl border border-[#ede5f8] bg-[#faf8ff] p-4">
+                  <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400">Delivery address</h4>
+                  <p className="mt-3 font-bold text-[#1a0745]">{selectedOrder.customer_name || user?.username || "Customer"}</p>
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    {[
+                      selectedOrder.street_address,
+                      selectedOrder.city,
+                      selectedOrder.district,
+                      selectedOrder.state,
+                      selectedOrder.zip_code,
+                      selectedOrder.country,
+                    ].filter(Boolean).join(", ") || "Address unavailable"}
+                  </p>
+                </section>
+              </div>
+
+              {selectedOrder.status !== "Cancelled" ? (
+                <ol className="flex items-start justify-between gap-1 rounded-xl border border-[#ede5f8] p-4">
+                  {ORDER_STEPS.map(function(step, index) {
+                    var done = selectedOrderStep >= index;
+                    return (
+                      <li key={step} className="flex flex-1 flex-col items-center gap-1 text-center">
+                        <span className={"flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold " + (done ? "bg-primary text-white" : "bg-gray-100 text-gray-400")}>{done ? "v" : index + 1}</span>
+                        <span className={"text-[10px] font-semibold leading-tight " + (done ? "text-primary" : "text-gray-400")}>{step}</span>
+                      </li>
+                    );
+                  })}
+                </ol>
+              ) : (
+                <p className="rounded-xl bg-rose-50 p-3 text-sm text-rose-600">{selectedOrder.cancellation_reason || "This order was cancelled."}</p>
+              )}
+
+              <section>
+                <h4 className="mb-3 text-xs font-bold uppercase tracking-widest text-gray-400">Products</h4>
+                <div className="space-y-3">
+                  {(Array.isArray(selectedOrder.items) ? selectedOrder.items : []).map(function(item, index) {
+                    var src = imgSrc(item.image);
+                    return (
+                      <article key={item.product_id || item.combo_id || index} className="rounded-xl border border-[#ede5f8] bg-white p-3">
+                        <div className="flex items-center gap-3">
+                          {src ? <img src={src} alt={item.product_name || item.name || "Order product"} className="h-14 w-14 shrink-0 rounded-lg border border-[#e2d3f5] object-contain" /> : <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Package size={20} /></span>}
+                          <div className="min-w-0 flex-1">
+                            <p className="font-bold text-[#1a0745]">{item.product_name || item.name || "Product"}</p>
+                            <p className="mt-1 text-xs text-gray-500">
+                              Qty: {item.quantity}
+                              {item.variant_color ? " · Color: " + item.variant_color : ""}
+                              {item.variant_size ? " · Size: " + item.variant_size : ""}
+                            </p>
+                            <p className="mt-1 text-xs text-gray-500">Unit price: Rs.{Number(item.price || 0).toLocaleString("en-IN")}</p>
+                          </div>
+                          <p className="shrink-0 text-sm font-bold text-primary">Rs.{Number(item.total || 0).toLocaleString("en-IN")}</p>
+                        </div>
+                        {Array.isArray(item.included_products) && item.included_products.length > 0 && (
+                          <div className="mt-3 border-t border-[#f0e8ff] pt-3">
+                            <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-gray-400">Products in this combo</p>
+                            <ul className="space-y-1.5">
+                              {item.included_products.map(function(product) {
+                                return (
+                                  <li key={product.id} className="flex items-center justify-between gap-3 text-sm text-gray-600">
+                                    <span>{product.name}{product.product_code ? " (" + product.product_code + ")" : ""}</span>
+                                    <span className="shrink-0">Qty: {Number(product.quantity || 1) * Number(item.quantity || 1)}</span>
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                  {(!Array.isArray(selectedOrder.items) || selectedOrder.items.length === 0) && (
+                    <p className="rounded-xl border border-[#ede5f8] p-4 text-sm text-gray-500">Product details are unavailable.</p>
+                  )}
+                </div>
+              </section>
+
+              <section className="rounded-xl border border-[#ede5f8] bg-[#faf8ff] p-4">
+                <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400">Order summary</h4>
+                <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+                  <p className="text-gray-600">Status: <strong className="text-[#1a0745]">{selectedOrder.status || "Order Placed"}</strong></p>
+                  <p className="text-gray-600">Order type: <strong className="text-[#1a0745]">{selectedOrder.order_type || "-"}</strong></p>
+                  <p className="text-gray-600">Payment: <strong className="text-[#1a0745]">{selectedOrder.payment_method || "-"}</strong></p>
+                  <p className="text-gray-600">Payment status: <strong className={selectedOrder.payment_status === "Paid" ? "text-emerald-600" : "text-amber-600"}>{selectedOrder.payment_status || "Pending"}</strong></p>
+                  {selectedOrder.tracking_number && <p className="text-gray-600">Tracking: <strong className="text-[#1a0745]">{selectedOrder.tracking_number}</strong></p>}
+                  {selectedOrder.courier_name && <p className="text-gray-600">Courier: <strong className="text-[#1a0745]">{selectedOrder.courier_name}</strong></p>}
+                </div>
+                <div className="mt-4 flex items-center justify-between border-t border-[#e9def5] pt-3">
+                  <span className="text-sm font-semibold text-gray-600">Total</span>
+                  <strong className="text-lg text-primary">Rs.{Number(selectedOrder.total_amount || 0).toLocaleString("en-IN")}</strong>
+                </div>
+              </section>
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );
