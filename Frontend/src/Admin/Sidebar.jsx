@@ -64,14 +64,15 @@ const navItems = [
 
   { path: "/admin/orders/billing", label: "Billing", icon: CreditCard },
   
-  {
-    label: "Dealers",
-    icon: Handshake,
-    children: [
-      { path: "/admin/dealers", label: "Dealers List", icon: List },
-      { path: "/admin/invoices/add", label: "New Invoice", icon: PlusCircle },
-    ],
-  },
+  // {
+  //   label: "Dealers",
+  //   icon: Handshake,
+  //   children: [
+  //     { path: "/admin/dealers", label: "Dealers List", icon: List },
+  //     { path: "/admin/invoices/add", label: "New Invoice", icon: PlusCircle },
+  //   ],
+  // },
+    { path: "/admin/users/all", label: "Customers", icon: Users },
   {
     label: "Marketing Management",
     icon: Megaphone,
@@ -79,7 +80,7 @@ const navItems = [
      
       { path: "/admin/banners", label: "Promotion Banners", icon: Image },
       { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
-      { path: "/admin/users/all", label: "Customers", icon: Users },
+    
     ],
   },
   { path: "/", label: "Back Home", icon: Home },
