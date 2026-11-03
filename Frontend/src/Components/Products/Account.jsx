@@ -759,19 +759,20 @@ function MyAddresses({ user }) {
             aria-labelledby="address-dialog-title"
             className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-2xl"
           >
-            <header className="flex items-start justify-between gap-4 border-b border-[#f0e8ff] p-5 sm:px-7">
+            <header className="relative flex items-start justify-between gap-4 overflow-hidden bg-gradient-to-r from-[#5b08b5] via-[#8509c9] to-[#4b078f] p-5 text-white sm:px-7">
+              <span className="pointer-events-none absolute -right-8 -top-20 h-48 w-72 rotate-[-18deg] rounded-full border-[24px] border-white/5" />
               <div>
-                <h3 id="address-dialog-title" className="text-lg font-extrabold text-[#1a0745]">
+                <h3 id="address-dialog-title" className="relative text-lg font-extrabold">
                   {editingAddressId === "new" ? "Add an address" : "Edit address"}
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">Enter your delivery address details.</p>
+                <p className="relative mt-1 text-sm text-purple-100">Enter your delivery address details.</p>
               </div>
               <button
                 type="button"
                 onClick={resetForm}
                 disabled={saving}
                 aria-label="Close address form"
-                className="rounded-lg p-2 text-gray-500 transition hover:bg-[#faf7ff] hover:text-primary disabled:opacity-50"
+                className="relative rounded-full bg-white p-2 text-[#6505a7] transition hover:bg-purple-50 disabled:opacity-50"
               >
                 <X size={20} />
               </button>
@@ -954,16 +955,43 @@ function Account() {
       </div>
 
       {showLogout && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-xs rounded-2xl bg-white p-6 text-center shadow-2xl">
-            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-red-50 text-red-500"><LogOut size={26} /></span>
-            <h2 className="mt-4 text-lg font-extrabold text-gray-800">Confirm Logout</h2>
-            <p className="mt-2 text-sm text-gray-500">Are you sure you want to sign out?</p>
-            <div className="mt-6 flex justify-center gap-3">
-              <button type="button" onClick={function(){ setShowLogout(false); }} className="rounded-xl border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50">Cancel</button>
-              <button type="button" onClick={handleLogout} className="rounded-xl bg-red-500 px-5 py-2 text-sm font-semibold text-white hover:bg-red-600">Logout</button>
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-[#150528]/55 p-4 backdrop-blur-sm"
+          onClick={function(event) {
+            if (event.target === event.currentTarget) setShowLogout(false);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="logout-dialog-title"
+            className="w-full max-w-md overflow-hidden rounded-3xl border border-[#ead8ff] bg-white shadow-[0_30px_100px_rgba(27,4,53,0.35)]"
+          >
+            <header className="relative overflow-hidden bg-gradient-to-r from-[#5b08b5] via-[#8509c9] to-[#4b078f] px-6 py-6 text-white sm:px-8">
+              <span className="pointer-events-none absolute -right-8 -top-20 h-48 w-72 rotate-[-18deg] rounded-full border-[24px] border-white/5" />
+              <span className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
+                <LogOut size={23} />
+              </span>
+              <h2 id="logout-dialog-title" className="relative mt-4 text-xl font-extrabold">Sign out of your account?</h2>
+              <p className="relative mt-1 text-sm text-purple-100">You can sign back in anytime to access your account.</p>
+            </header>
+            <div className="flex flex-col-reverse gap-3 bg-[#fdfbff] p-5 sm:flex-row sm:justify-end sm:p-6">
+              <button
+                type="button"
+                onClick={function(){ setShowLogout(false); }}
+                className="cursor-pointer rounded-xl border border-[#e4d7f1] bg-white px-5 py-2.5 text-sm font-bold text-[#51446a] transition hover:border-[#caa8e8] hover:bg-[#f8f2ff]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="cursor-pointer rounded-xl bg-gradient-to-r from-[#8509c9] to-[#5900a8] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-purple-200 transition hover:brightness-110"
+              >
+                Logout
+              </button>
             </div>
-          </div>
+          </section>
         </div>
       )}
     </>
