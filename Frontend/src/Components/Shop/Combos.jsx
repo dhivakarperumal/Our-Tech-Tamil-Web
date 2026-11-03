@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Boxes, Grid2X2, Heart, List, Search, ShoppingCart, Star, Zap } from "lucide-react";
+import { Boxes, Heart, Search, ShoppingCart, Star, Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
@@ -20,7 +20,6 @@ function Combos() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState("cards");
   const filteredCombos = combos.filter((combo) => {
     const query = searchQuery.trim().toLowerCase();
     return !query || [combo.name, combo.category, combo.category_type, combo.description]
@@ -74,31 +73,11 @@ function Combos() {
                 className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
               />
             </label>
-            <div className="flex items-center justify-end gap-1" role="group" aria-label="Combo view mode">
-              <button
-                type="button"
-                onClick={() => setViewMode("cards")}
-                aria-label="Card view"
-                aria-pressed={viewMode === "cards"}
-                className={`flex h-10 w-10 items-center justify-center rounded-lg transition ${viewMode === "cards" ? "bg-violet-700 text-white" : "text-slate-500 hover:bg-violet-50 hover:text-violet-700"}`}
-              >
-                <Grid2X2 size={18} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                aria-label="Table view"
-                aria-pressed={viewMode === "table"}
-                className={`flex h-10 w-10 items-center justify-center rounded-lg transition ${viewMode === "table" ? "bg-violet-700 text-white" : "text-slate-500 hover:bg-violet-50 hover:text-violet-700"}`}
-              >
-                <List size={18} aria-hidden="true" />
-              </button>
-            </div>
           </div>
 
           {loading ? (
-            <div className={viewMode === "cards" ? "grid gap-5 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5" : "space-y-3"}>
-              {[1, 2, 3].map((item) => <div key={item} className="h-80 animate-pulse rounded-2xl bg-white shadow-sm" />)}
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4 2xl:grid-cols-5">
+              {[1, 2, 3, 4].map((item) => <div key={item} className="h-80 animate-pulse rounded-2xl bg-white shadow-sm" />)}
             </div>
           ) : failed ? (
             <div className="rounded-2xl border border-rose-100 bg-white px-5 py-14 text-center">
@@ -106,8 +85,7 @@ function Combos() {
               <p className="mt-1 text-sm text-slate-500">Please refresh the page and try again.</p>
             </div>
           ) : filteredCombos.length ? (
-            viewMode === "cards" ? (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4 2xl:grid-cols-5">
               {filteredCombos.map((combo) => {
                 const image = imageUrl(combo.gallery_images?.[0]);
                 const price = Number(combo.final_price ?? combo.offer_price ?? 0);
@@ -186,7 +164,7 @@ function Combos() {
                         {hasDiscount && <span className="shrink-0 rounded-full bg-[#efe0ff] px-2 py-1 text-[8px] font-bold text-[#4B00C8]">Save ₹{(mrp - price).toLocaleString("en-IN")}</span>}
                       </div>
                       {!available && <p className="mt-1 text-[10px] font-semibold text-rose-600">Out of stock</p>}
-                      <div className="mt-auto grid grid-cols-2 gap-2 pt-3">
+                      <div className="mt-auto grid grid-cols-1 gap-2 pt-3 sm:grid-cols-2">
                         <button
                           type="button"
                           disabled={!available}
@@ -204,87 +182,7 @@ function Combos() {
                   </article>
                 );
               })}
-              </div>
-            ) : (
-              <div className="overflow-x-auto rounded-2xl border border-violet-100 bg-white shadow-sm">
-                <table className="w-full min-w-[850px] text-left text-sm">
-                  <thead className="bg-violet-50 text-xs uppercase tracking-wide text-violet-800">
-                    <tr>
-                      <th scope="col" className="px-4 py-3 font-bold">Combo</th>
-                      <th scope="col" className="px-4 py-3 font-bold">Category</th>
-                      <th scope="col" className="px-4 py-3 font-bold">Items</th>
-                      <th scope="col" className="px-4 py-3 font-bold">Price</th>
-                      <th scope="col" className="px-4 py-3 font-bold">Availability</th>
-                      <th scope="col" className="px-4 py-3 text-right font-bold">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-violet-50">
-                    {filteredCombos.map((combo) => {
-                      const image = imageUrl(combo.gallery_images?.[0]);
-                      const price = Number(combo.final_price ?? combo.offer_price ?? 0);
-                      const mrp = Number(combo.mrp ?? 0);
-                      const count = Array.isArray(combo.products) ? combo.products.length : 0;
-                      const minQuantity = Math.max(1, Number(combo.minimum_order_quantity) || 1);
-                      const trackInventory = Number(combo.track_inventory) === 1;
-                      const allowBackorders = Number(combo.allow_backorders) === 1;
-                      const available = !trackInventory || allowBackorders
-                        || Number(combo.available_stock) >= minQuantity;
-                      const isFavorite = wishlist.some((item) => Number(item.combo_id) === Number(combo.id));
-                      return (
-                        <tr key={combo.id} className="text-slate-700">
-                          <td className="px-4 py-3">
-                            <div className="flex min-w-[220px] items-center gap-3">
-                              <Link to={`/combos/${combo.id}`} className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-violet-50">
-                                {image ? <img src={image} alt="" loading="lazy" className="h-full w-full object-cover" /> : <Boxes className="m-auto mt-4 text-violet-300" size={24} />}
-                              </Link>
-                              <Link to={`/combos/${combo.id}`} className="font-bold text-slate-900 hover:text-violet-700">{combo.name}</Link>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3">{[combo.category_type, combo.category].filter(Boolean).join(" · ") || "Combo"}</td>
-                          <td className="px-4 py-3">{count}</td>
-                          <td className="px-4 py-3">
-                            <span className="font-extrabold text-violet-800">₹{price.toLocaleString("en-IN")}</span>
-                            {mrp > price && <span className="ml-2 text-xs text-slate-400 line-through">₹{mrp.toLocaleString("en-IN")}</span>}
-                          </td>
-                          <td className={`px-4 py-3 font-semibold ${available ? "text-emerald-700" : "text-rose-600"}`}>
-                            {available ? "In stock" : "Out of stock"}
-                          </td>
-                          <td className="px-4 py-3">
-                            <div className="flex justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => toggleComboWishlist(combo)}
-                                aria-label={isFavorite ? `Remove ${combo.name} from favorites` : `Add ${combo.name} to favorites`}
-                                aria-pressed={isFavorite}
-                                className={`flex h-9 w-9 items-center justify-center rounded-lg border border-violet-200 ${isFavorite ? "text-rose-600" : "text-violet-700"}`}
-                              >
-                                <Heart size={16} fill={isFavorite ? "currentColor" : "none"} aria-hidden="true" />
-                              </button>
-                              <button
-                                type="button"
-                                disabled={!available}
-                                onClick={() => addComboToCart(combo, minQuantity)}
-                                className="rounded-lg border border-violet-700 px-3 py-2 text-xs font-bold text-violet-700 hover:bg-violet-50 disabled:opacity-50"
-                              >
-                                Add to Cart
-                              </button>
-                              <button
-                                type="button"
-                                disabled={!available}
-                                onClick={() => buyNow(combo)}
-                                className="rounded-lg bg-violet-700 px-3 py-2 text-xs font-bold text-white hover:bg-violet-800 disabled:opacity-50"
-                              >
-                                Buy Now
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )
+            </div>
           ) : (
             <div className="rounded-2xl border border-slate-100 bg-white px-5 py-16 text-center shadow-sm">
               <Boxes className="mx-auto text-violet-300" size={42} />
