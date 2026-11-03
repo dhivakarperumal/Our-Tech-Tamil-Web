@@ -20,6 +20,7 @@ import {
   FiGrid,
   FiList,
   FiPrinter,
+  FiX,
 } from "react-icons/fi";
 import { toast, Toaster } from "react-hot-toast";
 
@@ -270,6 +271,7 @@ const Orders = ({ statusFilter = "All" }) => {
                 <option value="All">All Status</option>
                 <option value="Order Placed">Confirmed</option>
                 <option value="Shipping">Shipped</option>
+                <option value="Out for Delivery">Out for Delivery</option>
                 <option value="Delivered">Delivered</option>
                 <option value="Cancelled">Cancelled</option>
               </select>
@@ -521,9 +523,20 @@ const Orders = ({ statusFilter = "All" }) => {
           <div className="fixed inset-0 z-[100] flex h-screen w-screen items-center justify-center bg-transparent p-4">
             <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[3px] animate-in fade-in duration-300" onClick={() => setShowModal(false)} />
             <div className="relative w-full max-w-md bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-              <div className={`p-8 ${modalData.status === "Cancelled" ? "bg-red-600" : "bg-slate-900"} text-white`}>
-                <h3 className="text-xl font-black tracking-tight">{modalData.status} Pipeline Meta</h3>
-                <p className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-1 italic">Order Ref: #ORD-0{modalData.orderId}</p>
+              <div className={`flex items-start justify-between p-8 ${modalData.status === "Cancelled" ? "bg-red-600" : "admin-table-header"}`}>
+                <div>
+                  <h3 className="text-xl font-black tracking-tight text-white">{modalData.status} Pipeline Meta</h3>
+                  <p className="text-[10px] font-bold text-white/60 uppercase tracking-widest mt-1 italic">Order Ref: #ORD-0{modalData.orderId}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  aria-label="Close order status modal"
+                  title="Close"
+                  className="ml-4 rounded-full bg-white/15 p-2 text-white transition-colors hover:bg-white/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  <FiX size={20} aria-hidden="true" />
+                </button>
               </div>
 
               <form onSubmit={handleModalSubmit} className="p-8 space-y-6">
@@ -570,7 +583,7 @@ const Orders = ({ statusFilter = "All" }) => {
                   <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] border-2 border-gray-100 text-gray-400 hover:bg-gray-50 transition-all">
                     Abort
                   </button>
-                  <button type="submit" className={`flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] text-white shadow-lg transition-all active:scale-95 ${modalData.status === "Cancelled" ? "bg-red-600 shadow-red-500/20 hover:bg-red-500" : "bg-[#4318FF] shadow-blue-500/20 hover:bg-blue-800"}`}>
+                  <button type="submit" className={`flex-1 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] text-white shadow-lg transition-all active:scale-95 ${modalData.status === "Cancelled" ? "bg-red-600 shadow-red-500/20 hover:bg-red-500" : "admin-table-header shadow-blue-500/20 hover:brightness-110"}`}>
                     Sync Pipeline
                   </button>
                 </div>
