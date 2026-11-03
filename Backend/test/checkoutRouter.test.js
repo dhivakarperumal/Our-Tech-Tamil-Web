@@ -9,6 +9,7 @@ process.env.JWT_SECRET = "checkout-router-test-secret";
 
 function createPool({ stock = 5, quantity = 2 } = {}) {
   const statements = [];
+  const addresses = [];
   const cartRows = [{
     cart_item_id: 7,
     product_id: 9,
@@ -31,7 +32,49 @@ function createPool({ stock = 5, quantity = 2 } = {}) {
     statements.push({ query, params });
     if (query.includes("FROM users")) return [[{ user_id: params[0] }]];
     if (query.includes("FROM cart_items ci")) return [cartRows];
-    if (query.includes("INSERT INTO addresses")) return [{ insertId: 31 }];
+    if (query.includes("SELECT id, recipient_name, phone")) {
+      const userId = params[0];
+      return [addresses
+        .filter((address) => address.user_id === userId)
+        .map(({ id, recipient_name, phone, street_address, city, district, state, country, zip_code }) => ({
+          id, recipient_name, phone, street_address, city, district, state, country, zip_code,
+        }))];
+    }
+    if (query.includes("FROM addresses")) {
+      const [
+        userId, recipientName, phone, streetAddress, city, district, state, country, zipCode,
+      ] = params;
+      const existing = addresses.find((address) =>
+        address.user_id === userId &&
+        address.recipient_name === recipientName &&
+        address.phone === phone &&
+        address.street_address === streetAddress &&
+        address.city === city &&
+        address.district === district &&
+        address.state === state &&
+        address.country === country &&
+        address.zip_code === zipCode,
+      );
+      return [existing ? [{ id: existing.id }] : []];
+    }
+    if (query.includes("INSERT INTO addresses")) {
+      const [
+        user_id, recipient_name, phone, street_address, city, district, state, country, zip_code,
+      ] = params;
+      addresses.push({
+        id: 31,
+        user_id,
+        recipient_name,
+        phone,
+        street_address,
+        city,
+        district,
+        state,
+        country,
+        zip_code,
+      });
+      return [{ insertId: 31 }];
+    }
     if (query.includes("INSERT INTO orders")) return [{ insertId: 45 }];
     if (query.includes("INSERT INTO order_items")) return [{ insertId: 61 }];
     if (query.includes("UPDATE orders SET order_id")) return [{ affectedRows: 1 }];
@@ -41,6 +84,8 @@ function createPool({ stock = 5, quantity = 2 } = {}) {
   };
   return {
     statements,
+    addresses,
+    execute,
     async getConnection() {
       return {
         execute,
@@ -66,8 +111,8 @@ async function startServer(t, pool) {
   return `http://127.0.0.1:${server.address().port}/api/checkout`;
 }
 
-function authHeaders() {
-  const token = jwt.sign({ user_id: "customer-uuid", role: "customer" }, process.env.JWT_SECRET);
+function authHeaders(userId = "customer-uuid") {
+  const token = jwt.sign({ user_id: userId, role: "customer" }, process.env.JWT_SECRET);
   return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 }
 
@@ -126,6 +171,52 @@ test("checkout requires a non-empty cart and sufficient current stock", async (t
   const message = (await response.json()).message;
   assert.match(message, /Only 1 Headphones item/);
   assert.ok(!pool.statements.some(({ query }) => query.includes("INSERT INTO orders")));
+});
+
+test("checkout reuses the same customer's matching delivery address", async (t) => {
+  const pool = createPool();
+  const url = await startServer(t, pool);
+  const submitOrder = () => fetch(url, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(address),
+  });
+
+  const firstResponse = await submitOrder();
+  const firstOrder = await firstResponse.json();
+  const secondResponse = await submitOrder();
+  const secondOrder = await secondResponse.json();
+
+  assert.equal(firstResponse.status, 201);
+  assert.equal(secondResponse.status, 201);
+  assert.equal(firstOrder.address_id, 31);
+  assert.equal(secondOrder.address_id, 31);
+  assert.equal(pool.addresses.length, 1);
+  assert.equal(pool.statements.filter(({ query }) => query.includes("INSERT INTO addresses")).length, 1);
+});
+
+test("saved checkout addresses are listed only for the authenticated customer", async (t) => {
+  const pool = createPool();
+  const url = await startServer(t, pool);
+  const orderResponse = await fetch(url, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(address),
+  });
+  assert.equal(orderResponse.status, 201);
+
+  const customerAddressesResponse = await fetch(`${url}/addresses`, {
+    headers: authHeaders(),
+  });
+  const customerAddresses = await customerAddressesResponse.json();
+  assert.equal(customerAddressesResponse.status, 200);
+  assert.equal(customerAddresses.length, 1);
+  assert.equal(customerAddresses[0].street_address, address.street_address);
+
+  const otherCustomerResponse = await fetch(`${url}/addresses`, {
+    headers: authHeaders("other-customer"),
+  });
+  assert.deepEqual(await otherCustomerResponse.json(), []);
 });
 
 test("checkout rejects unauthenticated customers and invalid addresses", async (t) => {

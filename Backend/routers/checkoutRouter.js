@@ -145,6 +145,22 @@ function createCheckoutRouter(pool) {
   const router = express.Router();
   router.use(authenticate);
 
+  router.get("/addresses", async (request, response, next) => {
+    try {
+      const [addresses] = await pool.execute(
+        `SELECT id, recipient_name, phone, street_address, city, district,
+                state, country, zip_code
+         FROM addresses
+         WHERE user_id = ?
+         ORDER BY updated_at DESC, id DESC`,
+        [request.user.user_id],
+      );
+      return response.json(addresses);
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   router.post("/", async (request, response, next) => {
     let connection;
     try {
@@ -240,18 +256,44 @@ function createCheckoutRouter(pool) {
         };
       });
 
-      const [addressResult] = await connection.execute(
-        `INSERT INTO addresses
-          (user_id, recipient_name, phone, street_address, city, district, state, country, zip_code)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, recipientName, phone, streetAddress, city, district, state, "India", zipCode],
+      const addressValues = [
+        userId,
+        recipientName,
+        phone,
+        streetAddress,
+        city,
+        district,
+        state,
+        "India",
+        zipCode,
+      ];
+      const [existingAddresses] = await connection.execute(
+        `SELECT id
+         FROM addresses
+         WHERE user_id = ? AND recipient_name = ? AND phone = ?
+           AND street_address = ? AND city = ? AND district <=> ?
+           AND state = ? AND country = ? AND zip_code = ?
+         ORDER BY id
+         LIMIT 1
+         FOR UPDATE`,
+        addressValues,
       );
+      let addressId = existingAddresses[0]?.id;
+      if (!addressId) {
+        const [addressResult] = await connection.execute(
+          `INSERT INTO addresses
+            (user_id, recipient_name, phone, street_address, city, district, state, country, zip_code)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          addressValues,
+        );
+        addressId = addressResult.insertId;
+      }
       const [orderResult] = await connection.execute(
         `INSERT INTO orders
           (user_id, address_id, customer_email, order_type, payment_method,
            payment_status, status, total_amount)
          VALUES (?, ?, ?, 'Online', 'Cash on Delivery', 'Pending', 'Order Placed', ?)`,
-        [userId, addressResult.insertId, customerEmail, Number((totalCents / 100).toFixed(2))],
+        [userId, addressId, customerEmail, Number((totalCents / 100).toFixed(2))],
       );
       const orderId = `ORD${String(orderResult.insertId).padStart(5, "0")}`;
       await connection.execute("UPDATE orders SET order_id = ? WHERE id = ?", [orderId, orderResult.insertId]);
@@ -293,7 +335,7 @@ function createCheckoutRouter(pool) {
       return response.status(201).json({
         id: orderResult.insertId,
         order_id: orderId,
-        address_id: addressResult.insertId,
+        address_id: addressId,
         total_amount: Number((totalCents / 100).toFixed(2)),
         payment_method: "Cash on Delivery",
         status: "Order Placed",
