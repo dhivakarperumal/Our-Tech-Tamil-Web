@@ -164,7 +164,7 @@ function HomeCombos() {
                         src={image}
                         alt={combo.name}
                         loading="lazy"
-                        className="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-105 sm:p-3"
+                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center text-[#4B00C8]/30">
