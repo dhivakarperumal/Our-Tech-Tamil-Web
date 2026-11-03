@@ -72,7 +72,15 @@ test("dashboard returns real inventory, order, revenue, and low-stock data", asy
         ]];
       }
       if (query.includes("FROM order_items")) {
-        return [[{ id: 5, name: "Bluetooth speaker", sales: "7", img: "/uploads/speaker.png" }]];
+        assert.ok(query.includes("JSON_EXTRACT(p.images, '$[0]')"));
+        assert.match(query, /LEFT JOIN products p ON p\.id = sales\.id/);
+        return [[{
+          id: 5,
+          name: "Bluetooth speaker",
+          sales: "7",
+          img: "/uploads/products/speaker-main.png",
+          cat: "Audio",
+        }]];
       }
       if (query.includes("FROM products") && query.includes("total_stock < 10")) {
         return [[
@@ -110,7 +118,8 @@ test("dashboard returns real inventory, order, revenue, and low-stock data", asy
     id: 5,
     name: "Bluetooth speaker",
     sales: 7,
-    img: "/uploads/speaker.png",
+    img: "/uploads/products/speaker-main.png",
+    cat: "Audio",
   }]);
   assert.deepEqual(response.body.orderSummary, { total: 24, today: 3, cancelled: 4, delivery: 3 });
   assert.match(orderSummaryQuery, /SUM\(status = 'Delivered'\), 0\) AS delivery/);
