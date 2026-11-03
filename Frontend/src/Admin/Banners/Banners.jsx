@@ -199,15 +199,16 @@ function BannerModal({ banner, saving, onClose, onSubmit }) {
         onSubmit={submit}
         className="flex max-h-[min(94dvh,820px)] w-full max-w-[620px] flex-col overflow-hidden rounded-[26px] bg-white shadow-2xl"
       >
-        <header className="flex items-center gap-3 border-b border-slate-100 px-5 py-4 sm:px-7">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-gradient-middle text-accent shadow-lg shadow-primary/20">
+        <header className="relative flex items-center gap-3 overflow-hidden border-b border-violet-100 bg-gradient-to-r from-violet-950 via-violet-900 to-fuchsia-800 px-5 py-4 sm:px-7">
+          <div className="pointer-events-none absolute -right-8 -top-14 h-40 w-40 rounded-full border-[24px] border-white/[0.06]" />
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-violet-100 shadow-inner">
             <ImagePlus size={20} />
           </div>
-          <div>
-            <h2 className="text-base font-extrabold text-slate-900">
+          <div className="relative min-w-0">
+            <h2 className="text-base font-extrabold text-white">
               {banner ? "Edit promotion" : "New promotion"}
             </h2>
-            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-slate-400">
+            <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-violet-200">
               Banner studio
             </p>
           </div>
@@ -216,7 +217,7 @@ function BannerModal({ banner, saving, onClose, onSubmit }) {
             onClick={onClose}
             disabled={saving}
             aria-label="Close dialog"
-            className="ml-auto flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 text-slate-400 transition hover:bg-slate-50 hover:text-slate-700 disabled:opacity-50"
+            className="relative ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-white/75 transition hover:bg-white/20 hover:text-white disabled:opacity-50"
           >
             <X size={17} />
           </button>

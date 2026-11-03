@@ -497,13 +497,14 @@ const Reviews = () => {
 
           <div className="relative w-full max-w-2xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
             {/* Header */}
-            <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-white sticky top-0 z-10">
-              <div>
-                <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight">Create Manual Review</h2>
-                <p className="text-xs text-slate-400 font-bold mt-1 uppercase tracking-widest">Admin Control Panel</p>
+            <div className="relative px-8 py-6 border-b border-violet-100 flex items-center justify-between overflow-hidden bg-gradient-to-r from-violet-950 via-violet-900 to-fuchsia-800 sticky top-0 z-10">
+              <div className="pointer-events-none absolute -right-8 -top-14 h-40 w-40 rounded-full border-[24px] border-white/[0.06]" />
+              <div className="relative">
+                <h2 className="text-xl font-black text-white uppercase tracking-tight">Create Manual Review</h2>
+                <p className="text-xs text-violet-200 font-bold mt-1 uppercase tracking-widest">Admin Control Panel</p>
               </div>
-              <button onClick={() => setShowAddModal(false)} className="p-2 hover:bg-slate-100 rounded-xl transition-all">
-                <X className="w-6 h-6 text-slate-400" />
+              <button onClick={() => setShowAddModal(false)} aria-label="Close review form" className="relative p-2 border border-white/15 bg-white/10 hover:bg-white/20 rounded-xl transition-all">
+                <X className="w-6 h-6 text-white/75" />
               </button>
             </div>
 
