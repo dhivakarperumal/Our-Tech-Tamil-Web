@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
   ChevronRight,
@@ -28,6 +28,7 @@ const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const { cart, wishlist } = useContext(StoreContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
@@ -39,7 +40,12 @@ const Navbar = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
-  const [search, setSearch] = useState("");
+  const [searchState, setSearchState] = useState({ route: "", value: "" });
+  const urlSearch = location.pathname === "/shop"
+    ? new URLSearchParams(location.search).get("search") || ""
+    : "";
+  const currentRoute = `${location.pathname}${location.search}`;
+  const search = searchState.route === currentRoute ? searchState.value : urlSearch;
 
   const menuRef = useRef(null);
   const categoryRef = useRef(null);
@@ -108,11 +114,22 @@ const Navbar = () => {
     };
   }, [user]);
 
+  const navigateToSearch = (value, replace) => {
+    const params = new URLSearchParams();
+    if (value.trim()) params.set("search", value.trim());
+    const route = `/shop${params.size ? `?${params.toString()}` : ""}`;
+    setSearchState({ route, value });
+    navigate(route, { replace });
+  };
+
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    navigateToSearch(value, location.pathname === "/shop");
+  };
+
   const submitSearch = (event) => {
     event.preventDefault();
-    const params = new URLSearchParams();
-    if (search.trim()) params.set("search", search.trim());
-    navigate(`/shop${params.size ? `?${params.toString()}` : ""}`);
+    navigateToSearch(search, location.pathname === "/shop");
     setMobileMenu(false);
   };
 
@@ -191,7 +208,7 @@ const Navbar = () => {
               <input
                 id="desktop-product-search"
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={handleSearchChange}
                 placeholder="Search for products, brands and more..."
                 className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-gray-800 outline-none placeholder:text-gray-500"
               />
@@ -242,7 +259,7 @@ const Navbar = () => {
             <input
               id="mobile-product-search"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={handleSearchChange}
               placeholder="Search products, brands and more..."
               className="min-w-0 flex-1 bg-transparent px-2.5 py-2 text-xs text-gray-800 outline-none placeholder:text-gray-500"
             />

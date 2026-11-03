@@ -64,13 +64,14 @@ function Shop() {
   const [fetchFailed, setFetchFailed] = useState(false);
   const [searchParams] = useSearchParams();
   const urlSearch = searchParams.get("search") || "";
+  const urlCategory = searchParams.get("category") || "";
   const [localSearchState, setLocalSearchState] = useState(() => ({
     urlSearch,
     value: urlSearch,
   }));
   const localSearch = localSearchState.urlSearch === urlSearch ? localSearchState.value : urlSearch;
   const effectiveSearchQuery = localSearch.trim().toLowerCase();
-  const [selectedCategories, setSelectedCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState(() => urlCategory ? [urlCategory] : []);
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [brandSearch, setBrandSearch] = useState("");
   const [minPrice, setMinPrice] = useState(0);
@@ -135,7 +136,16 @@ function Shop() {
       const available = Number(product.total_stock) > 0
         || String(product.stock_status || "").toLowerCase() === "in stock";
       const matchesSearch = !effectiveSearchQuery
-        || [product.name, product.category, product.cat_type, product.brand, product.description]
+        || [
+          product.name,
+          product.product_code,
+          product.model_number,
+          product.category,
+          product.cat_type,
+          product.subcategory,
+          product.brand,
+          product.description,
+        ]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(effectiveSearchQuery));
 
