@@ -35,7 +35,7 @@ function CategoryCard({ category }) {
 
   return (
     <div
-      className="flex h-[112px] flex-col items-center justify-between rounded-xl border border-primary/5 bg-[#faf8ff] px-3 py-3 text-center transition duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md sm:h-[124px] sm:px-4"
+      className="group flex h-[112px] cursor-pointer flex-col items-center justify-between rounded-xl border border-primary/10 bg-[#faf8ff] px-3 py-3 text-center transition duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-[#f1e8ff] hover:shadow-[0_8px_20px_rgba(75,0,200,0.18)] sm:h-[124px] sm:px-4"
       title={category.name}
     >
       <div className="flex h-14 w-full items-center justify-center sm:h-[68px]">
@@ -52,7 +52,7 @@ function CategoryCard({ category }) {
           </div>
         )}
       </div>
-      <span className="w-full truncate text-xs font-bold leading-tight text-text-primary sm:text-[13px]">
+      <span className="w-full truncate text-xs font-bold leading-tight text-text-primary transition-colors group-hover:text-primary sm:text-[13px]">
         {category.name}
       </span>
     </div>
