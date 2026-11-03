@@ -333,7 +333,7 @@ function getRazorpayCredentials() {
   const keyId = process.env.RAZORPAY_KEY_ID;
   const keySecret = process.env.RAZORPAY_KEY_SECRET;
   if (!keyId || !keySecret) {
-    throw httpError(503, "Online payment is not configured. Please choose Cash on Delivery.");
+    throw httpError(503, "Online payment is not configured. Please contact support or try again later.");
   }
   return { keyId, keySecret };
 }

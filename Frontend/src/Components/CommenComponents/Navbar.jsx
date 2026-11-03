@@ -23,6 +23,7 @@ import {
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import api from "../../api";
+import { fetchAllPublicProducts } from "../Products/publicProducts";
 import PageContainer from "./PageContainer";
 import CartDrawer from "./CartDrawer";
 import WishlistDrawer from "./WishlistDrawer";
@@ -36,7 +37,10 @@ const Navbar = () => {
   const [userMenu, setUserMenu] = useState(false);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [publicProducts, setPublicProducts] = useState([]);
   const [categoryMenu, setCategoryMenu] = useState(false);
+  const [activeCategoryType, setActiveCategoryType] = useState("");
+  const [activeCategoryId, setActiveCategoryId] = useState("");
   const [mobileCategory, setMobileCategory] = useState(false);
   const [pagesMenu, setPagesMenu] = useState(false);
   const [mobilePages, setMobilePages] = useState(false);
@@ -62,6 +66,23 @@ const Navbar = () => {
   const searchInputRef = useRef(null);
   const suggestionQuery = search.trim();
   const currentSuggestions = suggestions.query === suggestionQuery ? suggestions : null;
+  const normalizeCategoryValue = (value) => String(value || "").trim().toLowerCase();
+  const categoriesWithProducts = categories.filter((category) => publicProducts.some((product) => {
+    const categoryName = normalizeCategoryValue(category.name);
+    const categoryMatches = [product.category, product.subcategory]
+      .some((value) => normalizeCategoryValue(value) === categoryName);
+    const productType = product.cat_type || product.category_type || category.categoryType || category.category_type;
+    const typeMatches = !productType
+      || normalizeCategoryValue(productType) === normalizeCategoryValue(category.categoryType || category.category_type);
+    return categoryMatches && typeMatches;
+  }));
+  const categoryTypes = [...new Set(categoriesWithProducts.map((category) => category.categoryType || category.category_type || "General"))];
+  const visibleTypeCategories = categoriesWithProducts.filter(
+    (category) => (category.categoryType || category.category_type || "General") === (activeCategoryType || categoryTypes[0]),
+  );
+  const activeCategory = visibleTypeCategories.find((category) => String(category.id) === String(activeCategoryId))
+    || visibleTypeCategories[0];
+  const activeCategorySubcategories = activeCategory?.subcategory || [];
 
   const confirmLogout = () => {
     logout();
@@ -128,12 +149,15 @@ const Navbar = () => {
   useEffect(() => {
     let active = true;
 
-    api.get("/categories")
-      .then((response) => {
-        if (active) setCategories(Array.isArray(response.data) ? response.data : []);
+    Promise.all([api.get("/categories"), fetchAllPublicProducts()])
+      .then(([response, products]) => {
+        if (active) {
+          setCategories(Array.isArray(response.data) ? response.data : []);
+          setPublicProducts(products);
+        }
       })
       .catch((error) => {
-        console.error("Failed to fetch navigation categories:", error);
+        console.error("Failed to fetch navigation categories and products:", error);
       });
 
     return () => {
@@ -224,10 +248,19 @@ const Navbar = () => {
         <NavLink to="/" end className={navClass}><House size={18} aria-hidden="true" />Home</NavLink>
         <NavLink to="/shop" className={navClass}><ShoppingBag size={18} aria-hidden="true" />Shop</NavLink>
         <NavLink to="/combos" className={navClass}><Boxes size={18} aria-hidden="true" />Combos</NavLink>
-        <div className="relative" ref={categoryRef}>
+        <div
+          className="relative"
+          ref={categoryRef}
+          onMouseEnter={() => setCategoryMenu(true)}
+          onMouseLeave={() => setCategoryMenu(false)}
+        >
           <button
             type="button"
-            onClick={() => setCategoryMenu((open) => !open)}
+            onClick={() => {
+              setCategoryMenu(true);
+              setActiveCategoryType(categoryTypes[0] || "");
+              setActiveCategoryId("");
+            }}
             aria-expanded={categoryMenu}
             className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
           >
@@ -236,37 +269,79 @@ const Navbar = () => {
             <ChevronDown size={14} className={`transition-transform ${categoryMenu ? "rotate-180" : ""}`} aria-hidden="true" />
           </button>
           {categoryMenu && (
-            <div className="absolute left-0 top-full z-[60] mt-3 w-72 overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-[0_18px_45px_rgba(37,12,69,0.2)] ring-1 ring-black/5">
-              <div className="flex items-center justify-between bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-4 py-3 text-white">
-                <div>
-                  <p className="text-sm font-bold">Shop by category</p>
-                  <p className="mt-0.5 text-[11px] text-white/75">Find something you love</p>
-                </div>
-                <span className="rounded-full bg-white/15 px-2 py-1 text-[10px] font-semibold">
-                  {categories.length} {categories.length === 1 ? "category" : "categories"}
-                </span>
+            <div className="absolute right-0 top-full z-[60] w-[680px] overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-[0_18px_45px_rgba(37,12,69,0.2)] ring-1 ring-black/5 xl:right-auto xl:left-1/2 xl:translate-x-[-34%]">
+              <div className="bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-4 py-3 text-white">
+                <p className="text-sm font-bold">Shop by category</p>
+                <p className="mt-0.5 text-[11px] text-white/75">Browse category types, categories, and subcategories</p>
               </div>
-              <div className="max-h-72 overflow-y-auto p-2">
-                {categories.length ? categories.map((category) => (
-                  <NavLink
-                    key={category.id}
-                    to={`/shop?category=${encodeURIComponent(category.name)}`}
-                    onClick={() => setCategoryMenu(false)}
-                    className={({ isActive }) =>
-                      `group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition ${
-                        isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"
-                      }`
-                    }
-                  >
-                    <span className="flex min-w-0 items-center gap-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white">
-                        <Grid2X2 size={15} aria-hidden="true" />
+              <div className="grid min-h-64 grid-cols-3 divide-x divide-[#eee8f5]">
+                <div className="max-h-80 overflow-y-auto p-2">
+                  {categoryTypes.length ? categoryTypes.map((categoryType) => (
+                    <button
+                      key={categoryType}
+                      type="button"
+                      onMouseEnter={() => {
+                        setActiveCategoryType(categoryType);
+                        setActiveCategoryId("");
+                      }}
+                      onFocus={() => {
+                        setActiveCategoryType(categoryType);
+                        setActiveCategoryId("");
+                      }}
+                      className={`group flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition ${
+                        (activeCategoryType || categoryTypes[0]) === categoryType
+                          ? "bg-[#f3eaff] font-semibold text-primary"
+                          : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"
+                      }`}
+                    >
+                      <span className="truncate">{categoryType}</span>
+                      <ChevronRight size={15} className="shrink-0 text-gray-400 group-hover:text-primary" aria-hidden="true" />
+                    </button>
+                  )) : <p className="px-3 py-5 text-center text-sm text-gray-500">No categories available</p>}
+                </div>
+                <div className="max-h-80 space-y-1 overflow-y-auto p-2">
+                  {visibleTypeCategories.map((category) => (
+                    <NavLink
+                      key={category.id}
+                      to={`/shop?category=${encodeURIComponent(category.name)}`}
+                      onMouseEnter={() => setActiveCategoryId(String(category.id))}
+                      onFocus={() => setActiveCategoryId(String(category.id))}
+                      onClick={() => setCategoryMenu(false)}
+                      className={({ isActive }) =>
+                        `group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition ${
+                          isActive || String(activeCategory?.id) === String(category.id)
+                            ? "bg-[#f3eaff] font-semibold text-primary"
+                            : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"
+                        }`
+                      }
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white">
+                          <Grid2X2 size={15} aria-hidden="true" />
+                        </span>
+                        <span className="truncate">{category.name}</span>
                       </span>
-                      <span className="truncate">{category.name}</span>
-                    </span>
-                    <ChevronRight size={15} className="shrink-0 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true" />
-                  </NavLink>
-                )) : <p className="px-3 py-5 text-center text-sm text-gray-500">No categories available</p>}
+                      <ChevronRight size={15} className="shrink-0 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true" />
+                    </NavLink>
+                  ))}
+                </div>
+                <div className="max-h-80 overflow-y-auto p-2">
+                  {activeCategorySubcategories.length ? activeCategorySubcategories.map((subcategory) => (
+                    <NavLink
+                      key={subcategory}
+                      to={`/shop?category=${encodeURIComponent(activeCategory.name)}&subcategory=${encodeURIComponent(subcategory)}`}
+                      onClick={() => setCategoryMenu(false)}
+                      className="flex items-center justify-between rounded-xl px-3 py-2.5 text-sm text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"
+                    >
+                      <span className="truncate">{subcategory}</span>
+                      <ChevronRight size={15} className="shrink-0 text-gray-400" aria-hidden="true" />
+                    </NavLink>
+                  )) : (
+                    <p className="px-3 py-5 text-center text-sm text-gray-500">
+                      {activeCategory ? "No subcategories available" : "Choose a category"}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -494,7 +569,7 @@ const Navbar = () => {
             <div className="p-4">
               <button type="button" onClick={() => setMobileCategory(false)} className="mb-3 flex items-center gap-2 px-2 py-2 text-sm font-semibold text-primary"><ChevronRight size={17} className="rotate-180" />Back to menu</button>
               <div className="space-y-2">
-                {categories.map((category) => (
+                {categoriesWithProducts.map((category) => (
                   <NavLink
                     key={category.id}
                     to={`/shop?category=${encodeURIComponent(category.name)}`}
@@ -504,7 +579,7 @@ const Navbar = () => {
                     <span className="flex items-center gap-3"><Grid2X2 size={17} />{category.name}</span><ChevronRight size={16} />
                   </NavLink>
                 ))}
-                {!categories.length && <p className="px-3 py-5 text-center text-sm text-gray-500">No categories available</p>}
+                {!categoriesWithProducts.length && <p className="px-3 py-5 text-center text-sm text-gray-500">No categories with available products</p>}
               </div>
             </div>
           ) : (

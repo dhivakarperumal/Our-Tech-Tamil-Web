@@ -120,14 +120,24 @@ function createDashboardController(pool) {
           FROM orders
         `),
         pool.execute(`
-          SELECT oi.product_id AS id, oi.product_name AS name,
-                 SUM(oi.quantity) AS sales, MAX(oi.image) AS img
-          FROM order_items oi
-          INNER JOIN orders o ON o.id = oi.order_id
-          WHERE oi.product_id IS NOT NULL AND o.status <> 'Cancelled'
-          GROUP BY oi.product_id, oi.product_name
-          ORDER BY sales DESC, oi.product_name ASC
-          LIMIT 4
+          SELECT sales.id, sales.name, sales.sales,
+                 COALESCE(
+                   NULLIF(JSON_UNQUOTE(JSON_EXTRACT(p.images, '$[0]')), ''),
+                   sales.img
+                 ) AS img,
+                 p.category AS cat
+          FROM (
+            SELECT oi.product_id AS id, oi.product_name AS name,
+                   SUM(oi.quantity) AS sales, MAX(oi.image) AS img
+            FROM order_items oi
+            INNER JOIN orders o ON o.id = oi.order_id
+            WHERE oi.product_id IS NOT NULL AND o.status <> 'Cancelled'
+            GROUP BY oi.product_id, oi.product_name
+            ORDER BY sales DESC, oi.product_name ASC
+            LIMIT 4
+          ) AS sales
+          LEFT JOIN products p ON p.id = sales.id
+          ORDER BY sales.sales DESC, sales.name ASC
         `),
       ]);
 
