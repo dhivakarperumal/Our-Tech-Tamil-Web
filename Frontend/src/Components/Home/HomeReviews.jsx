@@ -147,7 +147,7 @@ function HomeReviews() {
                     src={getReviewImageUrl(review.review_image)}
                     alt={`Review by ${review.user_name}`}
                     loading="lazy"
-                    className="mt-3 max-h-48 w-full rounded-xl object-cover"
+                    className="mt-3 h-16 w-16 rounded-lg object-cover"
                   />
                 )}
                 {review.admin_reply && (
