@@ -119,7 +119,11 @@ export const StoreProvider = ({ children }) => {
         }
 
         const selectedVariant = variant || product.variants?.[0] || null;
-        const selectedSize = size || selectedVariant?.selectedSizes?.[0] || "Free Size";
+        const selectedSize = size ||
+            selectedVariant?.selectedSizes?.[0] ||
+            (selectedVariant?.sizesStock ? Object.keys(selectedVariant.sizesStock)[0] : "") ||
+            parseStoredOptions(product.available_sizes)[0] ||
+            "Free Size";
         const quantity = Number(qty);
         if (!Number.isSafeInteger(quantity) || quantity < 1) {
             toast.error("Enter a valid quantity");
