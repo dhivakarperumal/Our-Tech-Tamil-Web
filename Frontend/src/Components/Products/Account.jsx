@@ -285,7 +285,7 @@ function MyOrders({ user }) {
                       </div>
                     </div>
 
-                    <div className="col-start-1 row-start-2 min-w-0 pl-1 sm:col-auto sm:row-auto sm:pl-0">
+                    <div className="col-start-1 row-start-2 min-w-0 pl-1 text-left sm:col-auto sm:row-auto sm:pl-0 sm:text-center">
                       <p className="text-[9px] font-semibold text-slate-500">Total Amount</p>
                       <p className="text-xs font-extrabold text-[#7100b5]">₹{Number(order.total_amount || 0).toLocaleString("en-IN")}</p>
                     </div>
@@ -298,7 +298,7 @@ function MyOrders({ user }) {
                       type="button"
                       onClick={function(){ setSelectedOrder(order); }}
                       aria-label={"View details for order " + (order.order_id || order.id)}
-                      className="col-start-2 row-start-2 flex items-center justify-center gap-1.5 rounded-lg border border-[#7900bd] bg-gradient-to-r from-[#8c12c6] to-[#6500a9] px-3 py-2 text-[10px] font-extrabold text-white transition hover:bg-none hover:from-white hover:to-white hover:text-[#7900bd] sm:col-auto sm:row-auto sm:min-w-[98px]"
+                      className="col-start-2 row-start-2 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-[#7900bd] bg-gradient-to-r from-[#8c12c6] to-[#6500a9] px-3 py-2 text-[10px] font-extrabold text-white transition hover:bg-none hover:from-white hover:to-white hover:text-[#7900bd] sm:col-auto sm:row-auto sm:min-w-[98px]"
                     >
                       View Details <ChevronRight size={13} />
                     </button>
