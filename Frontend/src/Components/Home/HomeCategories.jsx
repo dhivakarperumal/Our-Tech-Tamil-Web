@@ -205,7 +205,7 @@ function HomeCategories() {
             ))}
           </div>
         ) : (
-          <div ref={carouselContainerRef} className="overflow-visible py-1">
+          <div ref={carouselContainerRef} className="overflow-hidden py-2">
             <Swiper
               modules={[Autoplay]}
               onSwiper={(swiper) => {
@@ -223,7 +223,7 @@ function HomeCategories() {
                   : false
               }
               navigation={false}
-              className="home-category-swiper !ml-0 !mr-auto !overflow-visible"
+              className="home-category-swiper !ml-0 !mr-auto"
               style={{ width: "100%" }}
               aria-label="Shop by category"
             >
