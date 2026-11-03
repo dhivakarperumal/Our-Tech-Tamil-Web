@@ -380,9 +380,30 @@ function MyAddresses({ user }) {
     return function() { active = false; };
   }, [user?.user_id]);
 
+  useEffect(function() {
+    if (editingAddressId === null) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function closeOnEscape(event) {
+      if (event.key === "Escape" && !saving) resetForm();
+    }
+    document.addEventListener("keydown", closeOnEscape);
+
+    return function() {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [editingAddressId, saving]);
+
   function resetForm() {
     setEditingAddressId(null);
     setForm(EMPTY_ADDRESS);
+  }
+
+  function addAddress() {
+    setForm(EMPTY_ADDRESS);
+    setEditingAddressId("new");
   }
 
   function editAddress(address) {
@@ -450,36 +471,64 @@ function MyAddresses({ user }) {
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><MapPin size={20} /></span>
           <div><h2 className="text-lg font-extrabold text-[#1a0745]">My Addresses</h2><p className="text-xs text-gray-500">Manage your saved delivery addresses.</p></div>
         </div>
-        {!editingAddressId && (
-          <button type="button" onClick={function(){ setForm(EMPTY_ADDRESS); setEditingAddressId("new"); }} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-white transition hover:bg-primary-dark">
-            <Plus size={15} /> Add address
-          </button>
-        )}
+        <button type="button" onClick={addAddress} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-white transition hover:bg-primary-dark">
+          <Plus size={15} /> Add address
+        </button>
       </div>
-      {editingAddressId && (
-        <form onSubmit={saveAddress} className="mt-6 space-y-5 rounded-xl border border-[#e9def5] bg-[#faf8ff] p-4 sm:p-5">
-          <h3 className="font-bold text-[#1a0745]">{editingAddressId === "new" ? "Add an address" : "Edit address"}</h3>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Full name" required><InputBox icon={User} name="recipient_name" value={form.recipient_name} onChange={changeAddress} maxLength={160} required /></Field>
-            <Field label="Phone number" required><InputBox icon={Phone} name="phone" type="tel" value={form.phone} onChange={changeAddress} maxLength={32} required /></Field>
-            <div className="sm:col-span-2">
-              <Field label="Street address" required>
-                <textarea name="street_address" value={form.street_address} onChange={changeAddress} maxLength={512} required className="min-h-20 w-full rounded-xl border border-[#e2d3f5] bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
-              </Field>
-            </div>
-            <Field label="City" required><InputBox name="city" value={form.city} onChange={changeAddress} maxLength={120} required /></Field>
-            <Field label="District"><InputBox name="district" value={form.district} onChange={changeAddress} maxLength={120} /></Field>
-            <Field label="State" required><InputBox name="state" value={form.state} onChange={changeAddress} maxLength={120} required /></Field>
-            <Field label="Postal code" required><InputBox name="zip_code" value={form.zip_code} onChange={changeAddress} maxLength={24} required /></Field>
-            <Field label="Country" required><InputBox name="country" value={form.country} onChange={changeAddress} maxLength={120} required /></Field>
-          </div>
-          <div className="flex justify-end gap-3">
-            <button type="button" onClick={resetForm} className="rounded-xl border border-[#d4c5f0] px-4 py-2 text-sm font-bold text-gray-600 transition hover:bg-white">Cancel</button>
-            <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-dark disabled:opacity-60">
-              <Save size={15} /> {saving ? "Saving..." : "Save address"}
-            </button>
-          </div>
-        </form>
+      {editingAddressId !== null && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+          onClick={function(event) {
+            if (event.target === event.currentTarget && !saving) resetForm();
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="address-dialog-title"
+            className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-2xl"
+          >
+            <header className="flex items-start justify-between gap-4 border-b border-[#f0e8ff] p-5 sm:px-7">
+              <div>
+                <h3 id="address-dialog-title" className="text-lg font-extrabold text-[#1a0745]">
+                  {editingAddressId === "new" ? "Add an address" : "Edit address"}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">Enter your delivery address details.</p>
+              </div>
+              <button
+                type="button"
+                onClick={resetForm}
+                disabled={saving}
+                aria-label="Close address form"
+                className="rounded-lg p-2 text-gray-500 transition hover:bg-[#faf7ff] hover:text-primary disabled:opacity-50"
+              >
+                <X size={20} />
+              </button>
+            </header>
+            <form onSubmit={saveAddress} className="flex min-h-0 flex-col">
+              <div className="grid gap-4 overflow-y-auto p-5 sm:grid-cols-2 sm:px-7">
+                <Field label="Full name" required><InputBox icon={User} name="recipient_name" value={form.recipient_name} onChange={changeAddress} maxLength={160} required /></Field>
+                <Field label="Phone number" required><InputBox icon={Phone} name="phone" type="tel" value={form.phone} onChange={changeAddress} maxLength={32} required /></Field>
+                <div className="sm:col-span-2">
+                  <Field label="Street address" required>
+                    <textarea name="street_address" value={form.street_address} onChange={changeAddress} maxLength={512} required className="min-h-20 w-full rounded-xl border border-[#e2d3f5] bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
+                  </Field>
+                </div>
+                <Field label="City" required><InputBox name="city" value={form.city} onChange={changeAddress} maxLength={120} required /></Field>
+                <Field label="District"><InputBox name="district" value={form.district} onChange={changeAddress} maxLength={120} /></Field>
+                <Field label="State" required><InputBox name="state" value={form.state} onChange={changeAddress} maxLength={120} required /></Field>
+                <Field label="Postal code" required><InputBox name="zip_code" value={form.zip_code} onChange={changeAddress} maxLength={24} required /></Field>
+                <Field label="Country" required><InputBox name="country" value={form.country} onChange={changeAddress} maxLength={120} required /></Field>
+              </div>
+              <div className="flex justify-end gap-3 border-t border-[#f0e8ff] p-5 sm:px-7">
+                <button type="button" onClick={resetForm} disabled={saving} className="rounded-xl border border-[#d4c5f0] px-4 py-2 text-sm font-bold text-gray-600 transition hover:bg-[#faf7ff] disabled:opacity-50">Cancel</button>
+                <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-dark disabled:opacity-60">
+                  <Save size={15} /> {saving ? "Saving..." : "Save address"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
       )}
       {loading ? (
         <p className="mt-6 text-sm text-gray-500">Loading saved addresses...</p>
