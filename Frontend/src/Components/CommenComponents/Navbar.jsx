@@ -160,18 +160,18 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 bg-white shadow-[0_5px_18px_rgba(38,13,66,0.12)]">
       <PageContainer>
-        <div className="flex min-h-[68px] items-center justify-between gap-4 py-2 lg:min-h-[72px]">
+        <div className="flex min-h-[60px] items-center justify-between gap-3 py-1.5 lg:min-h-[64px]">
           <Link to="/" className="flex shrink-0 items-center" aria-label="Our Tech home">
             <img
               src="/images/logo.jpeg"
               alt=""
-              className="h-9 w-9 rounded-full bg-white object-cover ring-2 ring-fuchsia-600 ring-offset-2 ring-offset-white sm:h-11 sm:w-11"
+              className="h-8 w-8 rounded-full bg-white object-cover ring-2 ring-fuchsia-600 ring-offset-1 ring-offset-white sm:h-10 sm:w-10"
             />
             <span className="ml-3 flex flex-col leading-none">
-              <span className="text-lg font-extrabold tracking-tight text-gray-900 sm:text-xl">
+              <span className="text-base font-extrabold tracking-tight text-gray-900 sm:text-lg">
                 Our <span className="text-fuchsia-600">Tech</span>
               </span>
-              <span className="mt-1 text-[7px] font-bold uppercase tracking-[0.34em] text-gray-600 sm:text-[8px]">
+              <span className="mt-0.5 text-[6px] font-bold uppercase tracking-[0.34em] text-gray-600 sm:text-[7px]">
                 Gadgets Store
               </span>
             </span>
@@ -203,7 +203,7 @@ const Navbar = () => {
               type="button"
               onClick={() => setWishlistOpen(true)}
               aria-label="Open wishlist"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#eee7f5] bg-white text-[#2b1745] shadow-[0_3px_10px_rgba(34,12,60,0.10)] transition hover:-translate-y-0.5 hover:text-primary sm:h-10 sm:w-10"
+              className="relative flex h-8 w-8 items-center justify-center rounded-full border border-[#eee7f5] bg-white text-[#2b1745] shadow-[0_3px_10px_rgba(34,12,60,0.10)] transition hover:-translate-y-0.5 hover:text-primary sm:h-9 sm:w-9"
             >
               <Heart size={20} aria-hidden="true" />
               {wishlist.length > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white">{wishlist.length > 9 ? "9+" : wishlist.length}</span>}
@@ -212,7 +212,7 @@ const Navbar = () => {
               type="button"
               onClick={() => setCartOpen(true)}
               aria-label="Open cart"
-              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#eee7f5] bg-white text-[#2b1745] shadow-[0_3px_10px_rgba(34,12,60,0.10)] transition hover:-translate-y-0.5 hover:text-primary sm:h-10 sm:w-10"
+              className="relative flex h-8 w-8 items-center justify-center rounded-full border border-[#eee7f5] bg-white text-[#2b1745] shadow-[0_3px_10px_rgba(34,12,60,0.10)] transition hover:-translate-y-0.5 hover:text-primary sm:h-9 sm:w-9"
             >
               <ShoppingCart size={20} aria-hidden="true" />
               {cart.length > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-fuchsia-700 px-1 text-[9px] font-bold text-white">{cart.length > 9 ? "9+" : cart.length}</span>}
@@ -221,7 +221,7 @@ const Navbar = () => {
             <button
               type="button"
               onClick={() => setMobileMenu((open) => !open)}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eee7f5] text-[#2b1745] xl:hidden"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#eee7f5] text-[#2b1745] xl:hidden"
               aria-label={mobileMenu ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenu}
             >
@@ -230,7 +230,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        <form onSubmit={submitSearch} role="search" className="pb-2 xl:hidden">
+        <form onSubmit={submitSearch} role="search" className="pb-1.5 xl:hidden">
           <label htmlFor="mobile-product-search" className="sr-only">Search products</label>
           <div className="flex items-center overflow-hidden rounded-full border border-[#e7dff0] bg-white">
             <Search size={17} className="ml-3 shrink-0 text-[#4c3b64]" aria-hidden="true" />
@@ -248,9 +248,9 @@ const Navbar = () => {
         </form>
       </PageContainer>
 
-      <div className="relative isolate hidden h-[52px] items-center justify-center xl:flex">
+      <div className="relative isolate hidden h-[44px] items-center justify-center xl:flex">
         <svg
-          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[50px] w-full"
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[44px] w-full"
           viewBox="0 0 2000 80"
           preserveAspectRatio="none"
           aria-hidden="true"
@@ -279,7 +279,7 @@ const Navbar = () => {
           />
         </svg>
         <div className="mx-auto w-full max-w-[980px] px-8">
-          <div className="flex min-h-[44px] items-center justify-center gap-0.5 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-[#35134f] via-[#200b38] to-[#35134f] px-4 shadow-[0_12px_26px_rgba(30,8,50,0.28)]">
+          <div className="flex min-h-[38px] items-center justify-center gap-0.5 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-[#35134f] via-[#200b38] to-[#35134f] px-4 shadow-[0_12px_26px_rgba(30,8,50,0.28)]">
             <NavLink to="/" end className={navClass}><House size={19} aria-hidden="true" />Home</NavLink>
             <NavLink to="/shop" className={navClass}><ShoppingBag size={19} aria-hidden="true" />Shop</NavLink>
             <div className="relative" ref={categoryRef}>
