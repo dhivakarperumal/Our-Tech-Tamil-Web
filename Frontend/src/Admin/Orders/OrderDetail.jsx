@@ -419,53 +419,66 @@ const OrderDetail = () => {
                                 {order.items?.length || 0} items
                             </span>
                         </div>
-                        <div className="divide-y divide-slate-100">
-                            {order.items?.length ? order.items.map((item, index) => {
-                                const unitPrice = Number(item.price) || 0;
-                                const quantity = Number(item.quantity) || 1;
-                                return (
-                                    <div key={item.id || `${order.id}-${index}`} className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:px-6">
-                                        <div className="flex min-w-0 flex-1 items-center gap-4">
-                                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                                                <img
-                                                    src={getProductImage(item)}
-                                                    alt={item.product_name || item.name || "Order product"}
-                                                    className="h-full w-full object-cover"
-                                                    onError={(event) => {
-                                                        if (!event.currentTarget.src.includes("ui-avatars")) {
-                                                            event.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.product_name || item.name || "Product")}&background=ede9fe&color=4c1d95`;
-                                                        }
-                                                    }}
-                                                />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <h3 className="truncate text-sm font-bold text-slate-800">{item.product_name || item.name || "Product"}</h3>
-                                                <p className="mt-1 text-xs text-slate-500">₹{unitPrice.toLocaleString("en-IN")} each</p>
-                                                <div className="mt-2 flex flex-wrap gap-2">
-                                                    {item.variant_color && (
-                                                        <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">Color: {item.variant_color}</span>
-                                                    )}
-                                                    {item.variant_size && (
-                                                        <span className="rounded-md bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">Size: {item.variant_size}</span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between gap-5 border-t border-slate-100 pt-3 sm:border-0 sm:pt-0 sm:text-right">
-                                            <span className="text-xs font-medium text-slate-500">Qty {quantity}</span>
-                                            <span className="min-w-24 text-base font-extrabold text-violet-900">
-                                                ₹{(unitPrice * quantity).toLocaleString("en-IN")}
-                                            </span>
-                                        </div>
-                                    </div>
-                                );
-                            }) : (
-                                <div className="px-6 py-12 text-center">
-                                    <FiPackage className="mx-auto mb-2 text-slate-300" size={28} />
-                                    <p className="text-sm font-semibold text-slate-500">No item details found for this order.</p>
-                                </div>
-                            )}
-                        </div>
+                        {order.items?.length ? (
+                            <div className="overflow-x-auto">
+                                <table className="w-full min-w-[620px] table-fixed text-left">
+                                    <thead className="sr-only">
+                                        <tr>
+                                            <th scope="col">Product</th>
+                                            <th scope="col">Quantity</th>
+                                            <th scope="col">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {order.items.map((item, index) => {
+                                            const unitPrice = Number(item.price) || 0;
+                                            const quantity = Number(item.quantity) || 1;
+                                            return (
+                                                <tr key={item.id || `${order.id}-${index}`} className="hover:bg-violet-50/30">
+                                                    <td className="w-[70%] px-5 py-5 sm:px-6">
+                                                        <div className="flex min-w-0 items-center gap-4">
+                                                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                                                                <img
+                                                                    src={getProductImage(item)}
+                                                                    alt={item.product_name || item.name || "Order product"}
+                                                                    className="h-full w-full object-cover"
+                                                                    onError={(event) => {
+                                                                        if (!event.currentTarget.src.includes("ui-avatars")) {
+                                                                            event.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.product_name || item.name || "Product")}&background=ede9fe&color=4c1d95`;
+                                                                        }
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <h3 className="truncate text-sm font-bold text-slate-800">{item.product_name || item.name || "Product"}</h3>
+                                                                <p className="mt-1 text-xs text-slate-500">₹{unitPrice.toLocaleString("en-IN")} each</p>
+                                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                                    {item.variant_color && (
+                                                                        <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">Color: {item.variant_color}</span>
+                                                                    )}
+                                                                    {item.variant_size && (
+                                                                        <span className="rounded-md bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">Size: {item.variant_size}</span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td className="w-[15%] px-4 py-5 text-center text-sm font-medium text-slate-500">Qty {quantity}</td>
+                                                    <td className="w-[15%] px-5 py-5 text-right text-base font-extrabold text-violet-900 sm:px-6">
+                                                        ₹{(unitPrice * quantity).toLocaleString("en-IN")}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div className="px-6 py-12 text-center">
+                                <FiPackage className="mx-auto mb-2 text-slate-300" size={28} />
+                                <p className="text-sm font-semibold text-slate-500">No item details found for this order.</p>
+                            </div>
+                        )}
                         <div className="border-t border-slate-100 bg-slate-50/80 px-5 py-5 sm:px-6">
                             <div className="ml-auto flex max-w-sm items-center justify-between gap-4">
                                 <div>
