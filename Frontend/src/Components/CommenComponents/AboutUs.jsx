@@ -150,38 +150,96 @@ const AboutUs = () => {
         </PageContainer>
       </section>
 
-      {/* ── OUR VALUES ───────────────────────────────────────── */}
-      <section className="py-16 bg-white">
+      {/* ── FAQ & OUR VALUES ──────────────────────────────────── */}
+      <section className="bg-white py-12 sm:py-16">
         <PageContainer>
-          <div className="mb-10 text-center space-y-2">
-            <span className="inline-block rounded-full border border-primary/25 bg-[#f3eaff] px-4 py-1 text-xs font-semibold text-primary">
-              Our Values
-            </span>
-            <h2 className="text-3xl font-extrabold text-[#1a0745] sm:text-4xl">
-              What We Stand For
-            </h2>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <ValueCard
-              icon={Star}
-              title="Quality First"
-              desc="Premium products with trusted brands you can rely on."
-            />
-            <ValueCard
-              icon={Shield}
-              title="Secure Shopping"
-              desc="Your data and payments are always safe with us."
-            />
-            <ValueCard
-              icon={Truck}
-              title="Fast Delivery"
-              desc="Quick, reliable and on-time delivery to your door."
-            />
-            <ValueCard
-              icon={Headphones}
-              title="Customer Care"
-              desc="We're here to help you, always — 24/7 support."
-            />
+          <div className="grid items-start gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:gap-10">
+            <div>
+              <div className="mb-6">
+                <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-[#f3eaff] px-4 py-1 text-xs font-semibold text-primary">
+                  <MessageCircleQuestion size={15} aria-hidden="true" />
+                  FAQ
+                </span>
+                <h2 className="mt-3 text-2xl font-extrabold text-[#1a0745] sm:text-3xl">
+                  Frequently Asked Questions
+                </h2>
+                <p className="mt-2 text-sm text-gray-500">
+                  Find quick answers to common questions about shopping with us.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {faqs.map(({ question, answer }, index) => {
+                  const isOpen = openFaq === index;
+                  const answerId = `about-faq-answer-${index}`;
+
+                  return (
+                    <article
+                      key={question}
+                      className="overflow-hidden rounded-2xl border border-[#eadcf6] bg-white shadow-[0_4px_16px_rgba(74,27,120,0.06)]"
+                    >
+                      <h3>
+                        <button
+                          type="button"
+                          aria-expanded={isOpen}
+                          aria-controls={answerId}
+                          onClick={() => setOpenFaq(isOpen ? null : index)}
+                          className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left text-sm font-bold text-[#1a0745] transition hover:bg-[#fcf9ff] sm:px-5"
+                        >
+                          {question}
+                          <ChevronDown
+                            size={18}
+                            className={`shrink-0 text-primary transition-transform ${isOpen ? "rotate-180" : ""}`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </h3>
+                      {isOpen && (
+                        <div id={answerId} className="border-t border-[#f0e8f8] px-4 py-4 text-sm leading-6 text-gray-600 sm:px-5">
+                          {answer}
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-6">
+                <span className="inline-block rounded-full border border-primary/25 bg-[#f3eaff] px-4 py-1 text-xs font-semibold text-primary">
+                  Our Values
+                </span>
+                <h2 className="mt-3 text-2xl font-extrabold text-[#1a0745] sm:text-3xl">
+                  What We Stand For
+                </h2>
+                <p className="mt-2 text-sm text-gray-500">
+                  The principles behind every order and customer experience.
+                </p>
+              </div>
+              <div className="space-y-3">
+                <ValueCard
+                  icon={Star}
+                  title="Quality First"
+                  desc="Premium products with trusted brands you can rely on."
+                />
+                <ValueCard
+                  icon={Shield}
+                  title="Secure Shopping"
+                  desc="Your data and payments are always safe with us."
+                />
+                <ValueCard
+                  icon={Truck}
+                  title="Fast Delivery"
+                  desc="Quick, reliable and on-time delivery to your door."
+                />
+                <ValueCard
+                  icon={Headphones}
+                  title="Customer Care"
+                  desc="We're here to help you, always — 24/7 support."
+                />
+              </div>
+            </div>
           </div>
         </PageContainer>
       </section>
@@ -311,62 +369,6 @@ const AboutUs = () => {
                 desc="Continuing to deliver a better shopping experience."
                 isLast
               />
-            </div>
-          </div>
-        </PageContainer>
-      </section>
-
-      {/* ── FAQ ─────────────────────────────────────────────── */}
-      <section className="bg-white py-12 sm:py-16">
-        <PageContainer>
-          <div className="mx-auto max-w-3xl">
-            <div className="mb-7 text-center">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-[#f3eaff] px-4 py-1 text-xs font-semibold text-primary">
-                <MessageCircleQuestion size={15} aria-hidden="true" />
-                FAQ
-              </span>
-              <h2 className="mt-3 text-2xl font-extrabold text-[#1a0745] sm:text-3xl">
-                Frequently Asked Questions
-              </h2>
-              <p className="mt-2 text-sm text-gray-500">
-                Find quick answers to common questions about shopping with us.
-              </p>
-            </div>
-
-            <div className="space-y-3">
-              {faqs.map(({ question, answer }, index) => {
-                const isOpen = openFaq === index;
-                const answerId = `about-faq-answer-${index}`;
-
-                return (
-                  <article
-                    key={question}
-                    className="overflow-hidden rounded-2xl border border-[#eadcf6] bg-white shadow-[0_4px_16px_rgba(74,27,120,0.06)]"
-                  >
-                    <h3>
-                      <button
-                        type="button"
-                        aria-expanded={isOpen}
-                        aria-controls={answerId}
-                        onClick={() => setOpenFaq(isOpen ? null : index)}
-                        className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left text-sm font-bold text-[#1a0745] transition hover:bg-[#fcf9ff] sm:px-5"
-                      >
-                        {question}
-                        <ChevronDown
-                          size={18}
-                          className={`shrink-0 text-primary transition-transform ${isOpen ? "rotate-180" : ""}`}
-                          aria-hidden="true"
-                        />
-                      </button>
-                    </h3>
-                    {isOpen && (
-                      <div id={answerId} className="border-t border-[#f0e8f8] px-4 py-4 text-sm leading-6 text-gray-600 sm:px-5">
-                        {answer}
-                      </div>
-                    )}
-                  </article>
-                );
-              })}
             </div>
           </div>
         </PageContainer>
