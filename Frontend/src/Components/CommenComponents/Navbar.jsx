@@ -113,7 +113,7 @@ const Navbar = () => {
   };
 
   const navClass = ({ isActive }) =>
-    `inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+    `my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition ${
       isActive ? "bg-gradient-to-r from-accent to-[#ffe98a] text-[#29104b] shadow-sm" : "text-white hover:bg-white/10"
     }`;
 
@@ -279,7 +279,7 @@ const Navbar = () => {
           />
         </svg>
         <div className="mx-auto w-full max-w-[980px] px-8">
-          <div className="flex min-h-[38px] items-center justify-center gap-3 rounded-full border-2 border-[#e6bd3f] bg-primary px-4 shadow-[0_12px_26px_rgba(30,8,50,0.28)]">
+          <div className="flex min-h-[42px] items-center justify-center gap-3 rounded-full border-2 border-[#e6bd3f] bg-primary px-4 shadow-[0_12px_26px_rgba(30,8,50,0.28)]">
             <NavLink to="/" end className={navClass}><House size={19} aria-hidden="true" />Home</NavLink>
             <NavLink to="/shop" className={navClass}><ShoppingBag size={19} aria-hidden="true" />Shop</NavLink>
             <div className="relative" ref={categoryRef}>
@@ -287,7 +287,7 @@ const Navbar = () => {
                 type="button"
                 onClick={() => setCategoryMenu((open) => !open)}
                 aria-expanded={categoryMenu}
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
+                className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
               >
                 <Grid2X2 size={19} aria-hidden="true" />
                 Categories
