@@ -247,7 +247,7 @@ const Navbar = () => {
 
   const renderDesktopNavigation = () => (
     <div className="hidden min-w-0 flex-1 items-center justify-center xl:flex">
-      <div className="flex min-h-[42px] items-center justify-center gap-1 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-6 shadow-[0_8px_20px_rgba(30,8,50,0.2)]">
+      <div className="flex min-h-[42px] items-center justify-center gap-1 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-14 shadow-[0_8px_20px_rgba(30,8,50,0.2)]">
         <NavLink to="/" end className={navClass}><House size={18} aria-hidden="true" />Home</NavLink>
         <NavLink to="/shop" className={navClass}><ShoppingBag size={18} aria-hidden="true" />Shop</NavLink>
         <div className="relative" ref={categoryRef}>
