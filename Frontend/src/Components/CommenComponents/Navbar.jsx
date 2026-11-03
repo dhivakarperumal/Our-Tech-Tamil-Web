@@ -34,6 +34,8 @@ const Navbar = () => {
   const [categories, setCategories] = useState([]);
   const [categoryMenu, setCategoryMenu] = useState(false);
   const [mobileCategory, setMobileCategory] = useState(false);
+  const [pagesMenu, setPagesMenu] = useState(false);
+  const [mobilePages, setMobilePages] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
@@ -41,6 +43,7 @@ const Navbar = () => {
 
   const menuRef = useRef(null);
   const categoryRef = useRef(null);
+  const pagesRef = useRef(null);
 
   const confirmLogout = () => {
     logout();
@@ -53,6 +56,7 @@ const Navbar = () => {
     const handler = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) setUserMenu(false);
       if (categoryRef.current && !categoryRef.current.contains(event.target)) setCategoryMenu(false);
+      if (pagesRef.current && !pagesRef.current.contains(event.target)) setPagesMenu(false);
     };
 
     document.addEventListener("mousedown", handler);
@@ -310,25 +314,41 @@ const Navbar = () => {
                 </div>
               )}
             </div>
-            <NavLink to="/articles" className={navClass}><FileText size={19} aria-hidden="true" />Articles</NavLink>
-            <NavLink to="/about" className={navClass}><Users size={19} aria-hidden="true" />About Us</NavLink>
-            <NavLink to="/contactus" className={navClass}><Mail size={19} aria-hidden="true" />Contact Us</NavLink>
+            <div className="relative" ref={pagesRef}>
+              <button
+                type="button"
+                onClick={() => setPagesMenu((open) => !open)}
+                aria-expanded={pagesMenu}
+                className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                <FileText size={19} aria-hidden="true" />
+                Pages
+                <ChevronDown size={14} className={`transition-transform ${pagesMenu ? "rotate-180" : ""}`} aria-hidden="true" />
+              </button>
+              {pagesMenu && (
+                <div className="absolute left-0 top-full z-[60] mt-3 w-52 overflow-hidden rounded-xl border border-border bg-white py-2 shadow-xl">
+                  <NavLink to="/articles" onClick={() => setPagesMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"><FileText size={16} />Articles</NavLink>
+                  <NavLink to="/about" onClick={() => setPagesMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"><Users size={16} />About Us</NavLink>
+                  <NavLink to="/contactus" onClick={() => setPagesMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"><Mail size={16} />Contact Us</NavLink>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {mobileMenu && (
         <div className="absolute inset-x-0 top-full z-[55] max-h-[calc(100dvh-120px)] overflow-y-auto border-t border-[#eee7f5] bg-white shadow-xl lg:hidden">
-          {!mobileCategory ? (
+          {!mobileCategory && !mobilePages ? (
             <div className="space-y-2 p-4">
               <NavLink to="/" end onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><House size={18} />Home</NavLink>
               <NavLink to="/shop" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><ShoppingBag size={18} />Shop</NavLink>
               <button type="button" onClick={() => setMobileCategory(true)} className="flex w-full items-center justify-between rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary">
                 <span className="flex items-center gap-3"><Grid2X2 size={18} />Categories</span><ChevronRight size={17} />
               </button>
-              <NavLink to="/articles" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><FileText size={18} />Articles</NavLink>
-              <NavLink to="/about" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><Users size={18} />About Us</NavLink>
-              <NavLink to="/contactus" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><Phone size={18} />Contact Us</NavLink>
+              <button type="button" onClick={() => setMobilePages(true)} className="flex w-full items-center justify-between rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary">
+                <span className="flex items-center gap-3"><FileText size={18} />Pages</span><ChevronRight size={17} />
+              </button>
               <NavLink to="/termsandconditions" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><FileText size={18} />Terms &amp; Conditions</NavLink>
               <Link to="/ordersmain" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><ShoppingCart size={18} />Track Order</Link>
               <div className="flex items-center justify-between border-t border-gray-100 pt-3 sm:hidden">
@@ -340,7 +360,7 @@ const Navbar = () => {
                 ) : <Link to="/login" onClick={() => setMobileMenu(false)} className="flex items-center gap-2 text-sm font-semibold text-primary"><UserRound size={18} />Sign in</Link>}
               </div>
             </div>
-          ) : (
+          ) : mobileCategory ? (
             <div className="p-4">
               <button type="button" onClick={() => setMobileCategory(false)} className="mb-3 flex items-center gap-2 px-2 py-2 text-sm font-semibold text-primary"><ChevronRight size={17} className="rotate-180" />Back to menu</button>
               <div className="space-y-2">
@@ -355,6 +375,15 @@ const Navbar = () => {
                   </NavLink>
                 ))}
                 {!categories.length && <p className="px-3 py-5 text-center text-sm text-gray-500">No categories available</p>}
+              </div>
+            </div>
+          ) : (
+            <div className="p-4">
+              <button type="button" onClick={() => setMobilePages(false)} className="mb-3 flex items-center gap-2 px-2 py-2 text-sm font-semibold text-primary"><ChevronRight size={17} className="rotate-180" />Back to menu</button>
+              <div className="space-y-2">
+                <NavLink to="/articles" onClick={() => { setMobilePages(false); setMobileMenu(false); }} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><FileText size={18} />Articles</NavLink>
+                <NavLink to="/about" onClick={() => { setMobilePages(false); setMobileMenu(false); }} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><Users size={18} />About Us</NavLink>
+                <NavLink to="/contactus" onClick={() => { setMobilePages(false); setMobileMenu(false); }} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><Phone size={18} />Contact Us</NavLink>
               </div>
             </div>
           )}
