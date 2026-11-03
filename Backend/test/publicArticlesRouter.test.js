@@ -5,21 +5,23 @@ const { once } = require("node:events");
 const { createAdminContentController } = require("../controllers/adminContentController");
 const createPublicArticlesRouter = require("../routers/publicArticlesRouter");
 
-test("public articles endpoint returns recent article entries and their links", async (t) => {
+test("public articles endpoint returns all article entries and their links", async (t) => {
   let query = "";
   const pool = {
     async execute(statement) {
       query = statement;
-      return [[{
-        id: 12,
-        content_id: "ART-00012",
-        title: "Choosing a wireless speaker",
+      return [Array.from({ length: 5 }, (_, index) => ({
+        id: 12 + index,
+        content_id: `ART-${String(12 + index).padStart(5, "0")}`,
+        title: index === 0 ? "Choosing a wireless speaker" : `Article ${index + 1}`,
         description: "What to consider before buying a speaker.",
         image_url: "/uploads/articles/speaker.png",
         buy_link: null,
-        buy_links: JSON.stringify([{ name: "Read Guide", url: "https://example.com/guide" }]),
-        created_at: "2026-11-02T10:00:00.000Z",
-      }]];
+        buy_links: index === 0
+          ? JSON.stringify([{ name: "Read Guide", url: "https://example.com/guide" }])
+          : null,
+        created_at: `2026-11-0${2 - index}-10:00:00.000Z`,
+      }))];
     },
   };
   const app = express();
@@ -33,8 +35,8 @@ test("public articles endpoint returns recent article entries and their links", 
 
   assert.equal(response.status, 200);
   assert.match(query, /content_type = 'article'/);
-  assert.match(query, /LIMIT 4/);
-  assert.equal(result.articles.length, 1);
+  assert.doesNotMatch(query, /\bLIMIT\b/i);
+  assert.equal(result.articles.length, 5);
   assert.equal(result.articles[0].title, "Choosing a wireless speaker");
   assert.deepEqual(result.articles[0].buy_links, [
     { name: "Read Guide", url: "https://example.com/guide" },

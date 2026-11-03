@@ -307,8 +307,7 @@ function createAdminContentController(pool) {
           `SELECT id, content_id, title, description, image_url, buy_link, buy_links, created_at
            FROM admin_articles
            WHERE content_type = 'article'
-           ORDER BY created_at DESC, id DESC
-           LIMIT 4`,
+           ORDER BY created_at DESC, id DESC`,
         );
         return response.json({
           articles: articles.map((article) => ({

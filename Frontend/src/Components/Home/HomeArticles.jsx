@@ -40,7 +40,7 @@ function HomeArticles() {
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-700">Tech Knowledge Hub</p>
             <h2 id="home-articles-title" className="mt-1 text-2xl font-black text-slate-900 sm:text-3xl">
-              Latest Articles
+              All Articles
             </h2>
           </div>
           <Link
