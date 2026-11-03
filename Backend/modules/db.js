@@ -130,6 +130,7 @@ async function initializeDatabase(pool) {
     CREATE TABLE IF NOT EXISTS reviews (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       product_id BIGINT UNSIGNED NOT NULL,
+      user_id VARCHAR(255) NULL,
       user_name VARCHAR(160) NOT NULL,
       user_email VARCHAR(191) NULL,
       rating TINYINT UNSIGNED NOT NULL,
@@ -141,9 +142,30 @@ async function initializeDatabase(pool) {
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       KEY reviews_product_idx (product_id),
       KEY reviews_status_idx (status),
-      KEY reviews_created_at_idx (created_at)
+      KEY reviews_created_at_idx (created_at),
+      UNIQUE KEY reviews_product_user_unique (product_id, user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+
+  const [reviewColumnRows] = await pool.execute(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reviews'`,
+  );
+  const reviewColumns = new Set(reviewColumnRows.map((column) => column.COLUMN_NAME));
+  if (!reviewColumns.has("user_id")) {
+    await pool.query("ALTER TABLE reviews ADD COLUMN user_id VARCHAR(255) NULL AFTER product_id");
+  }
+  const [reviewIndexRows] = await pool.execute(
+    `SELECT INDEX_NAME
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reviews'`,
+  );
+  if (!reviewIndexRows.some((index) => index.INDEX_NAME === "reviews_product_user_unique")) {
+    await pool.query(
+      "ALTER TABLE reviews ADD UNIQUE KEY reviews_product_user_unique (product_id, user_id)",
+    );
+  }
 
   const [productColumnRows] = await pool.execute(
     `SELECT COLUMN_NAME, DATA_TYPE

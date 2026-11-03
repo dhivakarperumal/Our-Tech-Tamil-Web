@@ -2,6 +2,7 @@ const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const multer = require("multer");
 const requireAdmin = require("../middleware/requireAdmin");
 const { createReviewsController } = require("../controllers/reviewsController");
@@ -33,9 +34,37 @@ const uploadReviewImage = multer({
   },
 });
 
+function authenticateCustomer(request, response, next) {
+  const [scheme, token] = (request.headers.authorization || "").split(" ");
+  if (scheme !== "Bearer" || !token) {
+    return response.status(401).json({ message: "Please sign in to leave a review." });
+  }
+  try {
+    request.user = jwt.verify(token, process.env.JWT_SECRET);
+    if (typeof request.user.user_id !== "string" || !request.user.user_id.trim()) {
+      return response.status(401).json({ message: "Your session does not identify a user. Please sign in again." });
+    }
+    return next();
+  } catch (error) {
+    if (error.name === "TokenExpiredError" || error.name === "JsonWebTokenError") {
+      return response.status(401).json({ message: "Your session is invalid or expired. Please sign in again." });
+    }
+    return next(error);
+  }
+}
+
 function createReviewsRouter(pool) {
   const router = express.Router();
   const controller = createReviewsController(pool);
+  router.get("/mine", authenticateCustomer, controller.listCustomerReviews);
+  router.get("/product/:productId", controller.listProductReviews);
+  router.get("/product/:productId/mine", authenticateCustomer, controller.getCustomerProductReview);
+  router.post(
+    "/product/:productId",
+    authenticateCustomer,
+    uploadReviewImage.single("image"),
+    controller.createCustomerProductReview,
+  );
   router.get("/public", controller.listPublicReviews);
   router.use(requireAdmin);
 

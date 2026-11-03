@@ -1,9 +1,13 @@
-import { useContext, useEffect, useState } from "react";
-import { ArrowLeft, Minus, Package, Plus, ShoppingCart, Zap } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useContext, useEffect, useRef, useState } from "react";
+import { ArrowLeft, ChevronLeft, ChevronRight, ImagePlus, Minus, Package, Plus, ShoppingCart, Star, UserRound, X, Zap } from "lucide-react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import { toast } from "react-hot-toast";
 import api from "../../api";
 import PageContainer from "../CommenComponents/PageContainer";
 import PageHeader from "../CommenComponents/PageHeader";
+import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import { getProductStock } from "../../utils/stock";
 import ProductCard from "./ProductCard";
@@ -86,7 +90,10 @@ function getImageUrl(image) {
 function ProductDetails() {
   const { id } = useParams();
   const { addToCart } = useContext(StoreContext);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const reviewsSwiper = useRef(null);
   const [isBuying, setIsBuying] = useState(false);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [productState, setProductState] = useState({
@@ -100,9 +107,43 @@ function ProductDetails() {
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [relatedProductState, setRelatedProductState] = useState({ productId: null, items: [] });
+  const [reviewState, setReviewState] = useState({
+    productId: null,
+    reviews: [],
+    loading: true,
+    failed: false,
+  });
+  const [ownReviewState, setOwnReviewState] = useState({
+    productId: null,
+    userId: null,
+    review: null,
+    loading: false,
+    failed: false,
+  });
+  const [reviewUserName, setReviewUserName] = useState(user?.username || user?.name || "");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewImage, setReviewImage] = useState(null);
+  const [reviewImagePreview, setReviewImagePreview] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const loading = productState.id !== id;
   const product = loading ? null : productState.product;
   const fetchFailed = !loading && productState.failed;
+  const reviewsMatchProduct = reviewState.productId === id;
+  const reviews = reviewsMatchProduct ? reviewState.reviews : [];
+  const reviewsLoading = !reviewsMatchProduct || reviewState.loading;
+  const reviewsFailed = reviewsMatchProduct && reviewState.failed;
+  const ownReviewMatchesUser = ownReviewState.productId === id && ownReviewState.userId === user?.user_id;
+  const ownReview = ownReviewMatchesUser ? ownReviewState.review : null;
+  const ownReviewLoading = Boolean(user?.user_id) && (!ownReviewMatchesUser || ownReviewState.loading);
+  const ownReviewFailed = ownReviewMatchesUser && ownReviewState.failed;
+
+  useEffect(() => {
+    return () => {
+      if (reviewImagePreview) URL.revokeObjectURL(reviewImagePreview);
+    };
+  }, [reviewImagePreview]);
 
   useEffect(() => {
     let active = true;
@@ -176,6 +217,140 @@ function ProductDetails() {
       active = false;
     };
   }, [id, productState]);
+
+  useEffect(() => {
+    if (productState.id !== id || !productState.product) return undefined;
+    let active = true;
+    api.get(`/reviews/product/${id}`)
+      .then(({ data }) => {
+        if (active) {
+          setReviewState({
+            productId: id,
+            reviews: Array.isArray(data.reviews) ? data.reviews : [],
+            loading: false,
+            failed: false,
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load product reviews:", error);
+        if (active) {
+          setReviewState({ productId: id, reviews: [], loading: false, failed: true });
+          toast.error(error.response?.data?.message || "Failed to load product reviews");
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [id, productState.id, productState.product]);
+
+  useEffect(() => {
+    let active = true;
+    if (!user?.user_id || productState.id !== id || !productState.product) {
+      return () => {
+        active = false;
+      };
+    }
+
+    api.get(`/reviews/product/${id}/mine`)
+      .then(({ data }) => {
+        if (active) {
+          setOwnReviewState({
+            productId: id,
+            userId: user.user_id,
+            review: data.review || null,
+            loading: false,
+            failed: false,
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to check existing product review:", error);
+        if (active) {
+          setOwnReviewState({
+            productId: id,
+            userId: user.user_id,
+            review: null,
+            loading: false,
+            failed: true,
+          });
+          toast.error(error.response?.data?.message || "Could not check your existing review");
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [id, productState.id, productState.product, user?.user_id]);
+
+  const handleReviewSubmit = async (event) => {
+    event.preventDefault();
+    if (!user?.user_id) {
+      toast.error("Please sign in to leave a review.");
+      navigate("/login", { state: { from: `${location.pathname}${location.search}` } });
+      return;
+    }
+    if (!reviewUserName.trim() || reviewUserName.trim().length > 160) {
+      toast.error("Enter your name using 160 characters or fewer.");
+      return;
+    }
+    if (!reviewComment.trim() || reviewComment.trim().length > 5000) {
+      toast.error("Write a review of 5,000 characters or fewer.");
+      return;
+    }
+    if (reviewImage && reviewImage.size > 5 * 1024 * 1024) {
+      toast.error("Review image must be 5 MB or smaller.");
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    try {
+      const formData = new FormData();
+      formData.append("user_name", reviewUserName.trim());
+      formData.append("rating", String(reviewRating));
+      formData.append("comment", reviewComment.trim());
+      if (reviewImage) formData.append("image", reviewImage);
+      const { data } = await api.post(`/reviews/product/${id}`, formData);
+      setOwnReviewState({
+        productId: id,
+        userId: user.user_id,
+        review: data.review,
+        loading: false,
+        failed: false,
+      });
+      setReviewComment("");
+      setReviewImage(null);
+      setReviewImagePreview("");
+      setIsReviewModalOpen(false);
+      toast.success("Review submitted. It will appear after approval.");
+    } catch (error) {
+      if (error.response?.status === 409) {
+        try {
+          const { data } = await api.get(`/reviews/product/${id}/mine`);
+          setOwnReviewState({
+            productId: id,
+            userId: user.user_id,
+            review: data.review || null,
+            loading: false,
+            failed: false,
+          });
+        } catch (refreshError) {
+          console.error("Failed to refresh existing product review:", refreshError);
+        }
+      }
+      toast.error(error.response?.data?.message || "Failed to submit your review");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!isReviewModalOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape" && !isSubmittingReview) setIsReviewModalOpen(false);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isReviewModalOpen, isSubmittingReview]);
 
   if (loading) {
     return (
@@ -452,6 +627,261 @@ function ProductDetails() {
           )}
         </div>
       </div>
+      <section className="mt-10 border-t border-border pt-8 sm:mt-14" aria-labelledby="product-reviews-heading">
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Customer feedback</p>
+            <h2 id="product-reviews-heading" className="mt-1 text-xl font-extrabold text-text-primary sm:text-2xl">
+              Reviews ({reviews.length})
+            </h2>
+          </div>
+          {!reviewsLoading && !reviewsFailed && reviews.length > 1 && (
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                type="button"
+                onClick={() => reviewsSwiper.current?.slidePrev()}
+                aria-label="Previous product reviews"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
+              >
+                <ChevronLeft size={18} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => reviewsSwiper.current?.slideNext()}
+                aria-label="Next product reviews"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
+              >
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {ownReviewLoading ? (
+          <p className="mb-6 text-sm text-text-secondary">Checking your review...</p>
+        ) : ownReviewFailed ? (
+          <p className="mb-6 text-sm text-rose-600">Could not verify your review status. Please refresh the page and try again.</p>
+        ) : ownReview ? (
+          <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+            You have already reviewed this product. Your review is {String(ownReview.status || "Pending").toLowerCase()}.
+          </div>
+        ) : user?.user_id ? (
+          <div className="mb-8 flex justify-end">
+            <button
+              type="button"
+              onClick={() => {
+                setReviewUserName(user.username || user.name || "");
+                setIsReviewModalOpen(true);
+              }}
+              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white transition hover:bg-primary-dark"
+            >
+              Write a review
+            </button>
+          </div>
+        ) : (
+          <p className="mb-6 text-sm text-text-secondary">
+            <Link to="/login" state={{ from: `${location.pathname}${location.search}` }} className="font-bold text-primary hover:underline">
+              Sign in
+            </Link>{" "}
+            to write a review.
+          </p>
+        )}
+
+        {reviewsLoading ? (
+          <p className="text-sm text-text-secondary">Loading reviews...</p>
+        ) : reviewsFailed ? (
+          <p className="text-sm text-rose-600">Could not load reviews. Please refresh the page to try again.</p>
+        ) : reviews.length ? (
+          <div className="overflow-hidden py-1">
+            <Swiper
+              onSwiper={(swiper) => {
+                reviewsSwiper.current = swiper;
+              }}
+              slidesPerView={1}
+              spaceBetween={12}
+              breakpoints={{
+                640: { slidesPerView: 1.5, spaceBetween: 16 },
+                900: { slidesPerView: 3, spaceBetween: 16 },
+              }}
+              aria-label="Published product reviews"
+            >
+            {reviews.map((review) => (
+              <SwiperSlide key={review.id} className="!h-auto">
+              <article className="h-full rounded-xl border border-border bg-white p-4 text-center">
+                <div className="flex flex-col items-center gap-1">
+                  <span className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
+                    <UserRound size={21} />
+                  </span>
+                  <h3 className="font-bold text-text-primary">{review.user_name}</h3>
+                  <time className="text-xs text-text-secondary" dateTime={review.created_at}>
+                    {new Date(review.created_at).toLocaleDateString()}
+                  </time>
+                </div>
+                <div className="mt-1 flex justify-center text-amber-500" aria-label={`${review.rating} out of 5 stars`}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} size={15} fill={star <= Number(review.rating) ? "currentColor" : "none"} />
+                  ))}
+                </div>
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-text-secondary">{review.comment}</p>
+                {review.admin_reply && (
+                  <p className="mt-3 rounded-lg bg-[#faf8ff] p-3 text-sm text-text-secondary">
+                    <span className="font-bold text-text-primary">Store reply: </span>{review.admin_reply}
+                  </p>
+                )}
+              </article>
+              </SwiperSlide>
+            ))}
+            </Swiper>
+          </div>
+        ) : (
+          <p className="text-sm text-text-secondary">No published reviews yet. Customer reviews appear here after admin approval.</p>
+        )}
+      </section>
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Close review form"
+            onClick={() => {
+              if (!isSubmittingReview) setIsReviewModalOpen(false);
+            }}
+            className="absolute inset-0 bg-black/50"
+          />
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="write-review-heading"
+            className="relative z-10 max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-5 shadow-2xl sm:p-7"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Customer feedback</p>
+                <h2 id="write-review-heading" className="mt-1 text-xl font-extrabold text-text-primary">
+                  Review {product.name}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsReviewModalOpen(false)}
+                disabled={isSubmittingReview}
+                aria-label="Close review form"
+                className="rounded-lg p-2 text-text-secondary hover:bg-gray-100 disabled:opacity-50"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleReviewSubmit} className="mt-5">
+              <label htmlFor="product-review-name" className="block text-sm font-semibold text-text-secondary">
+                Your name
+              </label>
+              <input
+                id="product-review-name"
+                type="text"
+                value={reviewUserName}
+                onChange={(event) => setReviewUserName(event.target.value)}
+                maxLength={160}
+                required
+                autoComplete="name"
+                placeholder="Enter your name"
+                className="mt-2 w-full rounded-lg border border-border p-3 text-sm text-text-primary outline-none focus:border-primary"
+              />
+              <fieldset>
+                <legend className="mt-4 text-sm font-semibold text-text-secondary">Your rating</legend>
+                <div className="mt-1 flex gap-1">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <button
+                      key={rating}
+                      type="button"
+                      onClick={() => setReviewRating(rating)}
+                      aria-label={`${rating} star${rating > 1 ? "s" : ""}`}
+                      aria-pressed={reviewRating === rating}
+                      className="rounded p-1 text-amber-500"
+                    >
+                      <Star size={24} fill={rating <= reviewRating ? "currentColor" : "none"} />
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <label htmlFor="product-review-comment" className="mt-4 block text-sm font-semibold text-text-secondary">
+                Your review
+              </label>
+              <textarea
+                id="product-review-comment"
+                value={reviewComment}
+                onChange={(event) => setReviewComment(event.target.value)}
+                maxLength={5000}
+                rows={5}
+                required
+                placeholder="Share your experience with this product"
+                className="mt-2 w-full rounded-lg border border-border p-3 text-sm text-text-primary outline-none focus:border-primary"
+              />
+              <label htmlFor="product-review-image" className="mt-4 block text-sm font-semibold text-text-secondary">
+                Add a photo <span className="font-normal">(optional, max 5 MB)</span>
+              </label>
+              <input
+                id="product-review-image"
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                onChange={(event) => {
+                  const file = event.target.files?.[0] || null;
+                  if (file && file.size > 5 * 1024 * 1024) {
+                    toast.error("Review image must be 5 MB or smaller.");
+                    event.target.value = "";
+                    setReviewImage(null);
+                    setReviewImagePreview("");
+                    return;
+                  }
+                  setReviewImage(file);
+                  setReviewImagePreview(file ? URL.createObjectURL(file) : "");
+                }}
+                className="mt-2 block w-full text-sm text-text-secondary file:mr-3 file:rounded-lg file:border-0 file:bg-primary/10 file:px-4 file:py-2 file:font-semibold file:text-primary hover:file:bg-primary/15"
+              />
+              {reviewImagePreview && (
+                <div className="mt-3 flex items-start gap-3">
+                  <img
+                    src={reviewImagePreview}
+                    alt="Review upload preview"
+                    className="h-24 w-24 rounded-lg border border-border object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReviewImage(null);
+                      setReviewImagePreview("");
+                      const input = document.getElementById("product-review-image");
+                      if (input) input.value = "";
+                    }}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:underline"
+                  >
+                    <X size={14} /> Remove photo
+                  </button>
+                </div>
+              )}
+              <p className="mt-2 flex items-center gap-1.5 text-xs text-text-secondary">
+                <ImagePlus size={14} aria-hidden="true" />
+                JPG, PNG, WEBP, or GIF
+              </p>
+              <div className="mt-4 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsReviewModalOpen(false)}
+                  disabled={isSubmittingReview}
+                  className="rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-text-secondary hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingReview || !reviewUserName.trim() || !reviewComment.trim()}
+                  className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSubmittingReview ? "Submitting..." : "Submit review"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
       {relatedProducts.length > 0 && (
         <section className="mt-10 sm:mt-14" aria-labelledby="related-products-heading">
           <div className="mb-5">

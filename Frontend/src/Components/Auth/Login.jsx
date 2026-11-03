@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import api from "../../api";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { toast } from "react-hot-toast";
 import { GoogleLogin } from "@react-oauth/google";
@@ -20,6 +20,7 @@ const hasValidGoogleClientId = /^[0-9]+-[A-Za-z0-9_-]+\.apps\.googleusercontent\
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useContext(AuthContext);
   const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -56,7 +57,7 @@ function Login() {
       if (res.data.user.role === "admin") {
         navigate("/admin");
       } else {
-        navigate("/");
+        navigate(location.state?.from || "/");
       }
     } catch (error) {
       console.error("Login Error:", error);
@@ -76,7 +77,7 @@ function Login() {
       if (res.data.user.role === "admin") {
         navigate("/admin");
       } else {
-        navigate("/");
+        navigate(location.state?.from || "/");
       }
     } catch (error) {
       console.error("Google Login Error:", error);
