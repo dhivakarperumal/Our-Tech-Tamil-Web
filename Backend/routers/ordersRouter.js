@@ -189,15 +189,18 @@ function createOrdersRouter(pool) {
       connection = await pool.getConnection();
       await connection.beginTransaction();
 
-      let userId = optionalText(body.user_id, "User ID", 255);
-      if (userId) {
-        const [users] = await connection.execute(
-          "SELECT user_id FROM users WHERE user_id = ? LIMIT 1",
-          [userId],
-        );
-        if (!users.length) throw httpError(400, "The selected customer account was not found.");
-        userId = users[0].user_id;
+      let userId = optionalText(body.user_id, "User ID", 255) || request.user.user_id;
+      if (!userId) {
+        throw httpError(400, "The logged-in account could not be identified. Please sign in again.");
       }
+      const [users] = await connection.execute(
+        "SELECT user_id FROM users WHERE user_id = ? LIMIT 1",
+        [userId],
+      );
+      if (!users.length) {
+        throw httpError(400, "The selected or logged-in account was not found.");
+      }
+      userId = users[0].user_id;
 
       let totalCents = 0;
       const savedItems = [];

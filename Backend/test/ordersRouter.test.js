@@ -16,7 +16,7 @@ function createPool() {
     release() {},
     async execute(query, params = []) {
       statements.push({ query, params });
-      if (query.includes("FROM users")) return [[{ user_id: "customer-uuid" }]];
+      if (query.includes("FROM users")) return [[{ user_id: params[0] }]];
       if (query.includes("FROM products")) {
         return [[{
           id: 8,
@@ -100,8 +100,8 @@ test("admin order creation stores the address against the selected user ID", asy
     }),
   });
 
-  assert.equal(response.status, 201);
   const result = await response.json();
+  assert.equal(response.status, 201, JSON.stringify(result));
   assert.equal(result.id, 42);
   assert.equal(result.order_id, "ORD00042");
   assert.equal(result.user_id, "customer-uuid");
@@ -118,6 +118,42 @@ test("admin order creation stores the address against the selected user ID", asy
   assert.equal(itemInsert.params[0], 42);
   assert.equal(itemInsert.params[1], 8);
   assert.equal(itemInsert.params[2], "Test product");
+});
+
+test("admin order creation uses the logged-in user ID when no customer is selected", async (t) => {
+  const pool = createPool();
+  const app = express();
+  app.use(express.json());
+  app.use("/api/orders", createOrdersRouter(pool));
+  const server = app.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => server.close());
+
+  const token = jwt.sign({ id: 1, user_id: "admin-uuid", role: "admin" }, process.env.JWT_SECRET);
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/orders`, {
+    method: "POST",
+    headers: {
+      Authorization: ["Bearer", token].join(" "),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      customer_name: "Walk-in Customer",
+      customer_phone: "9876543210",
+      street_address: "12 Test Street",
+      city: "Chennai",
+      state: "Tamil Nadu",
+      zip_code: "600001",
+      items: [{ product_id: 8, quantity: 1 }],
+    }),
+  });
+
+  const result = await response.json();
+  assert.equal(response.status, 201, JSON.stringify(result));
+  assert.equal(result.user_id, "admin-uuid");
+  const addressInsert = pool.statements.find(({ query }) => query.includes("INSERT INTO addresses"));
+  const orderInsert = pool.statements.find(({ query }) => query.includes("INSERT INTO orders"));
+  assert.equal(addressInsert.params[0], "admin-uuid");
+  assert.equal(orderInsert.params[0], "admin-uuid");
 });
 
 test("order details load the delivery address from the addresses table", async (t) => {
