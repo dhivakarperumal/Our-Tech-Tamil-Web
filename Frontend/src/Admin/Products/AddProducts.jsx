@@ -1013,7 +1013,7 @@ const AddProducts = () => {
         </div>
     );
     return (
-        <div className=" space-y-6 p-4 pb-20 md:p-2">
+        <div className="product-editor-page space-y-6 rounded-[1.75rem] p-4 pb-24 md:p-6">
 
             <header className="product-editor-heading relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#2e1065] via-[#4c1d95] to-[#86198f] text-white">
                 <div className="relative flex flex-col gap-5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-4">
@@ -1039,11 +1039,30 @@ const AddProducts = () => {
                 </div>
             </header>
 
+            <section aria-label="Product setup steps" className="grid gap-3 rounded-2xl border border-violet-100 bg-white p-3 shadow-sm sm:grid-cols-3 sm:p-4">
+                {[
+                    { number: "01", title: "Product foundation", detail: "Name, category & visibility", icon: FiLayers },
+                    { number: "02", title: "Media & variants", detail: "Images, color & availability", icon: FiImage },
+                    { number: "03", title: "Pricing & stock", detail: "Set price and inventory", icon: FaRupeeSign },
+                ].map(({ number, title, detail, icon: StepIcon }) => (
+                    <div key={number} className="flex items-center gap-3 rounded-xl bg-slate-50/80 px-3 py-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-800 to-fuchsia-700 text-white shadow-sm">
+                            <StepIcon size={16} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                            <span className="block text-xs font-bold text-slate-800">{title}</span>
+                            <span className="mt-0.5 block truncate text-[10px] text-slate-500">{detail}</span>
+                        </span>
+                        <span className="text-[10px] font-black tracking-wider text-violet-400">{number}</span>
+                    </div>
+                ))}
+            </section>
+
             <form noValidate onSubmit={handleSubmit} className="product-editor-form grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
                 {Object.keys(validationErrors).length > 0 && (
-                    <div className="lg:col-span-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3" role="alert" aria-live="polite">
-                        <p className="text-sm font-bold text-red-800">Please fix the required fields below:</p>
-                        <ul className="mt-1 list-inside list-disc text-xs text-red-700">
+                    <div className="product-editor-alert lg:col-span-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5" role="alert" aria-live="polite">
+                        <p className="text-sm font-bold text-red-800">A few details need your attention</p>
+                        <ul className="mt-1.5 list-inside list-disc space-y-0.5 text-xs text-red-700">
                             {Object.values(validationErrors).map((message, index) => <li key={`${message}-${index}`}>{message}</li>)}
                         </ul>
                     </div>
@@ -1223,30 +1242,35 @@ const AddProducts = () => {
                         <div className="p-5 space-y-5">
                             <div>
                                 <div className="mb-3 flex items-center justify-between gap-3">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Images * (up to 10)</label>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Images * (up to 10)</label>
+                                        <p className="mt-1 text-[11px] text-slate-400">Add clear photos from multiple angles.</p>
+                                    </div>
                                     {formData.images.length < 10 && (
-                                        <label className="admin-button-secondary cursor-pointer rounded-lg px-3 py-2 text-xs font-bold">
-                                            Add Images
+                                        <label className="admin-button-secondary inline-flex cursor-pointer items-center gap-1.5 rounded-xl px-3.5 py-2.5 text-xs font-bold shadow-sm transition hover:-translate-y-0.5">
+                                            <FiPlus size={13} /> Add Images
                                             <input type="file" accept="image/*" multiple onChange={handleProductImageUpload} className="hidden" />
                                         </label>
                                     )}
                                 </div>
                                 {formData.images.length ? (
-                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                                    <div className="product-editor-image-grid grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
                                         {formData.images.map((image, index) => (
-                                            <div key={`${image}-${index}`} className="group relative aspect-square overflow-hidden rounded-xl border border-gray-200">
+                                            <div key={`${image}-${index}`} className="product-editor-image-tile group relative aspect-square overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
                                                 <img src={resolveImageUrl(image)} alt={`Product ${index + 1}`} className="h-full w-full object-cover" />
-                                                <button type="button" onClick={() => removeProductImage(index)} aria-label={`Remove product image ${index + 1}`} className="admin-button-danger absolute right-1 top-1 rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100">
-                                                    <FiTrash2 size={12} />
+                                                <span className="absolute bottom-2 left-2 rounded-lg bg-slate-950/65 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-sm">Image {index + 1}</span>
+                                                <button type="button" onClick={() => removeProductImage(index)} aria-label={`Remove product image ${index + 1}`} className="admin-button-danger absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg p-1 opacity-100 shadow-sm transition sm:opacity-0 sm:group-hover:opacity-100">
+                                                    <FiTrash2 size={13} />
                                                 </button>
                                             </div>
                                         ))}
                                     </div>
                                 ) : (
-                                    <label className={`flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed text-sm font-semibold text-gray-500 hover:border-violet-400 hover:bg-violet-50 ${validationErrors.product_image ? "border-red-300 bg-red-50/40" : "border-gray-300 bg-gray-50"}`}>
-                                        <FiUploadCloud size={20} className="mb-2 text-violet-500" />
-                                        Choose product images
-                                        <input type="file" accept="image/*" multiple onChange={handleProductImageUpload} className="hidden" />
+                                    <label className={`product-editor-image-drop flex min-h-44 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-7 text-center transition ${validationErrors.product_image ? "border-red-300 bg-red-50/40" : "border-slate-300 bg-gradient-to-b from-slate-50 to-white hover:border-violet-400 hover:from-violet-50/70 hover:to-white"}`}>
+                                        <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-violet-600 shadow-sm ring-1 ring-violet-100"><FiUploadCloud size={22} /></span>
+                                        <span className="text-sm font-bold text-slate-800">Choose product images</span>
+                                        <span className="mt-1 text-xs text-slate-500">PNG, JPG or WebP · Up to 10 images</span>
+                                        <input type="file" accept="image/*" multiple onChange={handleProductImageUpload} className="sr-only" />
                                     </label>
                                 )}
                                 {renderFieldError("product_image")}
@@ -1615,17 +1639,20 @@ const AddProducts = () => {
                 )}
 
                 {/* Bottom Global Action Button */}
-                <div className="lg:col-span-2 lg:order-4 mt-2 border-t border-gray-200 pt-5 pb-10">
+                <div className="product-editor-actions lg:col-span-2 lg:order-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-xs text-gray-500">Your changes are saved when you submit this product.</p>
-                        <div className="flex items-center justify-end gap-3">
-                        <button type="button" onClick={() => navigate(-1)} className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+                        <div>
+                            <p className="text-sm font-bold text-slate-800">{isEdit ? "Ready to update this product?" : "Ready to publish this product?"}</p>
+                            <p className="mt-0.5 text-xs text-slate-500">Your changes are saved when you submit this product.</p>
+                        </div>
+                        <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
+                        <button type="button" onClick={() => navigate(-1)} className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50">
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading || pendingUploads > 0}
-                            className="flex items-center gap-2 bg-[#1F0A3C] hover:bg-[#2d0f57] disabled:opacity-50 disabled:cursor-not-allowed text-white py-2.5 px-6 rounded-xl text-sm font-semibold shadow-lg transition-all active:scale-95"
+                            className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#2e1065] via-[#4c1d95] to-[#86198f] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-violet-900/20 transition-all hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {loading || pendingUploads > 0 ? (
                                 <div className="flex items-center gap-2">

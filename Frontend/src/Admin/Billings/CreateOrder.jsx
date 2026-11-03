@@ -1,8 +1,167 @@
-import React, { useState, useEffect } from "react";
-import { FiArrowLeft, FiPlus, FiTrash2, FiSave, FiUser, FiPackage, FiSearch, FiCheckCircle, FiMapPin, FiTruck, FiArrowRight, FiX, FiClock } from "react-icons/fi";
+import React, { useState, useEffect, useRef } from "react";
+import { FiArrowLeft, FiPlus, FiTrash2, FiSave, FiUser, FiPackage, FiSearch, FiCheckCircle, FiMapPin, FiTruck, FiArrowRight, FiX, FiClock, FiChevronDown, FiCheck } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import { toast, Toaster } from "react-hot-toast";
+
+const SearchableDropdown = ({
+    label,
+    value,
+    options,
+    onChange,
+    placeholder,
+    emptyLabel,
+    searchPlaceholder,
+    disabled = false,
+}) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState("");
+    const containerRef = useRef(null);
+    const searchRef = useRef(null);
+    const selectedOption = options.find((option) => String(option.value) === String(value));
+    const normalizedSearch = search.trim().toLowerCase();
+    const filteredOptions = options.filter((option) =>
+        `${option.label} ${option.meta || ""}`.toLowerCase().includes(normalizedSearch)
+    );
+
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        const handlePointerDown = (event) => {
+            if (!containerRef.current?.contains(event.target)) setIsOpen(false);
+        };
+        const handleKeyDown = (event) => {
+            if (event.key === "Escape") {
+                setIsOpen(false);
+                setSearch("");
+            }
+        };
+        document.addEventListener("mousedown", handlePointerDown);
+        document.addEventListener("touchstart", handlePointerDown);
+        document.addEventListener("keydown", handleKeyDown);
+        searchRef.current?.focus();
+        return () => {
+            document.removeEventListener("mousedown", handlePointerDown);
+            document.removeEventListener("touchstart", handlePointerDown);
+            document.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [isOpen]);
+
+    const chooseOption = (option) => {
+        onChange(option.value);
+        setIsOpen(false);
+        setSearch("");
+    };
+
+    return (
+        <div className="space-y-2">
+            <label className="ml-1 block text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</label>
+            <div className="relative" ref={containerRef}>
+                <button
+                    type="button"
+                    aria-haspopup="listbox"
+                    aria-expanded={isOpen}
+                    disabled={disabled}
+                    onClick={() => setIsOpen((open) => !open)}
+                    onKeyDown={(event) => {
+                        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                            event.preventDefault();
+                            setIsOpen(true);
+                        }
+                    }}
+                    className={`flex w-full items-center gap-3 rounded-xl border bg-white px-3.5 py-3 text-left shadow-sm outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-slate-50 ${
+                        isOpen ? "border-violet-500 ring-4 ring-violet-100" : "border-slate-200 hover:border-violet-300"
+                    }`}
+                >
+                    {selectedOption?.image && (
+                        <img src={selectedOption.image} alt="" className="h-9 w-9 shrink-0 rounded-lg border border-slate-100 object-cover" />
+                    )}
+                    <span className={`min-w-0 flex-1 truncate text-sm font-semibold ${selectedOption ? "text-slate-800" : "text-slate-400"}`}>
+                        {selectedOption?.label || placeholder}
+                    </span>
+                    {selectedOption?.meta && <span className="hidden shrink-0 text-xs font-bold text-violet-700 sm:block">{selectedOption.meta}</span>}
+                    <FiChevronDown className={`shrink-0 text-slate-400 transition-transform ${isOpen ? "rotate-180 text-violet-700" : ""}`} />
+                </button>
+                {isOpen && (
+                    <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/15">
+                        <div className="border-b border-slate-100 p-2.5">
+                            <div className="relative">
+                                <FiSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input
+                                    ref={searchRef}
+                                    type="search"
+                                    value={search}
+                                    onChange={(event) => setSearch(event.target.value)}
+                                    onKeyDown={(event) => {
+                                        if (event.key === "ArrowDown" && filteredOptions[0]) {
+                                            event.preventDefault();
+                                            containerRef.current?.querySelector("[role='option']")?.focus();
+                                        }
+                                    }}
+                                    placeholder={searchPlaceholder}
+                                    className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:bg-white"
+                                />
+                            </div>
+                        </div>
+                        <div role="listbox" aria-label={label} className="max-h-64 overflow-y-auto p-1.5">
+                            {emptyLabel && (
+                                <button
+                                    type="button"
+                                    role="option"
+                                    aria-selected={!selectedOption}
+                                    onClick={() => chooseOption({ value: "", label: emptyLabel })}
+                                    className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${
+                                        !selectedOption ? "bg-violet-50 font-bold text-violet-800" : "text-slate-600 hover:bg-slate-50"
+                                    }`}
+                                >
+                                    <span className="min-w-0 flex-1">{emptyLabel}</span>
+                                    {!selectedOption && <FiCheck className="shrink-0 text-violet-700" />}
+                                </button>
+                            )}
+                            {filteredOptions.map((option) => {
+                                const isSelected = String(option.value) === String(value);
+                                return (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        role="option"
+                                        aria-selected={isSelected}
+                                        onClick={() => chooseOption(option)}
+                                        onKeyDown={(event) => {
+                                            if (event.key === "ArrowDown") {
+                                                event.preventDefault();
+                                                event.currentTarget.nextElementSibling?.focus();
+                                            } else if (event.key === "ArrowUp") {
+                                                event.preventDefault();
+                                                event.currentTarget.previousElementSibling?.focus();
+                                            }
+                                        }}
+                                        className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition ${
+                                            isSelected ? "bg-violet-50 text-violet-900" : "text-slate-700 hover:bg-slate-50"
+                                        }`}
+                                    >
+                                        {option.image && <img src={option.image} alt="" className="h-10 w-10 shrink-0 rounded-lg border border-slate-100 object-cover" />}
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block truncate text-sm font-semibold">{option.label}</span>
+                                            {option.detail && <span className="mt-0.5 block truncate text-[11px] text-slate-500">{option.detail}</span>}
+                                        </span>
+                                        {option.meta && <span className="shrink-0 text-xs font-bold text-violet-700">{option.meta}</span>}
+                                        {isSelected && <FiCheck className="shrink-0 text-violet-700" />}
+                                    </button>
+                                );
+                            })}
+                            {filteredOptions.length === 0 && (
+                                <p className="px-3 py-6 text-center text-sm text-slate-500">No matching options found.</p>
+                            )}
+                        </div>
+                        <div className="border-t border-slate-100 bg-slate-50/80 px-3 py-2 text-[10px] font-medium text-slate-400">
+                            {filteredOptions.length} {filteredOptions.length === 1 ? "option" : "options"}
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const CreateOrder = () => {
     const navigate = useNavigate();
@@ -77,24 +236,34 @@ const CreateOrder = () => {
         return [];
     };
 
-    const resolveImageUrl = (image) => {
-        if (!image) return "";
-        let imageUrl = image;
-        if (Array.isArray(image)) imageUrl = image[0];
-        if (typeof imageUrl !== "string") return "";
-        if (imageUrl.startsWith("[")) {
+    const getFirstImage = (images) => {
+        if (typeof images === "string" && images.startsWith("[")) {
             try {
-                const parsed = JSON.parse(imageUrl);
-                imageUrl = Array.isArray(parsed) ? parsed[0] : "";
+                images = JSON.parse(images);
             } catch {
                 return "";
             }
         }
+        return Array.isArray(images) ? images[0] || "" : typeof images === "string" ? images : "";
+    };
+
+    const resolveImageUrl = (image) => {
+        if (!image) return "";
+        let imageUrl = getFirstImage(image);
+        if (typeof imageUrl !== "string") return "";
         if (!imageUrl) return "";
         if (/^(https?:|data:|blob:)/i.test(imageUrl)) return imageUrl;
         const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
         return `${backendUrl}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
     };
+
+    const getProductImage = (product, variant) =>
+        resolveImageUrl(
+            getFirstImage(variant?.images) ||
+            getFirstImage(product?.images) ||
+            product?.image_url ||
+            product?.image
+        );
 
     const getDefaultSize = (variant) => {
         const stockSizes = Object.entries(variant?.sizesStock || {})
@@ -146,7 +315,7 @@ const CreateOrder = () => {
                 total: price,
                 variant_color: colorName,
                 variant_size: selectedSize,
-                image: resolveImageUrl(selectedVariant.images?.[0] || product.variants?.[0]?.images?.[0])
+                image: getProductImage(product, selectedVariant)
             };
             updatedItems.push(newItem);
         }
@@ -244,100 +413,104 @@ const CreateOrder = () => {
             <Toaster position="top-right" />
 
             {/* Header */}
-            <div className="flex items-center gap-4 pb-2">
+            <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/80 p-4 shadow-sm sm:p-5">
                 <button
                     onClick={() => navigate(-1)}
-                    className="p-3 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-[#4b0b78] transition-all shadow-sm active:scale-95"
+                    aria-label="Go back"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-violet-200 hover:text-[#4b0b78] active:scale-95"
                 >
                     <FiArrowLeft size={20} />
                 </button>
-                <div>
+                <div className="min-w-0 flex-1">
                     <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4b0b78]">Order Management</p>
-                    <h1 className="text-2xl font-black text-slate-800 tracking-tight">Create New Shop Order</h1>
-                    <p className="text-sm text-gray-400 font-medium mt-1">Create a showroom order for an in-store customer.</p>
+                    <h1 className="mt-1 text-xl font-black tracking-tight text-slate-800 sm:text-2xl">Create New Shop Order</h1>
+                    <p className="mt-1 text-sm font-medium text-slate-500">Create a showroom order for an in-store customer.</p>
+                </div>
+                <div className="hidden items-center gap-2 sm:flex">
+                    {[{ number: 1, title: "Products" }, { number: 2, title: "Customer details" }].map(({ number, title }) => (
+                        <div key={number} className={`flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold ${step === number ? "bg-violet-100 text-violet-800" : step > number ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px]">{number}</span>
+                            {title}
+                        </div>
+                    ))}
                 </div>
             </div>
 
 
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
+            <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-3 xl:gap-8">
+                <div className="space-y-6 xl:col-span-2">
                     {step === 1 ? (
                         /* Step 1: Product Selection */
-                        <div className="bg-white p-6 sm:p-8 rounded-xl border border-gray-200 shadow-sm space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="space-y-4">
-                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">1. Select Category Type</label>
-                                    <select
-                                        value={selectedCategoryType}
-                                        onChange={(e) => {
-                                            setSelectedCategoryType(e.target.value);
-                                            setSelectedCategory(null);
-                                            setSelectedProductForVariant(null);
-                                        }}
-                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#4b0b78] transition-all font-medium text-slate-800 appearance-none cursor-pointer"
-                                    >
-                                        <option value="">All Category Types</option>
-                                        {categoryTypes.map(categoryType => (
-                                            <option key={categoryType} value={categoryType}>{categoryType}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                {/* Category Selection */}
-                                <div className="space-y-4">
-                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">2. Select Category</label>
-                                    <select
-                                        value={selectedCategory ? selectedCategory.id : ""}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            if (!val) {
-                                                setSelectedCategory(null);
-                                            } else {
-                                                const cat = filteredCategories.find(c => c.id.toString() === val);
-                                                setSelectedCategory(cat || null);
-                                            }
-                                            setSelectedProductForVariant(null);
-                                        }}
-                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#4b0b78] transition-all font-medium text-slate-800 appearance-none cursor-pointer"
-                                    >
-                                        <option value="">All Categories</option>
-                                        {filteredCategories.map(cat => (
-                                            <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div className="space-y-4">
-                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">3. Select Product</label>
-                                    <select
-                                        value={selectedProductForVariant ? selectedProductForVariant.id : ""}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            if (val) {
-                                                const prod = filteredProducts.find(p => p.id.toString() === val) || products.find(p => p.id.toString() === val);
-                                                handleProductClick(prod);
-                                            } else {
-                                                setSelectedProductForVariant(null);
-                                            }
-                                        }}
-                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#4b0b78] transition-all font-medium text-slate-800 appearance-none cursor-pointer"
-                                    >
-                                        <option value="" disabled>-- Choose a Product --</option>
-                                        {filteredProducts.map(product => (
-                                            <option key={product.id} value={product.id}>
-                                                {product.name} - ₹{parseFloat(product.offer_price || product.price || 0).toLocaleString()} {product.product_code ? `(${product.product_code})` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                        <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7">
+                            <div className="grid grid-cols-1 gap-4 rounded-2xl bg-slate-50/80 p-4 md:grid-cols-3 sm:p-5">
+                                <SearchableDropdown
+                                    label="1. Select Category Type"
+                                    value={selectedCategoryType}
+                                    options={categoryTypes.map((categoryType) => ({ value: categoryType, label: categoryType }))}
+                                    emptyLabel="All Category Types"
+                                    placeholder="All Category Types"
+                                    searchPlaceholder="Search category types..."
+                                    onChange={(value) => {
+                                        setSelectedCategoryType(value);
+                                        setSelectedCategory(null);
+                                        setSelectedProductForVariant(null);
+                                    }}
+                                />
+                                <SearchableDropdown
+                                    label="2. Select Category"
+                                    value={selectedCategory?.id || ""}
+                                    options={filteredCategories.map((category) => ({
+                                        value: category.id,
+                                        label: category.name,
+                                        detail: category.categoryType || category.category_type || "",
+                                    }))}
+                                    emptyLabel="All Categories"
+                                    placeholder="All Categories"
+                                    searchPlaceholder="Search categories..."
+                                    onChange={(value) => {
+                                        const category = filteredCategories.find((item) => String(item.id) === String(value));
+                                        setSelectedCategory(category || null);
+                                        setSelectedProductForVariant(null);
+                                    }}
+                                />
+                                <SearchableDropdown
+                                    label="3. Select Product"
+                                    value={selectedProductForVariant?.id || ""}
+                                    options={filteredProducts.map((product) => ({
+                                        value: product.id,
+                                        label: product.name,
+                                        meta: `₹${parseFloat(product.offer_price || product.price || 0).toLocaleString("en-IN")}`,
+                                        detail: product.product_code || product.category || "",
+                                        image: getProductImage(product, getProductVariants(product)[0]),
+                                    }))}
+                                    placeholder="Choose a product..."
+                                    searchPlaceholder="Search products..."
+                                    onChange={(value) => {
+                                        const product = filteredProducts.find((item) => String(item.id) === String(value));
+                                        if (product) handleProductClick(product);
+                                        else setSelectedProductForVariant(null);
+                                    }}
+                                />
                             </div>
 
                             {/* Variant Selection UI */}
                             {selectedProductForVariant && (
-                                    <div className="p-6 bg-purple-50/50 rounded-2xl border border-purple-100 space-y-6 animate-in zoom-in-95 duration-300">
-                                    <div className="flex justify-between items-center">
-                                        <h3 className="font-black text-[#4b0b78] uppercase tracking-widest text-xs italic">Select Color & Size for: {selectedProductForVariant.name}</h3>
-                                        <button onClick={() => setSelectedProductForVariant(null)} className="p-1 hover:bg-white rounded-lg transition-colors"><FiX /></button>
+                                    <div className="space-y-6 rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50/80 to-white p-4 shadow-sm sm:p-6 animate-in zoom-in-95 duration-300">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex min-w-0 items-center gap-3">
+                                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-white bg-slate-100 shadow-sm ring-1 ring-slate-200">
+                                                {getProductImage(selectedProductForVariant, selectedVariant) ? (
+                                                    <img src={getProductImage(selectedProductForVariant, selectedVariant)} alt={selectedProductForVariant.name} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+                                                ) : <div className="flex h-full w-full items-center justify-center text-slate-300"><FiPackage size={24} /></div>}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-violet-700">Selected product</p>
+                                                <h3 className="mt-1 truncate font-bold text-slate-900">{selectedProductForVariant.name}</h3>
+                                                <p className="mt-1 text-sm font-semibold text-slate-600">₹{parseFloat(selectedProductForVariant.offer_price || selectedProductForVariant.price || 0).toLocaleString("en-IN")}</p>
+                                            </div>
+                                        </div>
+                                        <button type="button" aria-label="Close product options" onClick={() => setSelectedProductForVariant(null)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-white hover:text-slate-700"><FiX /></button>
                                     </div>
 
                                     {/* Colors */}
@@ -348,15 +521,16 @@ const CreateOrder = () => {
                                                 <button
                                                     key={i}
                                                     onClick={() => { setSelectedVariant(v); setSelectedSize(getDefaultSize(v)); }}
-                                                    className={`group relative p-1 rounded-full border-2 transition-all ${selectedVariant === v ? 'border-[#4b0b78] scale-110' : 'border-transparent'}`}
+                                                    type="button"
+                                                    className={`group relative rounded-full border-2 p-1 transition-all ${selectedVariant === v ? 'border-[#4b0b78] scale-110 ring-4 ring-violet-100' : 'border-transparent hover:border-violet-200'}`}
                                                     title={v.colorName || v.color}
                                                 >
                                                     <div
-                                                        className="w-8 h-8 rounded-full border border-gray-200"
+                                                        className="h-9 w-9 rounded-full border border-white shadow-sm ring-1 ring-slate-200"
                                                         style={{ backgroundColor: v.color }}
                                                     ></div>
                                                     {v.colorName && (
-                                                        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[8px] font-black uppercase opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-blue-600">
+                                                        <span className="absolute -bottom-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] font-black uppercase text-violet-700 opacity-0 transition-opacity group-hover:opacity-100">
                                                             {v.colorName}
                                                         </span>
                                                     )}
@@ -374,22 +548,24 @@ const CreateOrder = () => {
                                             <div className="flex flex-wrap gap-2">
                                                 {Object.entries(selectedVariant.sizesStock || {}).filter(([, stock]) => parseInt(stock, 10) > 0).length > 0 ? Object.entries(selectedVariant.sizesStock || {}).map(([size, stock]) => (
                                                     <button
+                                                        type="button"
                                                         key={size}
                                                         disabled={parseInt(stock) <= 0}
                                                         onClick={() => setSelectedSize(size)}
-                                                        className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${selectedSize === size ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border border-gray-100'} ${parseInt(stock) <= 0 ? 'opacity-30 cursor-not-allowed' : 'hover:border-blue-200 shadow-sm'}`}
+                                                        className={`rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${selectedSize === size ? 'bg-[#4b0b78] text-white shadow-md shadow-violet-900/15' : 'border border-slate-200 bg-white text-slate-600 shadow-sm'} ${parseInt(stock) <= 0 ? 'opacity-30 cursor-not-allowed' : 'hover:border-violet-300'}`}
                                                     >
                                                         {size} <span className="opacity-50 ml-1">({stock})</span>
                                                     </button>
-                                                )) : <button type="button" onClick={() => setSelectedSize("Free Size")} className="px-4 py-2 rounded-xl text-xs font-black bg-[#4b0b78] text-white">Free Size</button>}
+                                                )) : <button type="button" onClick={() => setSelectedSize("Free Size")} className="rounded-xl bg-[#4b0b78] px-4 py-2.5 text-xs font-bold text-white shadow-md">Free Size</button>}
                                             </div>
                                         </div>
                                     )}
 
                                     <button
+                                        type="button"
                                         onClick={confirmAddItem}
                                         disabled={!selectedVariant || !selectedSize}
-                                        className="w-full py-4 bg-[#4b0b78] hover:bg-[#260642] disabled:bg-gray-200 text-white rounded-xl font-black text-sm uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-purple-500/20"
+                                        className="w-full rounded-xl bg-[#4b0b78] py-4 text-sm font-black uppercase tracking-widest text-white shadow-lg shadow-purple-500/20 transition-all hover:bg-[#260642] active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
                                     >
                                         Add Selection to Order
                                     </button>
@@ -422,7 +598,7 @@ const CreateOrder = () => {
                                                     <tr key={index} className="hover:bg-gray-50/50 transition-colors">
                                                         <td className="px-6 py-4">
                                                             <div className="flex items-center gap-3">
-                                                                <div className="w-8 h-8 rounded-lg bg-gray-100 overflow-hidden border border-gray-100 shrink-0">
+                                                                <div className="h-14 w-14 rounded-xl bg-gray-100 overflow-hidden border border-gray-100 shrink-0">
                                                                     {item.image ? (
                                                                         <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = "none"; }} />
                                                                     ) : (
@@ -467,7 +643,7 @@ const CreateOrder = () => {
                         </div>
                     ) : (
                         /* Step 2: Customer Details */
-                        <div className="bg-white p-6 sm:p-8 rounded-xl border border-gray-200 shadow-sm space-y-8 animate-in slide-in-from-right-4 duration-500">
+                        <div className="space-y-7 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:p-7 animate-in slide-in-from-right-4 duration-500">
 
                             {/* User Selection */}
                             <div className="space-y-4 pb-6 border-b border-gray-50">
@@ -667,8 +843,14 @@ const CreateOrder = () => {
 
                 {/* Sidebar Summary */}
                 <div className="space-y-6">
-                    <div className="bg-gradient-to-br from-[#260642] to-[#4b0b78] p-8 rounded-2xl text-white shadow-2xl shadow-purple-900/20 sticky top-6">
-                        <h3 className="text-xl font-bold mb-6">Order Summary</h3>
+                    <div className="sticky top-6 rounded-3xl bg-gradient-to-br from-[#260642] via-[#3b0963] to-[#5b1389] p-6 text-white shadow-2xl shadow-purple-900/20 sm:p-7">
+                        <div className="mb-6 flex items-start justify-between gap-3">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-violet-200">Billing overview</p>
+                                <h3 className="mt-1 text-xl font-bold">Order Summary</h3>
+                            </div>
+                            <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-bold">{formData.items.length} {formData.items.length === 1 ? "item" : "items"}</span>
+                        </div>
 
                         <div className="space-y-4 border-b border-white/10 pb-6 mb-6">
                             <div className="flex justify-between text-sm opacity-60 font-bold">
@@ -681,9 +863,28 @@ const CreateOrder = () => {
                             </div>
                         </div>
 
-                        <div className="mb-10">
+                        {formData.items.length > 0 && (
+                            <div className="mb-6 max-h-56 space-y-3 overflow-y-auto pr-1">
+                                {formData.items.map((item, index) => (
+                                    <div key={`${item.product_id}-${item.variant_color}-${item.variant_size}-${index}`} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.07] p-2.5">
+                                        <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-white/10">
+                                            {item.image ? (
+                                                <img src={resolveImageUrl(item.image)} alt={item.name} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.style.display = "none"; }} />
+                                            ) : <div className="flex h-full items-center justify-center text-white/50"><FiPackage /></div>}
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-xs font-bold">{item.name}</p>
+                                            <p className="mt-0.5 truncate text-[10px] text-violet-200">{item.variant_color} · {item.variant_size} · Qty {item.quantity}</p>
+                                        </div>
+                                        <p className="shrink-0 text-xs font-bold">₹{item.total.toLocaleString("en-IN")}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="mb-8 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
                             <p className="text-[10px] font-black uppercase tracking-widest text-purple-200 mb-2">Grand Total</p>
-                            <h2 className="text-4xl font-black italic">₹{formData.total_amount.toLocaleString()}</h2>
+                            <h2 className="text-4xl font-black tracking-tight">₹{formData.total_amount.toLocaleString("en-IN")}</h2>
                         </div>
 
                         {step === 1 ? (
@@ -692,7 +893,7 @@ const CreateOrder = () => {
                                     if (formData.items.length === 0) return toast.error("Please add products first");
                                     setStep(2);
                                 }}
-                                className="w-full flex items-center justify-center gap-3 bg-white text-[#4b0b78] hover:bg-purple-100 py-4 rounded-xl text-md font-black transition-all active:scale-95 group"
+                                className="w-full flex items-center justify-center gap-3 bg-white text-[#4b0b78] hover:bg-purple-100 py-4 rounded-xl text-sm font-black transition-all active:scale-[0.99] group shadow-lg shadow-black/10"
                             >
                                 <span>Next Details</span>
                                 <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
@@ -702,7 +903,7 @@ const CreateOrder = () => {
                                 <button
                                     onClick={handleSubmit}
                                     disabled={loading}
-                                    className="w-full flex items-center justify-center gap-3 bg-white text-[#4b0b78] hover:bg-purple-100 py-4 rounded-xl text-lg font-black transition-all active:scale-95 shadow-xl shadow-purple-900/20"
+                                    className="w-full flex items-center justify-center gap-3 bg-white text-[#4b0b78] hover:bg-purple-100 py-4 rounded-xl text-base font-black transition-all active:scale-[0.99] shadow-xl shadow-purple-900/20"
                                 >
                                     {loading ? <div className="w-6 h-6 border-2 border-t-white rounded-full animate-spin"></div> : (
                                         <>
