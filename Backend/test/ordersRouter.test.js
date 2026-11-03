@@ -59,6 +59,8 @@ function createPool({ orderItems } = {}) {
           state: "Tamil Nadu",
           country: "India",
           zip_code: "600001",
+          coupon_code: "SAVE10",
+          discount_amount: "25.00",
         }]];
       }
       if (query.includes("FROM order_items")) {
@@ -187,6 +189,8 @@ test("order details load the delivery address from the addresses table", async (
   assert.equal(order.address_id, 15);
   assert.equal(order.street_address, "12 Test Street");
   assert.equal(order.city, "Chennai");
+  assert.equal(order.coupon_code, "SAVE10");
+  assert.equal(order.discount_amount, "25.00");
   assert.deepEqual(order.items, [{
     product_id: 8,
     product_name: "Test product",
