@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Boxes, ChevronLeft, ChevronRight } from "lucide-react";
+import { Boxes, ChevronRight } from "lucide-react";
 import { Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -66,7 +66,6 @@ function HomeCategories() {
   const [showAll, setShowAll] = useState(false);
   const [carouselLayout, setCarouselLayout] = useState({ slideWidth: 128 });
   const carouselContainerRef = useRef(null);
-  const swiperRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -145,26 +144,6 @@ function HomeCategories() {
             Shop by Category
           </h2>
           <div className="flex shrink-0 items-center gap-2">
-            {!loading && categories.length > 1 && !showAll && (
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => swiperRef.current?.slidePrev()}
-                  aria-label="Previous categories"
-                  className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
-                >
-                  <ChevronLeft size={17} />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => swiperRef.current?.slideNext()}
-                  aria-label="Next categories"
-                  className="flex h-7 w-7 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
-                >
-                  <ChevronRight size={17} />
-                </button>
-              </div>
-            )}
             {!loading && categories.length > 0 && (
               <button
                 type="button"
@@ -208,9 +187,6 @@ function HomeCategories() {
           <div ref={carouselContainerRef} className="overflow-hidden py-2">
             <Swiper
               modules={[Autoplay]}
-              onSwiper={(swiper) => {
-                swiperRef.current = swiper;
-              }}
               slidesPerView="auto"
               slidesPerGroup={1}
               spaceBetween={8}
