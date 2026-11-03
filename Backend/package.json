@@ -7,7 +7,8 @@
     "test": "node --test",
     "dev": "node --watch index.js",
     "start": "node index.js",
-    "seed:demo": "node scripts/seedDemoProducts.js"
+    "seed:demo": "node scripts/seedDemoProducts.js",
+    "seed:articles": "node scripts/seedDemoArticles.js"
   },
   "keywords": [],
   "author": "",
