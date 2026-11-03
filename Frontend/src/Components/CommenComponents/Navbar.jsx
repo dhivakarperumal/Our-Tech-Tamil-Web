@@ -243,7 +243,7 @@ const Navbar = () => {
 
   const renderDesktopNavigation = () => (
     <div className="hidden min-w-0 flex-1 items-center justify-center xl:flex">
-      <div className="flex min-h-[42px] items-center justify-center gap-1 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-14 shadow-[0_8px_20px_rgba(30,8,50,0.2)]">
+      <div className="flex min-h-[58px] items-center justify-center gap-1 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-14 shadow-[0_8px_20px_rgba(30,8,50,0.2)]">
         <NavLink to="/" end className={navClass}><House size={18} aria-hidden="true" />Home</NavLink>
         <NavLink to="/shop" className={navClass}><ShoppingBag size={18} aria-hidden="true" />Shop</NavLink>
         <NavLink to="/combos" className={navClass}><Boxes size={18} aria-hidden="true" />Combos</NavLink>
@@ -261,7 +261,7 @@ const Navbar = () => {
               setActiveCategoryId("");
             }}
             aria-expanded={categoryMenu}
-            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
+            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
           >
             <Grid2X2 size={18} aria-hidden="true" />
             Categories
@@ -350,7 +350,7 @@ const Navbar = () => {
             type="button"
             onClick={() => setPagesMenu((open) => !open)}
             aria-expanded={pagesMenu}
-            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
+            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
           >
             <FileText size={18} aria-hidden="true" />
             Pages
@@ -392,7 +392,7 @@ const Navbar = () => {
   );
 
   const navClass = ({ isActive }) =>
-    `my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+    `my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-semibold transition ${
       isActive ? "bg-gradient-to-r from-accent to-[#ffe98a] text-[#29104b] shadow-sm" : "text-white hover:bg-white/10"
     }`;
 
