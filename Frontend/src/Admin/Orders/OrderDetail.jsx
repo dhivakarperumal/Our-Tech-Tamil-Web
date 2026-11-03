@@ -450,7 +450,10 @@ const OrderDetail = () => {
                                                                 />
                                                             </div>
                                                             <div className="min-w-0">
-                                                                <h3 className="truncate text-sm font-bold text-slate-800">{item.product_name || item.name || "Product"}</h3>
+                                                                <div className="flex flex-wrap items-center gap-2">
+                                                                    <h3 className="truncate text-sm font-bold text-slate-800">{item.product_name || item.name || "Product"}</h3>
+                                                                    {item.combo_id && <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[9px] font-bold uppercase text-violet-700">Combo</span>}
+                                                                </div>
                                                                 <p className="mt-1 text-xs text-slate-500">₹{unitPrice.toLocaleString("en-IN")} each</p>
                                                                 <div className="mt-2 flex flex-wrap gap-2">
                                                                     {item.variant_color && (
@@ -460,6 +463,45 @@ const OrderDetail = () => {
                                                                         <span className="rounded-md bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">Size: {item.variant_size}</span>
                                                                     )}
                                                                 </div>
+                                                                {item.combo_id && (
+                                                                    <div className="mt-4 rounded-xl border border-violet-200 bg-violet-50/70 p-3 sm:p-4">
+                                                                        <div className="flex flex-wrap items-center justify-between gap-2">
+                                                                            <p className="text-xs font-extrabold uppercase tracking-wide text-violet-800">Inside this combo</p>
+                                                                            <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-violet-700 shadow-sm">
+                                                                                {item.included_products?.length || 0} products
+                                                                            </span>
+                                                                        </div>
+                                                                        {item.included_products?.length ? (
+                                                                            <ul className="mt-3 space-y-2">
+                                                                                {item.included_products.map((product) => (
+                                                                                    <li key={product.id} className="flex min-w-0 items-center gap-3 rounded-lg border border-violet-100 bg-white p-2.5">
+                                                                                        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-md border border-slate-100 bg-slate-50">
+                                                                                            <img
+                                                                                                src={getProductImage(product)}
+                                                                                                alt=""
+                                                                                                className="h-full w-full object-cover"
+                                                                                                onError={(event) => {
+                                                                                                    if (!event.currentTarget.src.includes("ui-avatars")) {
+                                                                                                        event.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(product.name || "Product")}&background=ede9fe&color=4c1d95`;
+                                                                                                    }
+                                                                                                }}
+                                                                                            />
+                                                                                        </div>
+                                                                                        <div className="min-w-0 flex-1">
+                                                                                            <p className="whitespace-normal break-words text-xs font-bold leading-5 text-slate-800">{product.name}</p>
+                                                                                            {product.product_code && <p className="mt-0.5 text-[10px] font-medium text-slate-500">Code: {product.product_code}</p>}
+                                                                                        </div>
+                                                                                        <span className="shrink-0 rounded-md bg-violet-100 px-2.5 py-1.5 text-xs font-extrabold text-violet-800">
+                                                                                            × {Number(product.quantity) * quantity}
+                                                                                        </span>
+                                                                                    </li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        ) : (
+                                                                            <p className="mt-1 text-xs text-slate-500">Included product details are unavailable.</p>
+                                                                        )}
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </td>
@@ -611,6 +653,14 @@ const OrderDetail = () => {
                             <div className="flex items-center justify-between gap-3">
                                 <span className="flex items-center gap-2 text-sm text-slate-500"><FiCreditCard className="text-violet-600" /> Payment method</span>
                                 <span className="text-right text-sm font-bold text-slate-800">{order.payment_method || "—"}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-sm text-slate-500">Order type</span>
+                                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                                  order.items_type === "Combo" ? "bg-violet-50 text-violet-700" :
+                                    order.items_type === "Mixed" ? "bg-amber-50 text-amber-700" :
+                                      "bg-slate-100 text-slate-600"
+                                }`}>{order.items_type || "Single"}</span>
                             </div>
                             <div className="flex items-center justify-between gap-3">
                                 <span className="text-sm text-slate-500">Payment status</span>

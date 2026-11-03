@@ -115,8 +115,69 @@ function createWishlistRouter(pool) {
          ORDER BY wi.created_at DESC, wi.id DESC`,
         [request.user.user_id],
       );
-      return response.json(rows.map(toWishlistItem));
+      const [comboRows] = await pool.execute(
+        `SELECT wi.id, wi.combo_id, wi.product_name, wi.product_image, wi.product_code,
+                wi.mrp, wi.offer_price, c.name, c.code, c.thumbnail, c.gallery_images
+         FROM wishlist_items wi
+         INNER JOIN combos c ON c.id = wi.combo_id
+         WHERE wi.user_id = ? AND c.status = 'Active'
+         ORDER BY wi.created_at DESC, wi.id DESC`,
+        [request.user.user_id],
+      );
+      return response.json([
+        ...rows.map(toWishlistItem),
+        ...comboRows.map((row) => ({
+          id: Number(row.id),
+          combo_id: Number(row.combo_id),
+          item_type: "combo",
+          name: row.product_name || row.name,
+          product_name: row.product_name || row.name,
+          product_code: row.product_code || row.code,
+          image: row.product_image || row.thumbnail || parseImages(row.gallery_images)[0] || "",
+          product_image: row.product_image || row.thumbnail || parseImages(row.gallery_images)[0] || "",
+          price: Number(row.offer_price),
+          mrp: Number(row.mrp),
+          offer_price: Number(row.offer_price),
+          variants: [],
+        })),
+      ]);
     } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.post("/combos", async (request, response, next) => {
+    try {
+      const comboId = parseProductId(request.body?.combo_id);
+      const [rows] = await pool.execute(
+        `SELECT id, name, code, thumbnail, gallery_images, mrp, final_price
+         FROM combos WHERE id = ? AND status = 'Active' LIMIT 1`,
+        [comboId],
+      );
+      const combo = rows[0];
+      if (!combo) throw httpError(404, "This combo is no longer available.");
+      const mrp = Number(combo.mrp);
+      const offerPrice = Number(combo.final_price);
+      const comboImage = combo.thumbnail || parseImages(combo.gallery_images)[0] || "";
+      if (!Number.isFinite(mrp) || mrp < 0 || !Number.isFinite(offerPrice) || offerPrice < 0) {
+        throw httpError(400, "This combo has an invalid price.");
+      }
+      await pool.execute(
+        `INSERT INTO wishlist_items
+          (user_id, product_id, combo_id, product_name, product_image, product_code, mrp, offer_price,
+           variant_color, variant_size)
+         VALUES (?, NULL, ?, ?, ?, ?, ?, ?, '', '')
+         ON DUPLICATE KEY UPDATE
+           product_name = VALUES(product_name), product_image = VALUES(product_image),
+           product_code = VALUES(product_code), mrp = VALUES(mrp), offer_price = VALUES(offer_price)`,
+        [
+          request.user.user_id, combo.id, combo.name, comboImage,
+          combo.code, mrp, offerPrice,
+        ],
+      );
+      return response.status(201).json({ message: "Combo added to favorites." });
+    } catch (error) {
+      if (error.status) return response.status(error.status).json({ message: error.message });
       return next(error);
     }
   });
@@ -196,6 +257,21 @@ function createWishlistRouter(pool) {
       );
       if (!result.affectedRows) throw httpError(404, "Favorite not found.");
       return response.json({ message: "Product removed from favorites." });
+    } catch (error) {
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    }
+  });
+
+  router.delete("/combos/:comboId", async (request, response, next) => {
+    try {
+      const comboId = parseProductId(request.params.comboId);
+      const [result] = await pool.execute(
+        "DELETE FROM wishlist_items WHERE user_id = ? AND combo_id = ?",
+        [request.user.user_id, comboId],
+      );
+      if (!result.affectedRows) throw httpError(404, "Favorite not found.");
+      return response.json({ message: "Combo removed from favorites." });
     } catch (error) {
       if (error.status) return response.status(error.status).json({ message: error.message });
       return next(error);

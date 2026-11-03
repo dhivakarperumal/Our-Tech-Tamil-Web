@@ -365,6 +365,31 @@ async function initializeDatabase(pool) {
       KEY cart_items_product_id_idx (product_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  const [cartColumns] = await pool.execute(
+    `SELECT COLUMN_NAME, IS_NULLABLE
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cart_items'`,
+  );
+  const existingCartColumns = new Set(cartColumns.map((column) => column.COLUMN_NAME));
+  if (!existingCartColumns.has("combo_id")) {
+    await pool.query("ALTER TABLE cart_items ADD COLUMN combo_id BIGINT UNSIGNED NULL AFTER product_id");
+  }
+  const productIdColumn = cartColumns.find((column) => column.COLUMN_NAME === "product_id");
+  if (productIdColumn?.IS_NULLABLE === "NO") {
+    await pool.query("ALTER TABLE cart_items MODIFY COLUMN product_id BIGINT UNSIGNED NULL");
+  }
+  const [cartIndexes] = await pool.execute(
+    `SELECT INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'cart_items'`,
+  );
+  if (!cartIndexes.some((index) =>
+    index.INDEX_NAME === "cart_items_user_combo_unique" &&
+    index.COLUMN_NAME === "combo_id" &&
+    index.SEQ_IN_INDEX === 2,
+  )) {
+    await pool.query("ALTER TABLE cart_items ADD UNIQUE KEY cart_items_user_combo_unique (user_id, combo_id)");
+  }
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS wishlist_items (
@@ -386,7 +411,7 @@ async function initializeDatabase(pool) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
   const [wishlistColumnRows] = await pool.execute(
-    `SELECT COLUMN_NAME
+    `SELECT COLUMN_NAME, IS_NULLABLE
      FROM INFORMATION_SCHEMA.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'wishlist_items'`,
   );
@@ -403,6 +428,13 @@ async function initializeDatabase(pool) {
   ];
   for (const [column, statement] of wishlistColumnMigrations) {
     if (!wishlistColumns.has(column)) await pool.query(statement);
+  }
+  if (!wishlistColumns.has("combo_id")) {
+    await pool.query("ALTER TABLE wishlist_items ADD COLUMN combo_id BIGINT UNSIGNED NULL AFTER product_id");
+  }
+  const wishlistProductIdColumn = wishlistColumnRows.find((column) => column.COLUMN_NAME === "product_id");
+  if (wishlistProductIdColumn?.IS_NULLABLE === "NO") {
+    await pool.query("ALTER TABLE wishlist_items MODIFY COLUMN product_id BIGINT UNSIGNED NULL");
   }
   const [wishlistIndexes] = await pool.execute(
     `SELECT INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX
@@ -424,6 +456,14 @@ async function initializeDatabase(pool) {
     await pool.query(
       "ALTER TABLE wishlist_items ADD UNIQUE KEY wishlist_user_product_variant_unique (user_id, product_id, variant_color, variant_size)",
     );
+  }
+  const hasComboUniqueIndex = wishlistIndexes.some((index) =>
+    index.INDEX_NAME === "wishlist_user_combo_unique" &&
+    index.COLUMN_NAME === "combo_id" &&
+    index.SEQ_IN_INDEX === 2,
+  );
+  if (!hasComboUniqueIndex) {
+    await pool.query("ALTER TABLE wishlist_items ADD UNIQUE KEY wishlist_user_combo_unique (user_id, combo_id)");
   }
   await pool.query(`
     UPDATE wishlist_items wi
@@ -461,6 +501,7 @@ async function initializeDatabase(pool) {
       address_id BIGINT UNSIGNED NULL,
       customer_email VARCHAR(191) NULL,
       order_type VARCHAR(32) NOT NULL DEFAULT 'Shop',
+      items_type VARCHAR(16) NOT NULL DEFAULT 'Single',
       payment_method VARCHAR(64) NOT NULL DEFAULT 'Cash',
       payment_status VARCHAR(32) NOT NULL DEFAULT 'Pending',
       razorpay_order_id VARCHAR(64) NULL,
@@ -498,6 +539,14 @@ async function initializeDatabase(pool) {
       CONSTRAINT order_items_order_fk FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  const [orderItemColumns] = await pool.execute(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'order_items'`,
+  );
+  if (!orderItemColumns.some((column) => column.COLUMN_NAME === "combo_id")) {
+    await pool.query("ALTER TABLE order_items ADD COLUMN combo_id BIGINT UNSIGNED NULL AFTER product_id");
+  }
 
   const [orderColumns] = await pool.execute(
     `SELECT COLUMN_NAME
@@ -505,6 +554,26 @@ async function initializeDatabase(pool) {
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders'`,
   );
   const existingOrderColumns = new Set(orderColumns.map((column) => column.COLUMN_NAME));
+  if (!existingOrderColumns.has("items_type")) {
+    await pool.query("ALTER TABLE orders ADD COLUMN items_type VARCHAR(16) NOT NULL DEFAULT 'Single' AFTER order_type");
+    await pool.query(`
+      UPDATE orders
+      SET items_type = CASE
+        WHEN EXISTS (
+          SELECT 1 FROM order_items oi
+          WHERE oi.order_id = orders.id AND oi.combo_id IS NOT NULL
+        ) AND EXISTS (
+          SELECT 1 FROM order_items oi
+          WHERE oi.order_id = orders.id AND oi.combo_id IS NULL
+        ) THEN 'Mixed'
+        WHEN EXISTS (
+          SELECT 1 FROM order_items oi
+          WHERE oi.order_id = orders.id AND oi.combo_id IS NOT NULL
+        ) THEN 'Combo'
+        ELSE 'Single'
+      END
+    `);
+  }
   if (!existingOrderColumns.has("address_id")) {
     await pool.query("ALTER TABLE orders ADD COLUMN address_id BIGINT UNSIGNED NULL AFTER user_id");
   }

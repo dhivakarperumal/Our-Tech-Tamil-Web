@@ -16,7 +16,7 @@ const ORDER_STATUSES = new Set([
 const ORDER_COLUMNS = `
   o.id, o.order_id, o.user_id, o.address_id, a.recipient_name AS customer_name,
   o.customer_email, a.phone AS customer_phone, a.street_address, a.city, a.district, a.state, a.country,
-  a.zip_code, o.order_type, o.payment_method, o.payment_status, o.status, o.total_amount,
+  a.zip_code, o.order_type, o.items_type, o.payment_method, o.payment_status, o.status, o.total_amount,
   o.tracking_number, o.courier_name, o.shipped_at, o.cancellation_reason, o.cancelled_at,
   o.created_at, o.updated_at
 `;
@@ -71,6 +71,7 @@ function parseItems(value) {
 function toOrderItem(row) {
   return {
     product_id: row.product_id,
+    ...(row.combo_id ? { combo_id: Number(row.combo_id), item_type: "combo" } : {}),
     product_name: row.product_name,
     name: row.product_name,
     price: Number(row.price),
@@ -87,16 +88,69 @@ async function attachOrderItems(pool, orders) {
   const orderIds = orders.map((order) => order.id);
   const placeholders = orderIds.map(() => "?").join(", ");
   const [rows] = await pool.execute(
-    `SELECT order_id, product_id, product_name, price, quantity, total,
+    `SELECT order_id, product_id, combo_id, product_name, price, quantity, total,
             variant_color, variant_size, image
      FROM order_items
      WHERE order_id IN (${placeholders})
      ORDER BY id`,
     orderIds,
   );
+  const comboIds = [...new Set(rows
+    .map((row) => Number(row.combo_id))
+    .filter((id) => Number.isSafeInteger(id) && id > 0))];
+  const comboProductsById = new Map();
+  if (comboIds.length) {
+    const comboPlaceholders = comboIds.map(() => "?").join(", ");
+    const [combos] = await pool.execute(
+      `SELECT id, products FROM combos WHERE id IN (${comboPlaceholders})`,
+      comboIds,
+    );
+    const selectedProducts = combos.flatMap((combo) => {
+      let products = combo.products;
+      if (typeof products === "string") {
+        try {
+          products = JSON.parse(products);
+        } catch {
+          products = [];
+        }
+      }
+      const entries = Array.isArray(products) ? products : [];
+      return entries.flatMap((item) => {
+        const productId = Number(item?.id ?? item?.product_id);
+        const quantity = Number(item?.quantity) || 1;
+        if (!Number.isSafeInteger(productId) || productId < 1 ||
+            !Number.isSafeInteger(quantity) || quantity < 1) return [];
+        return [{ comboId: Number(combo.id), productId, quantity }];
+      });
+    });
+    const productIds = [...new Set(selectedProducts.map((item) => item.productId))];
+    let products = [];
+    if (productIds.length) {
+      const productPlaceholders = productIds.map(() => "?").join(", ");
+      [products] = await pool.execute(
+        `SELECT id, name, product_code, images FROM products WHERE id IN (${productPlaceholders})`,
+        productIds,
+      );
+    }
+    const productById = new Map(products.map((product) => [Number(product.id), product]));
+    for (const item of selectedProducts) {
+      const product = productById.get(item.productId);
+      const images = parseImageList(product?.images);
+      if (!comboProductsById.has(item.comboId)) comboProductsById.set(item.comboId, []);
+      comboProductsById.get(item.comboId).push({
+        id: item.productId,
+        name: product?.name || `Product #${item.productId}`,
+        product_code: product?.product_code || "",
+        quantity: item.quantity,
+        image: images[0] || "",
+      });
+    }
+  }
   const itemsByOrderId = new Map(orderIds.map((id) => [String(id), []]));
   for (const row of rows) {
-    itemsByOrderId.get(String(row.order_id))?.push(toOrderItem(row));
+    const item = toOrderItem(row);
+    if (row.combo_id) item.included_products = comboProductsById.get(Number(row.combo_id)) || [];
+    itemsByOrderId.get(String(row.order_id))?.push(item);
   }
   return orders.map((order) => ({
     ...order,
