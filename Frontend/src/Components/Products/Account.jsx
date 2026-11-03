@@ -261,14 +261,19 @@ function MyOrders({ user }) {
                 </h3>
                 <p className="mt-1 text-sm text-gray-500">Placed on {formatDate(selectedOrder.created_at)}</p>
               </div>
-              <button
-                type="button"
-                onClick={function(){ setSelectedOrder(null); }}
-                aria-label="Close order details"
-                className="rounded-lg p-2 text-gray-500 transition hover:bg-[#faf7ff] hover:text-primary"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className={"rounded-full border px-3 py-1.5 text-xs font-bold " + statusBadgeClass(selectedOrder.status || "Order Placed")}>
+                  {selectedOrder.status || "Order Placed"}
+                </span>
+                <button
+                  type="button"
+                  onClick={function(){ setSelectedOrder(null); }}
+                  aria-label="Close order details"
+                  className="rounded-lg p-2 text-gray-500 transition hover:bg-[#faf7ff] hover:text-primary"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </header>
             <div className="min-h-0 space-y-5 overflow-y-auto p-5 sm:p-7">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -357,7 +362,6 @@ function MyOrders({ user }) {
               <section className="rounded-xl border border-[#ede5f8] bg-[#faf8ff] p-4">
                 <h4 className="text-xs font-bold uppercase tracking-widest text-gray-400">Order summary</h4>
                 <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-                  <p className="text-gray-600">Status: <strong className="text-[#1a0745]">{selectedOrder.status || "Order Placed"}</strong></p>
                   <p className="text-gray-600">Order type: <strong className="text-[#1a0745]">{selectedOrder.order_type || "-"}</strong></p>
                   <p className="text-gray-600">Payment: <strong className="text-[#1a0745]">{selectedOrder.payment_method || "-"}</strong></p>
                   <p className="text-gray-600">Payment status: <strong className={selectedOrder.payment_status === "Paid" ? "text-emerald-600" : "text-amber-600"}>{selectedOrder.payment_status || "Pending"}</strong></p>
