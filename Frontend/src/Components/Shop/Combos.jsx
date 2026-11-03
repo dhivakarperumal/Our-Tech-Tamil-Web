@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Boxes, Heart, Package, ShoppingCart, Star, Zap } from "lucide-react";
+import { Boxes, Heart, ShoppingCart, Star, Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
@@ -71,6 +71,8 @@ function Combos() {
                 const price = Number(combo.final_price ?? combo.offer_price ?? 0);
                 const mrp = Number(combo.mrp ?? 0);
                 const count = Array.isArray(combo.products) ? combo.products.length : 0;
+                const hasDiscount = mrp > price;
+                const discount = hasDiscount ? Math.round(((mrp - price) / mrp) * 100) : 0;
                 const rating = Math.min(5, Math.max(0, Number(combo.rating) || 0));
                 const minQuantity = Math.max(1, Number(combo.minimum_order_quantity) || 1);
                 const trackInventory = Number(combo.track_inventory) === 1;
@@ -79,60 +81,82 @@ function Combos() {
                   Number(combo.available_stock) >= minQuantity;
                 const isFavorite = wishlist.some((item) => Number(item.combo_id) === Number(combo.id));
                 return (
-                  <article key={combo.id} className="group overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl">
-                    <div className="relative h-56 overflow-hidden bg-violet-50">
-                      <Link to={`/combos/${combo.id}`} aria-label={`View ${combo.name}`}>
+                  <article key={combo.id} className="group flex h-full min-w-0 flex-col rounded-[26px] border border-violet-200 bg-white p-2.5 shadow-[0_12px_28px_rgba(75,0,200,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(75,0,200,0.12)]">
+                    <div className="relative">
+                      {hasDiscount && (
+                        <span className="absolute left-3 top-3 z-10 rounded-full bg-[#4B00C8] px-2.5 py-1 text-[10px] font-extrabold tracking-tight text-white shadow-md">
+                          {discount}% OFF
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => toggleComboWishlist(combo)}
+                        aria-label={isFavorite ? `Remove ${combo.name} from favorites` : `Add ${combo.name} to favorites`}
+                        aria-pressed={isFavorite}
+                        className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[#e6d8f7] bg-white/90 shadow-sm transition hover:scale-105 hover:bg-white ${isFavorite ? "text-rose-600" : "text-[#4B00C8]"}`}
+                      >
+                        <Heart size={16} strokeWidth={2.2} fill={isFavorite ? "currentColor" : "none"} aria-hidden="true" />
+                      </button>
+                      <Link
+                        to={`/combos/${combo.id}`}
+                        aria-label={`View ${combo.name}`}
+                        className="block aspect-square overflow-hidden rounded-[20px] bg-[#f2ebf8]"
+                      >
                         {image ? (
-                        <img src={image} alt={combo.name} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+                          <img src={image} alt={combo.name} loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
                         ) : (
-                          <div className="flex h-full items-center justify-center text-violet-300"><Boxes size={56} /></div>
+                          <div className="flex h-full items-center justify-center text-[#4B00C8]/30"><Boxes size={56} strokeWidth={1.5} /></div>
                         )}
                       </Link>
-                      {mrp > price && <span className="absolute left-3 top-3 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">Save ₹{(mrp - price).toLocaleString("en-IN")}</span>}
                     </div>
-                    <div className="p-5">
-                      <p className="text-[11px] font-bold uppercase tracking-wider text-violet-700">{combo.category_type || "Combo"}{combo.category ? ` · ${combo.category}` : ""}</p>
-                      <h3 className="mt-1 truncate text-lg font-bold text-slate-900"><Link to={`/combos/${combo.id}`} className="hover:text-violet-700">{combo.name}</Link></h3>
-                      <div className="mt-2 flex items-center gap-1" role="img" aria-label={`Rating ${rating.toFixed(1)} out of 5`}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            size={15}
-                            aria-hidden="true"
-                            className={star <= rating ? "fill-amber-400 text-amber-400" : "fill-slate-100 text-slate-300"}
-                          />
-                        ))}
-                        <span className="ml-1 text-xs font-semibold text-slate-600">{rating.toFixed(1)} / 5</span>
+                    <div className="flex flex-1 flex-col px-1 pb-1 pt-3">
+                      <div className="flex min-w-0 items-center gap-2 text-[#4B00C8]">
+                        <Boxes size={14} strokeWidth={2.3} aria-hidden="true" />
+                        <span className="min-w-0 flex-1 truncate text-[9px] font-extrabold uppercase tracking-[0.14em]">
+                          {[combo.category_type, combo.category].filter(Boolean).join(" · ") || "Combo"}
+                        </span>
+                        <span className="shrink-0 rounded-lg bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">
+                          {count} {count === 1 ? "item" : "items"}
+                        </span>
                       </div>
-                      {combo.description && <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-500">{combo.description}</p>}
-                      <div className="mt-4 flex items-end justify-between border-t border-slate-100 pt-4">
-                        <div className="flex flex-wrap items-baseline gap-x-2">
-                          <p className="text-2xl font-black text-slate-900">₹{price.toLocaleString("en-IN")}</p>
-                          {mrp > price && <p className="text-sm text-slate-400 line-through">₹{mrp.toLocaleString("en-IN")}</p>}
+                      <h3 className="mt-1.5 min-h-[2rem] line-clamp-2 text-sm font-extrabold leading-[1.2] tracking-[-0.035em] text-[#111027]">
+                        <Link to={`/combos/${combo.id}`} className="transition hover:text-[#4B00C8]">{combo.name}</Link>
+                      </h3>
+                      <div className="mt-1.5 flex items-center gap-1 text-[10px]" role="img" aria-label={`Rating ${rating.toFixed(1)} out of 5`}>
+                        <span className="flex items-center gap-0.5 text-amber-500">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              size={11}
+                              aria-hidden="true"
+                              className={star <= Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-slate-300"}
+                            />
+                          ))}
+                        </span>
+                        <span className="font-bold text-slate-700">{rating ? rating.toFixed(1) : "New"}</span>
+                        {rating > 0 && <span className="text-slate-400">/ 5</span>}
+                      </div>
+                      <div className="mt-2.5 flex items-end justify-between gap-2">
+                        <div className="flex min-w-0 items-baseline gap-2">
+                          <span className="shrink-0 text-base font-extrabold tracking-[-0.04em] text-[#4B00C8]">₹{price.toLocaleString("en-IN")}</span>
+                          {hasDiscount && <span className="truncate text-[10px] font-medium text-[#6B6478] line-through">₹{mrp.toLocaleString("en-IN")}</span>}
                         </div>
-                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-2.5 py-1.5 text-xs font-semibold text-violet-700"><Package size={14} />{count} items</span>
+                        {hasDiscount && <span className="shrink-0 rounded-full bg-[#efe0ff] px-2 py-1 text-[8px] font-bold text-[#4B00C8]">Save ₹{(mrp - price).toLocaleString("en-IN")}</span>}
                       </div>
-                      {!available && <p className="mt-3 text-xs font-semibold text-rose-600">Out of stock</p>}
-                      <div className="mt-4 grid grid-cols-[1fr_1fr_auto] gap-2">
+                      {!available && <p className="mt-1 text-[10px] font-semibold text-rose-600">Out of stock</p>}
+                      <div className="mt-auto grid grid-cols-2 gap-2 pt-3">
                         <button
                           type="button"
                           disabled={!available}
                           onClick={() => addComboToCart(combo, minQuantity)}
-                          className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-violet-700 px-2.5 text-xs font-bold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
-                        ><ShoppingCart size={15} /> Add to Cart</button>
+                          className="inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-[12px] border border-[#4B00C8] bg-white px-2 py-2 text-[10px] font-extrabold text-[#4B00C8] shadow-sm transition hover:bg-[#f1ebff] disabled:cursor-not-allowed disabled:opacity-50"
+                        ><ShoppingCart className="shrink-0" size={14} aria-hidden="true" /><span className="whitespace-nowrap">Add to Cart</span></button>
                         <button
                           type="button"
                           disabled={!available}
                           onClick={() => buyNow(combo)}
-                          className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg bg-amber-500 px-2.5 text-xs font-bold text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm"
-                        ><Zap size={15} /> Buy Now</button>
-                        <button
-                          type="button"
-                          onClick={() => toggleComboWishlist(combo)}
-                          aria-label={isFavorite ? `Remove ${combo.name} from favorites` : `Add ${combo.name} to favorites`}
-                          aria-pressed={isFavorite}
-                          className={`inline-flex h-10 w-10 items-center justify-center rounded-lg border transition ${isFavorite ? "border-rose-200 bg-rose-50 text-rose-600" : "border-slate-200 text-slate-500 hover:border-rose-200 hover:text-rose-600"}`}
-                        ><Heart size={17} fill={isFavorite ? "currentColor" : "none"} /></button>
+                          className="inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-[12px] bg-[#4B00C8] px-2 py-2 text-[10px] font-extrabold text-white shadow-[0_8px_18px_rgba(75,0,200,0.25)] transition hover:bg-[#3d00a9] disabled:cursor-not-allowed disabled:opacity-50"
+                        ><Zap className="shrink-0" size={14} aria-hidden="true" /><span className="whitespace-nowrap">Buy Now</span></button>
                       </div>
                     </div>
                   </article>
