@@ -300,17 +300,38 @@ const Navbar = () => {
                 <ChevronDown size={14} className={`transition-transform ${categoryMenu ? "rotate-180" : ""}`} aria-hidden="true" />
               </button>
               {categoryMenu && (
-                <div className="absolute left-0 top-full z-[60] mt-3 max-h-80 w-60 overflow-y-auto rounded-xl border border-border bg-white py-2 shadow-xl">
-                  {categories.length ? categories.map((category) => (
-                    <NavLink
-                      key={category.id}
-                      to={`/category/${category.slug || category.name}`}
-                      onClick={() => setCategoryMenu(false)}
-                      className="block px-4 py-2.5 text-sm text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"
-                    >
-                      {category.name}
-                    </NavLink>
-                  )) : <p className="px-4 py-3 text-sm text-gray-500">No categories available</p>}
+                <div className="absolute left-0 top-full z-[60] mt-3 w-72 overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-[0_18px_45px_rgba(37,12,69,0.2)] ring-1 ring-black/5">
+                  <div className="flex items-center justify-between bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-4 py-3 text-white">
+                    <div>
+                      <p className="text-sm font-bold">Shop by category</p>
+                      <p className="mt-0.5 text-[11px] text-white/75">Find something you love</p>
+                    </div>
+                    <span className="rounded-full bg-white/15 px-2 py-1 text-[10px] font-semibold">
+                      {categories.length} {categories.length === 1 ? "category" : "categories"}
+                    </span>
+                  </div>
+                  <div className="max-h-72 overflow-y-auto p-2">
+                    {categories.length ? categories.map((category) => (
+                      <NavLink
+                        key={category.id}
+                        to={`/category/${category.slug || category.name}`}
+                        onClick={() => setCategoryMenu(false)}
+                        className={({ isActive }) =>
+                          `group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition ${
+                            isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"
+                          }`
+                        }
+                      >
+                        <span className="flex min-w-0 items-center gap-3">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white">
+                            <Grid2X2 size={15} aria-hidden="true" />
+                          </span>
+                          <span className="truncate">{category.name}</span>
+                        </span>
+                        <ChevronRight size={15} className="shrink-0 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true" />
+                      </NavLink>
+                    )) : <p className="px-3 py-5 text-center text-sm text-gray-500">No categories available</p>}
+                  </div>
                 </div>
               )}
             </div>
@@ -326,10 +347,25 @@ const Navbar = () => {
                 <ChevronDown size={14} className={`transition-transform ${pagesMenu ? "rotate-180" : ""}`} aria-hidden="true" />
               </button>
               {pagesMenu && (
-                <div className="absolute left-0 top-full z-[60] mt-3 w-52 overflow-hidden rounded-xl border border-border bg-white py-2 shadow-xl">
-                  <NavLink to="/articles" onClick={() => setPagesMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"><FileText size={16} />Articles</NavLink>
-                  <NavLink to="/about" onClick={() => setPagesMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"><Users size={16} />About Us</NavLink>
-                  <NavLink to="/contactus" onClick={() => setPagesMenu(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"><Mail size={16} />Contact Us</NavLink>
+                <div className="absolute left-0 top-full z-[60] mt-3 w-64 overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-[0_18px_45px_rgba(37,12,69,0.2)] ring-1 ring-black/5">
+                  <div className="bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-4 py-3 text-white">
+                    <p className="text-sm font-bold">Explore Our Store</p>
+                    <p className="mt-0.5 text-[11px] text-white/75">More about us and what we offer</p>
+                  </div>
+                  <div className="space-y-1 p-2">
+                    <NavLink to="/articles" onClick={() => setPagesMenu(false)} className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"}`}>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><FileText size={17} /></span>
+                      <span className="flex-1">Articles</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                    </NavLink>
+                    <NavLink to="/about" onClick={() => setPagesMenu(false)} className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"}`}>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><Users size={17} /></span>
+                      <span className="flex-1">About Us</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                    </NavLink>
+                    <NavLink to="/contactus" onClick={() => setPagesMenu(false)} className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"}`}>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><Mail size={17} /></span>
+                      <span className="flex-1">Contact Us</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                    </NavLink>
+                  </div>
                 </div>
               )}
             </div>
