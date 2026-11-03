@@ -157,34 +157,34 @@ const AboutUs = () => {
       {/* ── MISSION, VISION & WHY CHOOSE US ─────────────────── */}
       <section className="py-10 sm:py-14">
         <PageContainer>
-          <div className="overflow-hidden rounded-3xl border border-[#eadcf6] bg-gradient-to-br from-[#fbf7ff] via-[#f5edff] to-[#fdf9ff] p-5 shadow-[0_12px_30px_rgba(74,27,120,0.08)] sm:p-8">
-            <div className="grid gap-4 md:grid-cols-2">
-              <article className="flex items-start gap-4 rounded-2xl border border-white/80 bg-white/75 p-5 shadow-sm">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0e2ff] text-primary">
-                  <Target size={23} aria-hidden="true" />
-                </span>
-                <div>
-                  <h2 className="text-base font-extrabold text-[#1a0745]">Our Mission</h2>
-                  <p className="mt-1 text-sm leading-6 text-gray-600">
-                    To deliver high-quality gadgets and a seamless shopping experience with trust, value, and great customer support.
-                  </p>
-                </div>
-              </article>
+          <div className="grid gap-4 md:grid-cols-2">
+            <article className="flex items-start gap-4 rounded-2xl border border-[#eadcf6] bg-white p-5 shadow-[0_8px_24px_rgba(74,27,120,0.08)] sm:p-6">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0e2ff] text-primary">
+                <Target size={23} aria-hidden="true" />
+              </span>
+              <div>
+                <h2 className="text-base font-extrabold text-[#1a0745]">Our Mission</h2>
+                <p className="mt-1 text-sm leading-6 text-gray-600">
+                  To deliver high-quality gadgets and a seamless shopping experience with trust, value, and great customer support.
+                </p>
+              </div>
+            </article>
 
-              <article className="flex items-start gap-4 rounded-2xl border border-white/80 bg-white/75 p-5 shadow-sm">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0e2ff] text-primary">
-                  <Eye size={23} aria-hidden="true" />
-                </span>
-                <div>
-                  <h2 className="text-base font-extrabold text-[#1a0745]">Our Vision</h2>
-                  <p className="mt-1 text-sm leading-6 text-gray-600">
-                    To be a leading and trusted tech store, bringing the latest technology to everyone for a smarter lifestyle.
-                  </p>
-                </div>
-              </article>
-            </div>
+            <article className="flex items-start gap-4 rounded-2xl border border-[#eadcf6] bg-white p-5 shadow-[0_8px_24px_rgba(74,27,120,0.08)] sm:p-6">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0e2ff] text-primary">
+                <Eye size={23} aria-hidden="true" />
+              </span>
+              <div>
+                <h2 className="text-base font-extrabold text-[#1a0745]">Our Vision</h2>
+                <p className="mt-1 text-sm leading-6 text-gray-600">
+                  To be a leading and trusted tech store, bringing the latest technology to everyone for a smarter lifestyle.
+                </p>
+              </div>
+            </article>
+          </div>
 
-            <div className="my-7 flex items-center gap-3 sm:my-8">
+          <div className="mt-5 rounded-3xl border border-[#eadcf6] bg-gradient-to-br from-[#fbf7ff] via-[#f5edff] to-[#fdf9ff] p-5 shadow-[0_12px_30px_rgba(74,27,120,0.08)] sm:mt-6 sm:p-8">
+            <div className="mb-5 flex items-center gap-3 sm:mb-6">
               <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#c89af1] to-[#a855f7]" />
               <h2 className="shrink-0 text-center text-lg font-extrabold text-[#1a0745] sm:text-xl">
                 Why Choose Us?
