@@ -8,7 +8,7 @@ const createCheckoutRouter = require("../routers/checkoutRouter");
 
 process.env.JWT_SECRET = "checkout-router-test-secret";
 
-function createPool({ stock = 5, quantity = 2 } = {}) {
+function createPool({ stock = 5, quantity = 2, coupon = null } = {}) {
   const statements = [];
   const addresses = [];
   const orders = [];
@@ -34,6 +34,19 @@ function createPool({ stock = 5, quantity = 2 } = {}) {
     statements.push({ query, params });
     if (query.includes("FROM users")) return [[{ user_id: params[0] }]];
     if (query.includes("FROM cart_items ci")) return [cartRows];
+    if (query.includes("FROM coupons WHERE code")) {
+      return [coupon && coupon.code === params[0] ? [{ ...coupon }] : []];
+    }
+    if (query.includes("COUNT(*) AS used_count")) {
+      return [[{
+        used_count: orders.filter((order) =>
+          order.user_id === params[1] && order.coupon_code === params[0],
+        ).length,
+      }]];
+    }
+    if (query.includes("COUNT(*) AS order_count")) {
+      return [[{ order_count: orders.filter((order) => order.user_id === params[0]).length }]];
+    }
     if (query.includes("SELECT id, recipient_name, phone")) {
       const userId = params[0];
       return [addresses
@@ -85,7 +98,7 @@ function createPool({ stock = 5, quantity = 2 } = {}) {
     if (query.includes("INSERT INTO orders")) {
       const [
         user_id, address_id, customer_email, payment_method, payment_status,
-        total_amount, razorpay_order_id, razorpay_payment_id,
+        total_amount, razorpay_order_id, razorpay_payment_id, coupon_code, discount_amount,
       ] = params;
       orders.push({
         id: 45,
@@ -97,9 +110,15 @@ function createPool({ stock = 5, quantity = 2 } = {}) {
         total_amount,
         razorpay_order_id,
         razorpay_payment_id,
+        coupon_code,
+        discount_amount,
         status: "Order Placed",
       });
       return [{ insertId: 45 }];
+    }
+    if (query.includes("UPDATE coupons SET usage_count")) {
+      if (coupon?.id === params[0]) coupon.usage_count += 1;
+      return [{ affectedRows: 1 }];
     }
     if (query.includes("INSERT INTO order_items")) return [{ insertId: 61 }];
     if (query.includes("UPDATE orders SET order_id")) {
@@ -125,6 +144,28 @@ function createPool({ stock = 5, quantity = 2 } = {}) {
         release() {},
       };
     },
+  };
+}
+
+function validCoupon(overrides = {}) {
+  const now = Date.now();
+  return {
+    id: 8,
+    code: "SAVE10",
+    name: "Save ten percent",
+    discount_type: "percentage",
+    discount_value: "10.00",
+    min_order_value: "0.00",
+    start_date: new Date(now - 86400000),
+    expiry_date: new Date(now + 86400000),
+    usage_limit_global: null,
+    usage_limit_per_customer: 1,
+    usage_count: 0,
+    status: "active",
+    coupon_scope: "specific_products",
+    applicable_product_ids: "[9]",
+    applicable_category_ids: "[]",
+    ...overrides,
   };
 }
 
@@ -200,6 +241,33 @@ test("checkout requires a non-empty cart and sufficient current stock", async (t
   const message = (await response.json()).message;
   assert.match(message, /Only 1 Headphones item/);
   assert.ok(!pool.statements.some(({ query }) => query.includes("INSERT INTO orders")));
+});
+
+test("customer can validate and redeem a coupon against the server-calculated cart total", async (t) => {
+  const coupon = validCoupon();
+  const pool = createPool({ coupon });
+  const url = await startServer(t, pool);
+  const validation = await fetch(`${url}/coupon`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ code: "save10" }),
+  });
+  const validationResult = await validation.json();
+  assert.equal(validation.status, 200, JSON.stringify(validationResult));
+  assert.equal(validationResult.discount, 30);
+  assert.equal(validationResult.total, 270);
+
+  const orderResponse = await fetch(url, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ ...address, coupon_code: "SAVE10" }),
+  });
+  const order = await orderResponse.json();
+  assert.equal(orderResponse.status, 201, JSON.stringify(order));
+  assert.equal(order.total_amount, 270);
+  assert.equal(order.discount_amount, 30);
+  assert.equal(order.coupon_code, "SAVE10");
+  assert.equal(coupon.usage_count, 1);
 });
 
 test("checkout reuses the same customer's matching delivery address", async (t) => {

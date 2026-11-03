@@ -412,6 +412,8 @@ async function initializeDatabase(pool) {
       payment_status VARCHAR(32) NOT NULL DEFAULT 'Pending',
       razorpay_order_id VARCHAR(64) NULL,
       razorpay_payment_id VARCHAR(64) NULL UNIQUE,
+      coupon_code VARCHAR(64) NULL,
+      discount_amount DECIMAL(12, 2) NOT NULL DEFAULT 0,
       status VARCHAR(32) NOT NULL DEFAULT 'Order Placed',
       total_amount DECIMAL(12, 2) NOT NULL DEFAULT 0,
       tracking_number VARCHAR(160) NULL,
@@ -452,6 +454,12 @@ async function initializeDatabase(pool) {
   const existingOrderColumns = new Set(orderColumns.map((column) => column.COLUMN_NAME));
   if (!existingOrderColumns.has("address_id")) {
     await pool.query("ALTER TABLE orders ADD COLUMN address_id BIGINT UNSIGNED NULL AFTER user_id");
+  }
+  if (!existingOrderColumns.has("coupon_code")) {
+    await pool.query("ALTER TABLE orders ADD COLUMN coupon_code VARCHAR(64) NULL");
+  }
+  if (!existingOrderColumns.has("discount_amount")) {
+    await pool.query("ALTER TABLE orders ADD COLUMN discount_amount DECIMAL(12, 2) NOT NULL DEFAULT 0");
   }
   if (!existingOrderColumns.has("razorpay_order_id")) {
     await pool.query("ALTER TABLE orders ADD COLUMN razorpay_order_id VARCHAR(64) NULL");

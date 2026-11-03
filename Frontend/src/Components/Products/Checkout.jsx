@@ -80,6 +80,9 @@ function Checkout() {
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
   const [addressSearch, setAddressSearch] = useState("");
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [placedOrder, setPlacedOrder] = useState(null);
   const [form, setForm] = useState({
     recipient_name: user?.username || user?.name || "",
@@ -92,6 +95,7 @@ function Checkout() {
     zip_code: "",
   });
   const orderTotal = cart.reduce((total, item) => total + Number(item.subtotal ?? item.total_price ?? 0), 0);
+  const checkoutTotal = appliedCoupon ? Number(appliedCoupon.total) : orderTotal;
 
   useEffect(() => {
     let active = true;
@@ -171,6 +175,25 @@ function Checkout() {
       zip_code: address.zip_code || "",
     }));
     toast.success("Saved delivery address selected.");
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) {
+      toast.error("Enter a coupon code.");
+      return;
+    }
+    setIsApplyingCoupon(true);
+    try {
+      const { data } = await api.post("/checkout/coupon", { code: couponCode.trim() });
+      setAppliedCoupon(data);
+      setCouponCode(data.coupon.code);
+      toast.success("Coupon applied successfully.");
+    } catch (error) {
+      setAppliedCoupon(null);
+      toast.error(error.response?.data?.message || "Unable to apply this coupon.");
+    } finally {
+      setIsApplyingCoupon(false);
+    }
   };
 
   const handleUseCurrentLocation = async () => {
@@ -256,7 +279,10 @@ function Checkout() {
     setIsSubmitting(true);
     try {
       if (paymentMethod === "cod") {
-        const { data } = await api.post("/checkout", form);
+        const { data } = await api.post("/checkout", {
+          ...form,
+          coupon_code: appliedCoupon?.coupon?.code || "",
+        });
         setPlacedOrder(data);
         await fetchCart();
         toast.success("Order placed successfully.");
@@ -265,7 +291,9 @@ function Checkout() {
 
       const isRazorpayLoaded = await loadRazorpay();
       if (!isRazorpayLoaded) throw new Error("Unable to load Razorpay checkout. Please try again.");
-      const { data: paymentOrder } = await api.post("/checkout/razorpay/order");
+      const { data: paymentOrder } = await api.post("/checkout/razorpay/order", {
+        coupon_code: appliedCoupon?.coupon?.code || "",
+      });
       const payment = new window.Razorpay({
         key: paymentOrder.key_id,
         amount: paymentOrder.amount,
@@ -282,6 +310,7 @@ function Checkout() {
           try {
             const { data } = await api.post("/checkout/razorpay/verify", {
               ...form,
+              coupon_code: appliedCoupon?.coupon?.code || "",
               ...result,
             });
             setPlacedOrder(data);
@@ -497,7 +526,7 @@ function Checkout() {
               <FiLock size={16} />
               {isSubmitting
                 ? (paymentMethod === "razorpay" ? "Opening secure payment..." : "Placing order...")
-                : `${paymentMethod === "razorpay" ? "Pay securely" : "Place Order"} · ₹${formatPrice(orderTotal)}`}
+                : `${paymentMethod === "razorpay" ? "Pay securely" : "Place Order"} · ₹${formatPrice(checkoutTotal)}`}
             </button>
           </form>
 
@@ -517,9 +546,49 @@ function Checkout() {
                 </div>
               ))}
             </div>
-            <div className="mt-4 flex justify-between border-t border-border pt-4 text-base font-extrabold text-text-primary">
-              <span>Total</span><span>₹{formatPrice(orderTotal)}</span>
-            </div>
+              <div className="mt-4 border-t border-border pt-4">
+                <label htmlFor="checkout-coupon" className="text-sm font-bold text-text-primary">Coupon code</label>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    id="checkout-coupon"
+                    value={couponCode}
+                    onChange={(event) => {
+                      setCouponCode(event.target.value);
+                      setAppliedCoupon(null);
+                    }}
+                    placeholder="Enter coupon code"
+                    maxLength={64}
+                    className="min-w-0 flex-1 rounded-lg border border-border px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+                    disabled={isApplyingCoupon || isSubmitting}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleApplyCoupon}
+                    disabled={isApplyingCoupon || isSubmitting}
+                    className="rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isApplyingCoupon ? "Applying..." : "Apply"}
+                  </button>
+                </div>
+                {appliedCoupon && (
+                  <p className="mt-2 text-sm font-semibold text-emerald-700">
+                    {appliedCoupon.coupon.name} applied · You save ₹{formatPrice(appliedCoupon.discount)}
+                  </p>
+                )}
+              </div>
+              <div className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
+                <div className="flex justify-between text-text-secondary">
+                  <span>Subtotal</span><span>₹{formatPrice(orderTotal)}</span>
+                </div>
+                {appliedCoupon && (
+                  <div className="flex justify-between font-semibold text-emerald-700">
+                    <span>Coupon discount</span><span>−₹{formatPrice(appliedCoupon.discount)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-1 text-base font-extrabold text-text-primary">
+                  <span>Total</span><span>₹{formatPrice(checkoutTotal)}</span>
+                </div>
+              </div>
           </aside>
         </div>
       )}

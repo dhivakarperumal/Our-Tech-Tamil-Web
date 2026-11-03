@@ -77,6 +77,93 @@ function parseVariants(value) {
   }
 }
 
+function parseIdList(value) {
+  if (Array.isArray(value)) return value.map(Number).filter(Number.isSafeInteger);
+  if (typeof value !== "string") return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map(Number).filter(Number.isSafeInteger) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function applyCoupon(executor, codeValue, userId, cartRows, subtotalCents, { lock = false } = {}) {
+  const code = typeof codeValue === "string" ? codeValue.trim().toUpperCase() : "";
+  if (!code) return null;
+
+  const [coupons] = await executor.execute(
+    `SELECT id, code, name, discount_type, discount_value, min_order_value,
+            start_date, expiry_date, usage_limit_global, usage_limit_per_customer,
+            usage_count, status, coupon_scope, applicable_product_ids,
+            applicable_category_ids
+     FROM coupons WHERE code = ? LIMIT 1${lock ? " FOR UPDATE" : ""}`,
+    [code],
+  );
+  const coupon = coupons[0];
+  if (!coupon) throw httpError(400, "This coupon code is invalid.");
+  if (coupon.status !== "active" ||
+      new Date(coupon.start_date).getTime() > Date.now() ||
+      new Date(coupon.expiry_date).getTime() < Date.now()) {
+    throw httpError(400, "This coupon is inactive or outside its validity period.");
+  }
+  if (subtotalCents < Math.round(Number(coupon.min_order_value || 0) * 100)) {
+    throw httpError(400, `This coupon requires a minimum order of ₹${Number(coupon.min_order_value).toLocaleString("en-IN")}.`);
+  }
+  if (coupon.usage_limit_global !== null &&
+      Number(coupon.usage_count) >= Number(coupon.usage_limit_global)) {
+    throw httpError(400, "This coupon has reached its usage limit.");
+  }
+
+  const [[usage]] = await executor.execute(
+    "SELECT COUNT(*) AS used_count FROM orders WHERE coupon_code = ? AND user_id = ? AND status <> 'Cancelled'",
+    [coupon.code, userId],
+  );
+  if (Number(usage.used_count) >= Number(coupon.usage_limit_per_customer)) {
+    throw httpError(400, "You have already used this coupon the maximum number of times.");
+  }
+
+  if (coupon.coupon_scope === "first_order_only" || coupon.coupon_scope === "new_customers_only") {
+    const [[orders]] = await executor.execute(
+      "SELECT COUNT(*) AS order_count FROM orders WHERE user_id = ? AND status <> 'Cancelled'",
+      [userId],
+    );
+    if (Number(orders.order_count) > 0) {
+      throw httpError(400, "This coupon is available to new customers only.");
+    }
+  }
+
+  let eligibleSubtotalCents = subtotalCents;
+  if (coupon.coupon_scope === "specific_products") {
+    const productIds = new Set(parseIdList(coupon.applicable_product_ids));
+    eligibleSubtotalCents = cartRows.reduce((total, row) =>
+      productIds.has(Number(row.product_id))
+        ? total + priceInCents(row.offer_price ?? row.mrp, "offer price") * Number(row.quantity)
+        : total, 0);
+  } else if (coupon.coupon_scope === "specific_categories") {
+    const categoryIds = new Set(parseIdList(coupon.applicable_category_ids));
+    eligibleSubtotalCents = cartRows.reduce((total, row) =>
+      categoryIds.has(Number(row.category_id))
+        ? total + priceInCents(row.offer_price ?? row.mrp, "offer price") * Number(row.quantity)
+        : total, 0);
+  }
+  if (eligibleSubtotalCents < 1) {
+    throw httpError(400, "This coupon does not apply to products in your cart.");
+  }
+
+  const discountCents = coupon.discount_type === "percentage"
+    ? Math.round(eligibleSubtotalCents * Number(coupon.discount_value) / 100)
+    : Math.round(Number(coupon.discount_value) * 100);
+  const appliedDiscountCents = Math.min(eligibleSubtotalCents, discountCents);
+  return {
+    id: Number(coupon.id),
+    code: coupon.code,
+    name: coupon.name,
+    discountCents: appliedDiscountCents,
+    totalCents: subtotalCents - appliedDiscountCents,
+  };
+}
+
 function resolveCartImage(product, variantColor, savedImage) {
   if (savedImage) return savedImage;
   const variants = parseVariants(product.variants);
@@ -217,6 +304,7 @@ async function verifyRazorpayPayment(body, userId, credentials) {
     orderId,
     paymentId,
     amountCents: Number(payment.amount),
+    couponCode: order.notes?.coupon_code || "",
   };
 }
 
@@ -240,12 +328,51 @@ function createCheckoutRouter(pool) {
     }
   });
 
+  router.post("/coupon", async (request, response, next) => {
+    try {
+      const [cartRows] = await pool.execute(
+        `SELECT ci.product_id, ci.quantity, p.mrp, p.offer_price,
+                (SELECT MIN(id) FROM categories WHERE name = p.category) AS category_id
+         FROM cart_items ci
+         INNER JOIN products p ON p.id = ci.product_id
+         WHERE ci.user_id = ? AND p.status = 'Active'
+         ORDER BY ci.id`,
+        [request.user.user_id],
+      );
+      if (!cartRows.length) throw httpError(400, "Your cart is empty.");
+      const subtotalCents = cartRows.reduce((total, row) =>
+        total + priceInCents(row.offer_price ?? row.mrp, "offer price") * Number(row.quantity), 0);
+      if (!Number.isSafeInteger(subtotalCents) || subtotalCents < 1) {
+        throw httpError(400, "Your cart total is invalid.");
+      }
+      const coupon = await applyCoupon(
+        pool,
+        request.body?.code,
+        request.user.user_id,
+        cartRows,
+        subtotalCents,
+      );
+      if (!coupon) throw httpError(400, "Enter a coupon code.");
+      return response.json({
+        success: true,
+        coupon: { code: coupon.code, name: coupon.name },
+        subtotal: Number((subtotalCents / 100).toFixed(2)),
+        discount: Number((coupon.discountCents / 100).toFixed(2)),
+        total: Number((coupon.totalCents / 100).toFixed(2)),
+      });
+    } catch (error) {
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    }
+  });
+
   router.post("/razorpay/order", async (request, response, next) => {
     try {
       const credentials = getRazorpayCredentials();
       const [cartRows] = await pool.execute(
         `SELECT ci.product_id, ci.quantity, ci.variant_color, ci.variant_size,
-                p.name, p.mrp, p.offer_price, p.total_stock, p.status, p.variants
+                p.name, p.mrp, p.offer_price, p.total_stock, p.status, p.variants,
+                (SELECT MIN(id) FROM categories WHERE name = p.category) AS category_id
          FROM cart_items ci
          INNER JOIN products p ON p.id = ci.product_id
          WHERE ci.user_id = ?
@@ -286,6 +413,15 @@ function createCheckoutRouter(pool) {
         }
       }
 
+      const coupon = await applyCoupon(
+        pool,
+        request.body?.coupon_code,
+        request.user.user_id,
+        cartRows,
+        totalCents,
+      );
+      if (coupon) totalCents = coupon.totalCents;
+
       const receipt = randomUUID();
       const razorpayOrder = await razorpayRequest("/orders", credentials, {
         method: "POST",
@@ -293,7 +429,10 @@ function createCheckoutRouter(pool) {
           amount: totalCents,
           currency: "INR",
           receipt,
-          notes: { user_id: request.user.user_id },
+          notes: {
+            user_id: request.user.user_id,
+            coupon_code: coupon?.code || "",
+          },
         }),
       });
       if (!razorpayOrder.id || razorpayOrder.amount !== totalCents || razorpayOrder.currency !== "INR") {
@@ -359,7 +498,8 @@ function createCheckoutRouter(pool) {
         `SELECT ci.id AS cart_item_id, ci.product_id, ci.product_name, ci.product_image,
                 ci.product_code, ci.quantity, ci.variant_color, ci.variant_size,
                 p.name, p.product_code AS current_product_code, p.mrp, p.offer_price,
-                p.total_stock, p.status, p.images, p.variants
+                p.total_stock, p.status, p.images, p.variants,
+                (SELECT MIN(id) FROM categories WHERE name = p.category) AS category_id
          FROM cart_items ci
          INNER JOIN products p ON p.id = ci.product_id
          WHERE ci.user_id = ?
@@ -425,9 +565,19 @@ function createCheckoutRouter(pool) {
         };
       });
 
-      if (payment && payment.amountCents !== totalCents) {
-        throw httpError(409, "Your cart total changed after payment started. Please contact support.");
+      const coupon = await applyCoupon(
+        connection,
+        body.coupon_code,
+        userId,
+        cartRows,
+        totalCents,
+        { lock: true },
+      );
+      if (payment && (payment.amountCents !== (coupon?.totalCents ?? totalCents) ||
+          (payment.couponCode || "") !== (coupon?.code || ""))) {
+        throw httpError(409, "Your coupon or cart total changed after payment started. Please try checkout again.");
       }
+      if (coupon) totalCents = coupon.totalCents;
 
       const addressValues = [
         userId,
@@ -464,8 +614,9 @@ function createCheckoutRouter(pool) {
       const [orderResult] = await connection.execute(
         `INSERT INTO orders
           (user_id, address_id, customer_email, order_type, payment_method,
-           payment_status, status, total_amount, razorpay_order_id, razorpay_payment_id)
-         VALUES (?, ?, ?, 'Online', ?, ?, 'Order Placed', ?, ?, ?)`,
+           payment_status, status, total_amount, razorpay_order_id, razorpay_payment_id,
+           coupon_code, discount_amount)
+         VALUES (?, ?, ?, 'Online', ?, ?, 'Order Placed', ?, ?, ?, ?, ?)`,
         [
           userId,
           addressId,
@@ -475,6 +626,8 @@ function createCheckoutRouter(pool) {
           Number((totalCents / 100).toFixed(2)),
           payment?.orderId || null,
           payment?.paymentId || null,
+          coupon?.code || null,
+          Number(((coupon?.discountCents || 0) / 100).toFixed(2)),
         ],
       );
       const orderId = `ORD${String(orderResult.insertId).padStart(5, "0")}`;
@@ -511,6 +664,12 @@ function createCheckoutRouter(pool) {
           [remainingStock, stockStatus, JSON.stringify(variants), productId],
         );
       }
+      if (coupon) {
+        await connection.execute(
+          "UPDATE coupons SET usage_count = usage_count + 1 WHERE id = ?",
+          [coupon.id],
+        );
+      }
       await connection.execute("DELETE FROM cart_items WHERE user_id = ?", [userId]);
       await connection.commit();
 
@@ -519,6 +678,8 @@ function createCheckoutRouter(pool) {
         order_id: orderId,
         address_id: addressId,
         total_amount: Number((totalCents / 100).toFixed(2)),
+        coupon_code: coupon?.code || null,
+        discount_amount: Number(((coupon?.discountCents || 0) / 100).toFixed(2)),
         payment_method: payment?.method || "Cash on Delivery",
         payment_status: payment?.status || "Pending",
         status: "Order Placed",
