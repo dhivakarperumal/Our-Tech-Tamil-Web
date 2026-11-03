@@ -1,6 +1,5 @@
 import { useRef } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -34,13 +33,6 @@ function HomeProductCarousel({
 
           {!loading && products.length > 0 && (
             <div className="flex shrink-0 items-center gap-2">
-              <Link
-                to="/shop"
-                className="hidden items-center gap-1 whitespace-nowrap text-[11px] font-bold text-primary transition hover:text-primary-light sm:flex sm:text-xs"
-              >
-                View All Products
-                <ArrowRight size={15} aria-hidden="true" />
-              </Link>
               {products.length > 1 && (
                 <div className="flex items-center gap-1">
                   <button
