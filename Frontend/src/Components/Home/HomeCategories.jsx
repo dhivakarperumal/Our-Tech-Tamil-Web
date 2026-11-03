@@ -223,7 +223,7 @@ function HomeCategories() {
                   : false
               }
               navigation={false}
-              className="home-category-swiper !ml-0 !mr-auto"
+              className="home-category-swiper !ml-0 !mr-auto !overflow-visible"
               style={{ width: "100%" }}
               aria-label="Shop by category"
             >
