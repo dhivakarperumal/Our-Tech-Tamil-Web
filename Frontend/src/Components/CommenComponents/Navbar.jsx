@@ -158,7 +158,8 @@ const Navbar = () => {
   );
 
   return (
-    <nav className="relative bg-white shadow-[0_5px_18px_rgba(38,13,66,0.12)]">
+    <>
+      <nav className="relative bg-white shadow-[0_5px_18px_rgba(38,13,66,0.12)]">
       <PageContainer>
         <div className="flex min-h-[60px] items-center justify-between gap-3 py-1.5 lg:min-h-[64px]">
           <Link to="/" className="flex shrink-0 items-center" aria-label="Our Tech home">
@@ -247,6 +248,7 @@ const Navbar = () => {
           </div>
         </form>
       </PageContainer>
+      </nav>
 
       <div className="sticky top-0 z-50 isolate hidden h-[58px] items-center justify-center xl:flex">
         <svg
@@ -374,7 +376,7 @@ const Navbar = () => {
 
       <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
       <WishlistDrawer isOpen={wishlistOpen} onClose={() => setWishlistOpen(false)} />
-    </nav>
+    </>
   );
 };
 
