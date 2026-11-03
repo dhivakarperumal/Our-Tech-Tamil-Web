@@ -16,10 +16,14 @@ const Home = React.lazy(() => import("./Components/Home/Home.jsx"));
 const Shop = React.lazy(() => import("./Components/Shop/Shop.jsx"));
 const PublicProductDetails = React.lazy(() => import("./Components/Products/ProductDetails.jsx"));
 const AboutUs = React.lazy(() => import("./Components/CommenComponents/AboutUs.jsx"));
+const TermsAndConditions = React.lazy(() => import("./Components/CommenComponents/TermsAndCondition.jsx"));
 const Cart = React.lazy(() => import("./Components/Products/Cart.jsx"));
 const Checkout = React.lazy(() => import("./Components/Products/Checkout.jsx"));
 const Account = React.lazy(() => import("./Components/Products/Account.jsx"));
 const TrackOrders = React.lazy(() => import("./Components/Products/TrackOrders.jsx"));
+const Articles = React.lazy(() => import("./Components/Articles/Articles.jsx"));
+const ContactUs = React.lazy(() => import("./Components/CommenComponents/ContactUs.jsx"));
+const Account = React.lazy(() => import("./Components/Account/Account.jsx"));
 
 const Login = React.lazy(() => import("./Components/Auth/Login.jsx"));
 const Register = React.lazy(() => import("./Components/Auth/Register.jsx"));
@@ -57,6 +61,10 @@ const router = createBrowserRouter([
       { path: "shop", element: <Shop /> },
       { path: "product/:id", element: <PublicProductDetails /> },
       { path: "about", element: <AboutUs /> },
+      { path: "termsandconditions", element: <TermsAndConditions /> },
+      { path: "articles", element: <Articles /> },
+      { path: "contactus", element: <ContactUs /> },
+      { path: "account", element: <Account /> },
       { path: "cart", element: <Cart /> },
       { path: "checkout", element: <Checkout /> },
       { path: "account", element: <Account /> },

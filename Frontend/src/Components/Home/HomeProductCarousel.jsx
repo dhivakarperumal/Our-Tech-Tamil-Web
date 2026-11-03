@@ -1,6 +1,3 @@
-import { useRef } from "react";
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -15,8 +12,6 @@ function HomeProductCarousel({
   loading,
   emptyMessage,
 }) {
-  const swiperRef = useRef(null);
-
   return (
     <PageContainer className="py-4 sm:py-5">
       <section aria-labelledby={`${id}-heading`} className="w-full">
@@ -32,37 +27,6 @@ function HomeProductCarousel({
             <p className="mt-1 text-xs text-text-secondary sm:text-sm">{subtitle}</p>
           </div>
 
-          {!loading && products.length > 0 && (
-            <div className="flex shrink-0 items-center gap-2">
-              <Link
-                to="/shop"
-                className="hidden items-center gap-1 whitespace-nowrap text-[11px] font-bold text-primary transition hover:text-primary-light sm:flex sm:text-xs"
-              >
-                View All Products
-                <ArrowRight size={15} aria-hidden="true" />
-              </Link>
-              {products.length > 1 && (
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={() => swiperRef.current?.slidePrev()}
-                    aria-label={`Previous ${title.toLowerCase()}`}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
-                  >
-                    <ChevronLeft size={17} aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => swiperRef.current?.slideNext()}
-                    aria-label={`Next ${title.toLowerCase()}`}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
-                  >
-                    <ChevronRight size={17} aria-hidden="true" />
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
         </div>
 
         {loading ? (
@@ -83,9 +47,6 @@ function HomeProductCarousel({
           <div className="overflow-hidden py-2">
             <Swiper
               modules={[Autoplay]}
-              onSwiper={(swiper) => {
-                swiperRef.current = swiper;
-              }}
               slidesPerView={1.15}
               spaceBetween={12}
               loop={products.length > 5}

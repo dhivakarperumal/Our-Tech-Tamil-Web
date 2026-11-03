@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowRight,
   ChevronRight,
   FileText,
   Gamepad2,
@@ -176,15 +175,6 @@ const Footer = () => {
                 );
               })}
             </ul>
-            {categories.length > 0 && (
-              <Link
-                to="/#shop-by-category"
-                className="mt-4 inline-flex items-center gap-2 rounded-full border border-secondary-light px-4 py-2 text-sm font-bold text-white transition hover:bg-secondary-light/15"
-              >
-                View All Categories
-                <ArrowRight size={16} aria-hidden="true" />
-              </Link>
-            )}
           </div>
 
           <div className="border-white/15 sm:border-l sm:pl-6">

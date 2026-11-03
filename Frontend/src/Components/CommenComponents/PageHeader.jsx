@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-const PageHeader = ({ title, background, align = "center" }) => {
+const PageHeader = ({ title, background, align = "left" }) => {
   const bgImage = background || "/images/pageheader.png";
   const contentAlignment = align === "left"
     ? "w-full max-w-[1700px] mx-auto px-[6%] sm:px-[5%] lg:px-[3%] text-left"
