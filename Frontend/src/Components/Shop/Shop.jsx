@@ -83,6 +83,9 @@ function Shop() {
   const [sortBy, setSortBy] = useState("popular");
   const [pagination, setPagination] = useState({ filterKey: "", page: 1 });
   const [listView, setListView] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1024,
+  );
   const [showAllCategories, setShowAllCategories] = useState(() => Boolean(urlCategory));
   const [showAllBrands, setShowAllBrands] = useState(false);
 
@@ -267,6 +270,25 @@ function Shop() {
                 <option value="discount">Best Discount</option>
               </select>
             </label>
+            <button
+              type="button"
+              aria-expanded={filtersOpen}
+              aria-controls={filtersOpen ? "shop-filters" : undefined}
+              onClick={() => setFiltersOpen((open) => !open)}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-semibold transition ${
+                filtersOpen
+                  ? "border-[#4b00c8] bg-[#f3eaff] text-[#4b00c8]"
+                  : "border-[#e9e1f2] bg-white text-[#625970] hover:border-[#4b00c8] hover:text-[#4b00c8]"
+              }`}
+            >
+              <SlidersHorizontal size={14} aria-hidden="true" />
+              Filters
+              {activeFiltersCount > 0 && (
+                <span className="rounded-full bg-[#4b00c8] px-1.5 py-0.5 text-[10px] text-white">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
             <div className="hidden items-center rounded-lg border border-[#e9e1f2] bg-white p-1 sm:flex">
               <button
                 type="button"
@@ -290,8 +312,12 @@ function Shop() {
           </div>
         </div>
 
-        <div className="grid items-start gap-4 lg:grid-cols-[230px_minmax(0,1fr)] xl:grid-cols-[250px_minmax(0,1fr)]">
-          <aside className="rounded-xl border border-[#eee8f5] bg-white p-3 shadow-[0_4px_18px_rgba(54,22,93,0.06)] sm:p-4">
+        <div className={`grid items-start gap-4 ${filtersOpen ? "lg:grid-cols-[230px_minmax(0,1fr)] xl:grid-cols-[250px_minmax(0,1fr)]" : "grid-cols-1"}`}>
+          {filtersOpen && (
+          <aside
+            id="shop-filters"
+            className="rounded-xl border border-[#eee8f5] bg-white p-3 shadow-[0_4px_18px_rgba(54,22,93,0.06)] sm:p-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
+          >
             <div className="mb-1 flex items-center justify-between gap-2 pb-2">
               <h2 className="flex items-center gap-2 text-sm font-extrabold">
                 <SlidersHorizontal size={15} className="text-[#4b00c8]" aria-hidden="true" />
@@ -456,10 +482,11 @@ function Shop() {
               </label>
             </FilterSection>
           </aside>
+          )}
 
           <div className="min-w-0">
             {loading ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              <div className={`grid gap-3 sm:gap-4 ${filtersOpen ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}>
                 {Array.from({ length: 10 }, (_, index) => (
                   <div key={index} className="h-[270px] animate-pulse rounded-xl border border-[#eee8f5] bg-[#faf8ff]" aria-hidden="true" />
                 ))}
@@ -479,7 +506,7 @@ function Shop() {
               </div>
             ) : (
               <>
-                <div className={`grid gap-3 sm:gap-4 ${listView ? "grid-cols-1" : "grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5"}`}>
+                <div className={`grid gap-3 sm:gap-4 ${listView ? "grid-cols-1" : filtersOpen ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}>
                   {visibleProducts.map((product) => (
                     <ProductCard key={product.id} product={product} compact horizontal={listView} />
                   ))}
