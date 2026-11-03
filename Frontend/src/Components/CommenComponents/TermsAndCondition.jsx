@@ -23,6 +23,7 @@ import {
   Zap,
 } from "lucide-react";
 import PageContainer from "./PageContainer";
+import PageHeader from "./PageHeader";
 
 const sections = [
   {
@@ -167,28 +168,9 @@ const TermsAndConditions = () => {
 
   return (
     <main className="bg-[#fcfaff] pb-8">
+      <PageHeader title="Terms & Conditions" />
       <PageContainer className="pt-4 sm:pt-5">
-        <section
-          className="relative flex min-h-[132px] items-center overflow-hidden rounded-2xl bg-[#4b0d8c] bg-cover bg-center px-6 py-5 text-white shadow-sm sm:min-h-[142px] sm:px-10"
-          style={{
-            backgroundImage:
-              "linear-gradient(90deg, rgba(62, 9, 112, 0.96) 0%, rgba(116, 20, 190, 0.82) 48%, rgba(116, 20, 190, 0.05) 100%), url('/images/pageheader.png')",
-          }}
-        >
-          <div className="relative z-10 max-w-xl">
-            <div className="mb-2 flex items-center gap-2 text-[11px] font-medium text-white/85">
-              <Link to="/" className="transition hover:text-white">Home</Link>
-              <ChevronRight size={12} aria-hidden="true" />
-              <span>Terms &amp; Conditions</span>
-            </div>
-            <h1 className="text-2xl font-extrabold leading-tight sm:text-3xl lg:text-4xl">
-              Terms &amp; Conditions
-            </h1>
-            <p className="mt-1 max-w-lg text-xs leading-5 text-white/90 sm:text-sm">
-              Please read our terms carefully before using Our Tech. These guidelines explain your rights, responsibilities and our policies.
-            </p>
-          </div>
-        </section>
+      
 
         <div className="mt-4 grid items-start gap-3 lg:grid-cols-[246px_minmax(0,1fr)]">
           <aside className="rounded-2xl border border-[#eadcfb] bg-white p-2 shadow-[0_3px_12px_rgba(87,31,145,0.06)] lg:sticky lg:top-5">
@@ -202,14 +184,14 @@ const TermsAndConditions = () => {
               </div>
             </div>
 
-            <nav aria-label="Terms and conditions sections" className="mt-2 grid max-h-56 grid-cols-2 gap-x-2 gap-y-1.5 overflow-y-auto sm:grid-cols-3 lg:max-h-none lg:grid-cols-1 lg:gap-y-0">
+            <nav aria-label="Terms and conditions sections" className="mt-2 grid max-h-56 grid-cols-2 gap-x-2 gap-y-2 overflow-y-auto sm:grid-cols-3 lg:max-h-none lg:grid-cols-1 lg:gap-y-1.5">
               {sections.map(({ num, title }) => (
                 <a
                   key={num}
                   href={`#terms-${num}`}
                   onClick={() => setActiveSection(num)}
                   aria-current={activeSection === num ? "location" : undefined}
-                  className={`flex min-w-0 items-center gap-2 rounded-lg border-b border-[#eee7f5] px-2 py-2 text-[11px] transition last:border-b-0 sm:text-xs lg:rounded-none lg:py-1.5 lg:text-[11px] ${
+                  className={`flex min-w-0 items-center gap-2 rounded-lg border-b border-[#eee7f5] px-2 py-2.5 text-[11px] transition last:border-b-0 sm:text-xs lg:rounded-none lg:py-2.5 lg:text-[11px] ${
                     activeSection === num
                       ? "bg-[#f0ddff] font-bold text-primary"
                       : "text-[#29243c] hover:bg-[#faf6ff] hover:text-primary"
