@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import api from "../../api";
 import PageContainer from "../CommenComponents/PageContainer";
+import PageHeader from "../CommenComponents/PageHeader";
 
 const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
 
@@ -109,39 +110,9 @@ function Articles() {
 
   return (
     <main className="bg-[#f7f3fb] pb-14">
+      <PageHeader title = "Articles & Reviews" />
       <PageContainer>
         <section className="pt-6 sm:pt-8">
-          <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-r from-[#3d007d] via-[#6f1dc8] to-[#b84de2] px-6 py-7 shadow-[0_18px_60px_rgba(87,27,146,0.25)] sm:px-8 sm:py-9 lg:px-10 lg:py-10">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.18),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.12),transparent_28%)]" />
-            <div className="absolute -right-12 top-0 h-72 w-72 rounded-full bg-[#d7b7ff]/20 blur-3xl" />
-            <div className="absolute -left-10 bottom-0 h-52 w-52 rounded-full bg-[#f7e7ff]/10 blur-3xl" />
-
-            <div className="relative grid items-center gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-              <div className="max-w-[620px] text-white">
-                <div className="mb-3 flex items-center gap-2 text-[11px] font-medium text-purple-100">
-                  <span>Home</span>
-                  <span className="opacity-70">&gt;</span>
-                  <span>Articles &amp; Reviews</span>
-                </div>
-                <h1 className="text-4xl font-extrabold leading-[0.96] tracking-[-0.04em] sm:text-5xl lg:text-[4.1rem]">
-                  Articles &amp; Reviews
-                </h1>
-                <p className="mt-4 max-w-xl text-base text-purple-100 sm:text-lg">
-                  In-depth guides, product reviews and tech insights to help you make the right choice.
-                </p>
-              </div>
-
-              <div className="relative mx-auto w-full max-w-[500px]">
-                <div className="absolute left-8 top-10 h-20 w-20 rounded-full bg-[#f8d5ff]/30 blur-2xl" />
-                <div className="absolute bottom-0 right-0 h-24 w-24 rounded-full bg-[#ffffff]/20 blur-2xl" />
-                <img
-                  src={getImageUrl(articles[0]?.image_url)}
-                  alt="Tech accessories"
-                  className="relative h-[230px] w-full rounded-[26px] object-cover shadow-[0_25px_80px_rgba(19,6,38,0.35)] sm:h-[280px]"
-                />
-              </div>
-            </div>
-          </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {highlightCards.map(({ icon: Icon, title, subtitle }) => (
@@ -167,11 +138,10 @@ function Articles() {
                   key={value}
                   type="button"
                   onClick={() => setTab(value)}
-                  className={`rounded-[12px] px-5 py-2 text-sm font-semibold transition ${
-                    tab === value
+                  className={`rounded-[12px] px-5 py-2 text-sm font-semibold transition ${tab === value
                       ? "bg-[#6d2ad5] text-white shadow-[0_10px_20px_rgba(109,42,213,0.22)]"
                       : "bg-transparent text-[#4b4070] hover:bg-white/70"
-                  }`}
+                    }`}
                 >
                   {label}
                 </button>
@@ -292,11 +262,10 @@ function Articles() {
 
                       <button
                         type="button"
-                        className={`mt-5 inline-flex items-center justify-center gap-2 rounded-[14px] border px-4 py-3 text-sm font-bold transition ${
-                          itemType === "product_review"
+                        className={`mt-5 inline-flex items-center justify-center gap-2 rounded-[14px] border px-4 py-3 text-sm font-bold transition ${itemType === "product_review"
                             ? "border-[#6d2ad5] bg-[#6d2ad5] text-white hover:bg-[#5d1fc0]"
                             : "border-[#7d4ae4] bg-white text-[#6d2ad5] hover:bg-[#f4ebff]"
-                        }`}
+                          }`}
                       >
                         {buttonLabel}
                         <ArrowRight size={15} />
