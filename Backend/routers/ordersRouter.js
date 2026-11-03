@@ -195,6 +195,20 @@ function parseImageList(value) {
 function createOrdersRouter(pool) {
   const router = express.Router();
 
+  router.get("/mine", authenticate, async (request, response, next) => {
+    try {
+      if (!request.user.user_id) return response.json([]);
+      const [rows] = await pool.execute(
+        `SELECT ${ORDER_COLUMNS} ${ORDER_QUERY_FROM}
+         WHERE o.user_id = ? ORDER BY o.created_at DESC, o.id DESC`,
+        [request.user.user_id],
+      );
+      return response.json(await attachOrderItems(pool, rows));
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   router.get("/", authenticate, async (request, response, next) => {
     try {
       const conditions = [];

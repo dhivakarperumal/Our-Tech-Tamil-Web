@@ -9,12 +9,15 @@ import {
   Mail,
   MapPin,
   Package,
+  Pencil,
   Phone,
   Eye,
   EyeOff,
+  Plus,
   Save,
   Search,
   ShoppingBag,
+  Trash2,
   User,
   UserRound,
   X,
@@ -24,6 +27,7 @@ import api from "../../api";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import PageContainer from "../CommenComponents/PageContainer";
 import PageHeader from "../CommenComponents/PageHeader";
+import indianStates from "./indianStates";
 
 function getInitials(name) {
   if (!name) return "";
@@ -144,7 +148,7 @@ function MyOrders({ user }) {
   useEffect(function() {
     if (!user?.user_id) { setLoading(false); return; }
     var active = true;
-    api.get("/orders").then(function({ data }) {
+    api.get("/orders/mine").then(function({ data }) {
       if (active) { setOrders(Array.isArray(data) ? data : []); setLoading(false); }
     }).catch(function() {
       if (active) { setFailed(true); setLoading(false); }
@@ -343,18 +347,235 @@ function ChangePassword() {
   );
 }
 
-function MyAddresses() {
+const EMPTY_ADDRESS = {
+  recipient_name: "",
+  email: "",
+  phone: "",
+  street_address: "",
+  city: "",
+  district: "",
+  state: "",
+  country: "India",
+  zip_code: "",
+};
+
+function MyAddresses({ user }) {
+  const [addresses, setAddresses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [editingAddressId, setEditingAddressId] = useState(null);
+  const [form, setForm] = useState(function() { return { ...EMPTY_ADDRESS, email: user?.email || "" }; });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(function() {
+    let active = true;
+    api.get("/checkout/addresses").then(function({ data }) {
+      if (active) {
+        setAddresses(Array.isArray(data) ? data : []);
+        setFailed(false);
+      }
+    }).catch(function() {
+      if (active) setFailed(true);
+    }).finally(function() {
+      if (active) setLoading(false);
+    });
+    return function() { active = false; };
+  }, [user?.user_id]);
+
+  useEffect(function() {
+    if (editingAddressId === null) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    function closeOnEscape(event) {
+      if (event.key === "Escape" && !saving) {
+        setEditingAddressId(null);
+        setForm({ ...EMPTY_ADDRESS, email: user?.email || "" });
+      }
+    }
+    document.addEventListener("keydown", closeOnEscape);
+
+    return function() {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [editingAddressId, saving, user?.email]);
+
+  function resetForm() {
+    setEditingAddressId(null);
+    setForm({ ...EMPTY_ADDRESS, email: user?.email || "" });
+  }
+
+  function addAddress() {
+    setForm({ ...EMPTY_ADDRESS, email: user?.email || "" });
+    setEditingAddressId("new");
+  }
+
+  function editAddress(address) {
+    setEditingAddressId(address.id);
+    setForm({
+      recipient_name: address.recipient_name || "",
+      email: address.email || user?.email || "",
+      phone: address.phone || "",
+      street_address: address.street_address || "",
+      city: address.city || "",
+      district: address.district || "",
+      state: address.state || "",
+      country: address.country || "India",
+      zip_code: address.zip_code || "",
+    });
+  }
+
+  function changeAddress(event) {
+    const { name, value } = event.target;
+    setForm(function(current) { return { ...current, [name]: value }; });
+  }
+
+  async function saveAddress(event) {
+    event.preventDefault();
+    setSaving(true);
+    const isNewAddress = editingAddressId === "new";
+    try {
+      const { data } = !isNewAddress
+        ? await api.put("/checkout/addresses/" + editingAddressId, form)
+        : await api.post("/checkout/addresses", form);
+      setAddresses(function(current) {
+        if (!isNewAddress) {
+          return current.map(function(address) {
+            return address.id === editingAddressId ? data : address;
+          });
+        }
+        return [data, ...current];
+      });
+      toast.success(isNewAddress ? "Address saved successfully." : "Address updated successfully.");
+      resetForm();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to save this address.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteAddress(address) {
+    if (!window.confirm("Delete this saved address?")) return;
+    try {
+      await api.delete("/checkout/addresses/" + address.id);
+      setAddresses(function(current) {
+        return current.filter(function(item) { return item.id !== address.id; });
+      });
+      if (editingAddressId === address.id) resetForm();
+      toast.success("Address deleted successfully.");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to delete this address.");
+    }
+  }
+
   return (
     <div className="rounded-2xl border border-[#e9def5] bg-white p-6 sm:p-8">
-      <div className="flex items-center gap-3 border-b border-[#f0e8ff] pb-5">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><MapPin size={20} /></span>
-        <div><h2 className="text-lg font-extrabold text-[#1a0745]">My Addresses</h2><p className="text-xs text-gray-500">Manage your saved delivery addresses.</p></div>
+      <div className="flex items-center justify-between gap-3 border-b border-[#f0e8ff] pb-5">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><MapPin size={20} /></span>
+          <div><h2 className="text-lg font-extrabold text-[#1a0745]">My Addresses</h2><p className="text-xs text-gray-500">Manage your saved delivery addresses.</p></div>
+        </div>
+        <button type="button" onClick={addAddress} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-white transition hover:bg-primary-dark">
+          <Plus size={15} /> Add address
+        </button>
       </div>
-      <div className="mt-10 flex flex-col items-center gap-3 py-8 text-center">
-        <MapPin size={52} className="text-primary/20" strokeWidth={1.2} />
-        <p className="font-semibold text-gray-500">No saved addresses yet.</p>
-        <p className="text-xs text-gray-400">Addresses you use at checkout will be saved here.</p>
-      </div>
+      {editingAddressId !== null && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+          onClick={function(event) {
+            if (event.target === event.currentTarget && !saving) resetForm();
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="address-dialog-title"
+            className="flex max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-2xl"
+          >
+            <header className="flex items-start justify-between gap-4 border-b border-[#f0e8ff] p-5 sm:px-7">
+              <div>
+                <h3 id="address-dialog-title" className="text-lg font-extrabold text-[#1a0745]">
+                  {editingAddressId === "new" ? "Add an address" : "Edit address"}
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">Enter your delivery address details.</p>
+              </div>
+              <button
+                type="button"
+                onClick={resetForm}
+                disabled={saving}
+                aria-label="Close address form"
+                className="rounded-lg p-2 text-gray-500 transition hover:bg-[#faf7ff] hover:text-primary disabled:opacity-50"
+              >
+                <X size={20} />
+              </button>
+            </header>
+            <form onSubmit={saveAddress} className="flex min-h-0 flex-col">
+              <div className="grid gap-4 overflow-y-auto p-5 sm:grid-cols-2 sm:px-7">
+                <Field label="Full name" required><InputBox icon={User} name="recipient_name" value={form.recipient_name} onChange={changeAddress} maxLength={160} required /></Field>
+                <Field label="Phone number" required><InputBox icon={Phone} name="phone" type="tel" value={form.phone} onChange={changeAddress} maxLength={32} required /></Field>
+                <Field label="Email"><InputBox icon={Mail} name="email" type="email" value={form.email} onChange={changeAddress} maxLength={191} autoComplete="email" /></Field>
+                <div className="sm:col-span-2">
+                  <Field label="Street address" required>
+                    <textarea name="street_address" value={form.street_address} onChange={changeAddress} maxLength={512} required className="min-h-20 w-full rounded-xl border border-[#e2d3f5] bg-white px-3.5 py-2.5 text-sm text-gray-800 outline-none focus:border-primary focus:ring-2 focus:ring-primary/10" />
+                  </Field>
+                </div>
+                <Field label="City" required><InputBox name="city" value={form.city} onChange={changeAddress} maxLength={120} required /></Field>
+                <Field label="District"><InputBox name="district" value={form.district} onChange={changeAddress} maxLength={120} /></Field>
+                <Field label="State" required>
+                  <SelectBox icon={MapPin} name="state" value={form.state} onChange={changeAddress} required>
+                    <option value="" disabled>Select a state or union territory</option>
+                    {form.state && !indianStates.includes(form.state) && <option value={form.state}>{form.state}</option>}
+                    {indianStates.map(function(state) { return <option key={state} value={state}>{state}</option>; })}
+                  </SelectBox>
+                </Field>
+                <Field label="Postal code" required><InputBox name="zip_code" value={form.zip_code} onChange={changeAddress} maxLength={24} required /></Field>
+                <Field label="Country" required><InputBox name="country" value={form.country} onChange={changeAddress} maxLength={120} required /></Field>
+              </div>
+              <div className="flex justify-end gap-3 border-t border-[#f0e8ff] p-5 sm:px-7">
+                <button type="button" onClick={resetForm} disabled={saving} className="rounded-xl border border-[#d4c5f0] px-4 py-2 text-sm font-bold text-gray-600 transition hover:bg-[#faf7ff] disabled:opacity-50">Cancel</button>
+                <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-dark disabled:opacity-60">
+                  <Save size={15} /> {saving ? "Saving..." : "Save address"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
+      {loading ? (
+        <p className="mt-6 text-sm text-gray-500">Loading saved addresses...</p>
+      ) : failed ? (
+        <p className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">Could not load your addresses. Please refresh the page and try again.</p>
+      ) : addresses.length === 0 ? (
+        <div className="mt-8 flex flex-col items-center gap-3 py-8 text-center">
+          <MapPin size={48} className="text-primary/20" strokeWidth={1.2} />
+          <p className="font-semibold text-gray-500">No saved addresses yet.</p>
+          <p className="text-xs text-gray-400">Addresses you use at checkout will be saved here.</p>
+        </div>
+      ) : (
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {addresses.map(function(address) {
+            return (
+              <article key={address.id} className="rounded-xl border border-[#e9def5] bg-[#faf8ff] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="font-bold text-[#1a0745]">{address.recipient_name}</h3>
+                    <p className="mt-1 text-sm text-gray-600">{address.phone}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-2">
+                    <button type="button" onClick={function(){ editAddress(address); }} aria-label="Edit address" className="rounded-lg border border-[#e2d3f5] bg-white p-2 text-primary hover:bg-primary/5"><Pencil size={15} /></button>
+                    <button type="button" onClick={function(){ deleteAddress(address); }} aria-label="Delete address" className="rounded-lg border border-rose-200 bg-white p-2 text-rose-600 hover:bg-rose-50"><Trash2 size={15} /></button>
+                  </div>
+                </div>
+                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-600">
+                  {[address.street_address, address.city, address.district, address.state, address.zip_code, address.country].filter(Boolean).join(", ")}
+                </p>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -394,7 +615,7 @@ function Account() {
       <div className="bg-[#faf9fc] py-8 sm:py-12">
         <PageContainer>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-            <aside className="w-full shrink-0 lg:w-64">
+            <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:w-64 lg:self-start">
               <div className="rounded-2xl border border-[#e9def5] bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-3 border-b border-[#f0e8ff] pb-4">
                   <Avatar name={user.username} size="lg" />
@@ -412,16 +633,16 @@ function Account() {
                       </button>
                     );
                   })}
-                  <Link to="/shop" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"><ShoppingBag size={18} />Browse Shop</Link>
+                  {/* <Link to="/shop" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"><ShoppingBag size={18} />Browse Shop</Link> */}
                   <button type="button" onClick={function(){ setShowLogout(true); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50"><LogOut size={18} />Logout</button>
                 </nav>
               </div>
             </aside>
 
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
               {activeTab === "personal" && <PersonalDetails user={user} setUser={setUser} />}
               {activeTab === "orders"   && <MyOrders user={user} />}
-              {activeTab === "address"  && <MyAddresses />}
+              {activeTab === "address"  && <MyAddresses key={user.user_id} user={user} />}
               {activeTab === "password" && <ChangePassword />}
             </div>
           </div>

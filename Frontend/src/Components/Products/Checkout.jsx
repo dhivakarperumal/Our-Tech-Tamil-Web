@@ -7,50 +7,12 @@ import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import PageContainer from "../CommenComponents/PageContainer";
 import PageHeader from "../CommenComponents/PageHeader";
+import indianStates from "./indianStates";
 
 const formatPrice = (value) => Number(value || 0).toLocaleString("en-IN", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
-
-const indianStates = [
-  "Andhra Pradesh",
-  "Arunachal Pradesh",
-  "Assam",
-  "Bihar",
-  "Chhattisgarh",
-  "Goa",
-  "Gujarat",
-  "Haryana",
-  "Himachal Pradesh",
-  "Jharkhand",
-  "Karnataka",
-  "Kerala",
-  "Madhya Pradesh",
-  "Maharashtra",
-  "Manipur",
-  "Meghalaya",
-  "Mizoram",
-  "Nagaland",
-  "Odisha",
-  "Punjab",
-  "Rajasthan",
-  "Sikkim",
-  "Tamil Nadu",
-  "Telangana",
-  "Tripura",
-  "Uttar Pradesh",
-  "Uttarakhand",
-  "West Bengal",
-  "Andaman and Nicobar Islands",
-  "Chandigarh",
-  "Dadra and Nagar Haveli and Daman and Diu",
-  "Delhi",
-  "Jammu and Kashmir",
-  "Ladakh",
-  "Lakshadweep",
-  "Puducherry",
-];
 
 let razorpayScriptPromise;
 const loadRazorpay = () => {
@@ -125,6 +87,7 @@ function Checkout() {
       const signature = [
         address.recipient_name,
         address.phone,
+        address.email,
         address.street_address,
         address.city,
         address.district,
@@ -134,6 +97,7 @@ function Checkout() {
       return addresses.findIndex((candidate) => [
         candidate.recipient_name,
         candidate.phone,
+        candidate.email,
         candidate.street_address,
         candidate.city,
         candidate.district,
@@ -167,6 +131,7 @@ function Checkout() {
     setForm((current) => ({
       ...current,
       recipient_name: address.recipient_name || current.recipient_name,
+      customer_email: address.email || current.customer_email,
       phone: address.phone || current.phone,
       street_address: address.street_address || "",
       city: address.city || "",

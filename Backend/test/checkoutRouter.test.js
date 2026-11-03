@@ -69,13 +69,21 @@ function createPool({ stock = 5, quantity = 2, coupon = null, combo = false } = 
     if (query.includes("COUNT(*) AS order_count")) {
       return [[{ order_count: orders.filter((order) => order.user_id === params[0]).length }]];
     }
-    if (query.includes("SELECT id, recipient_name, phone")) {
+    if (query.includes("SELECT id, recipient_name, email, phone")) {
       const userId = params[0];
       return [addresses
-        .filter((address) => address.user_id === userId)
-        .map(({ id, recipient_name, phone, street_address, city, district, state, country, zip_code }) => ({
-          id, recipient_name, phone, street_address, city, district, state, country, zip_code,
+        .filter((address) => address.user_id === userId && address.is_active !== false)
+        .map(({ id, recipient_name, email, phone, street_address, city, district, state, country, zip_code }) => ({
+          id, recipient_name, email, phone, street_address, city, district, state, country, zip_code,
         }))];
+    }
+    if (query.includes("SELECT id FROM addresses WHERE id = ? AND user_id = ?")) {
+      const address = addresses.find((item) =>
+        String(item.id) === String(params[0]) &&
+        item.user_id === params[1] &&
+        item.is_active !== false,
+      );
+      return [address ? [{ id: address.id }] : []];
     }
     if (query.includes("FROM orders") && query.includes("razorpay_payment_id")) {
       return [orders.filter((order) =>
@@ -83,30 +91,31 @@ function createPool({ stock = 5, quantity = 2, coupon = null, combo = false } = 
       )];
     }
     if (query.includes("FROM addresses")) {
-      const [
-        userId, recipientName, phone, streetAddress, city, district, state, country, zipCode,
-      ] = params;
+      const [userId, ...values] = params;
+      const excludeId = query.includes("id <> ?") ? values.pop() : null;
+      const fields = [
+        "recipient_name", "email", "phone", "street_address", "city",
+        "district", "state", "country", "zip_code",
+      ];
       const existing = addresses.find((address) =>
         address.user_id === userId &&
-        address.recipient_name === recipientName &&
-        address.phone === phone &&
-        address.street_address === streetAddress &&
-        address.city === city &&
-        address.district === district &&
-        address.state === state &&
-        address.country === country &&
-        address.zip_code === zipCode,
+        address.is_active !== false &&
+        String(address.id) !== String(excludeId) &&
+        fields.every((field, index) =>
+          String(address[field] || "").trim().toLowerCase() === values[index],
+        ),
       );
       return [existing ? [{ id: existing.id }] : []];
     }
     if (query.includes("INSERT INTO addresses")) {
       const [
-        user_id, recipient_name, phone, street_address, city, district, state, country, zip_code,
+        user_id, recipient_name, email, phone, street_address, city, district, state, country, zip_code,
       ] = params;
       addresses.push({
-        id: 31,
+        id: addresses.reduce((maximum, address) => Math.max(maximum, address.id), 30) + 1,
         user_id,
         recipient_name,
+        email,
         phone,
         street_address,
         city,
@@ -114,8 +123,33 @@ function createPool({ stock = 5, quantity = 2, coupon = null, combo = false } = 
         state,
         country,
         zip_code,
+        is_active: true,
       });
-      return [{ insertId: 31 }];
+      return [{ insertId: addresses[addresses.length - 1].id }];
+    }
+    if (query.includes("UPDATE addresses SET is_active = FALSE")) {
+      const address = addresses.find((item) =>
+        String(item.id) === String(params[0]) &&
+        item.user_id === params[1] &&
+        item.is_active !== false,
+      );
+      if (address) address.is_active = false;
+      return [{ affectedRows: address ? 1 : 0 }];
+    }
+    if (query.includes("UPDATE addresses")) {
+      const [
+        recipient_name, email, phone, street_address, city, district, state, country, zip_code, id, user_id,
+      ] = params;
+      const address = addresses.find((item) =>
+        String(item.id) === String(id) &&
+        item.user_id === user_id &&
+        item.is_active !== false,
+      );
+      if (!address) return [{ affectedRows: 0 }];
+      Object.assign(address, {
+        recipient_name, email, phone, street_address, city, district, state, country, zip_code,
+      });
+      return [{ affectedRows: 1 }];
     }
     if (query.includes("INSERT INTO orders")) {
       const [
@@ -321,15 +355,20 @@ test("customer can validate and redeem a coupon against the server-calculated ca
 test("checkout reuses the same customer's matching delivery address", async (t) => {
   const pool = createPool();
   const url = await startServer(t, pool);
-  const submitOrder = () => fetch(url, {
+  const submitOrder = (orderAddress) => fetch(url, {
     method: "POST",
     headers: authHeaders(),
-    body: JSON.stringify(address),
+    body: JSON.stringify(orderAddress),
   });
 
-  const firstResponse = await submitOrder();
+  const firstResponse = await submitOrder(address);
   const firstOrder = await firstResponse.json();
-  const secondResponse = await submitOrder();
+  const secondResponse = await submitOrder({
+    ...address,
+    recipient_name: " customer one ",
+    street_address: "12 test street",
+    city: "chennai",
+  });
   const secondOrder = await secondResponse.json();
 
   assert.equal(firstResponse.status, 201);
@@ -357,11 +396,71 @@ test("saved checkout addresses are listed only for the authenticated customer", 
   assert.equal(customerAddressesResponse.status, 200);
   assert.equal(customerAddresses.length, 1);
   assert.equal(customerAddresses[0].street_address, address.street_address);
+  assert.equal(customerAddresses[0].email, address.customer_email);
 
   const otherCustomerResponse = await fetch(`${url}/addresses`, {
     headers: authHeaders("other-customer"),
   });
   assert.deepEqual(await otherCustomerResponse.json(), []);
+});
+
+test("customers can create, update, and delete only their own saved addresses", async (t) => {
+  const pool = createPool();
+  const url = await startServer(t, pool);
+  const createAddress = (data) => fetch(`${url}/addresses`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  });
+
+  const createdResponse = await createAddress(address);
+  const created = await createdResponse.json();
+  assert.equal(createdResponse.status, 201, JSON.stringify(created));
+  assert.equal(created.street_address, address.street_address);
+  assert.equal(created.email, address.customer_email);
+
+  const duplicateResponse = await createAddress({
+    ...address,
+    recipient_name: " customer one ",
+    street_address: "12 test street",
+  });
+  assert.equal(duplicateResponse.status, 409);
+
+  const updatedAddress = { ...address, street_address: "45 Updated Street" };
+  const updateResponse = await fetch(`${url}/addresses/${created.id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(updatedAddress),
+  });
+  assert.equal(updateResponse.status, 200);
+  assert.equal((await updateResponse.json()).street_address, updatedAddress.street_address);
+
+  const secondAddress = { ...address, street_address: "88 Second Street" };
+  const secondResponse = await createAddress(secondAddress);
+  const second = await secondResponse.json();
+  assert.equal(secondResponse.status, 201);
+  const duplicateUpdate = await fetch(`${url}/addresses/${created.id}`, {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify(secondAddress),
+  });
+  assert.equal(duplicateUpdate.status, 409);
+
+  const otherCustomerUpdate = await fetch(`${url}/addresses/${created.id}`, {
+    method: "PUT",
+    headers: authHeaders("other-customer"),
+    body: JSON.stringify(updatedAddress),
+  });
+  assert.equal(otherCustomerUpdate.status, 404);
+
+  const deleteResponse = await fetch(`${url}/addresses/${created.id}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  assert.equal(deleteResponse.status, 200);
+  const listResponse = await fetch(`${url}/addresses`, { headers: authHeaders() });
+  assert.deepEqual((await listResponse.json()).map((item) => item.id), [second.id]);
+  assert.equal(pool.addresses[0].is_active, false);
 });
 
 test("checkout rejects unauthenticated customers and invalid addresses", async (t) => {
@@ -379,6 +478,13 @@ test("checkout rejects unauthenticated customers and invalid addresses", async (
     body: JSON.stringify({ ...address, street_address: "" }),
   });
   assert.equal(invalidAddress.status, 400);
+
+  const invalidEmail = await fetch(`${url}/addresses`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({ ...address, email: "not-an-email" }),
+  });
+  assert.equal(invalidEmail.status, 400);
 });
 
 test("Razorpay order and payment verification use server-calculated totals", async (t) => {

@@ -203,6 +203,27 @@ test("order details load the delivery address from the addresses table", async (
   ));
 });
 
+test("the account orders endpoint only returns the authenticated user's orders", async (t) => {
+  const pool = createPool();
+  const app = express();
+  app.use("/api/orders", createOrdersRouter(pool));
+  const server = app.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => server.close());
+
+  const token = jwt.sign({ id: 1, user_id: "customer-uuid", role: "admin" }, process.env.JWT_SECRET);
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/orders/mine`, {
+    headers: { Authorization: ["Bearer", token].join(" ") },
+  });
+
+  assert.equal(response.status, 200);
+  const query = pool.statements.find(({ query: sql }) =>
+    sql.includes("FROM orders o LEFT JOIN addresses a ON a.id = o.address_id"),
+  );
+  assert.match(query.query, /WHERE o\.user_id = \?/);
+  assert.deepEqual(query.params, ["customer-uuid"]);
+});
+
 test("order details include every product and quantity inside combo order lines", async (t) => {
   const pool = createPool({
     orderItems: [{
