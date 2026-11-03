@@ -652,6 +652,16 @@ function Shop() {
 
             <FilterSection title="Rating" icon={Star} defaultOpen={false}>
               <div className="space-y-2">
+                <label className="flex cursor-pointer items-center gap-2 text-[11px] text-[#504760]">
+                  <input
+                    type="radio"
+                    name="shop-rating"
+                    checked={minRating === 0}
+                    onChange={() => setMinRating(0)}
+                    className="h-3.5 w-3.5 accent-[#4b00c8]"
+                  />
+                  <span className="min-w-0 flex-1">All</span>
+                </label>
                 {[4, 3, 2, 1].map((rating) => (
                   <label key={rating} className="flex cursor-pointer items-center gap-2 text-[11px] text-[#504760]">
                     <input
@@ -666,15 +676,6 @@ function Shop() {
                     </span>
                   </label>
                 ))}
-                {minRating > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setMinRating(0)}
-                    className="text-[10px] font-bold text-[#4b00c8]"
-                  >
-                    Clear rating
-                  </button>
-                )}
               </div>
             </FilterSection>
 
