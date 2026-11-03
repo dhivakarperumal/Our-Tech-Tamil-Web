@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, BadgePercent, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import api from "../../api";
 import PageContainer from "../CommenComponents/PageContainer";
@@ -58,55 +58,63 @@ function OfferBanner() {
     <>
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_61%_43%,rgba(241,0,255,0.82),transparent_35%),radial-gradient(ellipse_at_84%_100%,rgba(219,0,255,0.65),transparent_42%),linear-gradient(112deg,#30005f_0%,#5900b9_48%,#310078_100%)]"
+        className="pointer-events-none absolute -right-20 -top-32 z-0 h-80 w-80 rounded-full border-[32px] border-fuchsia-300/10"
       />
+
       <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-[17%] left-[22%] h-[28%] w-[62%] rounded-[50%] border-t-4 border-yellow-200 bg-gradient-to-b from-fuchsia-400 via-purple-700 to-[#24004f] shadow-[0_-8px_35px_rgba(255,215,0,0.75)]"
-      />
+        className="relative z-10 grid h-full min-h-[430px] w-full grid-cols-1 items-center gap-2 p-5 sm:min-h-[360px] sm:p-8 md:min-h-0 md:grid-cols-[0.9fr_1.25fr] md:gap-0 md:p-8 lg:p-12"
+        style={{
+          backgroundColor: "#10002e",
+          backgroundImage: "radial-gradient(ellipse at 70% 55%, rgba(174,30,255,0.6), transparent 34%), radial-gradient(ellipse at 100% 0%, rgba(64,0,200,0.6), transparent 40%), linear-gradient(112deg, #10002e 0%, #290078 45%, #4b00c8 100%)",
+        }}
+      >
+        <div className="relative z-10 flex min-w-0 flex-col items-start justify-center md:max-w-[470px]">
+          <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-fuchsia-200/50 bg-white/10 px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white shadow-[0_0_24px_rgba(217,70,239,0.25)] backdrop-blur sm:text-xs">
+            <Sparkles size={14} className="text-amber-300" aria-hidden="true" />
+            Limited-time offer
+          </span>
+          <h2 className="max-w-full text-3xl font-black leading-[1.05] tracking-tight text-white drop-shadow sm:text-4xl lg:text-5xl">
+            {banner.title}
+          </h2>
+          {banner.subtitle && (
+            <p className="mt-3 max-w-md text-sm font-semibold leading-relaxed text-fuchsia-100 sm:text-base">
+              {banner.subtitle}
+            </p>
+          )}
+          {descriptionText && (
+            <p className="mt-2 max-w-md whitespace-pre-line text-xs leading-relaxed text-white/80 sm:text-sm">
+              {descriptionText}
+            </p>
+          )}
+          <span className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-gradient-to-r from-amber-300 to-yellow-400 px-5 py-3 text-sm font-black text-[#24104f] shadow-[0_8px_24px_rgba(255,191,0,0.3)] transition duration-200 group-hover:-translate-y-0.5 group-hover:shadow-[0_12px_30px_rgba(255,191,0,0.45)]">
+            Explore Deals
+            <ArrowRight size={18} aria-hidden="true" />
+          </span>
+        </div>
 
-      <div className="relative z-10 flex w-full flex-col justify-center px-6 py-6 pr-20 sm:px-10 sm:py-7 sm:pr-24 md:absolute md:inset-y-0 md:left-0 md:w-[34%] md:px-8 md:pr-0 lg:px-12">
-        <h2 className="max-w-lg text-3xl font-black leading-tight tracking-tight text-white drop-shadow-sm sm:text-4xl lg:text-5xl">
-          {banner.title}
-        </h2>
-        {banner.subtitle && (
-          <p className="mt-2 max-w-lg text-sm font-extrabold leading-tight text-accent sm:text-base lg:text-xl">
-            {banner.subtitle}
-          </p>
-        )}
-        {descriptionText && (
-          <p className="mt-2 max-w-lg whitespace-pre-line text-[11px] font-medium leading-relaxed text-white/95 sm:text-xs lg:text-sm">
-            {descriptionText}
-          </p>
-        )}
-        <span className="mt-5 inline-flex w-fit items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-extrabold text-primary-dark shadow-lg transition group-hover:-translate-y-0.5 group-hover:bg-accent sm:px-7 sm:py-3 sm:text-base">
-          Explore Deals
-          <ArrowRight size={19} aria-hidden="true" />
-        </span>
-      </div>
-
-      {banner.desktop_image && (
-        <div className="relative z-[1] mx-auto flex h-[145px] w-[78%] items-center justify-center sm:h-[180px] md:absolute md:inset-y-[8%] md:left-[27%] md:mx-0 md:h-[84%] md:w-[56%] lg:left-[25%] lg:w-[60%]">
+        {banner.desktop_image && (
+          <div className="relative flex h-full min-h-0 w-full items-center justify-center md:pl-3">
+            <div aria-hidden="true" className="absolute left-1/2 top-1/2 aspect-square w-[75%] -translate-x-1/2 -translate-y-1/2 rounded-full border border-fuchsia-200/30 shadow-[0_0_48px_rgba(217,70,239,0.32)]" />
+            <div aria-hidden="true" className="absolute bottom-[12%] left-[8%] right-[4%] h-5 rounded-[50%] bg-fuchsia-400/40 blur-xl" />
           <img
             src={getImageUrl(banner.desktop_image)}
             alt={banner.title}
-            className="h-full w-full object-contain drop-shadow-[0_18px_22px_rgba(18,0,50,0.45)]"
+              className="relative z-[1] h-[220px] w-full object-contain drop-shadow-[0_20px_28px_rgba(9,0,40,0.5)] sm:h-[250px] md:h-full md:max-h-[340px] lg:max-h-[390px] transition-transform duration-500 group-hover:scale-[1.03]"
           />
-        </div>
-      )}
+          </div>
+        )}
 
-      <div className="absolute right-3 top-3 z-20 flex h-[74px] w-[64px] rotate-[7deg] flex-col items-center justify-center rounded-xl bg-gradient-to-b from-yellow-300 via-yellow-400 to-amber-500 text-center text-primary-dark shadow-[0_8px_24px_rgba(20,0,50,0.4)] sm:right-5 sm:top-5 sm:h-[100px] sm:w-[86px] md:right-[3%] md:top-[12%] md:h-[132px] md:w-[112px] lg:h-[160px] lg:w-[136px]">
-        <span className="text-[10px] font-black leading-none sm:text-xs lg:text-base">MEGA</span>
-        <span className="mt-1 text-base font-black leading-none sm:text-xl lg:text-3xl">SALE</span>
         {offerText && (
-          <span className="mt-1 max-w-[90%] text-[8px] font-extrabold leading-tight sm:text-[10px] lg:text-sm">
-            {offerText}
-          </span>
+          <div className="absolute right-4 top-4 z-20 hidden -rotate-6 flex-col items-center justify-center rounded-2xl border border-amber-100/70 bg-gradient-to-br from-amber-300 to-yellow-500 px-4 py-3 text-center text-[#25104d] shadow-[0_12px_28px_rgba(15,0,45,0.35)] sm:flex md:right-[4%] md:top-[12%] md:px-5 md:py-4">
+            <BadgePercent size={20} className="mb-1" aria-hidden="true" />
+            <span className="text-[9px] font-black uppercase tracking-wider md:text-[10px]">Mega deal</span>
+            <span className="mt-0.5 max-w-28 text-xs font-black leading-tight md:text-sm">{offerText}</span>
+          </div>
         )}
       </div>
     </>
   );
-  const className = "group relative isolate flex min-h-[280px] w-full flex-col overflow-hidden rounded-2xl bg-gradient-to-r from-primary-dark via-primary to-gradient-middle shadow-lg sm:min-h-[320px] md:min-h-[300px] md:flex-row";
+  const className = "group relative isolate aspect-[1.35/1] min-h-[430px] w-full overflow-hidden rounded-[1.75rem] border border-fuchsia-300/40 bg-gradient-to-br from-[#10002e] via-[#31008c] to-[#4b00c8] shadow-[0_24px_54px_rgba(76,0,200,0.24)] transition duration-300 hover:shadow-[0_30px_64px_rgba(76,0,200,0.34)] sm:aspect-[2.2/1] sm:min-h-[360px] md:aspect-[3.5/1] md:min-h-[320px]";
 
   return (
     <section aria-label="Latest offer">
