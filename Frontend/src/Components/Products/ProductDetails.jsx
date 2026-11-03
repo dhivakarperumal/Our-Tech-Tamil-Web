@@ -1015,7 +1015,7 @@ function ProductDetails() {
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
             {relatedProducts.map((relatedProduct) => (
-              <ProductCard key={relatedProduct.id} product={relatedProduct} />
+              <ProductCard key={relatedProduct.id} product={relatedProduct} dense />
             ))}
           </div>
         </section>

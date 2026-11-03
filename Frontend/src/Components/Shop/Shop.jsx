@@ -513,7 +513,7 @@ function Shop() {
               <>
                 <div className={`grid gap-3 sm:gap-4 ${listView ? "grid-cols-1" : filtersOpen ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}>
                   {visibleProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} compact horizontal={listView} />
+                    <ProductCard key={product.id} product={product} compact dense horizontal={listView} />
                   ))}
                 </div>
                 {totalPages > 1 && (
