@@ -65,13 +65,34 @@ function Shop() {
   const [searchParams] = useSearchParams();
   const urlSearch = searchParams.get("search") || "";
   const urlCategory = searchParams.get("category") || "";
+  const urlSubcategory = searchParams.get("subcategory") || "";
   const [localSearchState, setLocalSearchState] = useState(() => ({
     urlSearch,
     value: urlSearch,
   }));
   const localSearch = localSearchState.urlSearch === urlSearch ? localSearchState.value : urlSearch;
   const effectiveSearchQuery = localSearch.trim().toLowerCase();
-  const [selectedCategories, setSelectedCategories] = useState(() => urlCategory ? [urlCategory] : []);
+  const [selectedCategoryState, setSelectedCategoryState] = useState(() => ({
+    urlCategory,
+    values: urlCategory ? [urlCategory] : [],
+  }));
+  const selectedCategories = useMemo(
+    () => selectedCategoryState.urlCategory === urlCategory
+      ? selectedCategoryState.values
+      : urlCategory ? [urlCategory] : [],
+    [selectedCategoryState, urlCategory],
+  );
+  const setSelectedCategories = (update) => {
+    setSelectedCategoryState((current) => {
+      const currentValues = current.urlCategory === urlCategory
+        ? current.values
+        : urlCategory ? [urlCategory] : [];
+      return {
+        urlCategory,
+        values: typeof update === "function" ? update(currentValues) : update,
+      };
+    });
+  };
   const [selectedBrands, setSelectedBrands] = useState([]);
   const [brandSearch, setBrandSearch] = useState("");
   const [minPrice, setMinPrice] = useState(0);
@@ -88,7 +109,8 @@ function Shop() {
   const [filtersOpen, setFiltersOpen] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 1024,
   );
-  const [showAllCategories, setShowAllCategories] = useState(() => Boolean(urlCategory));
+  const [categoriesExpanded, setCategoriesExpanded] = useState(() => Boolean(urlCategory));
+  const showAllCategories = categoriesExpanded || Boolean(urlCategory);
   const [showAllBrands, setShowAllBrands] = useState(false);
   const productsPerPage = isDesktop && filtersOpen ? 8 : 10;
 
@@ -185,6 +207,7 @@ function Shop() {
 
       return matchesSearch
         && (!selectedCategories.length || selectedCategories.includes(category))
+        && (!urlSubcategory || product.subcategory === urlSubcategory)
         && (!selectedBrands.length || selectedBrands.includes(product.brand))
         && price >= minPrice
         && price <= currentMaxPrice
@@ -202,6 +225,7 @@ function Shop() {
   }, [
     products,
     effectiveSearchQuery,
+    urlSubcategory,
     selectedCategories,
     selectedBrands,
     minPrice,
@@ -419,7 +443,7 @@ function Shop() {
                 {categories.length > 5 && (
                   <button
                     type="button"
-                    onClick={() => setShowAllCategories((current) => !current)}
+                    onClick={() => setCategoriesExpanded((current) => !current)}
                     className="pt-0.5 text-[10px] font-bold text-[#4b00c8]"
                   >
                     {showAllCategories ? "Show Less" : "Show More"}
