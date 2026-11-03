@@ -3,6 +3,158 @@ import { createPortal } from "react-dom";
 import api from "../../api";
 
 const formatOrderId = (order) => order.order_id || `ORD${String(order.id).padStart(5, "0")}`;
+
+function OrdersDropdown({ value, options, onChange, ariaLabel, className = "", icon: Icon, triggerClassName = "" }) {
+  const dropdownId = React.useId();
+  const triggerRef = React.useRef(null);
+  const menuRef = React.useRef(null);
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [activeIndex, setActiveIndex] = React.useState(0);
+  const [menuPosition, setMenuPosition] = React.useState(null);
+  const selectedOption = options.find((option) => String(option.value) === String(value));
+
+  const updateMenuPosition = React.useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    const estimatedHeight = Math.min(280, options.length * 40 + 8);
+    const openBelow = spaceBelow >= estimatedHeight || spaceBelow >= spaceAbove;
+    const maxHeight = Math.max(100, Math.min(280, openBelow ? spaceBelow : spaceAbove));
+    setMenuPosition({
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8)),
+      top: openBelow ? rect.bottom + 6 : Math.max(8, rect.top - maxHeight - 6),
+      width: rect.width,
+      maxHeight,
+    });
+  }, [options.length]);
+
+  React.useEffect(() => {
+    if (!isOpen) return undefined;
+    updateMenuPosition();
+    const handleOutsidePointer = (event) => {
+      if (!triggerRef.current?.contains(event.target) && !menuRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    document.addEventListener("keydown", handleEscape);
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsidePointer);
+      document.removeEventListener("keydown", handleEscape);
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [isOpen, updateMenuPosition]);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      menuRef.current?.querySelector(`[data-option-index="${activeIndex}"]`)?.scrollIntoView({ block: "nearest" });
+    }
+  }, [activeIndex, isOpen]);
+
+  const openMenu = () => {
+    const selectedIndex = options.findIndex((option) => String(option.value) === String(value));
+    setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
+    setIsOpen(true);
+  };
+
+  const selectOption = (option) => {
+    onChange(option.value);
+    setIsOpen(false);
+    triggerRef.current?.focus();
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!isOpen) {
+        openMenu();
+        return;
+      }
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      setActiveIndex((index) => (index + direction + options.length) % options.length);
+    } else if (event.key === "Home" && isOpen) {
+      event.preventDefault();
+      setActiveIndex(0);
+    } else if (event.key === "End" && isOpen) {
+      event.preventDefault();
+      setActiveIndex(options.length - 1);
+    } else if ((event.key === "Enter" || event.key === " ") && isOpen) {
+      event.preventDefault();
+      if (options[activeIndex]) selectOption(options[activeIndex]);
+    } else if (event.key === "Escape" && isOpen) {
+      event.preventDefault();
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        role="combobox"
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={`${dropdownId}-listbox`}
+        aria-activedescendant={isOpen ? `${dropdownId}-option-${activeIndex}` : undefined}
+        onClick={() => (isOpen ? setIsOpen(false) : openMenu())}
+        onKeyDown={handleKeyDown}
+        className={`group flex w-full items-center justify-between gap-2 text-left outline-none transition focus-visible:ring-4 focus-visible:ring-violet-500/15 ${triggerClassName || "rounded-xl border border-violet-100 bg-white px-3.5 py-3 text-[13px] font-semibold text-slate-700 hover:border-violet-300"}`}
+      >
+        <span className="flex min-w-0 flex-1 items-center gap-2.5">
+          {Icon && <Icon size={16} className="shrink-0 text-violet-500" aria-hidden="true" />}
+          <span className="truncate">{selectedOption?.label ?? value}</span>
+        </span>
+        <span className={`shrink-0 text-violet-500 transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden="true">⌄</span>
+      </button>
+      {isOpen && menuPosition && createPortal(
+        <div
+          ref={menuRef}
+          id={`${dropdownId}-listbox`}
+          role="listbox"
+          aria-label={ariaLabel}
+          className={`fixed z-[9999] overflow-y-auto rounded-xl border border-violet-100 bg-white p-1.5 shadow-[0_16px_40px_rgba(31,10,60,0.2)] ${className}`}
+          style={menuPosition}
+        >
+          {options.map((option, index) => {
+            const selected = String(option.value) === String(value);
+            const active = index === activeIndex;
+            return (
+              <div
+                key={`${option.value}-${index}`}
+                id={`${dropdownId}-option-${index}`}
+                data-option-index={index}
+                role="option"
+                aria-selected={selected}
+                onMouseEnter={() => setActiveIndex(index)}
+                onClick={() => selectOption(option)}
+                className={`flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                  selected ? "bg-violet-700 font-bold text-white" : active ? "bg-violet-100 font-semibold text-violet-900" : "font-medium text-slate-700 hover:bg-violet-50"
+                }`}
+              >
+                <span className="min-w-0 truncate">{option.label}</span>
+                {selected && <span aria-hidden="true">✓</span>}
+              </div>
+            );
+          })}
+        </div>,
+        document.body,
+      )}
+    </>
+  );
+}
 import { Link } from "react-router-dom";
 import { useAdmin } from "../../PrivateRouter/AdminContext";
 import {
@@ -14,24 +166,25 @@ import {
   FiShoppingBag,
   FiPackage,
   FiXCircle,
-  FiClock,
   FiCalendar,
-  FiMoreVertical,
   FiGrid,
   FiList,
   FiPrinter,
   FiX,
+  FiPlus,
+  FiFileText,
 } from "react-icons/fi";
 import { toast, Toaster } from "react-hot-toast";
 
 const Orders = ({ statusFilter = "All" }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [paymentFilter, setPaymentFilter] = useState("All");
   const { ordersCache, setOrdersCache } = useAdmin();
   const [orders, setOrders] = useState(ordersCache[statusFilter] || []);
   const [loading, setLoading] = useState(!ordersCache[statusFilter]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState({
@@ -122,18 +275,30 @@ const Orders = ({ statusFilter = "All" }) => {
   };
 
   const filteredOrders = orders.filter((order) => {
-    const matchesSearch =
-      order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.user_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.id?.toString().includes(searchTerm);
-    return matchesSearch;
+    const query = searchTerm.trim().toLowerCase();
+    const matchesSearch = !query || [
+      formatOrderId(order),
+      order.id,
+      order.customer_name,
+      order.customer_email,
+      order.customer_phone,
+      order.user_id,
+    ].some((value) => String(value || "").toLowerCase().includes(query));
+    const paymentMethod = String(order.payment_method || "").toLowerCase();
+    const matchesPayment = paymentFilter === "All"
+      || (paymentFilter === "COD" && /cash|cod/i.test(paymentMethod))
+      || (paymentFilter === "Online" && Boolean(paymentMethod) && !/cash|cod/i.test(paymentMethod));
+    return matchesSearch && matchesPayment;
   });
 
-  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / itemsPerPage));
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredOrders.slice(indexOfFirstItem, indexOfLastItem);
+  const firstVisibleItem = filteredOrders.length ? indexOfFirstItem + 1 : 0;
+  const lastVisibleItem = Math.min(indexOfLastItem, filteredOrders.length);
+  const pageNumbers = Array.from({ length: totalPages }, (_, index) => index + 1)
+    .filter((pageNumber) => pageNumber === 1 || pageNumber === totalPages || Math.abs(pageNumber - currentPage) <= 1);
 
   const handlePrintTable = () => {
     const printWindow = window.open("", "", "width=1000,height=700");
@@ -161,7 +326,7 @@ const Orders = ({ statusFilter = "All" }) => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, activeStatus]);
+  }, [searchTerm, activeStatus, paymentFilter, itemsPerPage]);
 
   const getStatusBadgeClasses = (status) => {
     switch (status) {
@@ -188,10 +353,44 @@ const Orders = ({ statusFilter = "All" }) => {
     }
   };
 
+  const statusFilterOptions = [
+    { value: "All", label: "All Status" },
+    { value: "Order Placed", label: "Confirmed" },
+    { value: "Shipping", label: "Shipped" },
+    { value: "Out for Delivery", label: "Out for Delivery" },
+    { value: "Delivered", label: "Delivered" },
+    { value: "Cancelled", label: "Cancelled" },
+  ];
+  const paymentFilterOptions = [
+    { value: "All", label: "All Payment" },
+    { value: "Online", label: "Online" },
+    { value: "COD", label: "Cash on Delivery" },
+  ];
+  const pageSizeOptions = [10, 25, 50].map((size) => ({ value: size, label: `${size} per page` }));
+
   return (
-    <div className="bg-[#f8f9fc] min-h-screen pb-10 font-sans animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="min-h-screen bg-gradient-to-br from-[#faf8ff] via-[#f8f9fc] to-[#f2edff] pb-10 font-sans animate-in fade-in slide-in-from-bottom-4 duration-700">
       <Toaster position="top-right" />
-      <div className="max-w-[1600px] mx-auto px-2 sm:px-6 lg:px-2 py-6 space-y-6">
+      <div className="mx-auto max-w-[1600px] space-y-6 px-3 py-5 sm:px-6 sm:py-6 lg:px-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-purple-800 text-white shadow-lg shadow-violet-500/25">
+              <FiShoppingBag size={25} aria-hidden="true" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight text-[#211936] sm:text-3xl">Orders Management</h1>
+              <p className="mt-1 text-sm text-slate-500">Track, manage and process customer orders.</p>
+            </div>
+          </div>
+          <Link
+            to="/admin/orders/shop-create"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-700 to-purple-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-violet-700/20 transition hover:brightness-110"
+          >
+            <FiPlus size={18} aria-hidden="true" />
+            New Order
+          </Link>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-4">
           <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-all">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shrink-0">
@@ -249,64 +448,56 @@ const Orders = ({ statusFilter = "All" }) => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-4 flex-1">
-            <div className="relative w-full md:w-72">
+        <div className="flex flex-col gap-3 rounded-2xl border border-violet-100/80 bg-white/90 p-3 shadow-[0_8px_24px_rgba(54,22,93,0.06)] sm:flex-row sm:items-center sm:justify-between sm:p-4">
+          <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="relative w-full sm:max-w-md sm:flex-1">
               <input
                 type="text"
                 placeholder="Search by Order ID, Customer, Phone..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-4 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:outline-none focus:border-[#4318FF]"
+                aria-label="Search orders by order ID, customer, email, or phone"
+                className="w-full rounded-xl border border-violet-100 bg-white py-3 pl-10 pr-4 text-[13px] font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
               />
-              <FiSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-violet-600" aria-hidden="true" />
             </div>
 
-            <div className="relative">
-              
-              <select
+            <div className="w-full sm:w-40">
+              <OrdersDropdown
                 value={activeStatus}
-                onChange={(e) => setActiveStatus(e.target.value)}
-                className="w-36 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:outline-none focus:border-[#4318FF] appearance-none"
-              >
-                <option value="All">All Status</option>
-                <option value="Order Placed">Confirmed</option>
-                <option value="Shipping">Shipped</option>
-                <option value="Out for Delivery">Out for Delivery</option>
-                <option value="Delivered">Delivered</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</span>
+                options={statusFilterOptions}
+                onChange={setActiveStatus}
+                ariaLabel="Filter by order status"
+                icon={FiFilter}
+              />
             </div>
 
-            <div className="relative">
-              
-              <select className="w-36 px-4 py-2.5 bg-white border border-gray-200 rounded-lg text-[13px] font-medium focus:outline-none focus:border-[#4318FF] appearance-none">
-                <option>All Payment</option>
-                <option>Online</option>
-                <option>COD</option>
-              </select>
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400 text-[10px]">▼</span>
+            <div className="w-full sm:w-40">
+              <OrdersDropdown
+                value={paymentFilter}
+                options={paymentFilterOptions}
+                onChange={setPaymentFilter}
+                ariaLabel="Filter by payment method"
+                icon={FiFilter}
+              />
             </div>
-
-           
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between gap-3 sm:justify-end">
             <button
               type="button"
               onClick={handlePrintTable}
-              className="rounded-lg border border-gray-200 bg-white p-2 text-[#4318FF] shadow-sm transition-colors hover:bg-[#4318FF] hover:text-white"
+              className="rounded-xl border border-violet-100 bg-white p-3 text-violet-700 shadow-sm transition-colors hover:bg-violet-700 hover:text-white"
               aria-label="Print orders table"
               title="Print orders table"
             >
               <FiPrinter size={16} />
             </button>
-            <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1">
+            <div className="flex items-center gap-1 rounded-xl border border-violet-100 bg-violet-50/70 p-1">
               <button
                 type="button"
                 onClick={() => setViewMode("table")}
-                className={`p-2 rounded-md transition-colors ${viewMode === "table" ? "bg-white text-[#4318FF] shadow-sm" : "text-gray-500 hover:text-[#4318FF]"}`}
+                className={`rounded-lg p-2.5 transition-colors ${viewMode === "table" ? "bg-white text-violet-700 shadow-sm" : "text-gray-500 hover:text-violet-700"}`}
                 aria-label="Table mode"
                 title="Table mode"
               >
@@ -315,7 +506,7 @@ const Orders = ({ statusFilter = "All" }) => {
               <button
                 type="button"
                 onClick={() => setViewMode("card")}
-                className={`p-2 rounded-md transition-colors ${viewMode === "card" ? "bg-white text-[#4318FF] shadow-sm" : "text-gray-500 hover:text-[#4318FF]"}`}
+                className={`rounded-lg p-2.5 transition-colors ${viewMode === "card" ? "bg-white text-violet-700 shadow-sm" : "text-gray-500 hover:text-violet-700"}`}
                 aria-label="Card mode"
                 title="Card mode"
               >
@@ -328,103 +519,125 @@ const Orders = ({ statusFilter = "All" }) => {
         </div>
 
         {viewMode === "table" ? (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-violet-200/80 bg-white shadow-[0_12px_35px_rgba(54,22,93,0.10)]">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse whitespace-nowrap">
-              <thead>
-                <tr className="admin-table-header border-b border-[#3c096c]">
-                  <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Order ID</th>
-                  <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Customer</th>
-                  <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Order Type</th>
-                  <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Amount</th>
-                  <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Payment</th>
-                  <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Status</th>
-                  <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Order Date</th>
-                  <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Actions</th>
+            <table className="w-full min-w-[1050px] border-collapse text-left">
+              <thead className="bg-gradient-to-r from-[#4c168e] via-[#6825ad] to-[#4c168e] text-white">
+                <tr className="border-b border-violet-900/20">
+                  <th scope="col" className="px-4 py-4 text-[11px] font-extrabold uppercase tracking-wider">Order ID</th>
+                  <th scope="col" className="px-4 py-4 text-[11px] font-extrabold uppercase tracking-wider">Customer</th>
+                  <th scope="col" className="px-4 py-4 text-[11px] font-extrabold uppercase tracking-wider">Order Type</th>
+                  <th scope="col" className="px-4 py-4 text-[11px] font-extrabold uppercase tracking-wider">Amount</th>
+                  <th scope="col" className="px-4 py-4 text-[11px] font-extrabold uppercase tracking-wider">Payment</th>
+                  <th scope="col" className="px-4 py-4 text-[11px] font-extrabold uppercase tracking-wider">Status</th>
+                  <th scope="col" className="px-4 py-4 text-[11px] font-extrabold uppercase tracking-wider">Order Date</th>
+                  <th scope="col" className="px-4 py-4 text-center text-[11px] font-extrabold uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-10 text-center text-gray-400 text-sm font-semibold">Loading orders...</td>
+                    <td colSpan="8" className="px-6 py-12 text-center text-sm font-semibold text-slate-500">Loading orders...</td>
                   </tr>
                 ) : currentItems.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-10 text-center text-gray-400 text-sm font-semibold">No orders found.</td>
+                    <td colSpan="8" className="px-6 py-12 text-center text-sm font-semibold text-slate-500">No orders found.</td>
                   </tr>
                 ) : (
                   currentItems.map((order, idx) => {
-                    const paymentMethod = order.payment_method || (idx % 2 === 0 ? "Online" : "COD");
-                    const paymentStatus = paymentMethod === "Online" ? "Paid" : "Pending";
+                    const paymentMethod = order.payment_method || "Unknown";
+                    const paymentStatus = order.payment_status || "Pending";
                     const customerName = order.customer_name || "Guest Customer";
-                    const customerPhone = order.customer_phone || "+91 98765 43210";
+                    const customerPhone = order.customer_phone || order.customer_email || "Contact not provided";
+                    const itemCount = Array.isArray(order.items)
+                      ? order.items.reduce((count, item) => count + (Number(item.quantity) || 1), 0)
+                      : Number(order.item_count ?? order.items_count ?? 0);
 
                     return (
-                      <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors group">
-                        <td className="px-6 py-4 text-[13px] font-black text-[#4318FF]">{formatOrderId(order)}</td>
-                        <td className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold shrink-0">
+                      <tr key={order.id} className={`group border-b border-violet-100/80 transition-colors hover:bg-violet-50/70 ${idx % 2 ? "bg-[#fbfaff]" : "bg-white"}`}>
+                        <td className="px-4 py-4">
+                          <div className="flex items-center gap-2.5">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
+                              <FiFileText size={16} aria-hidden="true" />
+                            </span>
+                            <span className="text-[13px] font-black text-violet-700">{formatOrderId(order)}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex min-w-[170px] items-center gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100 font-bold text-orange-600">
                               {customerName.charAt(0)}
                             </div>
-                            <div>
-                              <div className="text-[13px] font-bold text-[#2B3674]">{customerName}</div>
-                              <div className="text-[11px] text-gray-400 font-medium mt-0.5">{customerPhone}</div>
+                            <div className="min-w-0">
+                              <div className="max-w-[190px] truncate text-[13px] font-bold text-[#211936]">{customerName}</div>
+                              <div className="mt-0.5 max-w-[190px] truncate text-[11px] font-medium text-slate-500">{customerPhone}</div>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">
-                          <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                        <td className="px-4 py-4">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide ${
                             order.items_type === "Combo" ? "bg-violet-100 text-violet-700" :
                               order.items_type === "Mixed" ? "bg-amber-100 text-amber-700" :
-                                "bg-slate-100 text-slate-600"
-                          }`}>{order.items_type || "Single"}</span>
+                                "border-slate-200 bg-slate-100 text-slate-600"
+                          }`}>
+                            <FiPackage size={13} aria-hidden="true" />
+                            {order.items_type || "Single"}
+                          </span>
                         </td>
-                        <td className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">
-                          <div className="text-[13px] font-black text-[#2B3674]">₹{parseFloat(order.total_amount || 0).toLocaleString()}</div>
-                          <div className="text-[11px] text-gray-400 font-medium mt-0.5">1 Item</div>
+                        <td className="px-4 py-4">
+                          <div className="text-[14px] font-black text-[#211936]">₹{Number(order.total_amount || 0).toLocaleString("en-IN")}</div>
+                          <div className="mt-0.5 text-[11px] font-medium text-slate-500">{itemCount ? `${itemCount} ${itemCount === 1 ? "item" : "items"}` : "Order total"}</div>
                         </td>
-                        <td className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">
-                          <div className="flex flex-col items-start gap-1">
-                            <span className={`px-2.5 py-1 rounded text-[10px] font-bold ${paymentMethod === "Online" ? "bg-[#dcfce7] text-[#16a34a]" : "bg-[#f4f1ff] text-[#4318FF]"}`}>
-                              {paymentMethod}
+                        <td className="px-4 py-4">
+                          <div className="flex min-w-[145px] items-center gap-2">
+                            <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${/cash|cod/i.test(paymentMethod) ? "bg-violet-100 text-violet-700" : "bg-blue-100 text-blue-700"}`}>
+                              {/cash|cod/i.test(paymentMethod) ? <FiShoppingBag size={15} aria-hidden="true" /> : <FiCheckCircle size={15} aria-hidden="true" />}
                             </span>
-                            <span className="text-[10px] text-gray-500 font-medium">{paymentStatus}</span>
+                            <span className="min-w-0">
+                              <span className="block max-w-[150px] truncate text-[10px] font-extrabold uppercase text-violet-700">{paymentMethod}</span>
+                              <span className={`mt-0.5 block text-[10px] font-semibold ${/paid|success/i.test(paymentStatus) ? "text-emerald-600" : "text-slate-500"}`}>{paymentStatus}</span>
+                            </span>
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">
-                          <div className="flex flex-col items-start gap-1 relative group/status">
-                            <select
+                        <td className="px-4 py-4">
+                          <div className="min-w-[150px]">
+                            <OrdersDropdown
                               value={order.status}
-                              onChange={(e) => handleQuickStatusUpdate(order.id, e.target.value)}
-                              className={`appearance-none cursor-pointer flex items-center gap-2 px-2.5 py-1 rounded text-[10px] font-bold border outline-none transition-all ${getStatusBadgeClasses(order.status)}`}
-                            >
-                              {(() => {
+                              onChange={(status) => handleQuickStatusUpdate(order.id, status)}
+                              ariaLabel={`Update status for ${formatOrderId(order)}`}
+                              triggerClassName={`w-full rounded-xl border px-3 py-2 text-left text-[11px] font-bold ${getStatusBadgeClasses(order.status)}`}
+                              options={(() => {
                                 const flow = ["Order Placed", "Packing", "Shipping", "Out for Delivery", "Delivered"];
                                 const currentIndex = flow.indexOf(order.status);
                                 const options = currentIndex === -1 ? [...flow, "Cancelled", order.status] : [...flow.slice(currentIndex), ...(currentIndex < 2 ? ["Cancelled"] : [])];
-                                return Array.from(new Set(options)).map((status) => (
-                                  <option key={status} value={status}>{status}</option>
-                                ));
+                                return Array.from(new Set(options)).map((status) => ({ value: status, label: status }));
                               })()}
-                            </select>
-                            <div className="text-[9px] text-gray-400 font-medium mt-1">
+                            />
+                            <div className="mt-1.5 text-[10px] font-medium text-slate-500">
                               {order.status === "Delivered" ? "Delivered on" : order.status === "Shipped" || order.status === "Out for Delivery" ? "Shipped on" : order.status === "Cancelled" ? "Cancelled on" : "Updated on"}
-                              <br />
-                              {order.updated_at ? new Date(order.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "Unknown"}
+                              {order.updated_at && <span className="ml-1">{new Date(order.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>}
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">
-                          <div className="text-[12px] font-bold text-[#2B3674]">{order.created_at ? new Date(order.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "Unknown"}</div>
-                          <div className="text-[11px] text-gray-500 font-medium">{order.created_at ? new Date(order.created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : ""}</div>
+                        <td className="px-4 py-4">
+                          <div className="flex min-w-[130px] items-start gap-2.5">
+                            <FiCalendar size={17} className="mt-0.5 shrink-0 text-slate-500" aria-hidden="true" />
+                            <div>
+                              <div className="text-[12px] font-bold text-[#211936]">{order.created_at ? new Date(order.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "Unknown"}</div>
+                              <div className="mt-0.5 text-[11px] font-medium text-slate-500">{order.created_at ? new Date(order.created_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : ""}</div>
+                            </div>
+                          </div>
                         </td>
-                        <td className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">
-                          <div className="flex items-center justify-center gap-2">
-                            <Link to={`/admin/orders/${order.id}`} className="p-1.5 border border-gray-200 rounded hover:bg-gray-100 text-[#4318FF] transition-colors shadow-sm">
-                              <FiEye size={14} />
+                        <td className="px-4 py-4">
+                          <div className="flex items-center justify-center">
+                            <Link
+                              to={`/admin/orders/${order.id}`}
+                              aria-label={`View ${formatOrderId(order)}`}
+                              title="View order"
+                              className="rounded-xl border border-violet-100 bg-white p-2.5 text-violet-700 shadow-sm transition hover:border-violet-300 hover:bg-violet-50"
+                            >
+                              <FiEye size={17} aria-hidden="true" />
                             </Link>
-                           
                           </div>
                         </td>
                       </tr>
@@ -435,31 +648,40 @@ const Orders = ({ statusFilter = "All" }) => {
             </table>
           </div>
 
-          <div className="px-6 py-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-4">
-            <p className="text-[13px] font-bold text-[#2B3674]">
-              Showing {indexOfFirstItem + 1} to {Math.min(indexOfLastItem, filteredOrders.length)} of {filteredOrders.length} orders
+          <div className="flex flex-col gap-3 border-t border-violet-100 bg-gradient-to-r from-white to-violet-50/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <p className="text-[13px] font-semibold text-slate-600">
+              Showing <span className="font-extrabold text-[#211936]">{firstVisibleItem}–{lastVisibleItem}</span> of <span className="font-extrabold text-[#211936]">{filteredOrders.length}</span> orders
             </p>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 border border-gray-200 rounded-lg px-3 py-1.5 text-[13px] font-bold text-[#2B3674] shadow-sm cursor-pointer hover:bg-gray-50">
-                10 per page <span className="text-gray-400 text-[10px] ml-1">▼</span>
+            <div className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
+              <div className="w-36">
+                <OrdersDropdown
+                  value={itemsPerPage}
+                  options={pageSizeOptions}
+                  onChange={(size) => setItemsPerPage(Number(size))}
+                  ariaLabel="Orders per page"
+                  triggerClassName="w-full rounded-xl border border-violet-100 bg-white px-3 py-2 text-left text-[12px] font-bold text-[#211936]"
+                />
               </div>
               <div className="flex items-center gap-1">
-                <button onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 shadow-sm font-bold text-[13px]">
-                  &lt;
+                <button type="button" aria-label="Previous page" onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))} disabled={currentPage === 1} className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-100 bg-white text-slate-600 shadow-sm transition hover:border-violet-300 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-40">
+                  ‹
                 </button>
-                {[...Array(Math.min(totalPages || 1, 3))].map((_, i) => (
-                  <button key={i} onClick={() => setCurrentPage(i + 1)} className={`w-8 h-8 flex items-center justify-center rounded-lg text-[13px] font-bold shadow-sm ${currentPage === i + 1 ? 'bg-[#4318FF] text-white border border-[#4318FF]' : 'border border-gray-200 text-[#2B3674] hover:bg-gray-50'}`}>
-                    {i + 1}
-                  </button>
+                {pageNumbers.map((pageNumber, index) => (
+                  <React.Fragment key={pageNumber}>
+                    {index > 0 && pageNumber - pageNumbers[index - 1] > 1 && <span className="px-1 text-slate-400" aria-hidden="true">…</span>}
+                    <button
+                      type="button"
+                      aria-label={`Page ${pageNumber}`}
+                      aria-current={currentPage === pageNumber ? "page" : undefined}
+                      onClick={() => setCurrentPage(pageNumber)}
+                      className={`h-9 min-w-9 rounded-xl px-2 text-[12px] font-bold shadow-sm transition ${currentPage === pageNumber ? "border border-violet-700 bg-violet-700 text-white" : "border border-violet-100 bg-white text-slate-700 hover:border-violet-300 hover:text-violet-700"}`}
+                    >
+                      {pageNumber}
+                    </button>
+                  </React.Fragment>
                 ))}
-                {totalPages > 3 && <span className="w-8 h-8 flex items-center justify-center text-gray-400">...</span>}
-                {totalPages > 3 && (
-                  <button onClick={() => setCurrentPage(totalPages)} className="w-8 h-8 flex items-center justify-center rounded-lg text-[13px] font-bold border border-gray-200 text-[#2B3674] hover:bg-gray-50 shadow-sm">
-                    {totalPages}
-                  </button>
-                )}
-                <button onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 shadow-sm font-bold text-[13px]">
-                  &gt;
+                <button type="button" aria-label="Next page" onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))} disabled={currentPage === totalPages} className="flex h-9 w-9 items-center justify-center rounded-xl border border-violet-100 bg-white text-slate-600 shadow-sm transition hover:border-violet-300 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-40">
+                  ›
                 </button>
               </div>
             </div>
@@ -476,17 +698,17 @@ const Orders = ({ statusFilter = "All" }) => {
                 No orders found.
               </div>
             ) : (
-              currentItems.map((order, idx) => {
+              currentItems.map((order) => {
                 const customerName = order.customer_name || "Guest Customer";
-                const paymentMethod = order.payment_method || (idx % 2 === 0 ? "Online" : "COD");
-                const paymentStatus = paymentMethod === "Online" ? "Paid" : "Pending";
+                const paymentMethod = order.payment_method || "Unknown";
+                const paymentStatus = order.payment_status || "Pending";
 
                 return (
-                  <article key={order.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-shadow">
-                    <div className="flex items-start justify-between gap-3 border-b border-gray-100 pb-4">
+                  <article key={order.id} className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm transition-shadow hover:shadow-lg hover:shadow-violet-900/5">
+                    <div className="flex items-start justify-between gap-3 border-b border-violet-100 pb-4">
                       <div>
-                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Order ID</p>
-                        <h3 className="text-sm font-black text-[#4318FF] mt-1">{formatOrderId(order)}</h3>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Order ID</p>
+                        <h3 className="mt-1 text-sm font-black text-violet-700">{formatOrderId(order)}</h3>
                       </div>
                       <span className={`px-2.5 py-1 rounded text-[10px] font-bold border ${getStatusBadgeClasses(order.status)}`}>
                         {order.status || "Pending"}
@@ -495,22 +717,22 @@ const Orders = ({ statusFilter = "All" }) => {
 
                     <div className="py-4 space-y-3">
                       <div>
-                        <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Customer</p>
-                        <p className="text-sm font-bold text-[#2B3674] mt-1">{customerName}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{order.customer_phone || "+91 98765 43210"}</p>
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Customer</p>
+                        <p className="mt-1 text-sm font-bold text-[#211936]">{customerName}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{order.customer_phone || order.customer_email || "Contact not provided"}</p>
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Order Type</p>
-                          <p className="mt-1 text-xs font-bold text-[#2B3674]">{order.items_type || "Single"}</p>
+                          <p className="mt-1 text-xs font-bold text-[#211936]">{order.items_type || "Single"}</p>
                         </div>
                         <div>
                           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Amount</p>
-                          <p className="text-base font-black text-[#2B3674] mt-1">₹{parseFloat(order.total_amount || 0).toLocaleString()}</p>
+                          <p className="mt-1 text-base font-black text-[#211936]">₹{Number(order.total_amount || 0).toLocaleString("en-IN")}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Payment</p>
-                          <p className="text-xs font-bold text-[#2B3674] mt-1">{paymentMethod} · {paymentStatus}</p>
+                          <p className="mt-1 text-xs font-bold text-[#211936]">{paymentMethod} · {paymentStatus}</p>
                         </div>
                       </div>
                       <div>
@@ -521,7 +743,7 @@ const Orders = ({ statusFilter = "All" }) => {
                       </div>
                     </div>
 
-                    <Link to={`/admin/orders/${order.id}`} className="w-full inline-flex items-center justify-center gap-2 border border-[#4318FF] text-[#4318FF] rounded-lg py-2 text-xs font-bold hover:bg-[#4318FF] hover:text-white transition-colors">
+                    <Link to={`/admin/orders/${order.id}`} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-violet-200 py-2.5 text-xs font-bold text-violet-700 transition-colors hover:bg-violet-700 hover:text-white">
                       <FiEye size={14} /> View order
                     </Link>
                   </article>
