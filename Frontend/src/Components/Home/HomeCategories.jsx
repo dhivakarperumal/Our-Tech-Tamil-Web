@@ -35,10 +35,10 @@ function CategoryCard({ category }) {
 
   return (
     <div
-      className="flex h-[92px] flex-col items-center justify-between rounded-xl border border-primary/5 bg-[#faf8ff] px-2 py-2.5 text-center transition duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md sm:h-[102px] sm:px-3"
+      className="flex h-[112px] flex-col items-center justify-between rounded-xl border border-primary/5 bg-[#faf8ff] px-3 py-3 text-center transition duration-200 hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-md sm:h-[124px] sm:px-4"
       title={category.name}
     >
-      <div className="flex h-12 w-full items-center justify-center sm:h-14">
+      <div className="flex h-14 w-full items-center justify-center sm:h-[68px]">
         {image ? (
           <img
             src={image}
@@ -47,12 +47,12 @@ function CategoryCard({ category }) {
             className="h-full max-w-full object-contain"
           />
         ) : (
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-primary">
-            <Boxes size={25} strokeWidth={1.7} aria-hidden="true" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-primary sm:h-14 sm:w-14">
+            <Boxes size={29} strokeWidth={1.7} aria-hidden="true" />
           </div>
         )}
       </div>
-      <span className="w-full truncate text-[11px] font-bold leading-tight text-text-primary sm:text-xs">
+      <span className="w-full truncate text-xs font-bold leading-tight text-text-primary sm:text-[13px]">
         {category.name}
       </span>
     </div>
@@ -64,7 +64,7 @@ function HomeCategories() {
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const [carouselLayout, setCarouselLayout] = useState({ slidesPerView: 1, slideWidth: 96 });
+  const [carouselLayout, setCarouselLayout] = useState({ slidesPerView: 1, slideWidth: 128 });
   const carouselContainerRef = useRef(null);
   const swiperRef = useRef(null);
 
@@ -101,7 +101,7 @@ function HomeCategories() {
     const container = carouselContainerRef.current;
     const updateSlidesPerView = () => {
       const availableWidth = container.clientWidth;
-      const slideWidth = window.matchMedia("(min-width: 640px)").matches ? 112 : 96;
+      const slideWidth = window.matchMedia("(min-width: 640px)").matches ? 144 : 128;
       setCarouselLayout({
         slidesPerView: Math.max(1, Math.floor((availableWidth + 8) / (slideWidth + 8))),
         slideWidth,
@@ -178,7 +178,7 @@ function HomeCategories() {
             {Array.from({ length: 8 }, (_, index) => (
               <div
                 key={index}
-                className="h-[92px] w-[96px] shrink-0 animate-pulse rounded-xl bg-[#faf8ff] sm:h-[102px] sm:w-[112px]"
+                className="h-[112px] w-[128px] shrink-0 animate-pulse rounded-xl bg-[#faf8ff] sm:h-[124px] sm:w-[144px]"
               />
             ))}
           </div>
@@ -191,7 +191,7 @@ function HomeCategories() {
             No categories are available right now.
           </p>
         ) : showAll ? (
-          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
             {categories.map((category) => (
               <CategoryCard
                 key={category.catId || category.id || category.name}
@@ -227,7 +227,7 @@ function HomeCategories() {
               {slides.map((category) => (
                 <SwiperSlide
                   key={category.slideKey}
-                  className="!w-[96px] sm:!w-[112px]"
+                  className="!w-[128px] sm:!w-[144px]"
                 >
                   <CategoryCard category={category} />
                 </SwiperSlide>
