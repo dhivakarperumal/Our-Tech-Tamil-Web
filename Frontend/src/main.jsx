@@ -23,7 +23,6 @@ const Account = React.lazy(() => import("./Components/Products/Account.jsx"));
 const TrackOrders = React.lazy(() => import("./Components/Products/TrackOrders.jsx"));
 const Articles = React.lazy(() => import("./Components/Articles/Articles.jsx"));
 const ContactUs = React.lazy(() => import("./Components/CommenComponents/ContactUs.jsx"));
-const Account = React.lazy(() => import("./Components/Account/Account.jsx"));
 
 const Login = React.lazy(() => import("./Components/Auth/Login.jsx"));
 const Register = React.lazy(() => import("./Components/Auth/Register.jsx"));
