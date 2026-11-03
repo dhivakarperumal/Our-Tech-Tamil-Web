@@ -26,6 +26,12 @@ const StockDetails = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const [viewMode, setViewMode] = useState("table");
+    const [activeStockType, setActiveStockType] = useState("normal");
+    const [combos, setCombos] = useState([]);
+    const [loadingCombos, setLoadingCombos] = useState(false);
+    const [selectedCombo, setSelectedCombo] = useState(null);
+    const [comboStockAddition, setComboStockAddition] = useState("");
+    const [updatingComboStock, setUpdatingComboStock] = useState(false);
     const itemsPerPage = 10;
 
     const currentCacheKey = JSON.stringify({
@@ -89,6 +95,25 @@ const StockDetails = () => {
     useEffect(() => {
         fetchProducts();
     }, [currentPage, searchTerm]);
+
+    useEffect(() => {
+        if (activeStockType !== "combo") return;
+        let active = true;
+        const fetchCombos = async () => {
+            setLoadingCombos(true);
+            try {
+                const { data } = await api.get("/combos");
+                if (active) setCombos(Array.isArray(data.combos) ? data.combos : []);
+            } catch (error) {
+                console.error("Error fetching combo stock:", error);
+                if (active) toast.error(error.response?.data?.message || "Unable to load combo stock.");
+            } finally {
+                if (active) setLoadingCombos(false);
+            }
+        };
+        fetchCombos();
+        return () => { active = false; };
+    }, [activeStockType]);
 
     const handleSync = () => {
         setIsSyncing(true);
@@ -235,6 +260,29 @@ const StockDetails = () => {
         }
     };
 
+    const handleSaveComboStock = async () => {
+        const quantity = Number(comboStockAddition);
+        if (!selectedCombo || !Number.isSafeInteger(quantity) || quantity <= 0) {
+            toast.error("Enter a stock quantity greater than 0.");
+            return;
+        }
+        setUpdatingComboStock(true);
+        try {
+            const { data } = await api.patch(`/combos/${selectedCombo.id}/stock`, { quantity });
+            setCombos((current) => current.map((combo) =>
+                String(combo.id) === String(selectedCombo.id) ? { ...combo, ...data.combo } : combo,
+            ));
+            toast.success(`Successfully added ${quantity} to combo stock.`);
+            setSelectedCombo(null);
+            setComboStockAddition("");
+        } catch (error) {
+            console.error("Failed to update combo stock:", error);
+            toast.error(error.response?.data?.message || "Failed to update combo stock.");
+        } finally {
+            setUpdatingComboStock(false);
+        }
+    };
+
     const getProductImage = (product) => {
         let imgUrl = null;
         try {
@@ -270,8 +318,28 @@ const StockDetails = () => {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
             <Toaster position="top-right" />
 
-           
-            
+            <div className="flex flex-wrap gap-2 rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
+                {[
+                    { id: "normal", label: "Normal Product Stock" },
+                    { id: "combo", label: "Combo Stock" },
+                ].map((tab) => (
+                    <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => { setActiveStockType(tab.id); setSearchTerm(""); }}
+                        className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold transition sm:flex-none ${
+                            activeStockType === tab.id
+                                ? "bg-gradient-to-r from-[#240046] to-[#7b2cbf] text-white shadow-md"
+                                : "text-slate-600 hover:bg-violet-50 hover:text-violet-800"
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            {activeStockType === "normal" ? (
+            <>
             {/* Stats Cards */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
@@ -539,6 +607,22 @@ const StockDetails = () => {
                     </div>
                 )}
             </div>
+            </>
+            ) : (
+                <ComboStockPanel
+                    combos={combos.filter((combo) => !searchTerm.trim() || [combo.name, combo.code, combo.category, combo.subcategory].some((value) => String(value || "").toLowerCase().includes(searchTerm.trim().toLowerCase())))}
+                    loading={loadingCombos}
+                    searchTerm={searchTerm}
+                    setSearchTerm={setSearchTerm}
+                    viewMode={viewMode}
+                    setViewMode={setViewMode}
+                    getProductImage={getProductImage}
+                    onAddStock={(combo) => {
+                        setSelectedCombo(combo);
+                        setComboStockAddition("");
+                    }}
+                />
+            )}
 
             {/* Quick Stock Update Modal */}
             {isModalOpen && selectedProduct && (
@@ -668,9 +752,125 @@ const StockDetails = () => {
                 )
             )}
 
+            {selectedCombo && (
+                createPortal(
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <button type="button" aria-label="Close stock update" className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setSelectedCombo(null)} />
+                        <section role="dialog" aria-modal="true" aria-labelledby="combo-stock-title" className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl">
+                            <header className="flex items-start justify-between gap-3 bg-gradient-to-r from-[#1F0A3C] to-[#7b2cbf] p-5 text-white">
+                                <div>
+                                    <h2 id="combo-stock-title" className="text-lg font-black">Update Combo Stock</h2>
+                                    <p className="mt-1 text-xs font-semibold text-violet-100">{selectedCombo.name}</p>
+                                </div>
+                                <button type="button" onClick={() => setSelectedCombo(null)} aria-label="Close" className="rounded-lg p-2 text-white/70 hover:bg-white/10 hover:text-white"><FiX size={18} /></button>
+                            </header>
+                            <div className="space-y-4 p-5">
+                                <div className="flex items-center justify-between rounded-xl bg-slate-50 p-4">
+                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500">Current stock</span>
+                                    <span className="text-lg font-black text-slate-800">{selectedCombo.available_stock ?? 0}</span>
+                                </div>
+                                <label className="block space-y-2">
+                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-600">Quantity to add</span>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        step="1"
+                                        value={comboStockAddition}
+                                        onChange={(event) => setComboStockAddition(event.target.value)}
+                                        placeholder="Enter quantity"
+                                        autoFocus
+                                        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-lg font-bold text-slate-800 outline-none focus:border-violet-500 focus:bg-white"
+                                    />
+                                </label>
+                            </div>
+                            <footer className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 p-4">
+                                <button type="button" onClick={() => setSelectedCombo(null)} disabled={updatingComboStock} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-50">Cancel</button>
+                                <button type="button" onClick={handleSaveComboStock} disabled={updatingComboStock || !comboStockAddition} className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-violet-800 disabled:opacity-50">
+                                    {updatingComboStock ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/40 border-t-white" /> : <FiSave size={15} />}
+                                    {updatingComboStock ? "Saving..." : "Update Stock"}
+                                </button>
+                            </footer>
+                        </section>
+                    </div>,
+                    document.body,
+                )
+            )}
+
         </div>
     );
 };
+
+function ComboStockPanel({ combos, loading, searchTerm, setSearchTerm, viewMode, setViewMode, getProductImage, onAddStock }) {
+    const stockStatus = (combo) => combo.stock_status || (Number(combo.available_stock) <= 0 ? "Out of Stock" : Number(combo.available_stock) <= 10 ? "Low Stock" : "In Stock");
+    const statusClass = (status) => status === "In Stock"
+        ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+        : status === "Low Stock"
+            ? "border-amber-100 bg-amber-50 text-amber-700"
+            : "border-rose-100 bg-rose-50 text-rose-700";
+
+    return (
+        <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+            <div className="flex flex-col gap-3 border-b border-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="relative w-full sm:max-w-md">
+                    <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                    <input
+                        type="search"
+                        value={searchTerm}
+                        onChange={(event) => setSearchTerm(event.target.value)}
+                        placeholder="Search combo name or SKU..."
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-4 text-sm outline-none focus:border-violet-500 focus:bg-white"
+                    />
+                </div>
+                <div className="flex items-center justify-end gap-2">
+                    <div className="flex rounded-xl border border-gray-200 bg-gray-100 p-1">
+                        <button type="button" onClick={() => setViewMode("table")} title="Table view" aria-pressed={viewMode === "table"} className={`rounded-lg p-2 ${viewMode === "table" ? "bg-white text-violet-700 shadow-sm" : "text-gray-400"}`}><FiList size={16} /></button>
+                        <button type="button" onClick={() => setViewMode("card")} title="Card view" aria-pressed={viewMode === "card"} className={`rounded-lg p-2 ${viewMode === "card" ? "bg-white text-violet-700 shadow-sm" : "text-gray-400"}`}><FiGrid size={16} /></button>
+                    </div>
+                </div>
+            </div>
+            {loading ? (
+                <div className="flex items-center justify-center gap-2 py-20 text-sm font-semibold text-slate-500"><span className="h-5 w-5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-700" />Loading combo stock...</div>
+            ) : combos.length === 0 ? (
+                <div className="py-16 text-center text-sm font-semibold text-slate-500">{searchTerm ? "No combos match your search." : "No combo stock found."}</div>
+            ) : viewMode === "table" ? (
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                        <thead><tr className="admin-table-header">
+                            {["S.No.", "Combo", "Category", "Price", "Available Stock", "Stock Status", "Action"].map((heading) => <th key={heading} className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-[#FCD34D]">{heading}</th>)}
+                        </tr></thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {combos.map((combo, index) => {
+                                const status = stockStatus(combo);
+                                return <tr key={combo.id} className="hover:bg-violet-50/40">
+                                    <td className="px-4 py-4 text-sm text-slate-500">{index + 1}</td>
+                                    <td className="px-4 py-4"><div className="flex items-center gap-3"><img src={getProductImage({ name: combo.name, images: combo.gallery_images })} alt="" className="h-11 w-11 rounded-lg bg-slate-100 object-cover" /><div><p className="max-w-56 truncate text-sm font-bold text-slate-800">{combo.name}</p><p className="text-xs text-slate-400">SKU: {combo.code}</p></div></div></td>
+                                    <td className="px-4 py-4 text-sm text-slate-600">{combo.category || "—"}</td>
+                                    <td className="px-4 py-4 text-sm font-bold text-slate-700">₹{Number(combo.final_price ?? combo.offer_price ?? 0).toLocaleString("en-IN")}</td>
+                                    <td className="px-4 py-4 text-sm font-black text-slate-800">{combo.available_stock ?? 0}</td>
+                                    <td className="px-4 py-4"><span className={`rounded-lg border px-2.5 py-1 text-[11px] font-bold ${statusClass(status)}`}>{status}</span></td>
+                                    <td className="px-4 py-4"><button type="button" onClick={() => onAddStock(combo)} className="inline-flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-xs font-bold text-violet-700 hover:bg-violet-700 hover:text-white"><FiPlus size={14} /> Add Stock</button></td>
+                                </tr>;
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <div className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                    {combos.map((combo) => {
+                        const status = stockStatus(combo);
+                        return <article key={combo.id} className="overflow-hidden rounded-2xl border border-gray-100 shadow-sm">
+                            <div className="relative h-40 bg-violet-50"><img src={getProductImage({ name: combo.name, images: combo.gallery_images })} alt={combo.name} className="h-full w-full object-cover" /><span className={`absolute right-3 top-3 rounded-lg border px-2.5 py-1 text-[11px] font-bold ${statusClass(status)}`}>{status}</span></div>
+                            <div className="p-4"><h3 className="truncate font-bold text-slate-800">{combo.name}</h3><p className="mt-1 text-xs text-slate-400">SKU: {combo.code}</p>
+                                <div className="mt-4 flex items-end justify-between border-t border-gray-100 pt-3"><div><p className="text-[11px] text-slate-400">Available stock</p><p className="text-xl font-black text-slate-800">{combo.available_stock ?? 0}</p></div><p className="text-sm font-bold text-slate-700">₹{Number(combo.final_price ?? combo.offer_price ?? 0).toLocaleString("en-IN")}</p></div>
+                                <button type="button" onClick={() => onAddStock(combo)} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-violet-700 py-2.5 text-xs font-bold text-white hover:bg-violet-800"><FiPlus size={14} /> Add Stock</button>
+                            </div>
+                        </article>;
+                    })}
+                </div>
+            )}
+        </section>
+    );
+}
 
 // SVG Helper Components
 const FiCheckCircle = () => <svg stroke="currentColor" fill="none" strokeWidth="2.5" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>

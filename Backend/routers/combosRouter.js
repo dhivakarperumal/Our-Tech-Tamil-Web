@@ -361,6 +361,35 @@ function createCombosRouter(pool) {
     }
   });
 
+  router.patch("/:id/stock", async (request, response, next) => {
+    try {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) throw httpError(400, "Invalid combo ID.");
+      const quantity = numberValue(request.body?.quantity, "Stock quantity", {
+        required: true,
+        min: 1,
+        max: 10000000,
+        integer: true,
+      });
+      const [result] = await pool.execute(
+        `UPDATE combos SET
+          available_stock = available_stock + ?,
+          stock_status = CASE WHEN available_stock + ? <= 10 THEN 'Low Stock' ELSE 'In Stock' END
+         WHERE id = ?`,
+        [quantity, quantity, id],
+      );
+      if (!result.affectedRows) throw httpError(404, "Combo product not found.");
+      const [rows] = await pool.execute(
+        "SELECT id, available_stock, stock_status FROM combos WHERE id = ?",
+        [id],
+      );
+      return response.json({ success: true, combo: rows[0] });
+    } catch (error) {
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    }
+  });
+
   router.put("/:id", async (request, response, next) => {
     try {
       const id = Number(request.params.id);

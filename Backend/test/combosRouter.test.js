@@ -81,6 +81,31 @@ test("combo product selection filters by category type", async (t) => {
   assert.equal(result.pagination.total, 0);
 });
 
+test("combo stock endpoint adds inventory and returns the new stock status", async (t) => {
+  let stock = 8;
+  const server = await startTestServer(t, {
+    async execute(query, params = []) {
+      if (query.includes("UPDATE combos SET") && query.includes("available_stock = available_stock +")) {
+        stock += params[0];
+        return [{ affectedRows: 1 }];
+      }
+      if (query.includes("SELECT id, available_stock, stock_status FROM combos")) {
+        return [[{ id: params[0], available_stock: stock, stock_status: stock <= 10 ? "Low Stock" : "In Stock" }]];
+      }
+      throw new Error(`Unexpected query: ${query}`);
+    },
+  });
+  const response = await fetch(`${server.url}/17/stock`, {
+    method: "PATCH",
+    headers: server.headers,
+    body: JSON.stringify({ quantity: 5 }),
+  });
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.combo.available_stock, 13);
+  assert.equal(result.combo.stock_status, "In Stock");
+});
+
 test("combo creation saves combo details and selected product quantities", async (t) => {
   let inserted;
   const server = await startTestServer(t, {
