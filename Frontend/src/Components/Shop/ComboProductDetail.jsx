@@ -36,6 +36,7 @@ function ComboProductDetail() {
   const { wishlist, addComboToCart, toggleComboWishlist } = useContext(StoreContext);
   const [quantityState, setQuantityState] = useState({ id: null, value: 1 });
   const [detailState, setDetailState] = useState({ id: null, combo: null, loading: true, failed: false });
+  const [relatedState, setRelatedState] = useState({ combos: [], loading: true, failed: false });
   const [isImageZoomOpen, setIsImageZoomOpen] = useState(false);
   const [isImageHovered, setIsImageHovered] = useState(false);
   const [imageZoomOrigin, setImageZoomOrigin] = useState("50% 50%");
@@ -64,9 +65,34 @@ function ComboProductDetail() {
     return () => { active = false; };
   }, [id]);
 
+  useEffect(() => {
+    let active = true;
+    api.get("/combos/public")
+      .then(({ data }) => {
+        if (active) {
+          setRelatedState({
+            combos: Array.isArray(data.combos) ? data.combos : [],
+            loading: false,
+            failed: false,
+          });
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load related combos:", error);
+        if (active) setRelatedState({ combos: [], loading: false, failed: true });
+      });
+    return () => { active = false; };
+  }, []);
+
   const gallery = parseList(combo?.gallery_images).map(imageUrl).filter(Boolean);
   const products = parseList(combo?.products);
   const specifications = parseList(combo?.specifications);
+  const relatedCombos = combo?.category
+    ? relatedState.combos.filter((relatedCombo) =>
+      Number(relatedCombo.id) !== Number(combo.id) &&
+      String(relatedCombo.category || "").trim().toLowerCase() === String(combo.category).trim().toLowerCase()
+    ).slice(0, 4)
+    : [];
   const activeImage = selectedImage.id === id && selectedImage.image
     ? selectedImage.image
     : gallery[0] || "";
@@ -299,6 +325,69 @@ function ComboProductDetail() {
                   </div>
                   {combo.warranty && <p className="mt-4 flex items-center gap-2 text-sm text-text-secondary"><ShieldCheck size={17} className="text-primary" />{combo.warranty}</p>}
                 </div>
+              </section>
+
+              <section className="mt-8">
+                <div className="mb-4">
+                  <h2 className="text-xl font-black text-slate-900">Related combos</h2>
+                  <p className="mt-1 text-sm text-slate-500">More bundles from {combo.category}.</p>
+                </div>
+                {relatedState.loading ? (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
+                    {[1, 2, 3, 4].map((item) => (
+                      <div key={item} className="aspect-[4/5] animate-pulse rounded-2xl bg-white" />
+                    ))}
+                  </div>
+                ) : relatedState.failed ? (
+                  <p className="rounded-xl border border-rose-100 bg-white p-4 text-sm text-rose-700">
+                    Related combos could not be loaded.
+                  </p>
+                ) : relatedCombos.length ? (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
+                    {relatedCombos.map((relatedCombo) => {
+                      const relatedImage = imageUrl(parseList(relatedCombo.gallery_images)[0]);
+                      const relatedPrice = Number(relatedCombo.final_price ?? relatedCombo.offer_price ?? 0);
+                      const relatedMrp = Number(relatedCombo.mrp ?? 0);
+                      return (
+                        <Link
+                          key={relatedCombo.id}
+                          to={`/combos/${relatedCombo.id}`}
+                          className="group overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                        >
+                          <div className="aspect-square overflow-hidden bg-violet-50">
+                            {relatedImage ? (
+                              <img
+                                src={relatedImage}
+                                alt={relatedCombo.name}
+                                loading="lazy"
+                                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                              />
+                            ) : (
+                              <div className="flex h-full items-center justify-center text-violet-300">
+                                <Boxes size={42} strokeWidth={1.5} aria-hidden="true" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="p-3">
+                            <h3 className="line-clamp-2 min-h-10 text-sm font-bold text-slate-800 group-hover:text-primary">
+                              {relatedCombo.name}
+                            </h3>
+                            <div className="mt-2 flex flex-wrap items-baseline gap-2">
+                              <span className="text-sm font-extrabold text-primary">{currency(relatedPrice)}</span>
+                              {relatedMrp > relatedPrice && (
+                                <span className="text-xs text-slate-400 line-through">{currency(relatedMrp)}</span>
+                              )}
+                            </div>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="rounded-xl border border-slate-100 bg-white p-4 text-sm text-slate-500">
+                    No other active combos in this category yet.
+                  </p>
+                )}
               </section>
 
               <section className="mt-8 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
