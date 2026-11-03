@@ -557,6 +557,32 @@ function createAdminContentController(pool) {
       }
     },
 
+    async listPublicYoutubeVideos(request, response, next) {
+      try {
+        const [videos] = await pool.execute(
+          `SELECT id, title, video_url, video_id, thumbnail_image, thumbnail_url, description,
+                  application_links
+           FROM admin_youtube_videos
+           WHERE status = 'Active'
+           ORDER BY created_at DESC, id DESC`,
+        );
+        return response.json({
+          videos: videos.map((video) => ({
+            ...video,
+            application_links: parseJsonArray(video.application_links).filter((link) =>
+              link
+              && typeof link.title === "string"
+              && link.title.trim()
+              && typeof link.url === "string"
+              && validateOptionalUrl(link.url.trim()),
+            ),
+          })),
+        });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
     async getNextYoutubeVideoCode(request, response, next) {
       try {
         const [rows] = await pool.query("SELECT COALESCE(MAX(id), 0) + 1 AS nextId FROM admin_youtube_videos");

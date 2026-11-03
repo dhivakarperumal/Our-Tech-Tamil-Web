@@ -15,6 +15,7 @@ import {
   ShoppingCart,
   UserRound,
   Users,
+  Video,
   X,
   Phone,
 } from "lucide-react";
@@ -291,6 +292,10 @@ const Navbar = () => {
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><FileText size={17} /></span>
                   <span className="flex-1">Articles</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
                 </NavLink>
+                <NavLink to="/youtube-videos" onClick={() => setPagesMenu(false)} className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"}`}>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><Video size={17} /></span>
+                  <span className="flex-1">YouTube Videos</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                </NavLink>
                 <NavLink to="/about" onClick={() => setPagesMenu(false)} className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"}`}>
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><Users size={17} /></span>
                   <span className="flex-1">About Us</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
@@ -506,6 +511,7 @@ const Navbar = () => {
               <button type="button" onClick={() => setMobilePages(false)} className="mb-3 flex items-center gap-2 px-2 py-2 text-sm font-semibold text-primary"><ChevronRight size={17} className="rotate-180" />Back to menu</button>
               <div className="space-y-2">
                 <NavLink to="/articles" onClick={() => { setMobilePages(false); setMobileMenu(false); }} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><FileText size={18} />Articles</NavLink>
+                <NavLink to="/youtube-videos" onClick={() => { setMobilePages(false); setMobileMenu(false); }} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><Video size={18} />YouTube Videos</NavLink>
                 <NavLink to="/about" onClick={() => { setMobilePages(false); setMobileMenu(false); }} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><Users size={18} />About Us</NavLink>
                 <NavLink to="/contactus" onClick={() => { setMobilePages(false); setMobileMenu(false); }} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><Phone size={18} />Contact Us</NavLink>
                 <NavLink to="/termsandconditions" onClick={() => { setMobilePages(false); setMobileMenu(false); }} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><FileText size={18} />Terms &amp; Conditions</NavLink>
