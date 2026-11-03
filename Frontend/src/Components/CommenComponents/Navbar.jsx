@@ -39,7 +39,6 @@ const Navbar = () => {
   const [mobilePages, setMobilePages] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
-  const [orderCount, setOrderCount] = useState(0);
   const [searchState, setSearchState] = useState({ route: "", value: "" });
   const [searchOpen, setSearchOpen] = useState(false);
   const [suggestions, setSuggestions] = useState({
@@ -139,35 +138,6 @@ const Navbar = () => {
     };
   }, []);
 
-  useEffect(() => {
-    let active = true;
-
-    const fetchOrderCount = async () => {
-      if (!user) {
-        setOrderCount(0);
-        return;
-      }
-
-      try {
-        const response = await api.get("/orders");
-        const orders = Array.isArray(response.data) ? response.data : (response.data.data || []);
-        const userOrders = orders.filter(
-          (order) => (order.user_id === user.user_id || order.user_id === user.id) && order.status !== "Delivered",
-        );
-        if (active) setOrderCount(userOrders.length);
-      } catch (error) {
-        console.error("Error fetching order count:", error);
-      }
-    };
-
-    fetchOrderCount();
-    const interval = setInterval(fetchOrderCount, 30000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, [user]);
-
   const handleSearchChange = (event) => {
     const value = event.target.value;
     const query = value.trim();
@@ -247,7 +217,7 @@ const Navbar = () => {
 
   const renderDesktopNavigation = () => (
     <div className="hidden min-w-0 flex-1 items-center justify-center xl:flex">
-      <div className="flex min-h-[42px] items-center justify-center gap-1 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-2 shadow-[0_8px_20px_rgba(30,8,50,0.2)]">
+      <div className="flex min-h-[42px] items-center justify-center gap-1 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-14 shadow-[0_8px_20px_rgba(30,8,50,0.2)]">
         <NavLink to="/" end className={navClass}><House size={18} aria-hidden="true" />Home</NavLink>
         <NavLink to="/shop" className={navClass}><ShoppingBag size={18} aria-hidden="true" />Shop</NavLink>
         <div className="relative" ref={categoryRef}>
@@ -363,10 +333,6 @@ const Navbar = () => {
           <Link to="/account" onClick={() => setUserMenu(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-[#faf7ff] hover:text-primary">
             My Account
           </Link>
-          <Link to="/ordersmain" onClick={() => setUserMenu(false)} className="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-[#faf7ff] hover:text-primary">
-            Track Orders
-            {orderCount > 0 && <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] text-white">{orderCount}</span>}
-          </Link>
           {user.role === "admin" && (
             <Link to="/admin" onClick={() => setUserMenu(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-[#faf7ff] hover:text-primary">
               Admin Panel
@@ -384,7 +350,7 @@ const Navbar = () => {
     <>
       <nav className="sticky top-0 z-50 bg-white shadow-[0_5px_18px_rgba(38,13,66,0.12)]">
       <PageContainer>
-        <div className="flex min-h-[68px] items-center justify-between gap-3 py-2 lg:min-h-[72px]">
+        <div className="flex min-h-[78px] items-center justify-between gap-3 py-2 lg:min-h-[82px]">
           <Link to="/" className="flex shrink-0 items-center" aria-label="Our Tech home">
             <img
               src="/images/logo.jpeg"
@@ -489,10 +455,9 @@ const Navbar = () => {
         )}
 
       </PageContainer>
-      </nav>
 
       {mobileMenu && (
-        <div className="absolute inset-x-0 top-full z-[55] max-h-[calc(100dvh-120px)] overflow-y-auto border-t border-[#eee7f5] bg-white shadow-xl lg:hidden">
+        <div className="absolute inset-x-0 top-full z-[55] max-h-[calc(100dvh-6rem)] overflow-y-auto border-t border-[#eee7f5] bg-white shadow-xl xl:hidden">
           {!mobileCategory && !mobilePages ? (
             <div className="space-y-2 p-4">
               <NavLink to="/" end onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><House size={18} />Home</NavLink>
@@ -503,8 +468,6 @@ const Navbar = () => {
               <button type="button" onClick={() => setMobilePages(true)} className="flex w-full items-center justify-between rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary">
                 <span className="flex items-center gap-3"><FileText size={18} />Pages</span><ChevronRight size={17} />
               </button>
-              <NavLink to="/termsandconditions" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><FileText size={18} />Terms &amp; Conditions</NavLink>
-              <Link to="/ordersmain" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><ShoppingCart size={18} />Track Order</Link>
               <div className="flex items-center justify-between border-t border-gray-100 pt-3 sm:hidden">
                 {user ? (
                   <>
@@ -543,6 +506,7 @@ const Navbar = () => {
           )}
         </div>
       )}
+      </nav>
 
       {logoutConfirm && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
