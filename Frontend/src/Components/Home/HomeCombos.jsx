@@ -1,5 +1,8 @@
 import { useContext, useEffect, useState } from "react";
-import { ArrowRight, Boxes, Heart, ShoppingCart, Star, Zap } from "lucide-react";
+import {
+  ArrowRight, Boxes, ChevronDown, Heart, LayoutGrid, ShieldCheck,
+  ShoppingCart, Sparkles, Star, Zap,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
@@ -17,6 +20,11 @@ function HomeCombos() {
   const { wishlist, addComboToCart, toggleComboWishlist } = useContext(StoreContext);
   const [combos, setCombos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeCategory, setActiveCategory] = useState("All Combos");
+  const categories = ["All Combos", ...new Set(combos.map((combo) => combo.category).filter(Boolean))];
+  const visibleCombos = activeCategory === "All Combos"
+    ? combos
+    : combos.filter((combo) => combo.category === activeCategory);
 
   const buyNow = async (combo) => {
     const quantity = Math.max(1, Number(combo.minimum_order_quantity) || 1);
@@ -59,25 +67,55 @@ function HomeCombos() {
   return (
     <section aria-labelledby="home-combos-title" className="bg-[#faf8fc] py-8 sm:py-12">
       <PageContainer>
-        <div className="mb-5 flex items-end justify-between gap-3">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-700">Bundle and save</p>
-            <h2 id="home-combos-title" className="mt-1 text-2xl font-black text-slate-900 sm:text-3xl">
-              Combo Offers
+        <div className="relative overflow-hidden rounded-[1.75rem] border border-violet-100 bg-gradient-to-br from-white via-[#fdfbff] to-violet-50/80 p-4 shadow-[0_16px_44px_rgba(75,0,200,0.08)] sm:p-6">
+          <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-32 h-72 w-72 rounded-full border-[38px] border-violet-100/30" />
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-36 left-1/4 h-56 w-56 rounded-full bg-fuchsia-100/25 blur-3xl" />
+          <div className="relative mb-4 flex flex-wrap items-center justify-between gap-3 sm:mb-5">
+            <h2 id="home-combos-title" className="flex items-center gap-2 text-2xl font-extrabold tracking-tight sm:text-3xl lg:text-4xl">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-700 to-fuchsia-600 text-white shadow-lg shadow-violet-900/20 sm:h-12 sm:w-12">
+                <LayoutGrid size={22} aria-hidden="true" />
+              </span>
+              <span className="bg-gradient-to-r from-violet-950 via-violet-800 to-fuchsia-700 bg-clip-text text-transparent">Combo Offers</span>
+              <Sparkles size={16} className="text-fuchsia-500" aria-hidden="true" />
             </h2>
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="hidden items-center gap-2 rounded-full border border-violet-200 bg-white/90 px-4 py-2 shadow-sm sm:flex">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-50 text-violet-800"><ShieldCheck size={19} aria-hidden="true" /></span>
+                <span><span className="block text-sm font-extrabold leading-tight text-slate-900">Secure</span><span className="block text-[10px] font-medium text-slate-500">Shopping experience</span></span>
+              </div>
+              <Link
+                to="/combos"
+                className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-2 text-xs font-bold text-violet-700 transition hover:bg-violet-50 hover:text-violet-900 sm:text-sm"
+              >
+                View all <ArrowRight size={16} aria-hidden="true" />
+              </Link>
+            </div>
           </div>
-          <Link
-            to="/combos"
-            className="inline-flex shrink-0 items-center gap-1 text-sm font-bold text-violet-700 transition hover:text-violet-900"
-          >
-            View all <ArrowRight size={16} aria-hidden="true" />
-          </Link>
-        </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {!loading && combos.length > 0 && (
+            <div className="relative mb-4 flex flex-wrap items-center justify-between gap-3">
+              <label className="relative block w-2/5 min-w-0 sm:w-64">
+                <LayoutGrid size={16} aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-violet-700" />
+                <select
+                  value={activeCategory}
+                  onChange={(event) => setActiveCategory(event.target.value)}
+                  aria-label="Filter combos by category"
+                  className="w-full appearance-none rounded-full border border-violet-200 bg-white py-3 pl-12 pr-10 text-sm font-bold text-slate-700 shadow-sm outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                >
+                  {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+                </select>
+                <ChevronDown size={17} aria-hidden="true" className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-violet-700" />
+              </label>
+              <span className="ml-auto text-right text-xs font-semibold text-slate-500">
+                {visibleCombos.length} {visibleCombos.length === 1 ? "combo" : "combos"}
+              </span>
+            </div>
+          )}
+
+          <div className="relative grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {loading ? [1, 2, 3, 4, 5].map((item) => (
             <div key={item} className="aspect-[4/5] animate-pulse rounded-[26px] border border-violet-100 bg-white p-2.5 shadow-sm" />
-          )) : combos.map((combo) => {
+          )) : visibleCombos.map((combo) => {
             const image = getImageUrl(
               combo.firstProductImage
               || combo.products?.[0]?.image
@@ -201,6 +239,7 @@ function HomeCombos() {
               </article>
             );
           })}
+          </div>
         </div>
       </PageContainer>
     </section>
