@@ -59,7 +59,7 @@ function HomeCombos() {
           </Link>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5">
           {loading ? [1, 2, 3, 4].map((item) => (
             <div key={item} className="aspect-[4/5] animate-pulse rounded-[26px] border border-violet-100 bg-white p-2.5 shadow-sm" />
           )) : combos.map((combo) => {

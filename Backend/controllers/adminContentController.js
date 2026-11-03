@@ -582,8 +582,8 @@ function createAdminContentController(pool) {
     async listPublicYoutubeVideos(request, response, next) {
       try {
         const [videos] = await pool.execute(
-          `SELECT id, title, video_url, video_id, thumbnail_image, thumbnail_url, description,
-                  application_links
+          `SELECT id, video_code, title, video_url, video_id, thumbnail_image, thumbnail_url,
+                  description, application_links, documents, follow_up_notes, created_at
            FROM admin_youtube_videos
            WHERE status = 'Active'
            ORDER BY created_at DESC, id DESC`,
@@ -598,6 +598,9 @@ function createAdminContentController(pool) {
               && typeof link.url === "string"
               && validateOptionalUrl(link.url.trim()),
             ),
+            documents: parseJsonArray(video.documents)
+              .filter((document) => validateDocuments([document]))
+              .map(({ name, type, url, data }) => ({ name, type, url, data })),
           })),
         });
       } catch (error) {
