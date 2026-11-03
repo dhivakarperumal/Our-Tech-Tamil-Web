@@ -89,7 +89,7 @@ function createDashboardController(pool) {
             COUNT(*) AS total,
             COALESCE(SUM(DATE(created_at) = CURDATE()), 0) AS today,
             COALESCE(SUM(status = 'Cancelled'), 0) AS cancelled,
-            COALESCE(SUM(status IN ('Shipping', 'Out for Delivery', 'Shipped')), 0) AS delivery
+            COALESCE(SUM(status = 'Delivered'), 0) AS delivery
           FROM orders
         `),
         pool.execute(`

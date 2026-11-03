@@ -23,6 +23,7 @@ test("dashboard returns real inventory, order, revenue, and low-stock data", asy
   let customerQuery = "";
   let revenueQuery = "";
   let revenueSummaryQuery = "";
+  let orderSummaryQuery = "";
   const pool = {
     async execute(query) {
       if (query.includes("COUNT(*) AS total") && query.includes("FROM products")) {
@@ -39,7 +40,8 @@ test("dashboard returns real inventory, order, revenue, and low-stock data", asy
         return [[{ total: "42500.50", today: "1200.00" }]];
       }
       if (query.includes("COUNT(*) AS total") && query.includes("FROM orders")) {
-        return [[{ total: "24", today: "3", cancelled: "4", delivery: "6" }]];
+        orderSummaryQuery = query;
+        return [[{ total: "24", today: "3", cancelled: "4", delivery: "3" }]];
       }
       if (query.includes("AS order_number")) {
         return [[{
@@ -110,7 +112,8 @@ test("dashboard returns real inventory, order, revenue, and low-stock data", asy
     sales: 7,
     img: "/uploads/speaker.png",
   }]);
-  assert.deepEqual(response.body.orderSummary, { total: 24, today: 3, cancelled: 4, delivery: 6 });
+  assert.deepEqual(response.body.orderSummary, { total: 24, today: 3, cancelled: 4, delivery: 3 });
+  assert.match(orderSummaryQuery, /SUM\(status = 'Delivered'\), 0\) AS delivery/);
   assert.deepEqual(response.body.revenueSummary, { total: 42500.5, today: 1200 });
   assert.deepEqual(response.body.revenueTrends, [
     { month: "Mon", revenue: 1200.5 },
