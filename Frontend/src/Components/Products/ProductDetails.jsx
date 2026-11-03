@@ -400,6 +400,9 @@ function ProductDetails() {
   }
 
   const images = getImages(product);
+  const isNaturalProduct = /natural/i.test(
+    `${product.cat_type || product.category_type || ""} ${product.category || ""}`,
+  );
   const variants = parseList(product.variants);
   const selectedVariant = variants.find((variant) =>
     (variant.colorName || variant.color || "") === selectedColor,
@@ -568,7 +571,7 @@ function ProductDetails() {
             {inStock ? `In stock (${selectedStock} ${product.unit || "Piece"})` : "Out of stock"}
           </p>
 
-          {colorOptions.length > 0 && (
+          {!isNaturalProduct && colorOptions.length > 0 && (
             <fieldset className="mt-5">
               <legend className="text-sm font-bold text-text-primary">Color</legend>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -613,7 +616,7 @@ function ProductDetails() {
             </fieldset>
           )}
 
-          {sizeOptions.length > 0 && (
+          {!isNaturalProduct && sizeOptions.length > 0 && (
             <fieldset className="mt-4">
               <legend className="text-sm font-bold text-text-primary">Size</legend>
               <div className="mt-2 flex flex-wrap gap-2">

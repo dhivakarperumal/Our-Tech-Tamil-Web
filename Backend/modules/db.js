@@ -127,6 +127,32 @@ async function initializeDatabase(pool) {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS coupons (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      code VARCHAR(64) NOT NULL,
+      name VARCHAR(160) NOT NULL,
+      description TEXT NULL,
+      discount_type ENUM('percentage', 'fixed') NOT NULL,
+      discount_value DECIMAL(12, 2) NOT NULL,
+      min_order_value DECIMAL(12, 2) NOT NULL DEFAULT 0,
+      start_date DATETIME NOT NULL,
+      expiry_date DATETIME NOT NULL,
+      usage_limit_global BIGINT UNSIGNED NULL,
+      usage_limit_per_customer BIGINT UNSIGNED NOT NULL DEFAULT 1,
+      usage_count BIGINT UNSIGNED NOT NULL DEFAULT 0,
+      status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+      coupon_scope ENUM('all', 'first_order_only', 'new_customers_only', 'specific_products', 'specific_categories') NOT NULL DEFAULT 'all',
+      applicable_product_ids JSON NOT NULL,
+      applicable_category_ids JSON NOT NULL,
+      applicable_subcategory_ids JSON NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY coupons_code_unique (code),
+      KEY coupons_status_dates_idx (status, start_date, expiry_date)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS reviews (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       product_id BIGINT UNSIGNED NOT NULL,

@@ -6,10 +6,26 @@ import Select from "react-select";
 import api from "../../api";
 import Loader from "../../Components/CommenComponents/Loader";
 
+const normalizeIdArray = (value) => {
+  let ids = value;
+  if (typeof ids === "string") {
+    try {
+      ids = JSON.parse(ids);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(ids)) return [];
+  return ids
+    .map(id => Number(id))
+    .filter(id => Number.isSafeInteger(id) && id > 0);
+};
+
 const Coupons = () => {
   const [coupons, setCoupons] = useState([]);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [optionsLoading, setOptionsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentCoupon, setCurrentCoupon] = useState(null);
@@ -50,23 +66,46 @@ const Coupons = () => {
 
   const fetchOptions = async () => {
     try {
-      const [prodRes, catRes] = await Promise.all([
-        api.get('/products').catch(() => ({ data: [] })),
-        api.get('/categories').catch(() => ({ data: [] }))
+      setOptionsLoading(true);
+      const [firstProductRes, catRes] = await Promise.all([
+        api.get('/products', { params: { page: 1, limit: 100 } }),
+        api.get('/categories')
       ]);
 
-      const allFoods = Array.isArray(prodRes.data) ? prodRes.data : [];
-      const prodList = allFoods.map(p => ({ 
-        value: p.id, 
-        label: p.name || 'Product' 
-      }));
+      const firstProductData = firstProductRes.data;
+      const allProducts = Array.isArray(firstProductData)
+        ? firstProductData
+        : Array.isArray(firstProductData?.products)
+          ? firstProductData.products
+          : [];
+      const totalPages = Number(firstProductData?.pagination?.totalPages) || 1;
+      if (totalPages > 1) {
+        const remainingProductResponses = await Promise.all(
+          Array.from({ length: totalPages - 1 }, (_, index) =>
+            api.get('/products', { params: { page: index + 2, limit: 100 } })
+          )
+        );
+        remainingProductResponses.forEach(({ data }) => {
+          if (Array.isArray(data?.products)) allProducts.push(...data.products);
+        });
+      }
+
+      const prodList = allProducts
+        .filter(p => p.id !== undefined && p.id !== null)
+        .map(p => ({
+          value: p.id,
+          label: p.name || 'Product'
+        }));
       setProducts(prodList);
 
       const allCategories = Array.isArray(catRes.data) ? catRes.data : [];
       const catList = allCategories.map(c => ({ value: c.id, label: c.name || `Category ${c.id}` }));
       setCategories(catList);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to load coupon options:', err);
+      toast.error('Failed to load products and categories');
+    } finally {
+      setOptionsLoading(false);
     }
   };
 
@@ -80,6 +119,9 @@ const Coupons = () => {
       setCurrentCoupon(coupon);
       setFormData({
         ...coupon,
+        applicable_product_ids: normalizeIdArray(coupon.applicable_product_ids),
+        applicable_category_ids: normalizeIdArray(coupon.applicable_category_ids),
+        applicable_subcategory_ids: normalizeIdArray(coupon.applicable_subcategory_ids),
         start_date: new Date(coupon.start_date).toISOString().slice(0, 16),
         expiry_date: new Date(coupon.expiry_date).toISOString().slice(0, 16),
       });
@@ -263,6 +305,7 @@ const Coupons = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="admin-table-header border-b border-[#3c096c]">
+                <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#FCD34D]">S No</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#FCD34D]">Code</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#FCD34D]">Name</th>
                 <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-[#FCD34D]">Discount</th>
@@ -276,13 +319,14 @@ const Coupons = () => {
             <tbody className="divide-y divide-slate-100">
               {filteredCoupons.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="p-8 text-center text-slate-500 font-semibold">
+                  <td colSpan="9" className="p-8 text-center text-slate-500 font-semibold">
                     No coupons found. Create one to get started.
                   </td>
                 </tr>
               ) : (
-                filteredCoupons.map((coupon) => (
+                filteredCoupons.map((coupon, index) => (
                   <tr key={coupon.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-semibold text-slate-600">{index + 1}</td>
                     <td className="px-6 py-4">
                       <span className="inline-flex px-3 py-1 bg-gray-100 text-gray-800 font-bold text-xs rounded-lg border border-gray-200">
                         {coupon.code}
@@ -388,7 +432,7 @@ const Coupons = () => {
 
       {isModalOpen && createPortal(
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-[3rem] w-full max-w-[95vw] md:max-w-[90vw] lg:max-w-6xl max-h-[95vh] overflow-hidden flex flex-col shadow-2xl relative z-[10000] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
+          <div className="bg-white rounded-[3rem] w-full max-w-3xl max-h-[95vh] overflow-hidden flex flex-col shadow-2xl relative z-[10000] animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
             <div className="admin-table-header p-8 text-white relative flex-shrink-0">
               <div className="absolute right-0 top-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
               <div className="relative flex items-center justify-between">
@@ -482,6 +526,8 @@ const Coupons = () => {
                           className="react-select-container text-black"
                           classNamePrefix="react-select"
                           placeholder="Search and select products..."
+                          isLoading={optionsLoading}
+                          noOptionsMessage={() => optionsLoading ? 'Loading products...' : 'No products available'}
                           styles={{
                             option: (provided) => ({ ...provided, color: '#000' }),
                             singleValue: (provided) => ({ ...provided, color: '#000' }),

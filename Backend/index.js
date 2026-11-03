@@ -21,6 +21,7 @@ const createOrdersRouter = require("./routers/ordersRouter");
 const createCartRouter = require("./routers/cartRouter");
 const createWishlistRouter = require("./routers/wishlistRouter");
 const createCheckoutRouter = require("./routers/checkoutRouter");
+const createCouponsRouter = require("./routers/couponsRouter");
 
 const port = Number(process.env.PORT || 5000);
 
@@ -61,6 +62,7 @@ app.use("/api/orders", createOrdersRouter(pool));
 app.use("/api/cart", createCartRouter(pool));
 app.use("/api/wishlist", createWishlistRouter(pool));
 app.use("/api/checkout", createCheckoutRouter(pool));
+app.use("/api/coupons", createCouponsRouter(pool));
 
 app.use((error, request, response, next) => {
   console.error("Backend request failed:", error);
