@@ -202,14 +202,14 @@ const TermsAndConditions = () => {
               </div>
             </div>
 
-            <nav aria-label="Terms and conditions sections" className="mt-2 grid max-h-56 grid-cols-2 gap-x-2 overflow-y-auto sm:grid-cols-3 lg:max-h-none lg:grid-cols-1">
+            <nav aria-label="Terms and conditions sections" className="mt-2 grid max-h-56 grid-cols-2 gap-x-2 gap-y-1.5 overflow-y-auto sm:grid-cols-3 lg:max-h-none lg:grid-cols-1 lg:gap-y-0">
               {sections.map(({ num, title }) => (
                 <a
                   key={num}
                   href={`#terms-${num}`}
                   onClick={() => setActiveSection(num)}
                   aria-current={activeSection === num ? "location" : undefined}
-                  className={`flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] transition sm:text-xs lg:text-[11px] ${
+                  className={`flex min-w-0 items-center gap-2 rounded-lg border-b border-[#eee7f5] px-2 py-2 text-[11px] transition last:border-b-0 sm:text-xs lg:rounded-none lg:py-1.5 lg:text-[11px] ${
                     activeSection === num
                       ? "bg-[#f0ddff] font-bold text-primary"
                       : "text-[#29243c] hover:bg-[#faf6ff] hover:text-primary"
