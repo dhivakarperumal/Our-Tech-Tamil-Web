@@ -14,6 +14,8 @@ import Loader from "./Components/CommenComponents/Loader.jsx";
 // Lazy Load Main Components
 const Home = React.lazy(() => import("./Components/Home/Home.jsx"));
 const Shop = React.lazy(() => import("./Components/Shop/Shop.jsx"));
+const Combos = React.lazy(() => import("./Components/Shop/Combos.jsx"));
+const ComboProductDetail = React.lazy(() => import("./Components/Shop/ComboProductDetail.jsx"));
 const PublicProductDetails = React.lazy(() => import("./Components/Products/ProductDetails.jsx"));
 const AboutUs = React.lazy(() => import("./Components/CommenComponents/AboutUs.jsx"));
 const TermsAndConditions = React.lazy(() => import("./Components/CommenComponents/TermsAndCondition.jsx"));
@@ -61,6 +63,8 @@ const router = createBrowserRouter([
     children: [
       { path: "/", element: <Home /> },
       { path: "shop", element: <Shop /> },
+      { path: "combos", element: <Combos /> },
+      { path: "combos/:id", element: <ComboProductDetail /> },
       { path: "product/:id", element: <PublicProductDetails /> },
       { path: "about", element: <AboutUs /> },
       { path: "termsandconditions", element: <TermsAndConditions /> },

@@ -504,6 +504,13 @@ function Checkout() {
                     <img src={item.image || "https://ui-avatars.com/api/?name=Product&background=f3f4f6&color=240046"} alt="" className="h-14 w-12 shrink-0 rounded-lg bg-gray-50 object-contain" />
                     <div className="min-w-0">
                       <p className="line-clamp-2 text-sm font-semibold text-text-primary">{item.name}</p>
+                      <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                        item.item_type === "combo" || item.combo_id
+                          ? "bg-violet-50 text-violet-700"
+                          : "bg-slate-100 text-slate-600"
+                      }`}>
+                        {item.item_type === "combo" || item.combo_id ? "Combo" : "Normal"}
+                      </span>
                       <p className="mt-1 text-xs text-text-secondary">Qty: {item.quantity}{item.colorName ? ` · ${item.colorName}` : ""}{item.size ? ` · ${item.size}` : ""}</p>
                     </div>
                   </div>

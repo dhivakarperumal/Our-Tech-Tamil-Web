@@ -144,6 +144,7 @@ const Orders = ({ statusFilter = "All" }) => {
         <td>${index + 1}</td>
         <td>${formatOrderId(order)}</td>
         <td>${order.customer_name || "Guest Customer"}</td>
+        <td>${order.items_type || "Single"}</td>
         <td>₹${Number(order.total_amount || 0).toFixed(2)}</td>
         <td>${order.payment_method || "-"}</td>
         <td>${order.status || "-"}</td>
@@ -151,7 +152,7 @@ const Orders = ({ statusFilter = "All" }) => {
       </tr>
     `).join("");
 
-    printWindow.document.write(`<!doctype html><html><head><title>Orders Report</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#1e293b}h1{color:#350866;margin:0 0 6px}p{color:#64748b;margin:0 0 24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #dbe1ea;padding:10px;text-align:left;font-size:12px}th{background:linear-gradient(90deg,#2e1065 0%,#4c1d95 55%,#86198f 100%);color:#FCD34D;text-transform:uppercase;font-size:11px}tr:nth-child(even){background:#f8fafc}</style></head><body><h1>Orders Report</h1><p>${filteredOrders.length} order${filteredOrders.length === 1 ? "" : "s"}</p><table><thead><tr><th>S No</th><th>Order ID</th><th>Customer</th><th>Amount</th><th>Payment</th><th>Status</th><th>Order Date</th></tr></thead><tbody>${rows || '<tr><td colspan="7">No orders found</td></tr>'}</tbody></table></body></html>`);
+    printWindow.document.write(`<!doctype html><html><head><title>Orders Report</title><style>body{font-family:Arial,sans-serif;padding:32px;color:#1e293b}h1{color:#350866;margin:0 0 6px}p{color:#64748b;margin:0 0 24px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #dbe1ea;padding:10px;text-align:left;font-size:12px}th{background:linear-gradient(90deg,#2e1065 0%,#4c1d95 55%,#86198f 100%);color:#FCD34D;text-transform:uppercase;font-size:11px}tr:nth-child(even){background:#f8fafc}</style></head><body><h1>Orders Report</h1><p>${filteredOrders.length} order${filteredOrders.length === 1 ? "" : "s"}</p><table><thead><tr><th>S No</th><th>Order ID</th><th>Customer</th><th>Order Type</th><th>Amount</th><th>Payment</th><th>Status</th><th>Order Date</th></tr></thead><tbody>${rows || '<tr><td colspan="8">No orders found</td></tr>'}</tbody></table></body></html>`);
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
@@ -334,6 +335,7 @@ const Orders = ({ statusFilter = "All" }) => {
                 <tr className="admin-table-header border-b border-[#3c096c]">
                   <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Order ID</th>
                   <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Customer</th>
+                  <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Order Type</th>
                   <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Amount</th>
                   <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Payment</th>
                   <th className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">Status</th>
@@ -344,11 +346,11 @@ const Orders = ({ statusFilter = "All" }) => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-10 text-center text-gray-400 text-sm font-semibold">Loading orders...</td>
+                    <td colSpan="8" className="px-6 py-10 text-center text-gray-400 text-sm font-semibold">Loading orders...</td>
                   </tr>
                 ) : currentItems.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="px-6 py-10 text-center text-gray-400 text-sm font-semibold">No orders found.</td>
+                    <td colSpan="8" className="px-6 py-10 text-center text-gray-400 text-sm font-semibold">No orders found.</td>
                   </tr>
                 ) : (
                   currentItems.map((order, idx) => {
@@ -370,6 +372,13 @@ const Orders = ({ statusFilter = "All" }) => {
                               <div className="text-[11px] text-gray-400 font-medium mt-0.5">{customerPhone}</div>
                             </div>
                           </div>
+                        </td>
+                        <td className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">
+                          <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                            order.items_type === "Combo" ? "bg-violet-100 text-violet-700" :
+                              order.items_type === "Mixed" ? "bg-amber-100 text-amber-700" :
+                                "bg-slate-100 text-slate-600"
+                          }`}>{order.items_type || "Single"}</span>
                         </td>
                         <td className="px-4 py-4 text-[11px] font-bold text-[#FCD34D] uppercase tracking-wider w-10">
                           <div className="text-[13px] font-black text-[#2B3674]">₹{parseFloat(order.total_amount || 0).toLocaleString()}</div>
@@ -491,6 +500,10 @@ const Orders = ({ statusFilter = "All" }) => {
                         <p className="text-xs text-gray-500 mt-0.5">{order.customer_phone || "+91 98765 43210"}</p>
                       </div>
                       <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Order Type</p>
+                          <p className="mt-1 text-xs font-bold text-[#2B3674]">{order.items_type || "Single"}</p>
+                        </div>
                         <div>
                           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Amount</p>
                           <p className="text-base font-black text-[#2B3674] mt-1">₹{parseFloat(order.total_amount || 0).toLocaleString()}</p>

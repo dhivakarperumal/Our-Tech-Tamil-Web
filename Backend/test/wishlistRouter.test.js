@@ -12,6 +12,17 @@ function createPool() {
   return {
     saved,
     async execute(query, params = []) {
+      if (query.includes("FROM combos WHERE id = ?")) {
+        return [[{
+          id: params[0],
+          name: "Test combo",
+          code: "COMBO-008",
+          thumbnail: null,
+          gallery_images: '["/uploads/combo-gallery.png"]',
+          mrp: "300.00",
+          final_price: "250.00",
+        }]];
+      }
       if (query.includes("FROM products WHERE id = ?")) {
         return [[{
           id: params[0],
@@ -24,6 +35,13 @@ function createPool() {
           available_sizes: '["M","L"]',
           available_colors: '["Blue","Black"]',
         }]];
+      }
+      if (query.includes("INSERT INTO wishlist_items") && query.includes("combo_id")) {
+        const [userId, comboId, name, image, code, mrp, offerPrice] = params;
+        saved.set(`${userId}:combo:${comboId}`, {
+          id: 2, userId, comboId, name, image, code, mrp, offerPrice,
+        });
+        return [{ affectedRows: 1 }];
       }
       if (query.includes("INSERT IGNORE INTO wishlist_items")) {
         saved.set(`${params[0]}:${params[1]}`, { userId: params[0], productId: params[1] });
@@ -47,6 +65,11 @@ function createPool() {
       }
       if (query.includes("DELETE FROM wishlist_items")) {
         let deleted = false;
+        if (query.includes("AND combo_id = ?")) {
+          const [userId, comboId] = params;
+          deleted = saved.delete(`${userId}:combo:${comboId}`);
+          return [{ affectedRows: deleted ? 1 : 0 }];
+        }
         if (query.includes("AND id = ?")) {
           const [userId, itemId] = params;
           const entry = [...saved].find(([, item]) =>
@@ -63,11 +86,29 @@ function createPool() {
         }
         return [{ affectedRows: deleted ? 1 : 0 }];
       }
+      if (query.includes("INNER JOIN combos")) {
+        const userId = params[0];
+        return [[...saved.values()]
+          .filter((item) => item.userId === userId && item.comboId)
+          .map((item) => ({
+            id: item.id,
+            combo_id: item.comboId,
+            product_name: item.name,
+            product_image: item.image,
+            product_code: item.code,
+            mrp: item.mrp,
+            offer_price: item.offerPrice,
+            name: "Test combo",
+            code: "COMBO-008",
+            thumbnail: null,
+            gallery_images: '["/uploads/combo-gallery.png"]',
+          }))];
+      }
       if (query.includes("FROM wishlist_items wi")) {
         const userId = params[0];
         const productIds = [...saved]
           .map(([, item]) => item)
-          .filter((item) => item.userId === userId);
+          .filter((item) => item.userId === userId && !item.comboId);
         return [productIds.map((productId) => ({
           id: productId.id || 1,
           product_id: productId.productId,
@@ -142,6 +183,33 @@ test("wishlist endpoints authenticate, load product data and isolate accounts", 
   });
   assert.equal(removedResponse.status, 200);
   assert.equal(pool.saved.size, 0);
+});
+
+test("wishlist saves, returns, and removes combo favorites", async (t) => {
+  const { pool, url } = await startServer(t);
+  const addResponse = await fetch(`${url}/combos`, {
+    method: "POST",
+    headers: { ...headers("customer-one"), "Content-Type": "application/json" },
+    body: JSON.stringify({ combo_id: 8 }),
+  });
+  assert.equal(addResponse.status, 201);
+
+  const response = await fetch(url, { headers: headers("customer-one") });
+  const items = await response.json();
+  assert.equal(items.length, 1);
+  assert.equal(items[0].combo_id, 8);
+  assert.equal(items[0].item_type, "combo");
+  assert.equal(items[0].name, "Test combo");
+  assert.equal(items[0].price, 250);
+  assert.equal(items[0].image, "/uploads/combo-gallery.png");
+  assert.equal([...pool.saved.values()][0].image, "/uploads/combo-gallery.png");
+
+  const removed = await fetch(`${url}/combos/8`, {
+    method: "DELETE",
+    headers: headers("customer-one"),
+  });
+  assert.equal(removed.status, 200);
+  assert.deepEqual(await (await fetch(url, { headers: headers("customer-one") })).json(), []);
 });
 
 test("wishlist routes reject missing authentication and invalid product IDs", async (t) => {

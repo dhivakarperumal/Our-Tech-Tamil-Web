@@ -154,6 +154,30 @@ export const StoreProvider = ({ children }) => {
         }
     };
 
+    const addComboToCart = async (combo, qty = 1) => {
+        if (!user?.user_id) {
+            toast.error("Please login to add combos to your cart");
+            return false;
+        }
+        const comboId = Number(combo?.combo_id ?? combo?.id);
+        const quantity = Number(qty);
+        if (!Number.isSafeInteger(comboId) || comboId < 1 ||
+            !Number.isSafeInteger(quantity) || quantity < 1) {
+            toast.error("Unable to add this combo to your cart");
+            return false;
+        }
+        try {
+            await api.post("/cart/combos", { combo_id: comboId, quantity });
+            toast.success("Combo added to cart successfully");
+            await fetchCart();
+            return true;
+        } catch (err) {
+            console.error("Add combo to cart error:", err);
+            toast.error(err.response?.data?.message || "Failed to add combo to cart");
+            return false;
+        }
+    };
+
     const removeFromCart = async (cartItemId) => {
         try {
             await api.delete(`/cart/${cartItemId}`);
@@ -223,6 +247,7 @@ export const StoreProvider = ({ children }) => {
             (selectedVariant?.sizesStock ? Object.keys(selectedVariant.sizesStock)[0] : "") ||
             availableSizes[0] || "";
         const isAlready = wishlist.some(w =>
+            !w.combo_id &&
             String(w.product_id ?? w.productId ?? w.id) === String(productId) &&
             (w.variant_color || w.colorName || "") === variantColor &&
             (w.variant_size || w.size || "") === variantSize
@@ -249,6 +274,34 @@ export const StoreProvider = ({ children }) => {
         }
     };
 
+    const toggleComboWishlist = async (combo) => {
+        if (!user?.user_id) {
+            toast.error("Please login to manage favorites");
+            return false;
+        }
+        const comboId = Number(combo?.combo_id ?? combo?.id);
+        if (!Number.isSafeInteger(comboId) || comboId < 1) {
+            toast.error("Unable to identify this combo.");
+            return false;
+        }
+        const isAlready = wishlist.some((item) => Number(item.combo_id) === comboId);
+        try {
+            if (isAlready) {
+                await api.delete(`/wishlist/combos/${comboId}`);
+                toast.success("Removed from favorites");
+            } else {
+                await api.post("/wishlist/combos", { combo_id: comboId });
+                toast.success("Added to favorites!");
+            }
+            await fetchWishlist();
+            return true;
+        } catch (err) {
+            console.error("Toggle combo favorite error:", err);
+            toast.error(err.response?.data?.message || "Failed to update favorites");
+            return false;
+        }
+    };
+
     const removeFromWishlist = async (item) => {
         const wishlistItemId = Number(item?.id);
         if (!Number.isSafeInteger(wishlistItemId) || wishlistItemId < 1) {
@@ -257,7 +310,11 @@ export const StoreProvider = ({ children }) => {
         }
 
         try {
-            await api.delete(`/wishlist/item/${wishlistItemId}`);
+            if (item?.combo_id) {
+                await api.delete(`/wishlist/combos/${Number(item.combo_id)}`);
+            } else {
+                await api.delete(`/wishlist/item/${wishlistItemId}`);
+            }
             setWishlist((current) => current.filter((entry) => Number(entry.id) !== wishlistItemId));
             toast.success("Removed from favorites");
             return true;
@@ -273,8 +330,8 @@ export const StoreProvider = ({ children }) => {
     return (
         <StoreContext.Provider value={{
             cart: visibleCart, wishlist,
-            addToCart, removeFromCart, updateCartQuantity, clearCart,
-            toggleWishlist, removeFromWishlist,
+            addToCart, addComboToCart, removeFromCart, updateCartQuantity, clearCart,
+            toggleWishlist, toggleComboWishlist, removeFromWishlist,
             loadingCart, loadingWishlist,
             fetchCart, fetchWishlist,
             productsCache, setProductsCache,

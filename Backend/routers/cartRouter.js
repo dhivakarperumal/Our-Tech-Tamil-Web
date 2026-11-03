@@ -106,14 +106,17 @@ function toCartItem(row) {
   const quantity = Number(row.quantity);
   const offerPrice = Number(row.offer_price);
   const subtotal = Number(row.subtotal);
+  const image = row.product_image || row.thumbnail || parseImageArray(row.gallery_images)[0] || "";
   return {
     id: Number(row.id),
     user_id: row.user_id,
-    product_id: Number(row.product_id),
+    product_id: row.product_id == null ? null : Number(row.product_id),
+    combo_id: row.combo_id == null ? null : Number(row.combo_id),
+    item_type: row.combo_id ? "combo" : "product",
     product_name: row.product_name,
     name: row.product_name,
-    product_image: row.product_image || "",
-    image: row.product_image || "",
+    product_image: image,
+    image,
     product_code: row.product_code,
     mrp: Number(row.mrp),
     offer_price: offerPrice,
@@ -126,16 +129,20 @@ function toCartItem(row) {
     colorName: row.variant_color || "",
     variant_size: row.variant_size || "",
     size: row.variant_size || "",
+    minimum_order_quantity: Number(row.minimum_order_quantity) || 1,
   };
 }
 
 async function getCart(pool, userId) {
   const [rows] = await pool.execute(
-    `SELECT id, user_id, product_id, product_name, product_image, product_code,
-            mrp, offer_price, quantity, subtotal, total, variant_color, variant_size
-     FROM cart_items
-     WHERE user_id = ?
-     ORDER BY created_at DESC, id DESC`,
+    `SELECT ci.id, ci.user_id, ci.product_id, ci.combo_id, ci.product_name,
+            ci.product_image, ci.product_code, ci.mrp, ci.offer_price,
+            ci.quantity, ci.subtotal, ci.total, ci.variant_color, ci.variant_size,
+            c.minimum_order_quantity, c.thumbnail, c.gallery_images
+     FROM cart_items ci
+     LEFT JOIN combos c ON c.id = ci.combo_id
+     WHERE ci.user_id = ?
+     ORDER BY ci.created_at DESC, ci.id DESC`,
     [userId],
   );
   const items = rows.map(toCartItem);
@@ -299,6 +306,85 @@ function createCartRouter(pool) {
     }
   });
 
+  router.post("/combos", async (request, response, next) => {
+    let connection;
+    try {
+      const comboId = parseProductId(request.body?.combo_id);
+      const quantity = parseQuantity(request.body?.quantity, 1);
+      const userId = request.user.user_id;
+      connection = await pool.getConnection();
+      await connection.beginTransaction();
+      await lockCartForUser(connection, userId);
+      const [combos] = await connection.execute(
+        `SELECT id, name, code, mrp, final_price, thumbnail, gallery_images, available_stock,
+                stock_status, track_inventory, allow_backorders,
+                minimum_order_quantity, maximum_order_quantity, status
+         FROM combos WHERE id = ? LIMIT 1 FOR UPDATE`,
+        [comboId],
+      );
+      const combo = combos[0];
+      if (!combo || combo.status !== "Active") throw httpError(404, "This combo is no longer available.");
+      const [existingRows] = await connection.execute(
+        "SELECT id, quantity FROM cart_items WHERE user_id = ? AND combo_id = ? LIMIT 1 FOR UPDATE",
+        [userId, comboId],
+      );
+      const currentQuantity = Number(existingRows[0]?.quantity || 0);
+      const nextQuantity = currentQuantity + quantity;
+      const minimumQuantity = Number(combo.minimum_order_quantity) || 1;
+      const maximumQuantity = Number(combo.maximum_order_quantity) || MAX_QUANTITY;
+      if (nextQuantity < minimumQuantity || nextQuantity > maximumQuantity) {
+        throw httpError(400, `This combo quantity must be between ${minimumQuantity} and ${maximumQuantity}.`);
+      }
+      const stock = Number(combo.available_stock);
+      if (Number(combo.track_inventory) === 1 && Number(combo.allow_backorders) !== 1 &&
+          (!Number.isSafeInteger(stock) || currentQuantity + quantity > stock)) {
+        throw httpError(400, `Only ${Math.max(0, Number.isSafeInteger(stock) ? stock - currentQuantity : 0)} more combo item(s) are available.`);
+      }
+      const mrpCents = priceInCents(combo.mrp, "MRP");
+      const offerCents = priceInCents(combo.final_price, "offer price");
+      const comboImage = combo.thumbnail || parseImageArray(combo.gallery_images)[0] || "";
+      const subtotalCents = validateAmountCents(offerCents * nextQuantity, "Cart item subtotal");
+      if (existingRows.length) {
+        await connection.execute(
+          `UPDATE cart_items
+           SET product_name = ?, product_image = ?, product_code = ?, mrp = ?, offer_price = ?,
+               quantity = ?, subtotal = ?, variant_color = '', variant_size = ''
+           WHERE id = ? AND user_id = ?`,
+          [
+            combo.name, comboImage, combo.code,
+            Number((mrpCents / 100).toFixed(2)), Number((offerCents / 100).toFixed(2)),
+            nextQuantity, Number((subtotalCents / 100).toFixed(2)), existingRows[0].id, userId,
+          ],
+        );
+      } else {
+        await connection.execute(
+          `INSERT INTO cart_items
+            (user_id, product_id, combo_id, product_name, product_image, product_code, mrp, offer_price,
+             quantity, subtotal, total, variant_color, variant_size)
+           VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, '', '')`,
+          [
+            userId, combo.id, combo.name, comboImage, combo.code,
+            Number((mrpCents / 100).toFixed(2)), Number((offerCents / 100).toFixed(2)),
+            quantity, Number(((offerCents * quantity) / 100).toFixed(2)),
+            Number(((offerCents * quantity) / 100).toFixed(2)),
+          ],
+        );
+      }
+      await updateCartTotal(connection, userId);
+      await connection.commit();
+      return response.status(existingRows.length ? 200 : 201).json({
+        ...await getCart(pool, userId),
+        message: "Combo added to cart successfully.",
+      });
+    } catch (error) {
+      if (connection) await connection.rollback();
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    } finally {
+      connection?.release();
+    }
+  });
+
   router.put("/:id", async (request, response, next) => {
     let connection;
     try {
@@ -310,10 +396,18 @@ function createCartRouter(pool) {
       await lockCartForUser(connection, userId);
 
       const [rows] = await connection.execute(
-        `SELECT ci.id, ci.product_id, ci.variant_color, ci.variant_size,
-                p.name, p.product_code, p.mrp, p.offer_price, p.total_stock, p.status, p.images, p.variants
+        `SELECT ci.id, ci.product_id, ci.combo_id, ci.variant_color, ci.variant_size,
+                COALESCE(c.name, p.name) AS name,
+                COALESCE(c.code, p.product_code) AS product_code,
+                COALESCE(c.mrp, p.mrp) AS mrp,
+                COALESCE(c.final_price, p.offer_price, p.mrp) AS offer_price,
+                COALESCE(c.available_stock, p.total_stock) AS total_stock,
+                COALESCE(c.status, p.status) AS status,
+                p.images, p.variants, c.thumbnail, c.track_inventory, c.allow_backorders,
+                c.minimum_order_quantity, c.maximum_order_quantity
          FROM cart_items ci
-         INNER JOIN products p ON p.id = ci.product_id
+         LEFT JOIN products p ON p.id = ci.product_id
+         LEFT JOIN combos c ON c.id = ci.combo_id
          WHERE ci.id = ? AND ci.user_id = ?
          LIMIT 1
          FOR UPDATE`,
@@ -322,16 +416,37 @@ function createCartRouter(pool) {
       const item = rows[0];
       if (!item) throw httpError(404, "Cart item not found.");
       if (item.status !== "Active") throw httpError(400, "This product is no longer available.");
+      if (item.combo_id) {
+        const minimumQuantity = Number(item.minimum_order_quantity) || 1;
+        const maximumQuantity = Number(item.maximum_order_quantity) || MAX_QUANTITY;
+        if (quantity < minimumQuantity || quantity > maximumQuantity) {
+          throw httpError(400, `This combo quantity must be between ${minimumQuantity} and ${maximumQuantity}.`);
+        }
+      }
 
-      const [quantityRows] = await connection.execute(
-        `SELECT COALESCE(SUM(quantity), 0) AS quantity
-         FROM cart_items
-         WHERE user_id = ? AND product_id = ? AND id <> ?`,
-        [userId, item.product_id, cartItemId],
-      );
-      const availableStock = Number(item.total_stock) - Number(quantityRows[0]?.quantity || 0);
-      if (quantity > availableStock) {
-        throw httpError(400, `Only ${Math.max(0, availableStock)} more item(s) are available.`);
+      if (item.combo_id) {
+        if (Number(item.track_inventory) === 1) {
+          const [quantityRows] = await connection.execute(
+            `SELECT COALESCE(SUM(quantity), 0) AS quantity
+             FROM cart_items WHERE user_id = ? AND combo_id = ? AND id <> ?`,
+            [userId, item.combo_id, cartItemId],
+          );
+          const availableStock = Number(item.total_stock) - Number(quantityRows[0]?.quantity || 0);
+          if (Number(item.allow_backorders) !== 1 && quantity > availableStock) {
+            throw httpError(400, `Only ${Math.max(0, availableStock)} more combo item(s) are available.`);
+          }
+        }
+      } else {
+        const [quantityRows] = await connection.execute(
+          `SELECT COALESCE(SUM(quantity), 0) AS quantity
+           FROM cart_items
+           WHERE user_id = ? AND product_id = ? AND id <> ?`,
+          [userId, item.product_id, cartItemId],
+        );
+        const availableStock = Number(item.total_stock) - Number(quantityRows[0]?.quantity || 0);
+        if (quantity > availableStock) {
+          throw httpError(400, `Only ${Math.max(0, availableStock)} more item(s) are available.`);
+        }
       }
 
       const mrpCents = priceInCents(item.mrp, "MRP");
@@ -347,7 +462,7 @@ function createCartRouter(pool) {
          WHERE id = ? AND user_id = ?`,
         [
           item.name,
-          getProductImage(item, item.variant_color || ""),
+          item.combo_id ? item.thumbnail || "" : getProductImage(item, item.variant_color || ""),
           item.product_code,
           Number((mrpCents / 100).toFixed(2)),
           Number((offerCents / 100).toFixed(2)),

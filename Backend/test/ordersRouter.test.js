@@ -7,8 +7,19 @@ const createOrdersRouter = require("../routers/ordersRouter");
 
 process.env.JWT_SECRET = "orders-router-test-secret";
 
-function createPool() {
+function createPool({ orderItems } = {}) {
   const statements = [];
+  const savedOrderItems = orderItems || [{
+    order_id: 42,
+    product_id: 8,
+    product_name: "Test product",
+    price: "125.50",
+    quantity: 2,
+    total: "251.00",
+    variant_color: "Blue",
+    variant_size: "M",
+    image: "/uploads/products/test.png",
+  }];
   const connection = {
     async beginTransaction() {},
     async commit() {},
@@ -51,17 +62,19 @@ function createPool() {
         }]];
       }
       if (query.includes("FROM order_items")) {
+        return [savedOrderItems];
+      }
+      if (query.includes("FROM combos WHERE id IN")) {
         return [[{
-          order_id: 42,
-          product_id: 8,
-          product_name: "Test product",
-          price: "125.50",
-          quantity: 2,
-          total: "251.00",
-          variant_color: "Blue",
-          variant_size: "M",
-          image: "/uploads/products/test.png",
+          id: 5,
+          products: '[{"id":8,"quantity":2},{"id":9,"quantity":1}]',
         }]];
+      }
+      if (query.includes("FROM products WHERE id IN")) {
+        return [[
+          { id: 8, name: "Test pan", product_code: "PAN-008", images: '["/uploads/pan.png"]' },
+          { id: 9, name: "Test lid", product_code: "LID-009", images: '["/uploads/lid.png"]' },
+        ]];
       }
       throw new Error("Unexpected pool query");
     },
@@ -209,6 +222,41 @@ test("the account orders endpoint only returns the authenticated user's orders",
   );
   assert.match(query.query, /WHERE o\.user_id = \?/);
   assert.deepEqual(query.params, ["customer-uuid"]);
+});
+
+test("order details include every product and quantity inside combo order lines", async (t) => {
+  const pool = createPool({
+    orderItems: [{
+      order_id: 42,
+      product_id: null,
+      combo_id: 5,
+      product_name: "Kitchen combo",
+      price: "500.00",
+      quantity: 1,
+      total: "500.00",
+      variant_color: "",
+      variant_size: "",
+      image: "/uploads/combo.png",
+    }],
+  });
+  const app = express();
+  app.use("/api/orders", createOrdersRouter(pool));
+  const server = app.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => server.close());
+
+  const token = jwt.sign({ id: 1, user_id: "admin-uuid", role: "admin" }, process.env.JWT_SECRET);
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/orders/42`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const order = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.equal(order.items[0].item_type, "combo");
+  assert.deepEqual(order.items[0].included_products, [
+    { id: 8, name: "Test pan", product_code: "PAN-008", quantity: 2, image: "/uploads/pan.png" },
+    { id: 9, name: "Test lid", product_code: "LID-009", quantity: 1, image: "/uploads/lid.png" },
+  ]);
 });
 
 test("order creation requires admin authentication", async (t) => {

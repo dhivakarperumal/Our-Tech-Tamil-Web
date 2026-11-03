@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Boxes, Check, Edit2, ImagePlus, LoaderCircle, PackagePlus, Plus, Search, Trash2, Video, X } from "lucide-react";
+import { ArrowLeft, Boxes, Check, Edit2, ImagePlus, LoaderCircle, PackagePlus, Plus, Search, Star, Trash2, Video, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import api from "../../api";
@@ -137,6 +137,7 @@ function AddCombo() {
           new_arrival: Boolean(combo.new_arrival),
           mrp: String(combo.mrp ?? ""),
           offer: String(combo.offer ?? "0"),
+          rating: String(combo.rating ?? "5"),
         });
       } else {
         setForm((current) => ({ ...current, code: comboResponse.data.code || "" }));
@@ -284,6 +285,7 @@ function AddCombo() {
     if (!form.category_type) nextErrors.category_type = "Select a category type.";
     if (!form.category) nextErrors.category = "Select a category.";
     if (!form.subcategory) nextErrors.subcategory = "Select a subcategory.";
+    if (!form.rating || Number(form.rating) < 1 || Number(form.rating) > 5) nextErrors.rating = "Select a rating.";
     if (status !== "Draft" && !form.products.length) nextErrors.products = "Select at least one product.";
     if (Number(form.mrp || originalTotal) <= 0) nextErrors.mrp = "Add products or enter a combo MRP.";
     setErrors(nextErrors);
@@ -370,6 +372,39 @@ function AddCombo() {
                     <option value="">Select subcategory</option>
                     {subcategories.map((subcategory) => <option key={subcategory} value={subcategory}>{subcategory}</option>)}
                   </select>
+                </Field>
+                <Field label="Rating" required error={errors.rating}>
+                  <div className="flex items-center gap-2">
+                    <select
+                      name="rating"
+                      value={form.rating}
+                      onChange={(event) => updateForm("rating", event.target.value)}
+                      className={`${selectClass} flex-1`}
+                    >
+                      <option value="5">5 Stars</option>
+                      <option value="4">4 Stars</option>
+                      <option value="3">3 Stars</option>
+                      <option value="2">2 Stars</option>
+                      <option value="1">1 Star</option>
+                    </select>
+                    <div className="flex items-center gap-0.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2.5 shadow-sm">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => updateForm("rating", String(star))}
+                          className="p-0.5 transition hover:scale-125 focus:outline-none"
+                          title={`${star} Star${star > 1 ? "s" : ""}`}
+                          aria-label={`${star} star`}
+                        >
+                          <Star
+                            size={16}
+                            className={star <= Number(form.rating || 5) ? "fill-amber-400 text-amber-400" : "fill-slate-200 text-slate-300"}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </Field>
                 <Field label="Status">
                   <select value={form.status} onChange={(event) => updateForm("status", event.target.value)} className={selectClass}>

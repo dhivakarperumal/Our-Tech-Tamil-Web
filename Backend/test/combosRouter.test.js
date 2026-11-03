@@ -52,6 +52,77 @@ test("combo endpoints require admin authentication", async (t) => {
   assert.equal(response.status, 401);
 });
 
+test("public combo listing returns active combos without admin authentication", async (t) => {
+  const server = await startTestServer(t, {
+    async execute(query) {
+      assert.match(query, /WHERE status = 'Active'/);
+      return [[{
+        id: 21,
+        name: "Kitchen bundle",
+        code: "COMBO0021",
+        category_type: "Home",
+        category: "Kitchen",
+        gallery_images: '["/uploads/combos/kitchen.jpg"]',
+        products: '[{"id":2,"quantity":1}]',
+        mrp: 500,
+        offer_price: 450,
+        final_price: 450,
+        available_stock: 6,
+        stock_status: "Low Stock",
+        rating: "4.5",
+      }]];
+    },
+  });
+  const response = await fetch(`${server.url}/public`);
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.combos[0].name, "Kitchen bundle");
+  assert.equal(result.combos[0].rating, 4.5);
+  assert.deepEqual(result.combos[0].gallery_images, ["/uploads/combos/kitchen.jpg"]);
+});
+
+test("public combo detail returns the active combo and included product details", async (t) => {
+  const server = await startTestServer(t, {
+    async execute(query, params = []) {
+      if (query.includes("FROM combos WHERE id = ? AND status = 'Active'")) {
+        assert.equal(params[0], 17);
+        return [[{
+          id: 17,
+          name: "Kitchen starter set",
+          code: "COMBO0017",
+          status: "Active",
+          gallery_images: '["/uploads/combos/kitchen.jpg"]',
+          products: '[{"id":2,"quantity":3}]',
+          specifications: '[{"key":"Material","value":"Steel"}]',
+          mrp: 500,
+          offer_price: 450,
+          final_price: 450,
+          available_stock: 4,
+        }]];
+      }
+      if (query.includes("FROM products WHERE status = 'Active'")) {
+        assert.deepEqual(params, [2]);
+        return [[{
+          id: 2,
+          name: "Steel pan",
+          product_code: "PAN-2",
+          mrp: 300,
+          offer_price: 250,
+          images: '["/uploads/pan.jpg"]',
+        }]];
+      }
+      throw new Error(`Unexpected query: ${query}`);
+    },
+  });
+  const response = await fetch(`${server.url}/public/17`);
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.combo.name, "Kitchen starter set");
+  assert.deepEqual(result.combo.products[0].images, ["/uploads/pan.jpg"]);
+  assert.equal(result.combo.products[0].quantity, 3);
+  assert.deepEqual(result.combo.specifications, [{ key: "Material", value: "Steel" }]);
+});
+
 test("combo SKU endpoint creates the next combo code", async (t) => {
   const server = await startTestServer(t, {
     async execute(query) {

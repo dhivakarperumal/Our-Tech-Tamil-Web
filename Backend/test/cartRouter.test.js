@@ -21,12 +21,34 @@ function createPool() {
     images: '["/uploads/test.png"]',
     variants: "[]",
   };
+  const combo = {
+    id: 5,
+    name: "Test combo",
+    code: "COMBO-005",
+    mrp: "300.00",
+    final_price: "250.00",
+    thumbnail: null,
+    gallery_images: '["/uploads/combo-gallery.png"]',
+    available_stock: 4,
+    status: "Active",
+    track_inventory: 1,
+    allow_backorders: 0,
+    minimum_order_quantity: 1,
+    maximum_order_quantity: 8,
+  };
 
   const execute = async (query, params = []) => {
     if (query.includes("FROM users")) return [[{ user_id: params[0] }]];
     if (query.includes("FROM products")) return [[{ ...product }]];
+    if (query.includes("FROM combos")) return [[{ ...combo }]];
 
     if (query.includes("SELECT id, quantity") && query.includes("FROM cart_items")) {
+      if (query.includes("combo_id = ?")) {
+        const [userId, comboId] = params;
+        return [items.filter((item) =>
+          item.user_id === userId && item.combo_id === comboId,
+        ).map(({ id, quantity }) => ({ id, quantity }))];
+      }
       const [userId, productId, color, size] = params;
       return [items.filter((item) =>
         item.user_id === userId && item.product_id === productId &&
@@ -35,9 +57,10 @@ function createPool() {
     }
 
     if (query.includes("SUM(quantity)") && query.includes("FROM cart_items")) {
-      const [userId, productId, excludedId] = params;
+      const [userId, selectedId, excludedId] = params;
       const quantity = items
-        .filter((item) => item.user_id === userId && item.product_id === productId)
+        .filter((item) => item.user_id === userId &&
+          (query.includes("combo_id = ?") ? item.combo_id === selectedId : item.product_id === selectedId))
         .filter((item) => !query.includes("id <> ?") || item.id !== excludedId)
         .reduce((sum, item) => sum + item.quantity, 0);
       return [[{ quantity }]];
@@ -52,23 +75,42 @@ function createPool() {
       }]];
     }
 
-    if (query.includes("SELECT ci.id") && query.includes("FROM cart_items ci")) {
+    if (query.includes("WHERE ci.id = ?") && query.includes("FROM cart_items ci")) {
       const [id, userId] = params;
       const item = items.find((entry) => entry.id === id && entry.user_id === userId);
       return [item ? [{
         ...item,
-        name: product.name,
-        product_code: product.product_code,
-        mrp: product.mrp,
-        offer_price: product.offer_price,
-        total_stock: product.total_stock,
-        status: product.status,
+        name: item.combo_id ? combo.name : product.name,
+        product_code: item.combo_id ? combo.code : product.product_code,
+        mrp: item.combo_id ? combo.mrp : product.mrp,
+        offer_price: item.combo_id ? combo.final_price : product.offer_price,
+        total_stock: item.combo_id ? combo.available_stock : product.total_stock,
+        status: item.combo_id ? combo.status : product.status,
         images: product.images,
         variants: product.variants,
+        thumbnail: combo.thumbnail,
+        gallery_images: combo.gallery_images,
+        track_inventory: combo.track_inventory,
+        allow_backorders: combo.allow_backorders,
+        minimum_order_quantity: combo.minimum_order_quantity,
+        maximum_order_quantity: combo.maximum_order_quantity,
       }] : []];
     }
 
     if (query.includes("INSERT INTO cart_items")) {
+      if (query.includes("combo_id")) {
+        const [
+          user_id, combo_id, product_name, product_image, product_code, mrp, offer_price,
+          quantity, subtotal, total,
+        ] = params;
+        const item = {
+          id: nextId++, user_id, product_id: null, combo_id, product_name, product_image,
+          product_code, mrp, offer_price, quantity, subtotal, total,
+          variant_color: "", variant_size: "",
+        };
+        items.push(item);
+        return [{ insertId: item.id }];
+      }
       const [
         user_id, product_id, product_name, product_image, product_code, mrp, offer_price,
         quantity, subtotal, total, variant_color, variant_size,
@@ -122,8 +164,12 @@ function createPool() {
       return [{ affectedRows: 1 }];
     }
 
-    if (query.includes("FROM cart_items") && query.includes("ORDER BY created_at")) {
-      return [items.filter((item) => item.user_id === params[0]).map((item) => ({ ...item }))];
+    if (query.includes("FROM cart_items") && query.includes("ORDER BY ci.created_at")) {
+      return [items.filter((item) => item.user_id === params[0]).map((item) => ({
+        ...item,
+        thumbnail: item.combo_id ? combo.thumbnail : null,
+        gallery_images: item.combo_id ? combo.gallery_images : null,
+      }))];
     }
 
     throw new Error(`Unexpected cart query: ${query}`);
@@ -278,6 +324,43 @@ test("cart items can be removed and a user's cart can be cleared without affecti
   assert.deepEqual(cleared.items, []);
   assert.equal(cleared.total, 0);
   assert.ok(secondUserItem.id);
+});
+
+test("combo cart items use combo prices and enforce inventory when updating quantity", async (t) => {
+  const { baseUrl } = await startCartServer(t);
+  const headers = {
+    Authorization: `Bearer ${tokenFor("customer-one")}`,
+    "Content-Type": "application/json",
+  };
+  const addResponse = await fetch(`${baseUrl}/combos`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ combo_id: 5, quantity: 2 }),
+  });
+  const cart = await addResponse.json();
+  assert.equal(addResponse.status, 201);
+  assert.equal(cart.items[0].combo_id, 5);
+  assert.equal(cart.items[0].product_id, null);
+  assert.equal(cart.items[0].item_type, "combo");
+  assert.equal(cart.items[0].offer_price, 250);
+  assert.equal(cart.items[0].subtotal, 500);
+  assert.equal(cart.items[0].image, "/uploads/combo-gallery.png");
+  assert.equal(cart.items[0].product_image, "/uploads/combo-gallery.png");
+
+  const updateResponse = await fetch(`${baseUrl}/1`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ quantity: 3 }),
+  });
+  assert.equal(updateResponse.status, 200);
+  assert.equal((await updateResponse.json()).items[0].subtotal, 750);
+
+  const outOfStock = await fetch(`${baseUrl}/1`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify({ quantity: 5 }),
+  });
+  assert.equal(outOfStock.status, 400);
 });
 
 test("cart APIs require authentication and reject invalid quantities", async (t) => {
