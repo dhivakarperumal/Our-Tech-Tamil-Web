@@ -197,7 +197,7 @@ const Dealers = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse whitespace-nowrap">
                             <thead>
-                                <tr className="bg-gradient-to-r from-[#260642] to-[#4b0b78] text-[11px] font-black text-[#facc15] uppercase tracking-wider">
+                                <tr className="admin-table-header text-[11px] font-black uppercase tracking-wider">
                                     <th className="px-4 py-4 text-center"><input type="checkbox" className="rounded border-white/70 text-[#facc15] focus:ring-[#facc15]" aria-label="Select all dealers" /></th>
                                     <th className="px-4 py-4 text-center">S No</th>
                                     <th className="px-6 py-4">Dealer</th>

@@ -341,7 +341,7 @@ const Services = () => {
         ) : viewMode === "table" ? (
           <div className="overflow-x-auto rounded-xl border border-slate-100">
             <table className="w-full min-w-[760px] text-left">
-              <thead className="bg-violet-950 text-xs uppercase tracking-wide text-white">
+              <thead className="admin-table-header text-xs uppercase tracking-wide">
                 <tr>
                   <th className="px-4 py-4">S. No.</th>
                   <th className="px-4 py-4">Service</th>

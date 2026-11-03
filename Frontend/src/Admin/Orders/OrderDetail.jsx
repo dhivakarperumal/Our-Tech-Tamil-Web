@@ -135,7 +135,7 @@ const OrderDetail = () => {
           <h3 style="margin-top:40px;font-size:12px;text-transform:uppercase;color:#94a3b8;letter-spacing:1.5px;font-weight:900;">Item Manifest</h3>
           <table style="width:100%;border-collapse:collapse;margin-top:15px;font-size:13px;">
             <thead>
-              <tr style="background:#f8fafc; color:#64748b;">
+              <tr style="background:linear-gradient(90deg,#1F0A3C,#3c096c); color:#FCD34D;">
                 <th style="border:1px solid #e2e8f0;padding:12px;text-align:center;width:40px;">#</th>
                 <th style="border:1px solid #e2e8f0;padding:12px;text-align:left;">Product Details</th>
                 <th style="border:1px solid #e2e8f0;padding:12px;text-align:center;width:60px;">Qty</th>

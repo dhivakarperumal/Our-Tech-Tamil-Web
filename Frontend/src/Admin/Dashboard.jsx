@@ -887,7 +887,7 @@ const Dashboard = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[620px] text-left text-sm">
                             <thead>
-                                <tr className="border-b border-violet-100 bg-gradient-to-r from-violet-50/90 via-fuchsia-50/60 to-amber-50/60 text-[10px] uppercase tracking-[0.12em] text-violet-700">
+                                <tr className="admin-table-header text-[10px] uppercase tracking-[0.12em]">
                                     <th className="pb-3 font-bold">Order</th>
                                     <th className="pb-3 font-bold">Customer</th>
                                     <th className="pb-3 font-bold">Date</th>

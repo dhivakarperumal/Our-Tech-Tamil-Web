@@ -85,9 +85,10 @@
 .admin-table-header {
   background: linear-gradient(
     90deg,
-    var(--color-secondary-dark),
-    var(--color-primary-dark)
+    #5b21b6,
+    #a21caf
   );
+  color: #FCD34D;
 }
 
 .admin-button-primary {

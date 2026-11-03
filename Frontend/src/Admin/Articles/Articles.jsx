@@ -821,14 +821,14 @@ const Articles = () => {
         ) : viewMode === "table" ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] border-separate border-spacing-0 text-left">
-              <thead className="text-xs uppercase tracking-wide text-[#FCD34D]">
+              <thead className="admin-table-header text-xs uppercase tracking-wide">
                 <tr>
-                  <th className="rounded-tl-xl bg-violet-950 px-4 py-4">S No.</th>
-                  <th className="bg-violet-950 px-4 py-4">Content</th>
-                  <th className="bg-violet-950 px-4 py-4">ID</th>
-                  <th className="bg-violet-950 px-4 py-4">Type</th>
-                  <th className="bg-violet-950 px-4 py-4">Details</th>
-                  <th className="rounded-tr-xl bg-violet-950 px-4 py-4 text-right">Actions</th>
+                  <th className="rounded-tl-xl px-4 py-4">S No.</th>
+                  <th className="px-4 py-4">Content</th>
+                  <th className="px-4 py-4">ID</th>
+                  <th className="px-4 py-4">Type</th>
+                  <th className="px-4 py-4">Details</th>
+                  <th className="rounded-tr-xl px-4 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">

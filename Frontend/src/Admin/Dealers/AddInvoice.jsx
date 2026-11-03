@@ -272,13 +272,13 @@ const AddInvoice = () => {
                                 ) : (
                                     <div className="overflow-hidden border border-gray-100 rounded-2xl">
                                         <table className="w-full text-left">
-                                            <thead className="bg-gray-50">
-                                                <tr>
-                                                    <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Product</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest">Price</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest w-24">Qty</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-right">Total</th>
-                                                    <th className="px-6 py-4 text-[10px] font-black uppercase text-gray-400 tracking-widest text-center"></th>
+                                            <thead className="admin-table-header">
+                                                <tr className="text-[10px] font-black uppercase tracking-widest">
+                                                    <th className="px-6 py-4">Product</th>
+                                                    <th className="px-6 py-4">Price</th>
+                                                    <th className="px-6 py-4 w-24">Qty</th>
+                                                    <th className="px-6 py-4 text-right">Total</th>
+                                                    <th className="px-6 py-4 text-center"></th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-50">

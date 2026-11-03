@@ -206,7 +206,7 @@ const Billing = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full text-left text-sm">
                         <thead>
-                            <tr className="bg-[#350866] text-[#FCD34D]">
+                            <tr className="admin-table-header">
                                 <th className="px-6 py-5 w-12 rounded-tl-[2rem]">
                                     <input type="checkbox" aria-label="Select all orders" className="h-4 w-4 accent-[#FCD34D]" />
                                 </th>
