@@ -146,214 +146,227 @@ const AddStock = () => {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
             <Toaster position="top-right" />
 
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-2">
-                <div className="flex items-center gap-3 sm:gap-4">
-                    <button onClick={() => navigate(-1)} className="p-3 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-blue-600 transition-all shadow-sm active:scale-95 shadow-blue-500/5">
-                        <FiArrowLeft size={20} />
-                    </button>
-                    <div>
-                        <h1 className="text-xl sm:text-3xl font-black text-slate-800 tracking-tight flex items-center gap-2">
-                            Add New Stock
-                        </h1>
-                        <p className="text-sm font-bold text-gray-400 mt-1">Select a product and top up your inventory securely.</p>
+            <header className="overflow-hidden rounded-3xl bg-gradient-to-r from-[#2e1065] via-[#4c1d95] to-[#86198f] text-white shadow-lg shadow-violet-950/10">
+                <div className="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+                    <div className="flex items-center gap-4">
+                        <button onClick={() => navigate(-1)} aria-label="Go back" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/20">
+                            <FiArrowLeft size={20} />
+                        </button>
+                        <div>
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-200">Inventory management</p>
+                            <h1 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">Add stock</h1>
+                            <p className="mt-1 text-sm text-violet-100/80">Choose a product and update its inventory.</p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(280px,0.85fr)_minmax(0,1.65fr)]">
                 {/* Search & Selection Section */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
-                        <label className="text-xs font-black text-gray-400 uppercase tracking-widest block mb-4">Step 1: Find Product</label>
+                <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
+                        <div className="flex items-center gap-3">
+                            <span className="grid h-9 w-9 place-items-center rounded-xl bg-violet-50 text-violet-700">
+                                <FiSearch size={17} />
+                            </span>
+                            <div>
+                                <h2 className="text-sm font-extrabold text-slate-800">Find a product</h2>
+                                <p className="text-xs text-slate-500">Search by name or product code</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-4 sm:p-5">
                         <div className="relative mb-4">
-                            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                            <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
                             <input
                                 type="text"
                                 value={search}
                                 onChange={handleSearchChange}
                                 placeholder="Search by name or SKU..."
-                                className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-transparent rounded-[1rem] outline-none focus:bg-white focus:border-blue-500/30 transition-all text-sm font-bold text-slate-800 shadow-inner"
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm font-medium text-slate-800 outline-none transition placeholder:font-normal placeholder:text-slate-400 focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
                             />
                         </div>
 
                         {!selectedProduct && (
-                            <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+                            <div className="max-h-[440px] space-y-2 overflow-y-auto pr-1">
                                 {filteredProducts.map(prod => (
                                     <button
                                         key={prod.id}
                                         onClick={() => handleSelectProduct(prod)}
-                                        className="w-full text-left p-3 rounded-xl bg-gray-50 hover:bg-blue-50 border border-transparent hover:border-blue-100 transition-all flex items-center gap-3 group"
+                                        className="group flex w-full items-center gap-3 rounded-xl border border-transparent bg-white p-3 text-left transition hover:border-violet-200 hover:bg-violet-50/60"
                                     >
-                                        <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-200">
+                                        <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-slate-50">
                                             <img
                                                 src={getImageUrl((prod.variants && prod.variants.length > 0 && prod.variants[0].images?.length > 0) ? prod.variants[0].images[0] : (prod.images && prod.images.length > 0) ? prod.images[0] : null)}
                                                 alt={prod.name}
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>
-                                        <div className="flex-1 overflow-hidden">
-                                            <p className="text-sm font-black text-slate-800 truncate">{prod.name}</p>
-                                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{prod.product_code || `#SKU-${1000 + prod.id}`}</p>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-bold text-slate-800">{prod.name}</p>
+                                            <p className="mt-1 truncate text-[10px] font-semibold uppercase tracking-wider text-slate-400">{prod.product_code || `#SKU-${1000 + prod.id}`}</p>
                                         </div>
-                                        <div className="opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity">
+                                        <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-violet-50 text-violet-700 transition group-hover:bg-violet-700 group-hover:text-white">
                                             <FiPlus />
                                         </div>
                                     </button>
                                 ))}
-                                {filteredProducts.length === 0 && search && (
-                                    <p className="text-xs text-center font-bold text-gray-400 py-4">No products found.</p>
+                                {loading && <p className="py-8 text-center text-sm font-medium text-slate-400">Loading products...</p>}
+                                {!loading && filteredProducts.length === 0 && search && (
+                                    <p className="py-8 text-center text-sm font-medium text-slate-400">No products found for “{search}”.</p>
+                                )}
+                                {!loading && filteredProducts.length === 0 && !search && (
+                                    <p className="py-8 text-center text-sm font-medium text-slate-400">Search to find a product.</p>
                                 )}
                             </div>
                         )}
                         {selectedProduct && (
-                            <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-blue-700 font-bold text-sm">
-                                    <FiCheck /> Product Selected
+                            <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
+                                <div className="flex items-center gap-2 text-sm font-bold text-emerald-800">
+                                    <FiCheck /> Product selected
                                 </div>
-                                <button onClick={() => setSelectedProduct(null)} className="text-[10px] font-black uppercase text-blue-500 hover:text-blue-700 bg-white px-2 py-1 rounded-lg">
+                                <button onClick={() => setSelectedProduct(null)} className="rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-emerald-800 transition hover:bg-emerald-100">
                                     Change
                                 </button>
                             </div>
                         )}
                     </div>
-                </div>
+                </section>
 
                 {/* Addition Section */}
-                <div className="lg:col-span-2 space-y-6">
+                <section className="min-w-0">
                     {selectedProduct ? (
-                        <div className="bg-white p-6 sm:p-10 rounded-[2.5rem] border border-gray-100 shadow-sm relative overflow-hidden group">
-                            <div className="absolute -top-10 -right-10 p-8 opacity-[0.03] text-blue-600">
-                                <FiLayers size={200} />
-                            </div>
-
-                            <div className="relative z-10 space-y-8">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-gray-100 shadow-inner">
+                        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <div className="flex flex-col gap-4 border-b border-slate-100 p-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                                <div className="flex min-w-0 items-center gap-4">
+                                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
                                         <img
                                             src={getImageUrl((selectedProduct.variants && selectedProduct.variants.length > 0 && selectedProduct.variants[0].images?.length > 0) ? selectedProduct.variants[0].images[0] : (selectedProduct.images && selectedProduct.images.length > 0) ? selectedProduct.images[0] : null)}
                                             alt={selectedProduct.name}
                                             className="w-full h-full object-cover"
                                         />
                                     </div>
-                                    <div>
-                                        <h2 className="text-2xl font-black text-slate-800 tracking-tight">{selectedProduct.name}</h2>
-                                        <div className="flex items-center gap-3 mt-1">
-                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{selectedProduct.product_code || `#SKU-${1000 + selectedProduct.id}`}</span>
-                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-200"></span>
-                                            <span className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-md">Total Current: {selectedProduct.total_stock || 0}</span>
-                                        </div>
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-violet-700">Selected product</p>
+                                        <h2 className="mt-1 truncate text-lg font-extrabold text-slate-800 sm:text-xl">{selectedProduct.name}</h2>
+                                        <p className="mt-1 truncate text-xs font-medium text-slate-500">{selectedProduct.product_code || `#SKU-${1000 + selectedProduct.id}`}</p>
                                     </div>
                                 </div>
+                                <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 sm:min-w-36 sm:justify-center">
+                                    <FiLayers className="text-violet-700" size={18} />
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Current stock</p>
+                                        <p className="text-lg font-black text-slate-800">{getCurrentStockValue(selectedProduct)}</p>
+                                    </div>
+                                </div>
+                            </div>
 
-                                <div className="bg-gray-50/50 p-6 rounded-[2rem] border border-gray-100 space-y-6">
-                                    <label className="text-xs font-black text-slate-800 uppercase tracking-widest block flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                        Step 2: Enter New Stock Details
-                                    </label>
-
-                                    {hasSizes || hasColorQuantities ? (
-                                        <div className="space-y-6">
-                                            {selectedProduct.variants.map((v, vIndex) => {
-                                                const hasVariantSizes = v.sizesStock && Object.keys(v.sizesStock).length > 0;
-                                                if (!hasVariantSizes && v.quantity === undefined) return null;
-                                                return (
-                                                    <div key={vIndex} className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-                                                        <div className="flex items-center gap-3 mb-4">
-                                                            <div className="w-5 h-5 rounded-full shadow-sm border border-gray-200" style={{ backgroundColor: v.color }}></div>
-                                                            <span className="text-sm font-black text-slate-800">{v.colorName || 'Default Shade'}</span>
-                                                        </div>
-                                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                            {(hasVariantSizes ? Object.entries(v.sizesStock) : [["quantity", v.quantity]]).map(([size, currentStock]) => {
-                                                                const key = `${vIndex}-${size}`;
-                                                                const added = parseInt(stockAdditions[key]) || 0;
-                                                                const oldTotal = parseInt(currentStock) || 0;
-                                                                const newTotalMatch = oldTotal + added;
-                                                                return (
-                                                                    <div key={size} className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                                                                        <div className="flex justify-between items-center mb-2">
-                                                                            <label className="text-[10px] font-black text-gray-400 uppercase">{size === "quantity" ? "Color stock" : size}</label>
-                                                                            <span className="text-[9px] font-black bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded-md">Curr: {oldTotal}</span>
-                                                                        </div>
-                                                                        <div className="relative mt-1">
-                                                                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">+</div>
-                                                                            <input
-                                                                                type="text"
-                                                                                value={stockAdditions[key] || ""}
-                                                                                onChange={(e) => handleAdditionChange(key, e.target.value)}
-                                                                                className="w-full pl-8 pr-3 py-2.5 bg-white border border-blue-100 focus:border-blue-500 outline-none rounded-lg text-lg font-black text-blue-600 shadow-inner transition-all placeholder:text-gray-300"
-                                                                                placeholder="0"
-                                                                            />
-                                                                        </div>
-                                                                        {added > 0 && (
-                                                                            <p className="text-[10px] text-emerald-500 font-bold mt-2 text-right tracking-tight">
-                                                                                New Total = {newTotalMatch}
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </div>
-                                                )
-                                            })}
-                                        </div>
-                                    ) : (
-                                        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
-                                            <div className="flex justify-between items-end">
-                                                <div className="space-y-1">
-                                                    <label className="text-[10px] font-black text-gray-400 uppercase">Quantity to Add</label>
-                                                    <p className="text-xs font-bold text-gray-500">Current Stock: <span className="text-slate-800">{selectedProduct.total_stock || 0}</span></p>
-                                                </div>
-                                                {parseInt(manualTotalStockAdd) > 0 && (
-                                                    <div className="text-right">
-                                                        <p className="text-[10px] font-black text-gray-400 uppercase">New Total Stock</p>
-                                                        <p className="text-xl font-black text-emerald-500">{(parseInt(selectedProduct.total_stock) || 0) + (parseInt(manualTotalStockAdd) || 0)}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="relative">
-                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 font-black text-xl">+</div>
-                                                <input
-                                                    type="text"
-                                                    value={manualTotalStockAdd}
-                                                    onChange={(e) => setManualTotalStockAdd(e.target.value.replace(/[^0-9]/g, ''))}
-                                                    placeholder="0"
-                                                    className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-blue-100 rounded-[1rem] outline-none focus:bg-white focus:border-blue-500 transition-all text-2xl font-black text-blue-600 shadow-inner"
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
+                            <div className="space-y-5 p-5 sm:p-6">
+                                <div>
+                                    <h3 className="text-sm font-extrabold text-slate-800">Add quantities</h3>
+                                    <p className="mt-1 text-xs text-slate-500">Enter the number of units to add to each variant.</p>
                                 </div>
 
-                                <div className="flex items-center justify-end">
+                                {hasSizes || hasColorQuantities ? (
+                                    <div className="space-y-4">
+                                        {selectedProduct.variants.map((v, vIndex) => {
+                                            const hasVariantSizes = v.sizesStock && Object.keys(v.sizesStock).length > 0;
+                                            if (!hasVariantSizes && v.quantity === undefined) return null;
+                                            return (
+                                                <div key={vIndex} className="overflow-hidden rounded-xl border border-slate-200">
+                                                    <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+                                                        <div className="h-4 w-4 rounded-full border border-slate-300 shadow-sm" style={{ backgroundColor: v.color || "#7c3aed" }}></div>
+                                                        <span className="text-sm font-bold text-slate-800">{v.colorName || "Default shade"}</span>
+                                                    </div>
+                                                    <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                                                        {(hasVariantSizes ? Object.entries(v.sizesStock) : [["quantity", v.quantity]]).map(([size, currentStock]) => {
+                                                            const key = `${vIndex}-${size}`;
+                                                            const added = parseInt(stockAdditions[key]) || 0;
+                                                            const oldTotal = parseInt(currentStock) || 0;
+                                                            const newTotalMatch = oldTotal + added;
+                                                            return (
+                                                                <div key={size} className="rounded-xl border border-slate-200 bg-white p-3">
+                                                                    <div className="mb-2 flex items-center justify-between gap-2">
+                                                                        <label className="text-xs font-bold text-slate-700">{size === "quantity" ? "Color stock" : `Size ${size}`}</label>
+                                                                        <span className="text-[10px] font-medium text-slate-500">Current: {oldTotal}</span>
+                                                                    </div>
+                                                                    <div className="flex items-center overflow-hidden rounded-lg border border-slate-200 focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-100">
+                                                                        <span className="px-3 text-sm font-bold text-violet-700">+</span>
+                                                                        <input
+                                                                            type="number"
+                                                                            min="0"
+                                                                            step="1"
+                                                                            inputMode="numeric"
+                                                                            aria-label={`Quantity to add for ${v.colorName || "variant"} ${size}`}
+                                                                            value={stockAdditions[key] || ""}
+                                                                            onChange={(e) => handleAdditionChange(key, e.target.value)}
+                                                                            className="w-full min-w-0 border-0 py-2.5 pr-3 text-sm font-bold text-slate-800 outline-none"
+                                                                            placeholder="0"
+                                                                        />
+                                                                    </div>
+                                                                    {added > 0 && <p className="mt-2 text-right text-[11px] font-semibold text-emerald-700">New total: {newTotalMatch}</p>}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                                        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                                            <label htmlFor="manual-stock-add" className="text-sm font-bold text-slate-700">Quantity to add</label>
+                                            {parseInt(manualTotalStockAdd) > 0 && (
+                                                <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">
+                                                    New total: {getCurrentStockValue(selectedProduct) + (parseInt(manualTotalStockAdd) || 0)}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-violet-400 focus-within:ring-4 focus-within:ring-violet-100">
+                                            <span className="px-4 text-lg font-bold text-violet-700">+</span>
+                                            <input
+                                                id="manual-stock-add"
+                                                type="number"
+                                                min="0"
+                                                step="1"
+                                                inputMode="numeric"
+                                                value={manualTotalStockAdd}
+                                                onChange={(e) => setManualTotalStockAdd(e.target.value.replace(/[^0-9]/g, ""))}
+                                                placeholder="0"
+                                                className="w-full border-0 py-3 pr-4 text-lg font-bold text-slate-800 outline-none"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                                    <p className="text-xs text-slate-500">Stock changes are saved to this product’s inventory.</p>
                                     <button
                                         onClick={handleSave}
                                         disabled={isSaving}
-                                        className="flex items-center justify-center gap-3 bg-primary border-4 border-white hover:bg-primary-light disabled:bg-slate-400 text-white py-4 px-10 rounded-[2.5rem] text-lg font-black shadow-2xl shadow-slate-200 transition-all active:scale-95 group w-full sm:w-auto"
+                                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-900 to-fuchsia-800 px-5 py-3 text-sm font-bold text-white shadow-md shadow-violet-900/15 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                                     >
                                         {isSaving ? (
-                                            <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></span>
                                         ) : (
-                                            <>
-                                                <FiSave className="text-xl group-hover:scale-110 transition-transform" />
-                                                <span>Confirm & Update Stock</span>
-                                            </>
+                                            <FiSave size={17} />
                                         )}
+                                        {isSaving ? "Saving stock..." : "Save stock"}
                                     </button>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="h-full min-h-[400px] border-2 border-dashed border-gray-100 rounded-[2.5rem] flex flex-col items-center justify-center bg-gray-50/50 text-center p-10">
-                            <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-gray-300 mb-4">
-                                <FiBox size={32} />
+                        <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm">
+                            <div className="mb-4 grid h-16 w-16 place-items-center rounded-2xl bg-violet-50 text-violet-700">
+                                <FiBox size={30} />
                             </div>
-                            <h3 className="text-lg font-black text-gray-400">No Product Selected</h3>
-                            <p className="text-sm font-bold text-gray-400 mt-2 max-w-xs mx-auto">Please find and select a product from the left pane to add new stock to its inventory.</p>
+                            <h3 className="text-base font-extrabold text-slate-800">Select a product</h3>
+                            <p className="mt-2 max-w-xs text-sm leading-relaxed text-slate-500">Choose a product from the list to see its current stock and add quantities.</p>
                         </div>
                     )}
-                </div>
+                </section>
             </div>
         </div>
     );
