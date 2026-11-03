@@ -200,18 +200,18 @@ const TermsAndConditions = () => {
             {sections.map(({ num, icon: Icon, title, bullets }) => (
               <div
                 key={num}
-                className="flex items-start rounded-2xl border border-[#e4d8f8] bg-white shadow-sm overflow-hidden"
+                className="flex items-start gap-4 rounded-2xl border border-[#e4d8f8] bg-white px-5 py-5 shadow-sm sm:gap-6 sm:px-7 sm:py-6"
               >
-                {/* Left panel — number + icon */}
-                <div className="flex w-24 shrink-0 flex-col items-center justify-start gap-2 bg-[#faf7ff] px-4 py-5 sm:w-28 sm:py-6">
-                  <span className="text-sm font-extrabold tracking-wide text-primary">{num}</span>
+                {/* Left: number + icon stacked, fixed width */}
+                <div className="flex w-14 shrink-0 flex-col items-center gap-2 sm:w-16">
+                  <span className="text-sm font-extrabold text-primary">{num}</span>
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#ede4fb] text-primary">
                     <Icon size={22} />
                   </div>
                 </div>
 
-                {/* Right panel — title + bullets */}
-                <div className="flex-1 min-w-0 px-5 py-5 sm:px-7 sm:py-6">
+                {/* Right: title + bullets */}
+                <div className="flex-1 min-w-0 pt-0.5">
                   <h2 className="text-base font-extrabold text-[#17122b] sm:text-lg">{title}</h2>
                   <ul className="mt-3 space-y-2">
                     {bullets.map((b, i) => (
