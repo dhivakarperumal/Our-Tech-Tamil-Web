@@ -3,11 +3,15 @@ import { createPortal } from "react-dom";
 import {
   ArrowUpRight,
   FilePlus2,
+  FileText,
   ImagePlus,
+  LayoutGrid,
   Link2,
   Loader2,
+  List,
   Pencil,
   Plus,
+  Search,
   ShoppingBag,
   Star,
   Trash2,
@@ -47,6 +51,9 @@ const Articles = () => {
   const [editingId, setEditingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [contentTypeFilter, setContentTypeFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("table");
 
   useEffect(() => {
     let active = true;
@@ -253,25 +260,100 @@ const Articles = () => {
   };
 
   const isArticle = form.content_type === "article";
+  const articleCount = articles.filter((item) => item.content_type === "article").length;
+  const productReviewCount = articles.length - articleCount;
+  const reviewRatings = articles
+    .filter((item) => item.content_type === "product_review" && item.rating != null)
+    .map((item) => Number(item.rating))
+    .filter(Number.isFinite);
+  const averageReviewRating = reviewRatings.length
+    ? (reviewRatings.reduce((total, rating) => total + rating, 0) / reviewRatings.length).toFixed(1)
+    : "—";
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredArticles = articles.filter((item) => {
+    const matchesType = contentTypeFilter === "all" || item.content_type === contentTypeFilter;
+    const name = item.content_type === "article" ? item.title : item.product_name;
+    const matchesSearch = !normalizedSearch || [
+      name,
+      item.content_id,
+      item.description,
+    ].some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
+    return matchesType && matchesSearch;
+  });
+  const contentStats = [
+    { label: "Total content", value: articles.length, sub: "Articles and product reviews", icon: FilePlus2, gradient: "from-violet-800 to-fuchsia-700" },
+    { label: "Articles", value: articleCount, sub: "Published articles", icon: FileText, gradient: "from-emerald-400 to-teal-500" },
+    { label: "Product reviews", value: productReviewCount, sub: "Saved product reviews", icon: ShoppingBag, gradient: "from-orange-400 to-amber-500" },
+    { label: "Average rating", value: averageReviewRating, sub: "Product reviews out of 5", icon: Star, gradient: "from-rose-400 to-pink-500" },
+  ];
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-10">
-      <header className="flex items-center gap-3">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
-          <FilePlus2 className="h-6 w-6" />
-        </span>
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-violet-700">Content management</p>
-          <h1 className="text-2xl font-black text-slate-900">Articles &amp; Product Reviews</h1>
+      <section aria-label="Content summary" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {contentStats.map(({ label, value, sub, icon: Icon, gradient }) => (
+          <div key={label} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:shadow-md">
+            <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg`}>
+              <Icon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-slate-400">{label}</p>
+              <p className="my-0.5 text-3xl font-black leading-none text-slate-800">{value}</p>
+              <p className="mt-1 text-[10px] text-slate-400">{sub}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section aria-label="Search and filter content" className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        <label className="relative w-full min-w-[180px] flex-1 sm:max-w-md">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="search"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search by title, product, ID, or description..."
+            aria-label="Search articles and product reviews"
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:bg-white"
+          />
+        </label>
+        <select
+          value={contentTypeFilter}
+          onChange={(event) => setContentTypeFilter(event.target.value)}
+          aria-label="Filter content type"
+          className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600 outline-none transition hover:border-violet-400 focus:border-violet-500 sm:ml-auto"
+        >
+          <option value="all">All content types</option>
+          <option value="article">Articles</option>
+          <option value="product_review">Product reviews</option>
+        </select>
+        <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1" role="group" aria-label="Content view">
+          <button
+            type="button"
+            onClick={() => setViewMode("table")}
+            aria-label="Table view"
+            aria-pressed={viewMode === "table"}
+            className={`rounded-lg p-2 transition ${viewMode === "table" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("cards")}
+            aria-label="Card view"
+            aria-pressed={viewMode === "cards"}
+            className={`rounded-lg p-2 transition ${viewMode === "cards" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
         </div>
         <button
           type="button"
           onClick={openAddForm}
-          className="ml-auto inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-800 to-fuchsia-700 px-4 py-3 text-sm font-bold text-white shadow-md transition hover:brightness-110"
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-violet-800 to-fuchsia-700 px-4 py-3 text-sm font-bold text-white shadow-md transition hover:brightness-110"
         >
           <Plus className="h-4 w-4" /> Add content
         </button>
-      </header>
+      </section>
 
       {isFormOpen && createPortal(
         <div
@@ -584,33 +666,35 @@ const Articles = () => {
       )}
 
       <section className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
-          <h2 className="font-bold text-slate-900">Saved articles and product reviews</h2>
-          <p className="mt-1 text-sm text-slate-500">{articles.length} {articles.length === 1 ? "item" : "items"}</p>
-        </div>
         {loading ? (
           <div className="flex min-h-40 items-center justify-center gap-2 text-sm text-slate-500">
             <Loader2 className="h-5 w-5 animate-spin text-violet-700" /> Loading content...
           </div>
-        ) : articles.length === 0 ? (
-          <div className="px-5 py-12 text-center text-sm text-slate-500">No content has been added yet.</div>
-        ) : (
+        ) : filteredArticles.length === 0 ? (
+          <div className="px-5 py-12 text-center text-sm text-slate-500">
+            {articles.length === 0
+              ? "No content has been added yet."
+              : "No content matches your search or selected filter."}
+          </div>
+        ) : viewMode === "table" ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-left">
-              <thead className="bg-violet-950 text-xs uppercase tracking-wide text-white">
+            <table className="w-full min-w-[760px] border-separate border-spacing-0 text-left">
+              <thead className="text-xs uppercase tracking-wide text-[#FCD34D]">
                 <tr>
-                  <th className="px-4 py-3">Content</th>
-                  <th className="px-4 py-3">ID</th>
-                  <th className="px-4 py-3">Type</th>
-                  <th className="px-4 py-3">Details</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
+                  <th className="rounded-tl-xl bg-violet-950 px-4 py-4">S No.</th>
+                  <th className="bg-violet-950 px-4 py-4">Content</th>
+                  <th className="bg-violet-950 px-4 py-4">ID</th>
+                  <th className="bg-violet-950 px-4 py-4">Type</th>
+                  <th className="bg-violet-950 px-4 py-4">Details</th>
+                  <th className="rounded-tr-xl bg-violet-950 px-4 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {articles.map((item) => {
+                {filteredArticles.map((item, index) => {
                   const name = item.content_type === "article" ? item.title : item.product_name;
                   return (
                     <tr key={item.id} className="text-sm text-slate-700 hover:bg-violet-50/40">
+                      <td className="px-4 py-3 font-medium text-slate-500">{index + 1}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <img src={getImageUrl(item.image_url)} alt="" className="h-12 w-12 rounded-lg object-cover" />
@@ -644,6 +728,48 @@ const Articles = () => {
                 })}
               </tbody>
             </table>
+          </div>
+        ) : (
+          <div className="grid gap-5 p-5 sm:grid-cols-2 xl:grid-cols-3">
+            {filteredArticles.map((item) => {
+              const name = item.content_type === "article" ? item.title : item.product_name;
+              const isReview = item.content_type === "product_review";
+              return (
+                <article key={item.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white transition hover:border-violet-200 hover:shadow-md">
+                  <img
+                    src={getImageUrl(item.image_url)}
+                    alt={name || ""}
+                    loading="lazy"
+                    className="h-48 w-full bg-slate-100 object-cover"
+                  />
+                  <div className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="line-clamp-2 font-bold text-slate-900">{name}</h3>
+                      <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${isReview ? "bg-amber-50 text-amber-700" : "bg-violet-50 text-violet-700"}`}>
+                        {isReview ? "Product Review" : "Article"}
+                      </span>
+                    </div>
+                    <p className="line-clamp-3 min-h-[3.75rem] text-sm text-slate-500">{item.description}</p>
+                    <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
+                      <span className="font-semibold text-violet-700">{item.content_id}</span>
+                      {isReview ? (
+                        <span className="inline-flex items-center gap-1 font-semibold text-amber-600">
+                          <Star className="h-4 w-4 fill-current" /> {Number(item.rating).toFixed(1)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="flex justify-end gap-1">
+                      <button type="button" onClick={() => editArticle(item)} aria-label={`Edit ${name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-violet-50 hover:text-violet-700">
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button type="button" onClick={() => deleteArticle(item)} disabled={deletingId === item.id} aria-label={`Delete ${name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50">
+                        {deletingId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
