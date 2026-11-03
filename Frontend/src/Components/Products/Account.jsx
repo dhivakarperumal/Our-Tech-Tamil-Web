@@ -412,7 +412,7 @@ function Account() {
                       </button>
                     );
                   })}
-                  <Link to="/shop" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"><ShoppingBag size={18} />Browse Shop</Link>
+                  {/* <Link to="/shop" className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-[#faf7ff] hover:text-primary"><ShoppingBag size={18} />Browse Shop</Link> */}
                   <button type="button" onClick={function(){ setShowLogout(true); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-500 transition hover:bg-red-50"><LogOut size={18} />Logout</button>
                 </nav>
               </div>
