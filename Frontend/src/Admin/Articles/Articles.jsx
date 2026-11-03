@@ -49,6 +49,7 @@ const getImageUrl = (image) => {
 const Articles = () => {
   const [articles, setArticles] = useState([]);
   const [form, setForm] = useState(emptyForm);
+  const [validationErrors, setValidationErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -127,6 +128,17 @@ const Articles = () => {
 
   const updateForm = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
+    setValidationErrors((current) => {
+      const errorField = field === "title" || field === "product_name"
+        ? field
+        : field === "description" || field === "rating" || field === "image_url"
+          ? field
+          : null;
+      if (!errorField || !current[errorField]) return current;
+      const next = { ...current };
+      delete next[errorField];
+      return next;
+    });
   };
 
   const updateRow = (field, index, key, value) => {
@@ -134,14 +146,38 @@ const Articles = () => {
       ...current,
       [field]: current[field].map((row, rowIndex) => rowIndex === index ? { ...row, [key]: value } : row),
     }));
+    if (field === "buy_links") {
+      setValidationErrors((current) => {
+        if (!current.buy_links) return current;
+        const next = { ...current };
+        delete next.buy_links;
+        return next;
+      });
+    }
   };
 
   const addRow = (field, row) => {
     setForm((current) => ({ ...current, [field]: [...current[field], row] }));
+    if (field === "buy_links") {
+      setValidationErrors((current) => {
+        if (!current.buy_links) return current;
+        const next = { ...current };
+        delete next.buy_links;
+        return next;
+      });
+    }
   };
 
   const removeRow = (field, index) => {
     setForm((current) => ({ ...current, [field]: current[field].filter((_, rowIndex) => rowIndex !== index) }));
+    if (field === "buy_links") {
+      setValidationErrors((current) => {
+        if (!current.buy_links) return current;
+        const next = { ...current };
+        delete next.buy_links;
+        return next;
+      });
+    }
   };
 
   const uploadImage = async (event) => {
@@ -180,20 +216,71 @@ const Articles = () => {
   const resetForm = () => {
     setEditingId(null);
     setForm(emptyForm);
+    setValidationErrors({});
   };
 
   const openAddForm = () => {
     setEditingId(null);
     setForm(emptyForm);
+    setValidationErrors({});
     setIsFormOpen(true);
   };
 
   const submitForm = async (event) => {
     event.preventDefault();
+    const errors = {};
+    const isArticle = form.content_type === "article";
+    if (isArticle && form.title.trim().length < 2) {
+      errors.title = "Enter an article title with at least 2 characters.";
+    }
+    if (!isArticle && form.product_name.trim().length < 2) {
+      errors.product_name = "Enter a product name with at least 2 characters.";
+    }
+    if (!form.description.trim()) {
+      errors.description = isArticle ? "Article description is required." : "Review description is required.";
+    }
+    const enteredLinks = form.buy_links.filter((link) => link.name.trim() || link.url.trim());
+    const validLinks = enteredLinks.filter((link) => {
+        const name = link.name.trim();
+        const url = link.url.trim();
+        if (!name || !url) return false;
+        try {
+          const parsedUrl = new URL(url);
+          return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
+        } catch {
+          return false;
+        }
+      });
+    if ((!isArticle && validLinks.length === 0) || validLinks.length !== enteredLinks.length) {
+      if (!isArticle || enteredLinks.length > 0) {
+        errors.buy_links = validLinks.length === 0
+          ? isArticle
+            ? "Each article link must include a name and a valid HTTP or HTTPS URL."
+            : "Add at least one buy link with a name and a valid HTTP or HTTPS URL."
+          : "Each link must include a name and a valid HTTP or HTTPS URL.";
+      }
+    }
+    if (!isArticle) {
+      const rating = Number(form.rating);
+      if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+        errors.rating = "Enter a rating from 1 to 5.";
+      }
+    }
     if (!form.image_url) {
-      toast.error("Upload an image before saving.");
+      errors.image_url = isArticle ? "Upload a cover image." : "Upload a product image.";
+    }
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      toast.error("Complete the required fields before saving.");
+      const firstInvalidField = Object.keys(errors)[0];
+      requestAnimationFrame(() => {
+        const field = document.querySelector(`[data-validation-field="${firstInvalidField}"]`);
+        field?.scrollIntoView({ behavior: "smooth", block: "center" });
+        field?.focus({ preventScroll: true });
+      });
       return;
     }
+    setValidationErrors({});
     setSaving(true);
     const payload = {
       ...form,
@@ -250,6 +337,7 @@ const Articles = () => {
           : [{ name: "", url: "" }],
       more_details: item.more_details || "",
     });
+    setValidationErrors({});
     setIsFormOpen(true);
   };
 
@@ -411,8 +499,16 @@ const Articles = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={submitForm} className="flex min-h-0 flex-1 basis-0 flex-col overflow-hidden">
+            <form noValidate onSubmit={submitForm} className="flex min-h-0 flex-1 basis-0 flex-col overflow-hidden">
               <div className="min-h-0 flex-1 space-y-4 overflow-x-hidden overflow-y-auto overscroll-y-contain bg-slate-50/80 p-4 sm:space-y-5 sm:p-6">
+        {Object.keys(validationErrors).length > 0 && (
+          <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+            <p className="font-bold">Please fix the following before saving:</p>
+            <ul className="mt-1 list-inside list-disc space-y-0.5">
+              {Object.values(validationErrors).map((message) => <li key={message}>{message}</li>)}
+            </ul>
+          </div>
+        )}
         <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
         <div>
           <div className="flex items-center gap-2">
@@ -439,7 +535,10 @@ const Articles = () => {
                   value={value}
                   checked={form.content_type === value}
                   disabled={Boolean(editingId)}
-                  onChange={() => setForm({ ...emptyForm, content_type: value })}
+                  onChange={() => {
+                    setForm({ ...emptyForm, content_type: value });
+                    setValidationErrors({});
+                  }}
                   className="mt-1 accent-violet-700"
                 />
                 <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${form.content_type === value ? "bg-violet-700 text-white shadow-md shadow-violet-900/20" : "bg-slate-100 text-slate-500 group-hover:bg-violet-100 group-hover:text-violet-700"}`}>
@@ -471,11 +570,14 @@ const Articles = () => {
                 required
                 minLength={2}
                 maxLength={200}
+                data-validation-field="title"
+                aria-invalid={Boolean(validationErrors.title)}
                 value={form.title}
                 onChange={(event) => updateForm("title", event.target.value)}
                 placeholder="Enter article title"
                 className={`${inputClass} font-medium`}
               />
+              {validationErrors.title && <span className="mt-1 block text-xs font-medium normal-case tracking-normal text-rose-600">{validationErrors.title}</span>}
             </label>
           ) : (
             <label className={fieldLabelClass}>
@@ -484,11 +586,14 @@ const Articles = () => {
                 required
                 minLength={2}
                 maxLength={191}
+                data-validation-field="product_name"
+                aria-invalid={Boolean(validationErrors.product_name)}
                 value={form.product_name}
                 onChange={(event) => updateForm("product_name", event.target.value)}
                 placeholder="Enter product name"
                 className={`${inputClass} font-medium`}
               />
+              {validationErrors.product_name && <span className="mt-1 block text-xs font-medium normal-case tracking-normal text-rose-600">{validationErrors.product_name}</span>}
             </label>
           )}
         </div>
@@ -501,6 +606,8 @@ const Articles = () => {
               required
               maxLength={5000}
               rows={4}
+              data-validation-field="description"
+              aria-invalid={Boolean(validationErrors.description)}
               value={form.description}
               onChange={(event) => updateForm("description", event.target.value)}
               placeholder={isArticle ? "Write a clear, engaging description for your article..." : "Share your honest product review..."}
@@ -509,6 +616,7 @@ const Articles = () => {
             <span className="mt-1 block text-right text-[11px] font-medium normal-case tracking-normal text-slate-400">
               {form.description.length.toLocaleString()} / 5,000 characters
             </span>
+            {validationErrors.description && <span className="mt-1 block text-xs font-medium normal-case tracking-normal text-rose-600">{validationErrors.description}</span>}
           </label>
         </section>
 
@@ -584,7 +692,7 @@ const Articles = () => {
                   <Plus className="h-4 w-4" /> Add link
                 </button>
               </div>
-              <div className="mt-4 space-y-3">
+              <div className="mt-4 space-y-3" data-validation-field="buy_links" tabIndex={-1}>
                 {form.buy_links.map((link, index) => (
                   <div key={`buy-link-${index}`} className="grid grid-cols-1 items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto] sm:gap-3">
                     <input
@@ -614,6 +722,7 @@ const Articles = () => {
                     </button>
                   </div>
                 ))}
+                {validationErrors.buy_links && <p className="text-xs font-medium text-rose-600">{validationErrors.buy_links}</p>}
               </div>
             </section>
 
@@ -630,11 +739,14 @@ const Articles = () => {
                     min="1"
                     max="5"
                     step="0.1"
+                    data-validation-field="rating"
+                    aria-invalid={Boolean(validationErrors.rating)}
                     value={form.rating}
                     onChange={(event) => updateForm("rating", event.target.value)}
                     className={`${inputClass} pl-10`}
                   />
                 </span>
+                {validationErrors.rating && <span className="mt-1 block text-xs font-medium normal-case tracking-normal text-rose-600">{validationErrors.rating}</span>}
               </label>
               <p className="flex items-center gap-2 self-end rounded-xl bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800">
                 <ArrowUpRight className="h-4 w-4 shrink-0" />
@@ -655,7 +767,11 @@ const Articles = () => {
           </>
         )}
 
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5">
+        <section
+          className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm sm:p-5"
+          data-validation-field="image_url"
+          tabIndex={-1}
+        >
           <div className="flex items-center justify-between gap-3">
             <div>
               <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
@@ -689,6 +805,7 @@ const Articles = () => {
                 </button>
               )}
               </div>
+              {validationErrors.image_url && <p className="mt-2 text-xs font-medium text-rose-600">{validationErrors.image_url}</p>}
             </div>
           </div>
         </section>

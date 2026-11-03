@@ -41,6 +41,64 @@ test("article creation validates required content and does not access the databa
   assert.equal(connectionRequested, false);
 });
 
+test("product review creation requires at least one complete buy link", async () => {
+  let connectionRequested = false;
+  const pool = {
+    async getConnection() {
+      connectionRequested = true;
+      throw new Error("Database should not be reached for invalid input");
+    },
+  };
+  const response = createResponse();
+
+  await createAdminContentController(pool).createArticle(
+    {
+      body: {
+        content_type: "product_review",
+        product_name: "Tamil phone",
+        description: "A useful product review.",
+        image_url: "/uploads/articles/12345678-1234-1234-1234-123456789abc.png",
+        rating: 4.5,
+        buy_links: [],
+      },
+    },
+    response,
+    (error) => { throw error; },
+  );
+
+  assert.equal(response.statusCode, 400);
+  assert.match(response.body.message, /at least one buy link/i);
+  assert.equal(connectionRequested, false);
+});
+
+test("YouTube video creation requires a thumbnail image", async () => {
+  let connectionRequested = false;
+  const pool = {
+    async getConnection() {
+      connectionRequested = true;
+      throw new Error("Database should not be reached for invalid input");
+    },
+  };
+  const response = createResponse();
+
+  await createAdminContentController(pool).createYoutubeVideo(
+    {
+      body: {
+        title: "Video title",
+        video_url: "https://www.youtube.com/watch?v=abcdefghijk",
+        application_links: [],
+        documents: [],
+      },
+    },
+    response,
+    (error) => { throw error; },
+  );
+
+  assert.equal(response.statusCode, 400);
+  assert.match(response.body.message, /thumbnail image/i);
+  assert.equal(connectionRequested, false);
+});
+
 test("product review creation persists the selected fields and returns a generated ID", async () => {
   const calls = [];
   const article = {
