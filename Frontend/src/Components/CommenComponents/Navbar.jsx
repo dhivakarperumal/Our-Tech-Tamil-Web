@@ -168,17 +168,10 @@ const Navbar = () => {
     };
   }, [user]);
 
-  const navigateToSearch = (value, replace) => {
-    const params = new URLSearchParams();
-    if (value.trim()) params.set("search", value.trim());
-    const route = `/shop${params.size ? `?${params.toString()}` : ""}`;
-    setSearchState({ route, value });
-    navigate(route, { replace });
-  };
-
   const handleSearchChange = (event) => {
     const value = event.target.value;
     const query = value.trim();
+    setSearchState({ route: currentRoute, value });
     setSearchOpen(true);
     setSuggestions({
       query,
@@ -186,14 +179,11 @@ const Navbar = () => {
       loading: query.length >= 2,
       error: false,
     });
-    navigateToSearch(value, location.pathname === "/shop");
   };
 
   const submitSearch = (event) => {
     event.preventDefault();
-    navigateToSearch(search, location.pathname === "/shop");
-    setSearchOpen(false);
-    setMobileMenu(false);
+    setSearchOpen(true);
   };
 
   const renderSearchSuggestions = (id) => {
@@ -241,8 +231,7 @@ const Navbar = () => {
             <button
               type="button"
               onClick={() => {
-                navigateToSearch(search, location.pathname === "/shop");
-                setSearchOpen(false);
+                setSearchOpen(true);
               }}
               className="w-full border-t border-[#eee8f5] px-4 py-2.5 text-left text-xs font-bold text-primary hover:bg-[#faf7ff]"
             >
