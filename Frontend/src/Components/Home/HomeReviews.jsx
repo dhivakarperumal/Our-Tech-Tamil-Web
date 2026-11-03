@@ -94,23 +94,23 @@ function HomeReviews() {
             No published reviews yet.
           </p>
         ) : (
-          <div className="overflow-hidden py-2">
+          <div className="overflow-hidden px-1 py-3">
             <Swiper
               modules={[Autoplay]}
               onSwiper={(swiper) => {
                 swiperRef.current = swiper;
               }}
               slidesPerView={1.1}
-              spaceBetween={12}
+              spaceBetween={18}
               loop={reviews.length > 4}
               autoplay={reviews.length > 4
                 ? { delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true }
                 : false}
               breakpoints={{
-                480: { slidesPerView: 1.5, spaceBetween: 12 },
-                640: { slidesPerView: 2, spaceBetween: 14 },
-                768: { slidesPerView: 3, spaceBetween: 16 },
-                1024: { slidesPerView: 4, spaceBetween: 16 },
+                480: { slidesPerView: 1.5, spaceBetween: 16 },
+                640: { slidesPerView: 2, spaceBetween: 18 },
+                768: { slidesPerView: 3, spaceBetween: 20 },
+                1024: { slidesPerView: 4, spaceBetween: 20 },
               }}
               aria-label="Customer reviews"
             >
@@ -121,7 +121,7 @@ function HomeReviews() {
 
                 return (
                   <SwiperSlide key={review.id} className="!h-auto">
-                    <article className="flex h-full flex-col rounded-2xl bg-[#f7effc] p-4 shadow-[0_0_14px_rgba(107,33,168,0.34),0_8px_18px_rgba(47,20,78,0.12)]">
+                    <article className="flex h-full flex-col rounded-2xl bg-[#f7effc] p-4 shadow-[0_6px_14px_rgba(47,20,78,0.16)]">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-3">
                           {review.review_image && (
