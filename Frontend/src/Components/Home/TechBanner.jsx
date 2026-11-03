@@ -101,7 +101,7 @@ const TechBanner = () => {
                     <span key={dot} className="h-1.5 w-1.5 rounded-full bg-fuchsia-400" />
                   ))}
                 </div>
-                <div className="relative z-10 flex h-full w-[58%] flex-col items-start justify-center p-4 sm:p-5 lg:p-6">
+                <div className="relative z-10 flex h-full w-[62%] flex-col items-start justify-center p-3 sm:w-[58%] sm:p-5 lg:p-6">
                   <span className={`mb-2 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.16em] ${theme === "laptop" ? "bg-violet-100 text-violet-800" : "border border-white/15 bg-white/10 text-violet-100"}`}>
                     <ThemeIcon size={12} aria-hidden="true" />
                     Featured collection
@@ -136,17 +136,17 @@ const TechBanner = () => {
                   </span>
                 </div>
 
-                <div className="absolute inset-y-0 right-0 flex w-[48%] items-center justify-center">
+                <div className="absolute inset-y-0 right-0 flex w-[44%] items-center justify-center sm:w-[48%]">
                   <div aria-hidden="true" className={`absolute inset-3 rounded-full blur-2xl ${themeStyles.glow}`} />
                   <img
                     src={getImageUrl(banner.desktop_image)}
                     alt={banner.title}
-                    className="relative h-[88%] w-full object-contain p-2 transition-transform duration-500 group-hover:scale-105 sm:p-3"
+                    className="relative h-[88%] w-full object-contain p-1 transition-transform duration-500 group-hover:scale-105 sm:p-3"
                   />
                 </div>
               </>
             );
-            const className = `group relative isolate flex aspect-[2.2/1] min-h-40 min-w-0 overflow-hidden rounded-[1.6rem] border transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_44px_rgba(74,0,220,0.24)] sm:aspect-[2.35/1] lg:min-h-0 ${themeStyles.card}`;
+            const className = `group relative isolate flex aspect-auto min-h-[210px] min-w-0 overflow-hidden rounded-[1.6rem] border transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_44px_rgba(74,0,220,0.24)] sm:aspect-[2.35/1] sm:min-h-40 lg:min-h-0 ${themeStyles.card}`;
 
             return /^https?:\/\//i.test(destination) ? (
               <a

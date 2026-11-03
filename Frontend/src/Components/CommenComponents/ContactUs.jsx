@@ -35,7 +35,72 @@ function ContactUs() {
       <PageHeader title="Contact Us" />
       <main className="bg-[#faf8fd] py-7 sm:py-10">
         <PageContainer>
-          <div className="grid items-stretch gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+
+          <section aria-labelledby="contact-information-heading" className="mt-1 mb-7">
+            <div className="mb-3 flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f0e6fa] text-primary">
+                <Headphones size={20} aria-hidden="true" />
+              </span>
+              <div>
+                <h2 id="contact-information-heading" className="text-lg font-extrabold text-[#101832]">
+                  Contact Information
+                </h2>
+                <p className="text-xs text-[#64708a]">Reach out to us through any of these channels.</p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <a href="tel:+919876543210" className="flex min-w-0 items-center gap-3 rounded-xl border border-[#eadff4] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a52ae1] to-[#6509b8] text-white">
+                  <Phone size={19} aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-extrabold text-[#101832]">Call Us</span>
+                  <span className="mt-0.5 block text-xs text-[#34405c]">+91 98765 43210</span>
+                  <span className="mt-0.5 block text-[10px] text-[#737b91]">Mon–Sat, 9:00 AM–7:00 PM</span>
+                </span>
+              </a>
+
+              <a href="mailto:support@ourtechtamil.com" className="flex min-w-0 items-center gap-3 rounded-xl border border-[#eadff4] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a52ae1] to-[#6509b8] text-white">
+                  <Mail size={19} aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-extrabold text-[#101832]">Email Us</span>
+                  <span className="mt-0.5 block break-all text-xs text-[#34405c]">support@ourtechtamil.com</span>
+                  <span className="mt-0.5 block text-[10px] text-[#737b91]">We&apos;ll reply within 24 hours.</span>
+                </span>
+              </a>
+
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=122%2C+Tirupathur%2C+Tamil+Nadu+635601%2C+India"
+                target="_blank"
+                rel="noreferrer"
+                className="flex min-w-0 items-center gap-3 rounded-xl border border-[#eadff4] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a52ae1] to-[#6509b8] text-white">
+                  <MapPin size={19} aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-extrabold text-[#101832]">Visit Our Store</span>
+                  <span className="mt-0.5 block text-xs leading-5 text-[#34405c]">122, Tirupathur,<br />Tamil Nadu – 635601, India</span>
+                </span>
+              </a>
+
+              <div className="flex min-w-0 items-center gap-3 rounded-xl border border-[#eadff4] bg-white p-4 shadow-sm">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a52ae1] to-[#6509b8] text-white">
+                  <Clock3 size={19} aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-extrabold text-[#101832]">Support Hours</span>
+                  <span className="mt-0.5 block text-xs text-[#34405c]">Monday – Saturday</span>
+                  <span className="mt-0.5 block text-[10px] text-[#737b91]">9:00 AM – 7:00 PM</span>
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <div className="grid mb-10 items-stretch gap-5 lg:grid-cols-[1.1fr_0.9fr]">
             <section className="overflow-hidden rounded-2xl border border-[#eadff4] bg-white shadow-[0_8px_24px_rgba(54,22,93,0.07)]">
               <div className="flex items-start gap-3 border-b border-[#f0e9f6] bg-gradient-to-r from-white to-[#fcf8ff] px-5 py-4 sm:px-6">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#f3eaff] text-primary">
@@ -127,70 +192,6 @@ function ContactUs() {
               </div>
             </aside>
           </div>
-
-          <section aria-labelledby="contact-information-heading" className="mt-6">
-            <div className="mb-3 flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#f0e6fa] text-primary">
-                <Headphones size={20} aria-hidden="true" />
-              </span>
-              <div>
-                <h2 id="contact-information-heading" className="text-lg font-extrabold text-[#101832]">
-                  Contact Information
-                </h2>
-                <p className="text-xs text-[#64708a]">Reach out to us through any of these channels.</p>
-              </div>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <a href="tel:+919876543210" className="flex min-w-0 items-center gap-3 rounded-xl border border-[#eadff4] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a52ae1] to-[#6509b8] text-white">
-                  <Phone size={19} aria-hidden="true" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-extrabold text-[#101832]">Call Us</span>
-                  <span className="mt-0.5 block text-xs text-[#34405c]">+91 98765 43210</span>
-                  <span className="mt-0.5 block text-[10px] text-[#737b91]">Mon–Sat, 9:00 AM–7:00 PM</span>
-                </span>
-              </a>
-
-              <a href="mailto:support@ourtechtamil.com" className="flex min-w-0 items-center gap-3 rounded-xl border border-[#eadff4] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a52ae1] to-[#6509b8] text-white">
-                  <Mail size={19} aria-hidden="true" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-extrabold text-[#101832]">Email Us</span>
-                  <span className="mt-0.5 block break-all text-xs text-[#34405c]">support@ourtechtamil.com</span>
-                  <span className="mt-0.5 block text-[10px] text-[#737b91]">We&apos;ll reply within 24 hours.</span>
-                </span>
-              </a>
-
-              <a
-                href="https://www.google.com/maps/search/?api=1&query=122%2C+Tirupathur%2C+Tamil+Nadu+635601%2C+India"
-                target="_blank"
-                rel="noreferrer"
-                className="flex min-w-0 items-center gap-3 rounded-xl border border-[#eadff4] bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a52ae1] to-[#6509b8] text-white">
-                  <MapPin size={19} aria-hidden="true" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-extrabold text-[#101832]">Visit Our Store</span>
-                  <span className="mt-0.5 block text-xs leading-5 text-[#34405c]">122, Tirupathur,<br />Tamil Nadu – 635601, India</span>
-                </span>
-              </a>
-
-              <div className="flex min-w-0 items-center gap-3 rounded-xl border border-[#eadff4] bg-white p-4 shadow-sm">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#a52ae1] to-[#6509b8] text-white">
-                  <Clock3 size={19} aria-hidden="true" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-sm font-extrabold text-[#101832]">Support Hours</span>
-                  <span className="mt-0.5 block text-xs text-[#34405c]">Monday – Saturday</span>
-                  <span className="mt-0.5 block text-[10px] text-[#737b91]">9:00 AM – 7:00 PM</span>
-                </span>
-              </div>
-            </div>
-          </section>
 
           <section aria-labelledby="store-map-heading" className="mt-6 overflow-hidden rounded-2xl border border-[#eadff4] bg-white p-4 shadow-[0_8px_24px_rgba(54,22,93,0.07)] sm:p-5">
             <div className="mb-4 flex items-center gap-3">
