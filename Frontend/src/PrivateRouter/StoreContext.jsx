@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext, useCallback } from "react";
+import React, { createContext, useState, useEffect, useContext, useCallback, useRef } from "react";
 import { toast } from "react-hot-toast";
 import api from "../api";
 import { AuthContext } from "./AuthContext";
@@ -25,6 +25,10 @@ const getFirstStoredImage = (images) => {
 export const StoreProvider = ({ children }) => {
     const { user } = useContext(AuthContext);
     const [cart, setCart] = useState([]);
+    const [cartOwnerId, setCartOwnerId] = useState(null);
+    const cartFetchSequence = useRef(0);
+    const cartOwner = useRef(null);
+    const currentUserId = useRef(null);
     const [wishlist, setWishlist] = useState([]);
     const [loadingCart, setLoadingCart] = useState(false);
     const [loadingWishlist, setLoadingWishlist] = useState(false);
@@ -36,24 +40,41 @@ export const StoreProvider = ({ children }) => {
 
     // ─── Fetch cart from backend ─────────────────────────────────
     const fetchCart = useCallback(async () => {
-        if (!user?.user_id) { setCart([]); return; }
+        const userId = user?.user_id;
+        if (!userId || currentUserId.current !== userId) return;
+        const requestSequence = ++cartFetchSequence.current;
         try {
             setLoadingCart(true);
             const res = await api.get("/cart");
             const items = Array.isArray(res.data) ? res.data : res.data?.items;
-            setCart((Array.isArray(items) ? items : []).map(item => ({
-                ...item,
-                name: item.product_name || item.name,
-                image: resolveStoredImage(item.product_image || item.image),
-                price: Number(item.offer_price ?? item.price ?? 0),
-                total_price: Number(item.subtotal ?? item.total_price ?? 0),
-            })));
+            if (requestSequence === cartFetchSequence.current && currentUserId.current === userId) {
+                cartOwner.current = userId;
+                setCartOwnerId(userId);
+                setCart((Array.isArray(items) ? items : []).map(item => ({
+                    ...item,
+                    name: item.product_name || item.name,
+                    image: resolveStoredImage(item.product_image || item.image),
+                    price: Number(item.offer_price ?? item.price ?? 0),
+                    total_price: Number(item.subtotal ?? item.total_price ?? 0),
+                })));
+            }
         } catch (err) {
-            console.error("Fetch cart error:", err);
-            toast.error(err.response?.data?.message || "Failed to load your cart");
+            if (requestSequence === cartFetchSequence.current && currentUserId.current === userId) {
+                console.error("Fetch cart error:", err);
+                toast.error(err.response?.data?.message || "Failed to load your cart");
+            }
         } finally {
-            setLoadingCart(false);
+            if (requestSequence === cartFetchSequence.current && currentUserId.current === userId) {
+                setLoadingCart(false);
+            }
         }
+    }, [user?.user_id]);
+
+    useEffect(() => {
+        currentUserId.current = user?.user_id;
+        return () => {
+            cartFetchSequence.current += 1;
+        };
     }, [user?.user_id]);
 
     // ─── Fetch wishlist from backend ─────────────────────────────
@@ -151,10 +172,11 @@ export const StoreProvider = ({ children }) => {
     };
 
     const clearCart = async () => {
-        if (!user?.user_id) { setCart([]); return; }
+        const userId = user?.user_id;
+        if (!userId) return;
         try {
             await api.delete("/cart/clear");
-            setCart([]);
+            if (currentUserId.current === userId && cartOwner.current === userId) setCart([]);
             toast.success("Cart cleared");
         } catch (err) {
             console.error("Clear cart error:", err);
@@ -208,9 +230,11 @@ export const StoreProvider = ({ children }) => {
         }
     };
 
+    const visibleCart = cartOwnerId === user?.user_id ? cart : [];
+
     return (
         <StoreContext.Provider value={{
-            cart, wishlist,
+            cart: visibleCart, wishlist,
             addToCart, removeFromCart, updateCartQuantity, clearCart,
             toggleWishlist,
             loadingCart, loadingWishlist,
