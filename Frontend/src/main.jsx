@@ -91,7 +91,7 @@ const router = createBrowserRouter([
       { path: "reviews", element: <AdminReviews /> },
       { path: "orders/all", element: <AdminOrders statusFilter="All" /> },
       { path: "orders/new", element: <AdminOrders statusFilter="Order Placed" /> },
-      { path: "orders/delivery", element: <AdminOrders statusFilter="Shipping" /> },
+      { path: "orders/delivery", element: <AdminOrders statusFilter="Delivered" /> },
       { path: "orders/cancelled", element: <AdminOrders statusFilter="Cancelled" /> },
       { path: "orders/billing", element: <AdminBilling /> },
       { path: "orders/shop-create", element: <CreateShopOrder /> },
