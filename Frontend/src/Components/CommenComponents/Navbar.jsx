@@ -441,7 +441,7 @@ const Navbar = () => {
             <img
               src="/images/logo.jpeg"
               alt=""
-              className="h-8 w-8 rounded-full bg-white object-cover ring-2 ring-fuchsia-600 ring-offset-1 ring-offset-white sm:h-10 sm:w-10"
+              className="h-9 w-9 rounded-full bg-white object-cover ring-2 ring-fuchsia-600 ring-offset-1 ring-offset-white sm:h-10 sm:w-10"
             />
             <span className="ml-3 flex flex-col leading-none">
               <span className="text-base font-extrabold tracking-tight text-gray-900 sm:text-lg">
@@ -467,7 +467,7 @@ const Navbar = () => {
                 aria-label={searchOpen ? "Close product search" : "Open product search"}
                 aria-expanded={searchOpen}
                 aria-controls="navbar-product-search"
-                className={`relative flex h-8 w-8 items-center justify-center rounded-full border border-[#eee7f5] bg-white shadow-[0_3px_10px_rgba(34,12,60,0.10)] transition hover:-translate-y-0.5 sm:h-9 sm:w-9 ${
+                className={`relative flex h-9 w-9 items-center justify-center rounded-full border border-[#eee7f5] bg-white shadow-[0_3px_10px_rgba(34,12,60,0.10)] transition hover:-translate-y-0.5 sm:h-9 sm:w-9 ${
                   searchOpen ? "text-primary" : "text-[#2b1745] hover:text-primary"
                 }`}
               >
@@ -478,7 +478,7 @@ const Navbar = () => {
               type="button"
               onClick={() => setWishlistOpen(true)}
               aria-label="Open wishlist"
-              className="relative flex h-8 w-8 items-center justify-center rounded-full border border-[#eee7f5] bg-white text-[#2b1745] shadow-[0_3px_10px_rgba(34,12,60,0.10)] transition hover:-translate-y-0.5 hover:text-primary sm:h-9 sm:w-9"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#eee7f5] bg-white text-[#2b1745] shadow-[0_3px_10px_rgba(34,12,60,0.10)] transition hover:-translate-y-0.5 hover:text-primary sm:h-9 sm:w-9"
             >
               <Heart size={20} aria-hidden="true" />
               {wishlist.length > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white">{wishlist.length > 9 ? "9+" : wishlist.length}</span>}
@@ -487,7 +487,7 @@ const Navbar = () => {
               type="button"
               onClick={() => setCartOpen(true)}
               aria-label="Open cart"
-              className="relative flex h-8 w-8 items-center justify-center rounded-full border border-[#eee7f5] bg-white text-[#2b1745] shadow-[0_3px_10px_rgba(34,12,60,0.10)] transition hover:-translate-y-0.5 hover:text-primary sm:h-9 sm:w-9"
+              className="relative flex h-9 w-9 items-center justify-center rounded-full border border-[#eee7f5] bg-white text-[#2b1745] shadow-[0_3px_10px_rgba(34,12,60,0.10)] transition hover:-translate-y-0.5 hover:text-primary sm:h-9 sm:w-9"
             >
               <ShoppingCart size={20} aria-hidden="true" />
               {cart.length > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-fuchsia-700 px-1 text-[9px] font-bold text-white">{cart.length > 9 ? "9+" : cart.length}</span>}
@@ -496,7 +496,7 @@ const Navbar = () => {
             <button
               type="button"
               onClick={() => setMobileMenu((open) => !open)}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#eee7f5] text-[#2b1745] xl:hidden"
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-[#eee7f5] bg-white text-[#2b1745] shadow-[0_3px_10px_rgba(34,12,60,0.10)] xl:hidden"
               aria-label={mobileMenu ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenu}
             >
@@ -543,25 +543,25 @@ const Navbar = () => {
       </PageContainer>
 
       {mobileMenu && (
-        <div className="absolute inset-x-0 top-full z-[55] max-h-[calc(100dvh-6rem)] overflow-y-auto border-t border-[#eee7f5] bg-white shadow-xl xl:hidden">
+        <div className="absolute inset-x-0 top-full z-[55] max-h-[calc(100dvh-5rem)] overflow-y-auto border-t border-[#eee7f5] bg-gradient-to-b from-white to-[#faf8ff] shadow-[0_18px_35px_rgba(38,13,66,0.14)] xl:hidden">
           {!mobileCategory && !mobilePages ? (
-            <div className="space-y-2 p-4">
-              <NavLink to="/" end onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><House size={18} />Home</NavLink>
-              <NavLink to="/shop" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><ShoppingBag size={18} />Shop</NavLink>
-              <NavLink to="/combos" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><Boxes size={18} />Combo Offers</NavLink>
-              <button type="button" onClick={() => setMobileCategory(true)} className="flex w-full items-center justify-between rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary">
-                <span className="flex items-center gap-3"><Grid2X2 size={18} />Categories</span><ChevronRight size={17} />
+            <div className="space-y-2.5 p-4">
+              <NavLink to="/" end onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><House size={18} /></span>Home</NavLink>
+              <NavLink to="/shop" onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><ShoppingBag size={18} /></span>Shop</NavLink>
+              <NavLink to="/combos" onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><Boxes size={18} /></span>Combo Offers</NavLink>
+              <button type="button" onClick={() => setMobileCategory(true)} className="flex min-h-14 w-full items-center justify-between rounded-2xl border border-[#eee7f5] bg-white px-4 py-3 text-sm font-semibold text-gray-800 transition hover:border-violet-200 hover:bg-violet-50">
+                <span className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><Grid2X2 size={18} /></span>Categories</span><ChevronRight size={18} className="text-violet-500" />
               </button>
-              <button type="button" onClick={() => setMobilePages(true)} className="flex w-full items-center justify-between rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary">
-                <span className="flex items-center gap-3"><FileText size={18} />Pages</span><ChevronRight size={17} />
+              <button type="button" onClick={() => setMobilePages(true)} className="flex min-h-14 w-full items-center justify-between rounded-2xl border border-[#eee7f5] bg-white px-4 py-3 text-sm font-semibold text-gray-800 transition hover:border-violet-200 hover:bg-violet-50">
+                <span className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><FileText size={18} /></span>Pages</span><ChevronRight size={18} className="text-violet-500" />
               </button>
-              <div className="flex items-center justify-between border-t border-gray-100 pt-3 sm:hidden">
+              <div className="mt-1 flex min-h-14 items-center justify-between rounded-2xl border border-[#eee7f5] bg-white px-4 py-3 sm:hidden">
                 {user ? (
                   <>
-                    <Link to="/account" onClick={() => setMobileMenu(false)} className="flex items-center gap-2 text-sm font-semibold text-gray-700"><UserRound size={18} />My Account</Link>
-                    <button type="button" onClick={() => setLogoutConfirm(true)} className="text-sm font-semibold text-red-500">Logout</button>
+                    <Link to="/account" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 text-sm font-semibold text-gray-700"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><UserRound size={18} /></span>My Account</Link>
+                    <button type="button" onClick={() => setLogoutConfirm(true)} className="rounded-full bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-100">Logout</button>
                   </>
-                ) : <Link to="/login" onClick={() => setMobileMenu(false)} className="flex items-center gap-2 text-sm font-semibold text-primary"><UserRound size={18} />Sign in</Link>}
+                ) : <Link to="/login" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 text-sm font-semibold text-primary"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100"><UserRound size={18} /></span>Sign in</Link>}
               </div>
             </div>
           ) : mobileCategory ? (
