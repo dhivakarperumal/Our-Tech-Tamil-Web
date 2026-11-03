@@ -284,7 +284,10 @@ function createReviewsController(pool) {
           [userName, userEmail || null, rating, comment, reviewId],
         );
         if (!result.affectedRows) {
-          return response.status(404).json({ message: "Review not found." });
+          const [reviews] = await pool.execute("SELECT id FROM reviews WHERE id = ? LIMIT 1", [reviewId]);
+          if (!reviews.length) {
+            return response.status(404).json({ message: "Review not found." });
+          }
         }
         return response.json({ message: "Review updated successfully." });
       } catch (error) {

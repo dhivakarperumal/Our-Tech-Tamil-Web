@@ -563,6 +563,93 @@ const Reviews = () => {
         )
       )}
 
+      {viewingReview && createPortal(
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <button type="button" aria-label="Close review details" onClick={() => setViewingReview(null)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+          <section role="dialog" aria-modal="true" aria-labelledby="review-details-title" className="relative z-10 max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-[#4b0b78]">Review details</p>
+                <h2 id="review-details-title" className="mt-1 text-xl font-black text-slate-800">{viewingReview.user_name}</h2>
+              </div>
+              <button type="button" onClick={() => setViewingReview(null)} aria-label="Close review details" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <span className="inline-flex items-center gap-1 font-bold text-amber-500">
+                {viewingReview.rating}
+                {[1, 2, 3, 4, 5].map((star) => <Star key={star} className={`h-4 w-4 ${star <= Number(viewingReview.rating) ? "fill-current" : "text-slate-200"}`} />)}
+              </span>
+              <span className={`rounded-lg border px-2.5 py-1 text-[10px] font-black uppercase ${getStatusColor(viewingReview.status)}`}>{viewingReview.status}</span>
+            </div>
+            <p className="mt-4 text-sm font-semibold text-slate-600">{viewingReview.product_name || "Product Deleted"}</p>
+            {viewingReview.user_email && <p className="mt-1 text-sm text-slate-500">{viewingReview.user_email}</p>}
+            <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{viewingReview.comment}</p>
+            {viewingReview.review_image && (
+              <img src={resolveReviewImage(viewingReview.review_image)} alt={`Review by ${viewingReview.user_name}`} className="mt-4 max-h-80 w-full rounded-xl border border-slate-100 object-contain" />
+            )}
+            {viewingReview.admin_reply && (
+              <div className="mt-4 rounded-xl bg-blue-50 p-4">
+                <p className="text-xs font-black uppercase tracking-widest text-blue-700">Official reply</p>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{viewingReview.admin_reply}</p>
+              </div>
+            )}
+            <p className="mt-4 text-xs text-slate-400">{new Date(viewingReview.created_at).toLocaleString()}</p>
+          </section>
+        </div>,
+        document.body,
+      )}
+
+      {editingReview && editForm && createPortal(
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <button type="button" aria-label="Close edit review" onClick={() => setEditingReview(null)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+          <section role="dialog" aria-modal="true" aria-labelledby="edit-review-title" className="relative z-10 max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-black uppercase tracking-widest text-[#4b0b78]">Admin review editor</p>
+                <h2 id="edit-review-title" className="mt-1 text-xl font-black text-slate-800">Edit review</h2>
+              </div>
+              <button type="button" onClick={() => setEditingReview(null)} aria-label="Close edit review" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateReview} className="mt-5 space-y-4">
+              <label className="block text-sm font-semibold text-slate-600">
+                Customer name
+                <input required maxLength={160} value={editForm.user_name} onChange={(event) => setEditForm({ ...editForm, user_name: event.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-[#4b0b78]" />
+              </label>
+              <label className="block text-sm font-semibold text-slate-600">
+                Customer email
+                <input type="email" maxLength={191} value={editForm.user_email} onChange={(event) => setEditForm({ ...editForm, user_email: event.target.value })} className="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-[#4b0b78]" />
+              </label>
+              <fieldset>
+                <legend className="text-sm font-semibold text-slate-600">Rating</legend>
+                <div className="mt-2 flex items-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button key={star} type="button" onClick={() => setEditForm({ ...editForm, rating: star })} aria-label={`${star} star${star === 1 ? "" : "s"}`} aria-pressed={editForm.rating === star}>
+                      <Star className={`h-6 w-6 ${star <= editForm.rating ? "fill-amber-400 text-amber-400" : "text-slate-200"}`} />
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <label className="block text-sm font-semibold text-slate-600">
+                Review comment
+                <textarea required maxLength={5000} rows={5} value={editForm.comment} onChange={(event) => setEditForm({ ...editForm, comment: event.target.value })} className="mt-1 w-full resize-y rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-[#4b0b78]" />
+              </label>
+              <div className="flex justify-end gap-3 border-t border-slate-100 pt-4">
+                <button type="button" onClick={() => setEditingReview(null)} className="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">Cancel</button>
+                <button type="submit" disabled={editSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-[#4b0b78] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#260642] disabled:opacity-50">
+                  {editSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {editSubmitting ? "Saving..." : "Save changes"}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>,
+        document.body,
+      )}
+
       {/* ADD REVIEW MODAL */}
       {showAddModal && (
         createPortal(

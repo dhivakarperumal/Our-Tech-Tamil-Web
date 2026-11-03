@@ -123,6 +123,7 @@ test("admin can edit review content and invalid edits are rejected", async (t) =
         updateParams = params;
         return [{ affectedRows: 1 }];
       }
+      if (query.startsWith("SELECT id FROM reviews WHERE id")) return [[{ id: params[0] }]];
       throw new Error(`Unexpected review query: ${query}`);
     },
   });
@@ -150,6 +151,18 @@ test("admin can edit review content and invalid edits are rejected", async (t) =
     }),
   });
   assert.equal(invalid.status, 400);
+
+  const unchanged = await fetch(`${url}/admin/7`, {
+    method: "PUT",
+    headers: adminHeaders(),
+    body: JSON.stringify({
+      user_name: "Updated Customer",
+      user_email: "",
+      rating: 4,
+      comment: "Updated review text.",
+    }),
+  });
+  assert.equal(unchanged.status, 200);
 });
 
 test("customers can submit one review per product and see their review status", async (t) => {
