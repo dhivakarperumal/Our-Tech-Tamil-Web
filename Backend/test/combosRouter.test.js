@@ -64,6 +64,23 @@ test("combo SKU endpoint creates the next combo code", async (t) => {
   assert.deepEqual(await response.json(), { code: "COMBO0008" });
 });
 
+test("combo product selection filters by category type", async (t) => {
+  const server = await startTestServer(t, {
+    async execute(query, params) {
+      assert.match(query, /cat_type = \?/);
+      assert.ok(params.includes("Natural Products"));
+      if (query.includes("COUNT(*)")) return [[{ total: 0 }]];
+      return [[]];
+    },
+  });
+  const response = await fetch(`${server.url}/products?categoryType=Natural%20Products`, {
+    headers: server.headers,
+  });
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.pagination.total, 0);
+});
+
 test("combo creation saves combo details and selected product quantities", async (t) => {
   let inserted;
   const server = await startTestServer(t, {
@@ -110,4 +127,55 @@ test("active combos require selected products and duplicate codes return a confl
     body: JSON.stringify(combo),
   });
   assert.equal(duplicate.status, 409);
+});
+
+test("combo detail, update, and delete endpoints operate on the requested combo", async (t) => {
+  const savedCombo = {
+    id: 17,
+    ...combo,
+    gallery_images: "[]",
+    specifications: JSON.stringify(combo.specifications),
+    products: JSON.stringify(combo.products),
+  };
+  let updatedParams;
+  let deletedId;
+  const server = await startTestServer(t, {
+    async execute(query, params = []) {
+      if (query.includes("DELETE FROM combos")) {
+        deletedId = params[0];
+        return [{ affectedRows: 1 }];
+      }
+      if (query.includes("FROM combos WHERE id = ?")) return [[savedCombo]];
+      if (query.includes("FROM products WHERE id IN")) {
+        return [[{ id: 2, name: "Pan", product_code: "PAN-2", mrp: 300, offer_price: 250, total_stock: 8, images: "[]" }]];
+      }
+      if (query.includes("UPDATE combos SET")) {
+        updatedParams = params;
+        return [{ affectedRows: 1 }];
+      }
+      throw new Error(`Unexpected query: ${query}`);
+    },
+  });
+
+  const detailResponse = await fetch(`${server.url}/17`, { headers: server.headers });
+  const detail = await detailResponse.json();
+  assert.equal(detailResponse.status, 200);
+  assert.equal(detail.combo.products[0].name, "Pan");
+  assert.equal(detail.combo.products[0].quantity, 1);
+
+  const updateResponse = await fetch(`${server.url}/17`, {
+    method: "PUT",
+    headers: server.headers,
+    body: JSON.stringify({ ...combo, name: "Updated kitchen set" }),
+  });
+  assert.equal(updateResponse.status, 200);
+  assert.equal(updatedParams[0], "Updated kitchen set");
+  assert.equal(updatedParams.at(-1), 17);
+
+  const deleteResponse = await fetch(`${server.url}/17`, {
+    method: "DELETE",
+    headers: server.headers,
+  });
+  assert.equal(deleteResponse.status, 200);
+  assert.equal(deletedId, 17);
 });

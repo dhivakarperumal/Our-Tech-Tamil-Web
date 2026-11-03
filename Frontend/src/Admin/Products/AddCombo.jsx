@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Boxes, Check, Edit2, ImagePlus, LoaderCircle, PackagePlus, Plus, Search, Trash2, Video, X } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import api from "../../api";
 
@@ -70,6 +70,8 @@ function Field({ label, required, children, error }) {
 
 function AddCombo() {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditing = Boolean(id);
   const [form, setForm] = useState(emptyForm);
   const [categories, setCategories] = useState([]);
   const [categoryTypes, setCategoryTypes] = useState([]);
@@ -107,21 +109,53 @@ function AddCombo() {
     let active = true;
     Promise.all([
       api.get("/combos/categories"),
-      api.get("/combos/next-code"),
-    ]).then(([categoryResponse, codeResponse]) => {
+      isEditing ? api.get(`/combos/${id}`) : api.get("/combos/next-code"),
+    ]).then(([categoryResponse, comboResponse]) => {
       if (!active) return;
       const loadedCategories = Array.isArray(categoryResponse.data) ? categoryResponse.data : [];
       setCategories(loadedCategories);
       setCategoryTypes([...new Set(loadedCategories.map((category) => category.category_type).filter(Boolean))]);
-      setForm((current) => ({ ...current, code: codeResponse.data.code || "" }));
+      if (isEditing) {
+        const combo = comboResponse.data.combo;
+        setForm({
+          ...emptyForm,
+          ...combo,
+          code: combo.code || "",
+          gallery_images: Array.isArray(combo.gallery_images) ? combo.gallery_images : [],
+          products: Array.isArray(combo.products) ? combo.products.map((product) => ({
+            ...product,
+            image: product.image || product.images?.[0] || "",
+            offer_price: Number(product.offer_price ?? product.mrp) || 0,
+            mrp: Number(product.mrp) || 0,
+            stock: Number(product.stock ?? product.total_stock) || 0,
+          })) : [],
+          specifications: Array.isArray(combo.specifications) ? combo.specifications : [],
+          track_inventory: Boolean(combo.track_inventory),
+          allow_backorders: Boolean(combo.allow_backorders),
+          featured: Boolean(combo.featured),
+          trending: Boolean(combo.trending),
+          new_arrival: Boolean(combo.new_arrival),
+          mrp: String(combo.mrp ?? ""),
+          offer: String(combo.offer ?? "0"),
+        });
+      } else {
+        setForm((current) => ({ ...current, code: comboResponse.data.code || "" }));
+      }
     }).catch((error) => {
       console.error("Failed to load combo form options:", error);
-      toast.error(error.response?.data?.message || "Unable to load categories or combo code.");
+      toast.error(error.response?.data?.message || (isEditing ? "Unable to load combo details." : "Unable to load categories or combo code."));
     });
     return () => { active = false; };
-  }, []);
+  }, [id, isEditing]);
 
   useEffect(() => {
+    if (!form.category_type) {
+      setProducts([]);
+      setProductPagination({ total: 0, totalPages: 1 });
+      setLoadingProducts(false);
+      return undefined;
+    }
+
     let active = true;
     const timeout = setTimeout(async () => {
       setLoadingProducts(true);
@@ -131,6 +165,7 @@ function AddCombo() {
             page: productPage,
             limit: 24,
             ...(productSearch.trim() ? { search: productSearch.trim() } : {}),
+            categoryType: form.category_type,
             ...(productCategory ? { category: productCategory } : {}),
             ...(productSubcategory ? { subcategory: productSubcategory } : {}),
           },
@@ -152,7 +187,7 @@ function AddCombo() {
       active = false;
       clearTimeout(timeout);
     };
-  }, [productPage, productSearch, productCategory, productSubcategory]);
+  }, [form.category_type, productPage, productSearch, productCategory, productSubcategory]);
 
   const updateForm = (name, value) => {
     setForm((current) => ({ ...current, [name]: value }));
@@ -161,6 +196,9 @@ function AddCombo() {
 
   const handleCategoryType = (value) => {
     setForm((current) => ({ ...current, category_type: value, category: "", subcategory: "" }));
+    setProductCategory("");
+    setProductSubcategory("");
+    setProductPage(1);
   };
 
   const handleCategory = (value) => {
@@ -267,8 +305,10 @@ function AddCombo() {
         available_stock: availableStock,
         stock_status: stockStatus,
       };
-      const { data } = await api.post("/combos", payload);
-      toast.success(status === "Draft" ? "Combo saved as draft." : "Combo product added successfully.");
+      const { data } = isEditing
+        ? await api.put(`/combos/${id}`, payload)
+        : await api.post("/combos", payload);
+      toast.success(isEditing ? "Combo product updated successfully." : status === "Draft" ? "Combo saved as draft." : "Combo product added successfully.");
       if (data.success) navigate("/admin/products/all");
     } catch (error) {
       console.error("Failed to save combo:", error);
@@ -283,26 +323,24 @@ function AddCombo() {
   return (
     <div className="min-h-full bg-slate-50/70 px-3 py-5 sm:px-6 sm:py-7 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <Link to="/admin/products/all" aria-label="Back to products" className="rounded-xl border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm transition hover:border-violet-200 hover:text-violet-700">
-              <ArrowLeft size={18} />
-            </Link>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-700">Inventory management</p>
-              <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">Add Combo Product</h1>
-              <p className="mt-1 text-sm text-slate-500">Bundle products, set pricing, and manage combo inventory.</p>
+        <header className="product-editor-heading relative mb-6 overflow-hidden rounded-3xl bg-gradient-to-r from-[#2e1065] via-[#4c1d95] to-[#86198f] text-white shadow-lg shadow-violet-950/10">
+          <div className="relative flex flex-col gap-5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+            <div className="flex min-w-0 items-center gap-4">
+              <Link to="/admin/products/all" aria-label="Back to products" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/20">
+                <ArrowLeft size={18} />
+              </Link>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-200">Inventory management</p>
+                <h1 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">{isEditing ? "Edit Combo Product" : "Add Combo Product"}</h1>
+                <p className="mt-1 text-sm text-violet-100/80">Bundle products, set pricing, and manage combo inventory.</p>
+              </div>
             </div>
+            <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white">
+              <span className={`h-2 w-2 rounded-full ${form.status === "Active" ? "bg-emerald-300" : form.status === "Draft" ? "bg-amber-300" : "bg-gray-300"}`} />
+              {form.status || "Active"} listing
+            </span>
           </div>
-          <div className="flex w-full gap-2 sm:w-auto">
-            <button type="button" onClick={() => navigate("/admin/products/all")} className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-100 sm:flex-none">Cancel</button>
-            <button type="button" onClick={() => submit("Draft")} disabled={loading || Boolean(uploading)} className="flex-1 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-bold text-violet-800 transition hover:bg-violet-100 disabled:opacity-60 sm:flex-none">Save as Draft</button>
-            <button type="button" onClick={() => submit("Active")} disabled={loading || Boolean(uploading)} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#35106d] to-[#7037c3] px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-violet-900/15 transition hover:brightness-110 disabled:opacity-60 sm:flex-none">
-              {loading ? <LoaderCircle className="animate-spin" size={16} /> : <Check size={16} />}
-              Add Combo
-            </button>
-          </div>
-        </div>
+        </header>
 
         <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,0.8fr)]">
           <div className="space-y-5">
@@ -335,7 +373,7 @@ function AddCombo() {
                 </Field>
                 <Field label="Status">
                   <select value={form.status} onChange={(event) => updateForm("status", event.target.value)} className={selectClass}>
-                    <option value="Active">Active</option><option value="Inactive">Inactive</option>
+                    <option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Draft">Draft</option>
                   </select>
                 </Field>
                 <div className="sm:col-span-2">
@@ -393,7 +431,7 @@ function AddCombo() {
                   <div className="grid grid-cols-2 gap-3">
                     <select value={productCategory} onChange={(event) => { setProductCategory(event.target.value); setProductSubcategory(""); setProductPage(1); }} className={selectClass}>
                       <option value="">All categories</option>
-                      {[...new Set(categories.map((category) => category.name))].map((category) => <option key={category} value={category}>{category}</option>)}
+                      {[...new Set(categoriesForType.map((category) => category.name))].map((category) => <option key={category} value={category}>{category}</option>)}
                     </select>
                     <select value={productSubcategory} onChange={(event) => { setProductSubcategory(event.target.value); setProductPage(1); }} className={selectClass} disabled={!productCategory}>
                       <option value="">All subcategories</option>
@@ -403,7 +441,8 @@ function AddCombo() {
                 </div>
                 {errors.products && <p className="text-xs font-semibold text-rose-600">{errors.products}</p>}
                 <div className="max-h-[34rem] space-y-2 overflow-y-auto pr-1">
-                  {loadingProducts ? <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500"><LoaderCircle className="animate-spin" size={18} /> Loading products...</div>
+                  {!form.category_type ? <p className="py-10 text-center text-sm text-slate-500">Select a category type above to see matching products.</p>
+                    : loadingProducts ? <div className="flex items-center justify-center gap-2 py-10 text-sm text-slate-500"><LoaderCircle className="animate-spin" size={18} /> Loading products...</div>
                     : products.length === 0 ? <p className="py-10 text-center text-sm text-slate-500">No matching products found.</p>
                       : products.map((product) => {
                         const selected = selectedProductsById.has(Number(product.id));
@@ -535,9 +574,9 @@ function AddCombo() {
 
             <div className="flex flex-col gap-2 sm:flex-row xl:flex-col 2xl:flex-row">
               <button type="button" onClick={() => navigate("/admin/products/all")} className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-100">Cancel</button>
-              <button type="button" onClick={() => submit("Draft")} disabled={loading || Boolean(uploading)} className="rounded-xl border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-bold text-violet-800 transition hover:bg-violet-100 disabled:opacity-60">Save as Draft</button>
-              <button type="button" onClick={() => submit("Active")} disabled={loading || Boolean(uploading)} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#35106d] to-[#7037c3] px-5 py-3 text-sm font-bold text-white shadow-md shadow-violet-900/15 transition hover:brightness-110 disabled:opacity-60">
-                {loading ? <LoaderCircle className="animate-spin" size={16} /> : <Check size={16} />}Add Combo Product
+              {!isEditing && <button type="button" onClick={() => submit("Draft")} disabled={loading || Boolean(uploading)} className="rounded-xl border border-violet-200 bg-violet-50 px-5 py-3 text-sm font-bold text-violet-800 transition hover:bg-violet-100 disabled:opacity-60">Save as Draft</button>}
+              <button type="button" onClick={() => submit(isEditing ? form.status : "Active")} disabled={loading || Boolean(uploading)} className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#35106d] to-[#7037c3] px-5 py-3 text-sm font-bold text-white shadow-md shadow-violet-900/15 transition hover:brightness-110 disabled:opacity-60">
+                {loading ? <LoaderCircle className="animate-spin" size={16} /> : <Check size={16} />}{isEditing ? "Save Changes" : "Add Combo Product"}
               </button>
             </div>
           </div>

@@ -220,6 +220,11 @@ function createCombosRouter(pool) {
       const search = typeof request.query.search === "string" ? request.query.search.trim() : "";
       const category = typeof request.query.category === "string" ? request.query.category.trim() : "";
       const subcategory = typeof request.query.subcategory === "string" ? request.query.subcategory.trim() : "";
+      const categoryType = typeof request.query.categoryType === "string" ? request.query.categoryType.trim() : "";
+      if (categoryType) {
+        filters.push("cat_type = ?");
+        params.push(categoryType);
+      }
       if (search) {
         filters.push("(name LIKE ? OR product_code LIKE ?)");
         params.push(`%${search}%`, `%${search}%`);
@@ -276,6 +281,49 @@ function createCombosRouter(pool) {
     }
   });
 
+  router.get("/:id", async (request, response, next) => {
+    try {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) throw httpError(400, "Invalid combo ID.");
+      const [rows] = await pool.execute(`SELECT ${COMBO_COLUMNS} FROM combos WHERE id = ? LIMIT 1`, [id]);
+      if (!rows.length) throw httpError(404, "Combo product not found.");
+
+      const combo = rows[0];
+      const products = parseList(combo.products, "Selected products", 100);
+      const productIds = products.map((item) => Number(item.id)).filter((productId) => Number.isSafeInteger(productId) && productId > 0);
+      let productRows = [];
+      if (productIds.length) {
+        const [selectedProducts] = await pool.execute(
+          `SELECT id, name, product_code, mrp, offer_price, total_stock, images
+           FROM products WHERE id IN (${productIds.map(() => "?").join(", ")})`,
+          productIds,
+        );
+        productRows = selectedProducts;
+      }
+      const productById = new Map(productRows.map((product) => [Number(product.id), product]));
+      return response.json({
+        success: true,
+        combo: {
+          ...combo,
+          gallery_images: parseList(combo.gallery_images, "Gallery images", 10),
+          products: products.map((item) => {
+            const product = productById.get(Number(item.id));
+            return {
+              ...(product || {}),
+              id: Number(item.id),
+              quantity: Number(item.quantity) || 1,
+              images: product ? parseList(product.images, "Product images", 100) : [],
+            };
+          }),
+          specifications: parseList(combo.specifications, "Specifications", 100),
+        },
+      });
+    } catch (error) {
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    }
+  });
+
   router.post("/", async (request, response, next) => {
     try {
       const combo = normalizeCombo(request.body);
@@ -308,6 +356,57 @@ function createCombosRouter(pool) {
       if (error.code === "ER_DUP_ENTRY") {
         return response.status(409).json({ message: "A combo with this code already exists." });
       }
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    }
+  });
+
+  router.put("/:id", async (request, response, next) => {
+    try {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) throw httpError(400, "Invalid combo ID.");
+      const combo = normalizeCombo(request.body);
+      const [result] = await pool.execute(
+        `UPDATE combos SET
+          name = ?, code = ?, category_type = ?, category = ?, subcategory = ?, brand = ?,
+          short_description = ?, description = ?, thumbnail = ?, gallery_images = ?, video = ?,
+          status = ?, products = ?, mrp = ?, offer = ?, offer_price = ?, total_savings = ?,
+          gst = ?, final_price = ?, available_stock = ?, minimum_order_quantity = ?,
+          maximum_order_quantity = ?, stock_status = ?, track_inventory = ?, allow_backorders = ?,
+          specifications = ?, warranty = ?, return_policy = ?, delivery_information = ?,
+          rating = ?, featured = ?, trending = ?, new_arrival = ?
+         WHERE id = ?`,
+        [
+          combo.name, combo.code, combo.category_type, combo.category, combo.subcategory,
+          combo.brand, combo.short_description, combo.description, combo.thumbnail,
+          JSON.stringify(combo.gallery_images), combo.video, combo.status,
+          JSON.stringify(combo.products), combo.mrp, combo.offer, combo.offer_price,
+          combo.total_savings, combo.gst, combo.final_price, combo.available_stock,
+          combo.minimum_order_quantity, combo.maximum_order_quantity, combo.stock_status,
+          combo.track_inventory, combo.allow_backorders, JSON.stringify(combo.specifications),
+          combo.warranty, combo.return_policy, combo.delivery_information, combo.rating,
+          combo.featured, combo.trending, combo.new_arrival, id,
+        ],
+      );
+      if (!result.affectedRows) throw httpError(404, "Combo product not found.");
+      return response.json({ success: true, combo: { id, ...combo } });
+    } catch (error) {
+      if (error.code === "ER_DUP_ENTRY") {
+        return response.status(409).json({ message: "A combo with this code already exists." });
+      }
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    }
+  });
+
+  router.delete("/:id", async (request, response, next) => {
+    try {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) throw httpError(400, "Invalid combo ID.");
+      const [result] = await pool.execute("DELETE FROM combos WHERE id = ?", [id]);
+      if (!result.affectedRows) throw httpError(404, "Combo product not found.");
+      return response.json({ success: true, message: "Combo product deleted." });
+    } catch (error) {
       if (error.status) return response.status(error.status).json({ message: error.message });
       return next(error);
     }

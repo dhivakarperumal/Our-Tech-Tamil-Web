@@ -16,10 +16,24 @@ import {
     FiPackage,
 } from "react-icons/fi";
 
+const parseComboArray = (value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value !== "string" || !value) return [];
+    try {
+        const parsed = JSON.parse(value);
+        return Array.isArray(parsed) ? parsed : [];
+    } catch {
+        return [];
+    }
+};
+
 const AllProducts = () => {
     const navigate = useNavigate();
     const { productsCache, setProductsCached } = useAdmin();
 
+    const [activeProductType, setActiveProductType] = useState("normal");
+    const [combos, setCombos] = useState([]);
+    const [loadingCombos, setLoadingCombos] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
     const [showLowStockOnly, setShowLowStockOnly] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
@@ -87,6 +101,25 @@ const AllProducts = () => {
         return () => clearTimeout(timeout);
     }, [currentPage, searchTerm, showLowStockOnly]);
 
+    useEffect(() => {
+        if (activeProductType !== "combo") return;
+        let active = true;
+        const fetchCombos = async () => {
+            setLoadingCombos(true);
+            try {
+                const { data } = await api.get("/combos");
+                if (active) setCombos(Array.isArray(data.combos) ? data.combos : []);
+            } catch (error) {
+                console.error("Error fetching combo products:", error);
+                if (active) toast.error(error.response?.data?.message || "Unable to load combo products.");
+            } finally {
+                if (active) setLoadingCombos(false);
+            }
+        };
+        fetchCombos();
+        return () => { active = false; };
+    }, [activeProductType]);
+
     const handleDelete = async (id) => {
         if (!window.confirm("Are you sure you want to delete this product?")) return;
         try {
@@ -96,6 +129,18 @@ const AllProducts = () => {
         } catch (error) {
             toast.error("Deletion failed.");
             console.error("Error deleting product:", error);
+        }
+    };
+
+    const handleDeleteCombo = async (combo) => {
+        if (!window.confirm(`Delete "${combo.name}"? This action cannot be undone.`)) return;
+        try {
+            await api.delete(`/combos/${combo.id}`);
+            setCombos((current) => current.filter((item) => item.id !== combo.id));
+            toast.success("Combo product deleted.");
+        } catch (error) {
+            console.error("Error deleting combo product:", error);
+            toast.error(error.response?.data?.message || "Unable to delete combo product.");
         }
     };
 
@@ -137,6 +182,20 @@ const AllProducts = () => {
     // Simplified Pagination (Handled by backend)
     const totalPages = pagination.totalPages;
     const currentItems = products;
+    const filteredCombos = combos.filter((combo) => {
+        const query = searchTerm.trim().toLowerCase();
+        return !query || [combo.name, combo.code, combo.category, combo.subcategory]
+            .some((value) => String(value || "").toLowerCase().includes(query));
+    });
+    const comboStats = {
+        total: combos.length,
+        active: combos.filter((combo) => (combo.status || "Active").toLowerCase() === "active").length,
+        inactive: combos.filter((combo) => (combo.status || "").toLowerCase() === "inactive").length,
+        lowStock: combos.filter((combo) => {
+            const stock = Number(combo.available_stock ?? 0);
+            return (combo.stock_status || "").toLowerCase() === "low stock" || (stock > 0 && stock <= 10);
+        }).length,
+    };
 
     // Reset to page 1 when search/filters change
     useEffect(() => {
@@ -180,15 +239,32 @@ const AllProducts = () => {
         <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700 min-h-screen pb-20">
             <Toaster position="top-right" />
 
-           
-           
+            <div className="flex flex-wrap gap-2 rounded-2xl border border-gray-100 bg-white p-2 shadow-sm">
+                {[
+                    { id: "normal", label: "Normal Products" },
+                    { id: "combo", label: "Combo Products" },
+                ].map((tab) => (
+                    <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => { setActiveProductType(tab.id); setSearchTerm(""); }}
+                        className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold transition sm:flex-none ${
+                            activeProductType === tab.id
+                                ? "bg-gradient-to-r from-[#240046] to-[#7b2cbf] text-white shadow-md"
+                                : "text-slate-600 hover:bg-violet-50 hover:text-violet-800"
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
 
-            {loading ? (
+            {(activeProductType === "normal" ? loading : loadingCombos) ? (
                 <div className="flex flex-col items-center justify-center py-32 bg-white rounded-2xl border border-gray-100 shadow-sm">
                     <div className="w-10 h-10 border-4 border-[#7b2cbf]/20 border-t-[#7b2cbf] rounded-full animate-spin mb-4"></div>
-                    <p className="text-gray-400 font-bold text-sm">Loading products...</p>
+                    <p className="text-gray-400 font-bold text-sm">Loading {activeProductType === "combo" ? "combo products" : "products"}...</p>
                 </div>
-            ) : (
+            ) : activeProductType === "normal" ? (
                 <>
                     {/* Stats Cards */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -439,6 +515,208 @@ const AllProducts = () => {
                             <p className="text-slate-400 text-xs mt-1">Try adjusting your search or filters</p>
                         </div>
                     )}
+                </>
+            ) : (
+                <>
+                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                        {[
+                            { label: "Total Combos", value: comboStats.total, sub: "All combo listings", icon: <FiBox size={22} />, gradient: "from-[#240046] to-[#7b2cbf]" },
+                            { label: "Active", value: comboStats.active, sub: "Active combos", icon: <FiCheckCircle size={22} />, gradient: "from-emerald-400 to-teal-500" },
+                            { label: "Inactive", value: comboStats.inactive, sub: "Inactive combos", icon: <FiAlertCircle size={22} />, gradient: "from-orange-400 to-amber-500" },
+                            { label: "Low Stock", value: comboStats.lowStock, sub: "Combos with low stock", icon: <FiXCircle size={22} />, gradient: "from-rose-400 to-pink-500" },
+                        ].map((stat) => (
+                            <div key={stat.label} className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition-all hover:shadow-md sm:gap-4 sm:p-5">
+                                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg sm:h-14 sm:w-14 ${stat.gradient}`}>
+                                    {stat.icon}
+                                </div>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-medium text-gray-400">{stat.label}</p>
+                                    <p className="my-0.5 text-2xl font-black leading-none text-slate-800 sm:text-3xl">{stat.value}</p>
+                                    <p className="truncate text-[10px] text-gray-400">{stat.sub}</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+                        <div className="relative w-full sm:max-w-md">
+                            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+                            <input
+                                type="search"
+                                placeholder="Search combo name, SKU, or category..."
+                                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-4 text-sm font-medium text-slate-700 outline-none transition-all focus:border-[#7b2cbf] focus:bg-white"
+                                value={searchTerm}
+                                onChange={(event) => setSearchTerm(event.target.value)}
+                            />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <div className="flex rounded-xl border border-gray-200 bg-gray-100 p-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode("table")}
+                                    title="Table view"
+                                    aria-label="Table view"
+                                    aria-pressed={viewMode === "table"}
+                                    className={`rounded-lg p-2 transition-all ${viewMode === "table" ? "bg-white text-[#7b2cbf] shadow-sm" : "text-gray-400 hover:text-slate-600"}`}
+                                >
+                                    <FiList size={17} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewMode("grid")}
+                                    title="Card view"
+                                    aria-label="Card view"
+                                    aria-pressed={viewMode === "grid"}
+                                    className={`rounded-lg p-2 transition-all ${viewMode === "grid" ? "bg-white text-[#7b2cbf] shadow-sm" : "text-gray-400 hover:text-slate-600"}`}
+                                >
+                                    <FiGrid size={17} />
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => navigate("/admin/products/combos/add")}
+                                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#240046] to-[#7b2cbf] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-purple-900/20 transition hover:brightness-110"
+                            >
+                                <FiPlus size={16} /> Add Combo Product
+                            </button>
+                        </div>
+                    </div>
+                    <section className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+                    {filteredCombos.length ? (
+                        viewMode === "table" ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="admin-table-header">
+                                        <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-[#FCD34D]">S.No.</th>
+                                        <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-[#FCD34D]">Combo</th>
+                                        <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-[#FCD34D]">Category</th>
+                                        <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-[#FCD34D]">Products</th>
+                                        <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-[#FCD34D]">Price</th>
+                                        <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-[#FCD34D]">Stock</th>
+                                        <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-[#FCD34D]">Status</th>
+                                        <th className="px-4 py-4 text-[11px] font-bold uppercase tracking-wider text-[#FCD34D]">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {filteredCombos.map((combo, index) => {
+                                        const gallery = parseComboArray(combo.gallery_images);
+                                        const items = parseComboArray(combo.products);
+                                        return (
+                                            <tr key={combo.id} className="transition-colors hover:bg-violet-50/40">
+                                                <td className="px-4 py-4 text-sm font-medium text-gray-500">{index + 1}</td>
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <img
+                                                            src={getProductImage({ name: combo.name, images: gallery })}
+                                                            alt=""
+                                                            className="h-12 w-12 rounded-xl border border-gray-100 bg-gray-50 object-cover"
+                                                        />
+                                                        <div className="min-w-0">
+                                                            <p className="max-w-56 truncate text-sm font-bold text-slate-800">{combo.name}</p>
+                                                            <p className="mt-0.5 text-[11px] font-medium text-gray-400">SKU: {combo.code}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <p className="text-sm font-semibold text-slate-700">{combo.category || "—"}</p>
+                                                    <p className="mt-0.5 text-xs text-gray-400">{combo.subcategory || combo.category_type || ""}</p>
+                                                </td>
+                                                <td className="px-4 py-4 text-sm font-semibold text-slate-600">{items.length}</td>
+                                                <td className="px-4 py-4">
+                                                    <p className="text-sm font-bold text-slate-800">₹{Number(combo.final_price ?? combo.offer_price ?? 0).toLocaleString("en-IN")}</p>
+                                                    {Number(combo.mrp) > Number(combo.offer_price) && <p className="text-[11px] text-gray-400 line-through">₹{Number(combo.mrp).toLocaleString("en-IN")}</p>}
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <p className="text-sm font-bold text-slate-700">{combo.available_stock ?? 0}</p>
+                                                    <p className="mt-0.5 text-[10px] text-gray-500">{combo.stock_status || "—"}</p>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <span className={`rounded-lg border px-3 py-1 text-[11px] font-bold ${
+                                                        combo.status === "Active" ? "border-emerald-100 bg-emerald-50 text-emerald-600" :
+                                                            combo.status === "Draft" ? "border-amber-100 bg-amber-50 text-amber-700" :
+                                                                "border-gray-100 bg-gray-50 text-gray-600"
+                                                    }`}>{combo.status || "Active"}</span>
+                                                </td>
+                                                <td className="px-4 py-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <button type="button" onClick={() => navigate(`/admin/products/combos/${combo.id}`)} title="View combo" aria-label={`View ${combo.name}`} className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50 text-violet-700 transition hover:bg-violet-700 hover:text-white">
+                                                            <FiEye size={14} />
+                                                        </button>
+                                                        <button type="button" onClick={() => navigate(`/admin/products/combos/edit/${combo.id}`)} title="Edit combo" aria-label={`Edit ${combo.name}`} className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                                                            <FiEdit2 size={14} />
+                                                        </button>
+                                                        <button type="button" onClick={() => handleDeleteCombo(combo)} title="Delete combo" aria-label={`Delete ${combo.name}`} className="flex h-8 w-8 items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-600 hover:text-white">
+                                                            <FiTrash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                        ) : (
+                            <div className="grid grid-cols-1 gap-5 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                                {filteredCombos.map((combo) => {
+                                    const gallery = parseComboArray(combo.gallery_images);
+                                    const items = parseComboArray(combo.products);
+                                    return (
+                                        <article key={combo.id} className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg">
+                                            <div className="relative h-48 overflow-hidden bg-violet-50">
+                                                <img
+                                                    src={getProductImage({ name: combo.name, images: gallery })}
+                                                    alt={combo.name}
+                                                    loading="lazy"
+                                                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                                                />
+                                                <span className={`absolute left-3 top-3 rounded-lg border px-3 py-1 text-[11px] font-bold ${
+                                                    combo.status === "Active" ? "border-emerald-100 bg-white/95 text-emerald-700" :
+                                                        combo.status === "Draft" ? "border-amber-100 bg-white/95 text-amber-700" :
+                                                            "border-gray-100 bg-white/95 text-gray-600"
+                                                }`}>{combo.status || "Active"}</span>
+                                            </div>
+                                            <div className="p-4">
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-violet-700">{combo.category_type || "Combo"} · {combo.category || "Uncategorized"}</p>
+                                                <h3 className="mt-1 truncate text-base font-bold text-slate-800">{combo.name}</h3>
+                                                <p className="mt-1 text-xs text-slate-400">SKU: {combo.code}</p>
+                                                <div className="mt-4 grid grid-cols-2 gap-3 border-t border-gray-100 pt-4">
+                                                    <div>
+                                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Combo price</p>
+                                                        <p className="mt-1 text-base font-black text-slate-800">₹{Number(combo.final_price ?? combo.offer_price ?? 0).toLocaleString("en-IN")}</p>
+                                                        {Number(combo.mrp) > Number(combo.offer_price) && <p className="text-[11px] text-slate-400 line-through">₹{Number(combo.mrp).toLocaleString("en-IN")}</p>}
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Products</p>
+                                                        <p className="mt-1 text-base font-bold text-slate-800">{items.length}</p>
+                                                        <p className="text-[11px] text-slate-400">Stock: {combo.available_stock ?? 0} · {combo.stock_status || "—"}</p>
+                                                    </div>
+                                                </div>
+                                                <div className="mt-4 flex gap-2 border-t border-gray-100 pt-3">
+                                                    <button type="button" onClick={() => navigate(`/admin/products/combos/${combo.id}`)} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-violet-50 py-2 text-xs font-bold text-violet-700 transition hover:bg-violet-700 hover:text-white">
+                                                        <FiEye size={13} /> View
+                                                    </button>
+                                                    <button type="button" onClick={() => navigate(`/admin/products/combos/edit/${combo.id}`)} className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-blue-50 py-2 text-xs font-bold text-blue-600 transition hover:bg-blue-600 hover:text-white">
+                                                        <FiEdit2 size={13} /> Edit
+                                                    </button>
+                                                    <button type="button" onClick={() => handleDeleteCombo(combo)} aria-label={`Delete ${combo.name}`} className="flex items-center justify-center rounded-lg bg-rose-50 px-3 py-2 text-rose-600 transition hover:bg-rose-600 hover:text-white">
+                                                        <FiTrash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        )
+                    ) : (
+                        <div className="flex flex-col items-center px-5 py-20 text-center">
+                            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-violet-50 text-violet-400"><FiBox size={30} /></div>
+                            <p className="text-sm font-bold text-slate-600">{searchTerm ? "No matching combo products" : "No combo products yet"}</p>
+                            <p className="mt-1 text-xs text-slate-400">{searchTerm ? "Try another search." : "Create your first product bundle to see it here."}</p>
+                        </div>
+                    )}
+                    </section>
                 </>
             )}
 
