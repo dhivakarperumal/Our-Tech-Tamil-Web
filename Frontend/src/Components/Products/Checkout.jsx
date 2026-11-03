@@ -36,7 +36,6 @@ function Checkout() {
   const { user } = useContext(AuthContext);
   const { cart, loadingCart, fetchCart } = useContext(StoreContext);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cod");
   const [isLocating, setIsLocating] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
@@ -243,17 +242,6 @@ function Checkout() {
 
     setIsSubmitting(true);
     try {
-      if (paymentMethod === "cod") {
-        const { data } = await api.post("/checkout", {
-          ...form,
-          coupon_code: appliedCoupon?.coupon?.code || "",
-        });
-        setPlacedOrder(data);
-        await fetchCart();
-        toast.success("Order placed successfully.");
-        return;
-      }
-
       const isRazorpayLoaded = await loadRazorpay();
       if (!isRazorpayLoaded) throw new Error("Unable to load Razorpay checkout. Please try again.");
       const { data: paymentOrder } = await api.post("/checkout/razorpay/order", {
@@ -475,23 +463,15 @@ function Checkout() {
 
             <section className="rounded-xl bg-gray-50 p-4">
               <h2 className="text-sm font-bold text-text-primary">Payment method</h2>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <label className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm font-semibold transition ${paymentMethod === "cod" ? "border-primary bg-white text-primary" : "border-border bg-white text-text-primary"}`}>
-                  <input type="radio" name="payment_method" value="cod" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} />
-                  Cash on Delivery
-                </label>
-                <label className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm font-semibold transition ${paymentMethod === "razorpay" ? "border-primary bg-white text-primary" : "border-border bg-white text-text-primary"}`}>
-                  <input type="radio" name="payment_method" value="razorpay" checked={paymentMethod === "razorpay"} onChange={() => setPaymentMethod("razorpay")} />
-                  Pay Online with Razorpay
-                </label>
-              </div>
+              <label className="mt-3 flex items-center gap-2 rounded-lg border border-primary bg-white p-3 text-sm font-semibold text-primary">
+                <input type="radio" name="payment_method" value="razorpay" checked readOnly />
+                Pay Online with Razorpay
+              </label>
             </section>
 
             <button type="submit" disabled={isSubmitting || !cart.length} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3.5 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60">
               <FiLock size={16} />
-              {isSubmitting
-                ? (paymentMethod === "razorpay" ? "Opening secure payment..." : "Placing order...")
-                : `${paymentMethod === "razorpay" ? "Pay securely" : "Place Order"} · ₹${formatPrice(checkoutTotal)}`}
+              {isSubmitting ? "Opening secure payment..." : `Pay securely · ₹${formatPrice(checkoutTotal)}`}
             </button>
           </form>
 
