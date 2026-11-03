@@ -12,13 +12,14 @@ const resolveStoredImage = (image) => {
     return `${backendUrl}${image.startsWith("/") ? image : `/${image}`}`;
 };
 
-const getFirstStoredImage = (images) => {
-    if (!images) return null;
+const parseStoredOptions = (options) => {
+    if (Array.isArray(options)) return options;
+    if (typeof options !== "string") return [];
     try {
-        const parsed = typeof images === "string" ? JSON.parse(images) : images;
-        return Array.isArray(parsed) ? parsed[0] || null : parsed;
+        const parsed = JSON.parse(options);
+        return Array.isArray(parsed) ? parsed : [];
     } catch {
-        return typeof images === "string" ? images : null;
+        return [];
     }
 };
 
@@ -79,13 +80,18 @@ export const StoreProvider = ({ children }) => {
 
     // ─── Fetch wishlist from backend ─────────────────────────────
     const fetchWishlist = useCallback(async () => {
-        if (!user?.user_id) { setWishlist([]); return; }
+        if (!user?.user_id) {
+            setWishlist([]);
+            setLoadingWishlist(false);
+            return;
+        }
         try {
             setLoadingWishlist(true);
-            const res = await api.get(`/wishlist/${user.user_id}`);
-            setWishlist(res.data);
+            const res = await api.get("/wishlist");
+            setWishlist(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
             console.error("Fetch wishlist error:", err);
+            toast.error(err.response?.data?.message || "Failed to load favorites");
         } finally {
             setLoadingWishlist(false);
         }
@@ -129,7 +135,7 @@ export const StoreProvider = ({ children }) => {
             toast.error(`Only ${availableStock} item${availableStock === 1 ? "" : "s"} available`);
             return;
         }
-        const variantColor = selectedVariant?.colorName || selectedVariant?.color || "Default";
+        const variantColor = selectedVariant?.colorName || selectedVariant?.color || "";
 
         try {
             await api.post("/cart", {
@@ -186,47 +192,58 @@ export const StoreProvider = ({ children }) => {
 
     // ─── WISHLIST ACTIONS ────────────────────────────────────────
 
-    const toggleWishlist = async (product, variant = null, size = null) => {
+    const toggleWishlist = async (product) => {
         if (!user?.user_id) {
             toast.error("Please login to manage wishlist");
             return;
         }
 
         const productId = product.product_id ?? product.productId ?? product.id;
+        let variants = product.variants;
+        if (typeof variants === "string") {
+            try {
+                variants = JSON.parse(variants);
+            } catch {
+                variants = [];
+            }
+        }
+        const selectedVariant = Array.isArray(variants)
+            ? variants.find((variant) =>
+                (variant.colorName || variant.color || "") === (product.variant_color || product.colorName),
+            ) || variants[0]
+            : null;
+        const availableColors = parseStoredOptions(product.available_colors);
+        const availableSizes = parseStoredOptions(product.available_sizes);
+        const variantColor = product.variant_color || product.colorName ||
+            selectedVariant?.colorName || selectedVariant?.color || availableColors[0] || "";
+        const variantSize = product.variant_size || product.size ||
+            selectedVariant?.selectedSizes?.[0] ||
+            (selectedVariant?.sizesStock ? Object.keys(selectedVariant.sizesStock)[0] : "") ||
+            availableSizes[0] || "";
         const isAlready = wishlist.some(w =>
-            String(w.product_id ?? w.productId ?? w.id) === String(productId)
+            String(w.product_id ?? w.productId ?? w.id) === String(productId) &&
+            (w.variant_color || w.colorName || "") === variantColor &&
+            (w.variant_size || w.size || "") === variantSize
         );
 
         try {
             if (isAlready) {
-                await api.delete(`/wishlist/${user.user_id}/${productId}`);
-                toast.error("Removed from favorites");
+                await api.delete(`/wishlist/${productId}`, {
+                    params: { variant_color: variantColor, variant_size: variantSize },
+                });
+                toast.success("Removed from favorites");
             } else {
-                const selectedVariant = variant || product.variants?.[0] || null;
-                const selectedSize = size || selectedVariant?.selectedSizes?.[0] || "";
-                const variantColor = selectedVariant?.colorName || selectedVariant?.color || "";
-                
-                // Correctly parse images if they are stored as JSON strings
-                const variantImage = getFirstStoredImage(selectedVariant?.images) || getFirstStoredImage(product.images);
-                
-                const price = parseFloat(product.offer_price || product.price || 0);
-
                 await api.post("/wishlist", {
-                    user_id: user.user_id,
-                    product_id: productId,
+                    product_id: Number(productId),
                     variant_color: variantColor,
-                    variant_size: selectedSize,
-                    image: variantImage,
-                    email: user.email || "",
-                    price: price,
-                    total_price: price,
+                    variant_size: variantSize,
                 });
                 toast.success("Added to favorites!");
             }
             await fetchWishlist();
         } catch (err) {
             console.error("Toggle wishlist error:", err);
-            toast.error("Failed to update wishlist");
+            toast.error(err.response?.data?.message || "Failed to update favorites");
         }
     };
 

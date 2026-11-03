@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiMinus, FiPlus, FiShoppingCart, FiTrash2 } from "react-icons/fi";
 import PageContainer from "../CommenComponents/PageContainer";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
@@ -13,6 +13,7 @@ const formatPrice = (value) => Number(value || 0).toLocaleString("en-IN", {
 function Cart() {
   const { user } = useContext(AuthContext);
   const { cart, loadingCart, clearCart, removeFromCart, updateCartQuantity } = useContext(StoreContext);
+  const navigate = useNavigate();
   const totalItems = cart.reduce((total, item) => total + Number(item.quantity || 0), 0);
   const totalAmount = cart.reduce((total, item) => total + Number(item.subtotal ?? item.total_price ?? 0), 0);
 
@@ -145,8 +146,8 @@ function Cart() {
             <div className="mt-3 flex justify-between border-t border-border pt-3 text-lg font-extrabold text-text-primary">
               <span>Grand Total</span><span>₹{formatPrice(totalAmount)}</span>
             </div>
-            <button type="button" disabled title="Checkout is not available yet." className="mt-5 w-full cursor-not-allowed rounded-lg bg-gray-200 px-4 py-3 text-sm font-bold text-gray-500">
-              Proceed to Checkout (coming soon)
+            <button type="button" onClick={() => navigate("/checkout")} className="mt-5 w-full rounded-lg bg-primary px-4 py-3 text-sm font-bold text-white transition hover:bg-primary-dark">
+              Proceed to Checkout
             </button>
             <Link to="/shop" className="mt-2 block w-full rounded-lg border border-primary px-4 py-3 text-center text-sm font-bold text-primary transition hover:bg-primary/5">
               Continue Shopping

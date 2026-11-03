@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart, Leaf, Package, Shirt, ShoppingCart, Sparkles, Zap } from "lucide-react";
+import { StoreContext } from "../../PrivateRouter/StoreContext";
 
 function getFirstImage(images) {
   if (!images) return "";
@@ -61,8 +62,9 @@ function getCategoryIcon(category) {
 
 function ProductCard({ product }) {
   const [imageFailed, setImageFailed] = useState(false);
-  const { addToCart } = useContext(StoreContext);
+  const { addToCart, toggleWishlist, wishlist } = useContext(StoreContext);
   const image = getProductImage(product);
+  const isWishlisted = wishlist.some((item) => Number(item.product_id ?? item.productId ?? item.id) === Number(product.id));
   const productDetailsPath = `/product/${product.id}`;
   const mrp = Number(product.mrp) || 0;
   const offerPrice = Number(product.offer_price ?? product.mrp) || 0;
@@ -83,10 +85,12 @@ function ProductCard({ product }) {
 
         <button
           type="button"
-          aria-label="Add to wishlist"
-          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[#e6d8f7] bg-white/90 text-[#4B00C8] shadow-sm transition hover:scale-105 hover:bg-white"
+          onClick={() => toggleWishlist(product)}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          aria-pressed={isWishlisted}
+          className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[#e6d8f7] bg-white/90 shadow-sm transition hover:scale-105 hover:bg-white ${isWishlisted ? "text-rose-600" : "text-[#4B00C8]"}`}
         >
-          <Heart size={16} strokeWidth={2.2} aria-hidden="true" />
+          <Heart size={16} strokeWidth={2.2} fill={isWishlisted ? "currentColor" : "none"} aria-hidden="true" />
         </button>
 
         <Link
@@ -146,7 +150,9 @@ function ProductCard({ product }) {
         <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-1.5 rounded-[12px] border border-[#4B00C8] bg-white px-2 py-2.5 text-[0.7rem] font-extrabold text-[#4B00C8] shadow-sm transition hover:bg-[#f1ebff]"
+            onClick={() => addToCart(product)}
+            disabled={Number(product.total_stock) < 1}
+            className="inline-flex items-center justify-center gap-1.5 rounded-[12px] border border-[#4B00C8] bg-white px-2 py-2.5 text-[0.7rem] font-extrabold text-[#4B00C8] shadow-sm transition hover:bg-[#f1ebff] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <ShoppingCart size={14} aria-hidden="true" />
             Add to Cart

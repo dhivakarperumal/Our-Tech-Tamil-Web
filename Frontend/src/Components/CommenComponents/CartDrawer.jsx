@@ -170,11 +170,10 @@ const CartDrawer = ({ isOpen, onClose }) => {
             </button>
             <button
               type="button"
-              disabled
-              title="Checkout is not available yet."
-              className="mt-2 w-full cursor-not-allowed rounded-lg bg-gray-200 py-3 font-semibold text-gray-500"
+              onClick={() => goTo("/checkout")}
+              className="mt-2 w-full rounded-lg bg-primary py-3 font-semibold text-white transition hover:bg-primary-dark"
             >
-              Proceed to Checkout (coming soon)
+              Proceed to Checkout
             </button>
             <button
               type="button"
