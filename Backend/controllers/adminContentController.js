@@ -301,6 +301,29 @@ function createAdminContentController(pool) {
       }
     },
 
+    async listPublicArticles(request, response, next) {
+      try {
+        const [articles] = await pool.execute(
+          `SELECT id, content_id, title, description, image_url, buy_link, buy_links, created_at
+           FROM admin_articles
+           WHERE content_type = 'article'
+           ORDER BY created_at DESC, id DESC
+           LIMIT 4`,
+        );
+        return response.json({
+          articles: articles.map((article) => ({
+            ...article,
+            buy_links: parseArticleRows(
+              article.buy_links,
+              article.buy_link ? [{ name: "Read More", url: article.buy_link }] : [],
+            ),
+          })),
+        });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
     async getNextArticleId(request, response, next) {
       const contentType = request.query.type;
       if (!["article", "product_review"].includes(contentType)) {
