@@ -4,6 +4,8 @@ import {
   Camera,
   CalendarDays,
   Check,
+  ChevronDown,
+  ChevronRight,
   CreditCard,
   FileText,
   KeyRound,
@@ -147,6 +149,7 @@ function MyOrders({ user }) {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
 
@@ -172,8 +175,10 @@ function MyOrders({ user }) {
 
   const filtered = orders.filter(function(o) {
     var q = search.trim().toLowerCase();
-    if (!q) return true;
-    return [o.order_id, o.id, o.status, o.tracking_number, o.courier_name].some(function(v){ return String(v || "").toLowerCase().includes(q); });
+    var matchesSearch = !q || [o.order_id, o.id, o.status, o.tracking_number, o.courier_name]
+      .concat((Array.isArray(o.items) ? o.items : []).map(function(item) { return item.product_name || item.name; }))
+      .some(function(v){ return String(v || "").toLowerCase().includes(q); });
+    return matchesSearch && (statusFilter === "All" || o.status === statusFilter);
   });
 
   function imgSrc(img) {
@@ -199,16 +204,15 @@ function MyOrders({ user }) {
   var selectedOrderDiscount = Math.max(0, Number(selectedOrder?.discount_amount) || 0);
 
   return (
-    <div className="rounded-2xl border border-[#e9def5] bg-white p-6 sm:p-8">
-      <div className="flex items-center justify-between gap-3 border-b border-[#f0e8ff] pb-5">
+    <div className="rounded-2xl border border-[#e9def5] bg-white p-4 shadow-sm sm:p-6">
+      <div className="flex items-center gap-3 border-b border-[#f0e8ff] pb-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f2e3ff] text-[#8509c9]"><Package size={20} /></span>
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Package size={20} /></span>
           <div>
             <h2 className="text-lg font-extrabold text-[#1a0745]">My Orders</h2>
-            <p className="text-xs text-gray-500">{loading ? "Loading..." : orders.length + " order" + (orders.length !== 1 ? "s" : "")}</p>
+            <p className="text-xs text-gray-500">Track, manage and view all your orders in one place.</p>
           </div>
         </div>
-        <Link to="/ordersmain" className="hidden items-center gap-1.5 rounded-xl border border-primary px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/5 sm:flex"><Package size={13} /> Track Orders</Link>
       </div>
 
       {loading ? (
@@ -224,31 +228,95 @@ function MyOrders({ user }) {
         </div>
       ) : (
         <>
-          <div className="relative mt-5">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-            <input type="search" value={search} onChange={function(e){ setSearch(e.target.value); }} placeholder="Search by order ID or status..." className="w-full rounded-xl border border-[#e2d3f5] bg-white py-2.5 pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10" />
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8b65aa]" size={15} />
+              <input
+                type="search"
+                value={search}
+                onChange={function(e){ setSearch(e.target.value); }}
+                placeholder="Search by order ID or product name..."
+                aria-label="Search by order ID or product name"
+                className="w-full rounded-xl border border-[#e9ddf6] bg-white py-2.5 pl-10 pr-4 text-xs outline-none transition focus:border-[#a536df] focus:ring-2 focus:ring-[#a536df]/10"
+              />
+            </div>
+            <label className="relative flex shrink-0 items-center">
+              <span className="sr-only">Filter orders by status</span>
+              <select
+                value={statusFilter}
+                onChange={function(event){ setStatusFilter(event.target.value); }}
+                className="w-full appearance-none rounded-xl border border-[#e9ddf6] bg-[#fcfaff] py-2.5 pl-9 pr-9 text-xs font-bold text-[#321454] outline-none transition focus:border-[#a536df] sm:w-36"
+              >
+                <option value="All">All Orders</option>
+                <option value="Order Placed">Order Placed</option>
+                <option value="Packing">Packing</option>
+                <option value="Shipping">Shipping</option>
+                <option value="Out for Delivery">Out for Delivery</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <Package size={14} className="pointer-events-none absolute left-3 text-[#8509c9]" />
+              <ChevronDown size={14} className="pointer-events-none absolute right-3 text-[#8b65aa]" />
+            </label>
           </div>
           {filtered.length === 0 ? (
-            <p className="mt-6 text-center text-sm text-gray-400">No matching orders found.</p>
+            <p className="mt-4 rounded-xl border border-dashed border-[#e9ddf6] py-8 text-center text-sm text-gray-400">No matching orders found.</p>
           ) : (
-            <div className="mt-4 space-y-3">
+            <div className="mt-3 space-y-2">
               {filtered.map(function(order) {
-                var status  = order.status || "Order Placed";
+                var status = order.status || "Order Placed";
+                var items = Array.isArray(order.items) ? order.items : [];
+                var visibleItems = items.slice(0, 2);
+                var remainingItems = Math.max(0, items.length - visibleItems.length);
+                var statusIconClass = status === "Cancelled"
+                  ? "bg-rose-100 text-rose-600"
+                  : status === "Shipping" || status === "Shipped" || status === "Out for Delivery"
+                    ? "bg-orange-100 text-orange-600"
+                    : status === "Delivered"
+                      ? "bg-emerald-100 text-emerald-600"
+                      : "bg-violet-100 text-violet-700";
                 return (
-                  <div key={order.id} className="overflow-hidden rounded-2xl border border-[#e9def5] bg-[#faf8ff] shadow-sm">
-                    <button type="button" onClick={function(){ setSelectedOrder(order); }} aria-label={"View details for order " + (order.order_id || order.id)} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-[#f5efff]">
+                  <article key={order.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-xl border border-[#eee4f8] bg-white px-3 py-3 shadow-[0_2px_8px_rgba(54,22,82,0.04)] transition hover:border-[#d8b8f5] sm:grid-cols-[minmax(118px,1fr)_auto_minmax(76px,.75fr)_auto_auto] sm:gap-3 sm:px-4">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className={"flex h-9 w-9 shrink-0 items-center justify-center rounded-xl " + statusIconClass}>
+                        <Package size={17} />
+                      </span>
                       <div className="min-w-0">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Order ID</p>
-                        <p className="mt-0.5 font-extrabold text-[#1a0745]">#{order.order_id || order.id}</p>
-                        <p className="mt-0.5 text-xs text-gray-400">{formatDate(order.created_at)}</p>
+                        <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">Order ID</p>
+                        <p className="truncate text-xs font-extrabold text-[#211044]">#{order.order_id || order.id}</p>
+                        <p className="mt-0.5 flex items-center gap-1 text-[9px] font-medium text-slate-500"><CalendarDays size={10} /> {formatDate(order.created_at)}</p>
                       </div>
-                      <div className="flex shrink-0 items-center gap-3">
-                        <span className={"rounded-full border px-3 py-1 text-[11px] font-bold " + statusBadgeClass(status)}>{status}</span>
-                        <strong className="text-sm text-[#1a0745]">Rs.{Number(order.total_amount || 0).toLocaleString("en-IN")}</strong>
-                        <Eye size={16} className="text-primary" />
-                      </div>
+                    </div>
+
+                    <div className="col-start-1 row-start-2 flex min-w-0 items-center gap-1.5 pl-1 sm:col-auto sm:row-auto sm:pl-0" aria-label={`${items.length} products`}>
+                      {visibleItems.map(function(item, index) {
+                        var source = imgSrc(item.image);
+                        return source
+                          ? <img key={item.product_id || item.combo_id || index} src={source} alt={item.product_name || item.name || "Product"} className="h-9 w-9 rounded-lg border border-[#eee4f8] bg-[#faf7ff] object-contain p-0.5 sm:h-10 sm:w-10" />
+                          : <span key={item.product_id || item.combo_id || index} className="flex h-9 w-9 items-center justify-center rounded-lg border border-[#eee4f8] bg-[#faf7ff] text-[#8509c9] sm:h-10 sm:w-10"><Package size={16} /></span>;
+                      })}
+                      {remainingItems > 0 && <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-[#f3e8ff] px-2 text-[10px] font-extrabold text-[#7900bd]">+{remainingItems}</span>}
+                      {items.length === 0 && <span className="text-[10px] text-slate-400">No product images</span>}
+                    </div>
+
+                    <div className="col-start-2 row-start-2 min-w-0 text-right sm:col-auto sm:row-auto sm:text-left">
+                      <p className="text-[10px] font-semibold text-slate-600">{items.length} {items.length === 1 ? "Item" : "Items"}</p>
+                      <p className="mt-0.5 text-xs font-extrabold text-[#7100b5]">₹{Number(order.total_amount || 0).toLocaleString("en-IN")}</p>
+                    </div>
+
+                    <span className={"col-start-2 row-start-1 max-w-[125px] truncate rounded-full border px-2.5 py-1 text-center text-[9px] font-extrabold sm:col-auto sm:row-auto sm:max-w-none " + statusBadgeClass(status)}>
+                      {status}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={function(){ setSelectedOrder(order); }}
+                      aria-label={"View details for order " + (order.order_id || order.id)}
+                      className="col-span-2 flex items-center justify-center gap-1.5 rounded-lg border border-[#a52cda] px-3 py-2 text-[10px] font-extrabold text-[#7900bd] transition hover:bg-gradient-to-r hover:from-[#8c12c6] hover:to-[#6500a9] hover:text-white sm:col-auto sm:min-w-[98px]"
+                    >
+                      View Details <ChevronRight size={13} />
                     </button>
-                  </div>
+                  </article>
                 );
               })}
             </div>
