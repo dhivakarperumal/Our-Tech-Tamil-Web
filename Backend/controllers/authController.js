@@ -172,6 +172,72 @@ function createAuthController(authService) {
         return next(error);
       }
     },
+    async updateProfile(request, response, next) {
+      const userId = request.user?.user_id;
+      if (!userId) return response.status(401).json({ message: "Authentication required." });
+
+      const body = request.body || {};
+      const username = typeof body.username === "string" ? body.username.trim() : "";
+      const phone    = typeof body.phone    === "string" ? body.phone.trim()    : "";
+      const dob      = typeof body.dob      === "string" ? body.dob.trim()      : null;
+      const gender   = typeof body.gender   === "string" ? body.gender.trim()   : null;
+
+      if (username.length < 2 || username.length > 120) {
+        return response.status(400).json({ message: "Name must be between 2 and 120 characters." });
+      }
+
+      try {
+        const [rows] = await request.pool.execute(
+          "SELECT id FROM users WHERE user_id = ?", [userId]
+        );
+        if (!rows.length) return response.status(404).json({ message: "User not found." });
+        const numericId = rows[0].id;
+        await request.pool.execute(
+          "UPDATE users SET username = ?, phone = ?, dob = ?, gender = ? WHERE id = ?",
+          [username, phone || null, dob || null, gender || null, numericId]
+        );
+        const [updated] = await request.pool.execute(
+          "SELECT id, user_id, username, email, phone, dob, gender, role, status, created_at, updated_at FROM users WHERE id = ?",
+          [numericId]
+        );
+        const u = updated[0];
+        return response.json({
+          message: "Profile updated successfully.",
+          user: { id: u.id, user_id: u.user_id, username: u.username, name: u.username, email: u.email, phone: u.phone, dob: u.dob, gender: u.gender, role: u.role, status: u.status }
+        });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
+    async changePassword(request, response, next) {
+      const userId = request.user?.user_id;
+      if (!userId) return response.status(401).json({ message: "Authentication required." });
+
+      const body = request.body || {};
+      const currentPassword = typeof body.currentPassword === "string" ? body.currentPassword : "";
+      const newPassword     = typeof body.newPassword     === "string" ? body.newPassword     : "";
+
+      if (!currentPassword) return response.status(400).json({ message: "Current password is required." });
+      if (newPassword.length < 8 || newPassword.length > 72) {
+        return response.status(400).json({ message: "New password must be between 8 and 72 characters." });
+      }
+
+      try {
+        const bcrypt = require("bcryptjs");
+        const [rows] = await request.pool.execute(
+          "SELECT id, password_hash FROM users WHERE user_id = ?", [userId]
+        );
+        if (!rows.length) return response.status(404).json({ message: "User not found." });
+        const match = await bcrypt.compare(currentPassword, rows[0].password_hash);
+        if (!match) return response.status(400).json({ message: "Current password is incorrect." });
+        const hash = await bcrypt.hash(newPassword, 12);
+        await request.pool.execute("UPDATE users SET password_hash = ? WHERE id = ?", [hash, rows[0].id]);
+        return response.json({ message: "Password changed successfully." });
+      } catch (error) {
+        return next(error);
+      }
+    },
   };
 }
 
