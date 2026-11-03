@@ -883,10 +883,10 @@ const AddProducts = () => {
         </div>
     );
     return (
-        <div className="product-editor-page space-y-6 rounded-3xl bg-[#f7f6fb] p-4 pb-20 md:p-6">
+        <div className=" space-y-6 p-4 pb-20 md:p-2">
 
-            <header className="product-editor-heading relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#2e1065] via-[#4c1d95] to-[#86198f] text-white shadow-lg shadow-violet-950/10">
-                <div className="relative flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+            <header className="product-editor-heading relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#2e1065] via-[#4c1d95] to-[#86198f] text-white">
+                <div className="relative flex flex-col gap-5 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-4">
                     <div className="flex min-w-0 items-center gap-4">
                         <button
                             type="button"
