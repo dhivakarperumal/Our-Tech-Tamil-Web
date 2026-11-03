@@ -183,6 +183,16 @@ function Shop() {
     });
     return [...counts.entries()].sort((first, second) => first[0].localeCompare(second[0]));
   }, [products]);
+  const hasProductsForSelectedSubcategory = !urlSubcategory || products.some((product) => {
+    const categoryValues = [getCategory(product), product.category, product.subcategory]
+      .filter(Boolean)
+      .map((value) => String(value).trim().toLowerCase());
+    const matchesSelectedCategory = !selectedCategories.length || selectedCategories.some(
+      (category) => categoryValues.includes(String(category).trim().toLowerCase()),
+    );
+    return matchesSelectedCategory
+      && String(product.subcategory || "").trim().toLowerCase() === urlSubcategory.trim().toLowerCase();
+  });
 
   const filteredProducts = useMemo(() => {
     const matching = products.filter((product) => {
@@ -211,7 +221,8 @@ function Shop() {
       return matchesSearch
         && (!selectedCategories.length || selectedCategories.some((selectedCategory) =>
           productCategoryValues.includes(String(selectedCategory).trim().toLowerCase())))
-        && (!urlSubcategory || product.subcategory === urlSubcategory)
+        && (!hasProductsForSelectedSubcategory
+          || String(product.subcategory || "").trim().toLowerCase() === urlSubcategory.trim().toLowerCase())
         && (!selectedBrands.length || selectedBrands.includes(product.brand))
         && price >= minPrice
         && price <= currentMaxPrice
@@ -230,6 +241,7 @@ function Shop() {
     products,
     effectiveSearchQuery,
     urlSubcategory,
+    hasProductsForSelectedSubcategory,
     selectedCategories,
     selectedBrands,
     minPrice,
