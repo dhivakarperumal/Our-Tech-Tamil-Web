@@ -290,6 +290,86 @@ function productValues(product) {
   ];
 }
 
+function createConflictError(message) {
+  const error = new Error(message);
+  error.status = 409;
+  return error;
+}
+
+async function findAvailableSlug(pool, baseSlug, excludeId) {
+  const query = excludeId
+    ? "SELECT slug FROM products WHERE (slug = ? OR slug LIKE ?) AND id <> ?"
+    : "SELECT slug FROM products WHERE slug = ? OR slug LIKE ?";
+  const parameters = excludeId
+    ? [baseSlug, `${baseSlug}-%`, excludeId]
+    : [baseSlug, `${baseSlug}-%`];
+  const [rows] = await pool.execute(query, parameters);
+  const existingSlugs = new Set(rows.map((row) => row.slug));
+  if (!existingSlugs.has(baseSlug)) return baseSlug;
+
+  for (let suffix = 2; suffix <= 10000; suffix += 1) {
+    const suffixText = `-${suffix}`;
+    const candidate = `${baseSlug.slice(0, 220 - suffixText.length)}${suffixText}`;
+    if (!existingSlugs.has(candidate)) return candidate;
+  }
+  throw createConflictError("Could not generate a unique product URL. Please try again.");
+}
+
+async function ensureProductCodeAvailable(pool, productCode, excludeId) {
+  const query = excludeId
+    ? "SELECT id FROM products WHERE product_code = ? AND id <> ? LIMIT 1"
+    : "SELECT id FROM products WHERE product_code = ? LIMIT 1";
+  const parameters = excludeId ? [productCode, excludeId] : [productCode];
+  const [rows] = await pool.execute(query, parameters);
+  if (rows.length) {
+    throw createConflictError("This product SKU is already in use. Refresh the form to get a new SKU.");
+  }
+}
+
+async function insertProductWithUniqueSlug(pool, product) {
+  const baseSlug = product.slug;
+  await ensureProductCodeAvailable(pool, product.product_code);
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    product.slug = await findAvailableSlug(pool, baseSlug);
+    try {
+      return await pool.execute(
+        `INSERT INTO products (${INSERT_COLUMNS.join(", ")}) VALUES (${INSERT_COLUMNS.map(() => "?").join(", ")})`,
+        productValues(product),
+      );
+    } catch (error) {
+      if (error.code !== "ER_DUP_ENTRY") throw error;
+      await ensureProductCodeAvailable(pool, product.product_code);
+      if (attempt === 4) {
+        throw createConflictError("Could not generate a unique product URL. Please try again.");
+      }
+    }
+  }
+  throw createConflictError("Could not generate a unique product URL. Please try again.");
+}
+
+async function updateProductWithUniqueSlug(pool, product, id) {
+  const baseSlug = product.slug;
+  await ensureProductCodeAvailable(pool, product.product_code, id);
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    product.slug = await findAvailableSlug(pool, baseSlug, id);
+    try {
+      return await pool.execute(
+        `UPDATE products SET ${INSERT_COLUMNS.map(column => `${column} = ?`).join(", ")} WHERE id = ?`,
+        [...productValues(product), id],
+      );
+    } catch (error) {
+      if (error.code !== "ER_DUP_ENTRY") throw error;
+      await ensureProductCodeAvailable(pool, product.product_code, id);
+      if (attempt === 4) {
+        throw createConflictError("Could not generate a unique product URL. Please try again.");
+      }
+    }
+  }
+  throw createConflictError("Could not generate a unique product URL. Please try again.");
+}
+
 function createProductsRouter(pool) {
   const router = express.Router();
 
@@ -356,8 +436,12 @@ function createProductsRouter(pool) {
 
   router.get("/latest-code", async (request, response, next) => {
     try {
-      const [rows] = await pool.execute("SELECT id FROM products ORDER BY id DESC LIMIT 1");
-      const nextId = (Number(rows[0]?.id) || 0) + 1;
+      const [rows] = await pool.execute(
+        `SELECT COALESCE(MAX(CAST(SUBSTRING(product_code, 4) AS UNSIGNED)), 0) + 1 AS nextCode
+         FROM products
+         WHERE product_code REGEXP '^OTP[0-9]+$'`,
+      );
+      const nextId = Number(rows[0]?.nextCode) || 1;
       return response.json({ latestCode: `OTP${String(nextId).padStart(4, "0")}` });
     } catch (error) {
       return next(error);
@@ -431,15 +515,9 @@ function createProductsRouter(pool) {
   router.post("/", async (request, response, next) => {
     try {
       const product = parseProduct(request.body || {});
-      const [result] = await pool.execute(
-        `INSERT INTO products (${INSERT_COLUMNS.join(", ")}) VALUES (${INSERT_COLUMNS.map(() => "?").join(", ")})`,
-        productValues(product),
-      );
+      const [result] = await insertProductWithUniqueSlug(pool, product);
       return response.status(201).json({ id: result.insertId, ...product });
     } catch (error) {
-      if (error.code === "ER_DUP_ENTRY") {
-        return response.status(409).json({ message: "A product with this SKU or slug already exists." });
-      }
       if (error.status) return response.status(error.status).json({ message: error.message });
       return next(error);
     }
@@ -448,19 +526,13 @@ function createProductsRouter(pool) {
   router.put("/:id", async (request, response, next) => {
     try {
       const product = parseProduct(request.body || {});
-      const [result] = await pool.execute(
-        `UPDATE products SET ${INSERT_COLUMNS.map(column => `${column} = ?`).join(", ")} WHERE id = ?`,
-        [...productValues(product), request.params.id],
-      );
+      const [result] = await updateProductWithUniqueSlug(pool, product, request.params.id);
       if (!result.affectedRows) {
         const [rows] = await pool.execute("SELECT id FROM products WHERE id = ? LIMIT 1", [request.params.id]);
         if (!rows.length) return response.status(404).json({ message: "Product not found." });
       }
       return response.json({ id: Number(request.params.id), ...product });
     } catch (error) {
-      if (error.code === "ER_DUP_ENTRY") {
-        return response.status(409).json({ message: "A product with this SKU or slug already exists." });
-      }
       if (error.status) return response.status(error.status).json({ message: error.message });
       return next(error);
     }

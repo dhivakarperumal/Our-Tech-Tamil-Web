@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useId, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
     FiArrowLeft,
     FiSave,
@@ -13,7 +14,9 @@ import {
     FiActivity,
     FiHash,
     FiEdit2,
-    FiX
+    FiX,
+    FiChevronDown,
+    FiCheck
 } from "react-icons/fi";
 import { FaRupeeSign } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
@@ -107,6 +110,152 @@ const createSlug = (value) => value
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+const CustomDropdown = ({ name, value, options, placeholder, onChange, disabled = false, required = false, ariaLabel, className = "" }) => {
+    const dropdownId = useId();
+    const triggerRef = useRef(null);
+    const menuRef = useRef(null);
+    const [isOpen, setIsOpen] = useState(false);
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [menuPosition, setMenuPosition] = useState(null);
+    const normalizedOptions = options.map(option => typeof option === "string"
+        ? { value: option, label: option }
+        : option);
+    const selectedOption = normalizedOptions.find(option => String(option.value) === String(value));
+
+    const updateMenuPosition = useCallback(() => {
+        const trigger = triggerRef.current;
+        if (!trigger) return;
+        const rect = trigger.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom - 8;
+        const spaceAbove = rect.top - 8;
+        const openBelow = spaceBelow >= Math.min(240, normalizedOptions.length * 40 + 8) || spaceBelow >= spaceAbove;
+        const availableHeight = Math.max(100, Math.min(260, openBelow ? spaceBelow : spaceAbove));
+        setMenuPosition({
+            left: Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8)),
+            top: openBelow ? rect.bottom + 6 : Math.max(8, rect.top - availableHeight - 6),
+            width: rect.width,
+            maxHeight: availableHeight,
+        });
+    }, [normalizedOptions.length]);
+
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        updateMenuPosition();
+        const handleOutsidePointer = (event) => {
+            if (!triggerRef.current?.contains(event.target) && !menuRef.current?.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        const handleViewportChange = () => updateMenuPosition();
+        document.addEventListener("pointerdown", handleOutsidePointer);
+        window.addEventListener("resize", handleViewportChange);
+        window.addEventListener("scroll", handleViewportChange, true);
+        return () => {
+            document.removeEventListener("pointerdown", handleOutsidePointer);
+            window.removeEventListener("resize", handleViewportChange);
+            window.removeEventListener("scroll", handleViewportChange, true);
+        };
+    }, [isOpen, updateMenuPosition]);
+
+    useEffect(() => {
+        if (!isOpen || activeIndex < 0) return;
+        menuRef.current?.querySelector(`[data-option-index="${activeIndex}"]`)?.scrollIntoView({ block: "nearest" });
+    }, [activeIndex, isOpen]);
+
+    const openMenu = (initialIndex) => {
+        if (disabled || !normalizedOptions.length) return;
+        const selectedIndex = normalizedOptions.findIndex(option => String(option.value) === String(value));
+        setActiveIndex(initialIndex ?? (selectedIndex >= 0 ? selectedIndex : 0));
+        setIsOpen(true);
+    };
+
+    const chooseOption = (option) => {
+        onChange({ target: { name, value: option.value } });
+        setIsOpen(false);
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            if (!isOpen) {
+                openMenu();
+                return;
+            }
+            const direction = event.key === "ArrowDown" ? 1 : -1;
+            setActiveIndex(index => (index + direction + normalizedOptions.length) % normalizedOptions.length);
+        } else if (event.key === "Home" && isOpen) {
+            event.preventDefault();
+            setActiveIndex(0);
+        } else if (event.key === "End" && isOpen) {
+            event.preventDefault();
+            setActiveIndex(normalizedOptions.length - 1);
+        } else if ((event.key === "Enter" || event.key === " ") && isOpen) {
+            event.preventDefault();
+            if (normalizedOptions[activeIndex]) chooseOption(normalizedOptions[activeIndex]);
+        } else if (event.key === "Escape" && isOpen) {
+            event.preventDefault();
+            setIsOpen(false);
+        }
+    };
+
+    return (
+        <>
+            <button
+                ref={triggerRef}
+                type="button"
+                name={name}
+                role="combobox"
+                aria-label={ariaLabel}
+                aria-required={required || undefined}
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
+                aria-controls={`${dropdownId}-listbox`}
+                aria-activedescendant={isOpen ? `${dropdownId}-option-${activeIndex}` : undefined}
+                disabled={disabled}
+                onClick={() => isOpen ? setIsOpen(false) : openMenu()}
+                onKeyDown={handleKeyDown}
+                className={`product-dropdown-trigger group flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-left text-sm font-semibold text-gray-800 shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50/30 focus:outline-none focus:ring-4 focus:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+            >
+                <span className={`min-w-0 truncate ${selectedOption ? "" : "font-medium text-gray-400"}`}>
+                    {selectedOption?.label ?? placeholder}
+                </span>
+                <FiChevronDown className={`h-4 w-4 shrink-0 text-gray-400 transition-transform group-hover:text-violet-700 ${isOpen ? "rotate-180 text-violet-700" : ""}`} />
+            </button>
+            {isOpen && menuPosition && createPortal(
+                <div
+                    ref={menuRef}
+                    id={`${dropdownId}-listbox`}
+                    role="listbox"
+                    aria-label={placeholder || "Options"}
+                    className="product-dropdown-menu fixed z-[9999] overflow-y-auto rounded-xl border border-violet-100 bg-white p-1.5 shadow-[0_16px_40px_rgba(31,10,60,0.18)]"
+                    style={menuPosition}
+                >
+                    {normalizedOptions.map((option, index) => {
+                        const selected = String(option.value) === String(value);
+                        const active = index === activeIndex;
+                        return (
+                            <div
+                                key={`${option.value}-${index}`}
+                                id={`${dropdownId}-option-${index}`}
+                                data-option-index={index}
+                                role="option"
+                                aria-selected={selected}
+                                onMouseEnter={() => setActiveIndex(index)}
+                                onClick={() => chooseOption(option)}
+                                className={`flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${selected ? "bg-violet-50 font-bold text-[#3D01B1]" : "font-medium text-gray-700"} ${active ? "bg-violet-100 text-[#1F0A3C]" : "hover:bg-violet-50"}`}
+                            >
+                                <span className="min-w-0 truncate">{option.label}</span>
+                                {selected && <FiCheck className="h-4 w-4 shrink-0 text-violet-700" />}
+                            </div>
+                        );
+                    })}
+                </div>,
+                document.body
+            )}
+        </>
+    );
+};
 
 const toDateInputValue = (value) => {
     if (!value) return "";
@@ -464,9 +613,12 @@ const AddProducts = () => {
     // Variant Operations
     const addVariant = () => {
         const sizes = sizeOptions;
+        const nextColor = productColors.find(color =>
+            !variants.some(variant => variant.color?.toLowerCase() === color.hex.toLowerCase())
+        ) || productColors[0];
         const initialVariant = {
-            color: "#3D01B1",
-            colorName: "Purple",
+            color: nextColor.hex,
+            colorName: nextColor.name,
             images: [],
             ...(!isClothingCategory ? { quantity: 0 } : {}),
             selectedSizes: sizes.length === 1 ? [sizes[0]] : [],
@@ -637,9 +789,11 @@ const AddProducts = () => {
                 return;
             }
 
-            const updated = [...variants];
-            updated[vIndex].images = [...(updated[vIndex].images || []), ...uploadedImages];
-            setVariants(updated);
+            setVariants(prev => prev.map((variant, index) => (
+                index === vIndex
+                    ? { ...variant, images: [...(variant.images || []), ...uploadedImages] }
+                    : variant
+            )));
             toast.success(`${uploadedImages.length} color images uploaded.`);
         } catch (error) {
             console.error("Product image upload error:", error);
@@ -650,9 +804,11 @@ const AddProducts = () => {
     };
 
     const removeVariantImage = (vIndex, imgIndex) => {
-        const updated = [...variants];
-        updated[vIndex].images = updated[vIndex].images.filter((_, i) => i !== imgIndex);
-        setVariants(updated);
+        setVariants(prev => prev.map((variant, index) => (
+            index === vIndex
+                ? { ...variant, images: (variant.images || []).filter((_, imageIndex) => imageIndex !== imgIndex) }
+                : variant
+        )));
     };
 
     const handleSubmit = async (e) => {
@@ -727,32 +883,42 @@ const AddProducts = () => {
         </div>
     );
     return (
-        <div className="space-y-6 pb-20">
+        <div className="product-editor-page space-y-6 rounded-3xl bg-[#f7f6fb] p-4 pb-20 md:p-6">
 
             {/* Page Header */}
-            <div className="flex items-center gap-3 pb-2">
-                <button onClick={() => navigate(-1)} className="p-2.5 bg-white border border-gray-200 rounded-xl text-gray-500 hover:text-[#1F0A3C] hover:border-[#1F0A3C]/30 transition-all shadow-sm">
+            <div className="product-editor-heading flex flex-wrap items-center justify-between gap-4 pb-1">
+                <div className="flex items-center gap-3">
+                <button type="button" onClick={() => navigate(-1)} aria-label="Go back" className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-violet-200 hover:text-[#1F0A3C]">
                     <FiArrowLeft size={18} />
                 </button>
-                <div>
-                    <h1 className="text-xl font-bold text-[#1F0A3C]">{isEdit ? 'Edit Product' : 'Add New Product'}</h1>
-                    <p className="text-xs text-gray-400">Fill in product details below</p>
+                <div className="min-w-0">
+                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-600">Inventory management</p>
+                    <h1 className="text-xl font-extrabold tracking-tight text-[#1F0A3C] md:text-2xl">{isEdit ? 'Edit Product' : 'Add New Product'}</h1>
+                    <p className="mt-0.5 text-sm text-gray-500">Build a complete product listing, from details to stock.</p>
                 </div>
+                </div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-white px-3.5 py-2 text-xs font-semibold text-gray-600 shadow-sm">
+                    <span className={`h-2 w-2 rounded-full ${formData.status === "Active" ? "bg-emerald-500" : "bg-gray-400"}`} />
+                    {formData.status === "Active" ? "Active listing" : "Inactive listing"}
+                </span>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <form onSubmit={handleSubmit} className="product-editor-form grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
                 <div className={`space-y-5 lg:order-1 ${usesSideBySideProductLayout ? "lg:col-span-1" : "lg:col-span-2"}`}>
                     <div className={`grid grid-cols-1 gap-5 ${usesSideBySideProductLayout ? "lg:grid-cols-1" : "lg:grid-cols-2"}`}>
                     {/* Primary Categorization & Identity */}
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 bg-[#1F0A3C]/5">
+                    <div className="product-editor-card overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                        <div className="product-editor-card-header flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
                             <div className="flex items-center gap-2">
-                                <span className="p-1.5 bg-[#1F0A3C] text-white rounded-lg"><FiLayers size={15} /></span>
-                                <h2 className="text-sm font-bold text-[#1F0A3C]">Product Foundation</h2>
+                                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#3D01B1] to-[#1F0A3C] text-white shadow-sm"><FiLayers size={16} /></span>
+                                <div>
+                                    <h2 className="text-sm font-bold text-[#1F0A3C]">Product Foundation</h2>
+                                    <p className="mt-0.5 text-[11px] text-gray-500">Identity, category and visibility</p>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-1.5 px-3 py-1 bg-[#1F0A3C]/10 rounded-lg border border-[#1F0A3C]/15">
+                            <div className="flex shrink-0 items-center gap-1.5 rounded-lg border border-violet-100 bg-white px-3 py-2 shadow-sm">
                                 <FiHash className="text-[#1F0A3C] w-3 h-3" />
-                                <span className="text-xs font-bold text-[#1F0A3C]">{formData.product_code || 'Generating...'}</span>
+                                <span className="text-xs font-bold tracking-wide text-[#1F0A3C]">{formData.product_code || 'Generating...'}</span>
                             </div>
                         </div>
 
@@ -760,31 +926,29 @@ const AddProducts = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Category Type *</label>
-                                    <select
+                                    <CustomDropdown
                                         name="cat_type"
                                         value={formData.cat_type}
                                         onChange={handleCategoryTypeChange}
+                                        options={categoryTypes}
+                                        placeholder="Select category type first"
+                                        ariaLabel="Category type"
                                         required
-                                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm font-semibold text-gray-800 cursor-pointer"
-                                    >
-                                        <option value="">Select category type first</option>
-                                        {categoryTypes.map(type => <option key={type} value={type}>{type}</option>)}
-                                    </select>
+                                    />
                                     {categoryTypes.length === 0 && <p className="text-xs text-amber-700">Create a category before adding products.</p>}
                                 </div>
                                 <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Category *</label>
-                                    <select
+                                    <CustomDropdown
                                         name="category"
                                         value={formData.category}
                                         onChange={handleCategoryChange}
+                                        options={categoriesForType.map(cat => ({ value: cat.name, label: cat.name }))}
+                                        placeholder="Select category"
+                                        ariaLabel="Category"
                                         required
                                         disabled={!formData.cat_type}
-                                        className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm font-semibold text-gray-800 cursor-pointer disabled:opacity-50"
-                                    >
-                                        <option value="">Select category</option>
-                                        {categoriesForType.map(cat => <option key={cat.id || cat.catId} value={cat.name}>{cat.name}</option>)}
-                                    </select>
+                                    />
                                 </div>
                             </div>
 
@@ -802,27 +966,42 @@ const AddProducts = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Subcategory</label>
-                                    <select name="subcategory" value={formData.subcategory} onChange={handleFormChange} disabled={!subcategories.length} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-800 disabled:opacity-50">
-                                        <option value="">Select subcategory</option>
-                                        {subcategories.map((sub, index) => <option key={index} value={sub}>{sub}</option>)}
-                                    </select>
+                                    <CustomDropdown
+                                        name="subcategory"
+                                        value={formData.subcategory}
+                                        onChange={handleFormChange}
+                                        options={subcategories}
+                                        placeholder="Select subcategory"
+                                        ariaLabel="Subcategory"
+                                        disabled={!subcategories.length}
+                                    />
                                 </div>
                                 <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Rating</label>
-                                    <select name="rating" value={formData.rating} onChange={handleFormChange} className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm font-semibold text-gray-800">
-                                        {[1, 2, 3, 4, 5].map(rating => <option key={rating} value={rating}>{rating} Star{rating > 1 ? "s" : ""}</option>)}
-                                    </select>
+                                    <CustomDropdown
+                                        name="rating"
+                                        value={formData.rating}
+                                        onChange={handleFormChange}
+                                        options={[1, 2, 3, 4, 5].map(rating => ({ value: String(rating), label: `${rating} Star${rating > 1 ? "s" : ""}` }))}
+                                        placeholder="Select rating"
+                                        ariaLabel="Rating"
+                                    />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <label className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-3 py-2.5 text-sm font-semibold text-gray-700">
-                                    <span>Product Status</span>
-                                    <select name="status" value={formData.status} onChange={handleFormChange} className="min-w-0 rounded-md bg-gray-50 px-2 py-1 text-sm font-semibold text-gray-800">
-                                        <option value="Active">Active</option>
-                                        <option value="Inactive">Inactive</option>
-                                    </select>
-                                </label>
+                                <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-3 py-2">
+                                    <span className="shrink-0 text-sm font-semibold text-gray-700">Product Status</span>
+                                    <CustomDropdown
+                                        name="status"
+                                        value={formData.status}
+                                        onChange={handleFormChange}
+                                        options={["Active", "Inactive"]}
+                                        placeholder="Select status"
+                                        ariaLabel="Product status"
+                                        className="min-w-0 max-w-[150px] py-2"
+                                    />
+                                </div>
                                 {[
                                     ["featured", "Featured Product"],
                                     ["trending", "Trending Product"],
@@ -875,8 +1054,8 @@ const AddProducts = () => {
 
                     {/* Product Media */}
                     {!isClothingCategory && !isGadgetCategory && (
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-[#1F0A3C]/5">
+                    <div className="product-editor-card overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                        <div className="product-editor-card-header flex items-center gap-2 border-b border-gray-100 px-5 py-4">
                             <span className="p-1.5 bg-[#1F0A3C] text-white rounded-lg"><FiImage size={15} /></span>
                             <h2 className="text-sm font-bold text-[#1F0A3C]">Product Images & Video</h2>
                         </div>
@@ -930,8 +1109,8 @@ const AddProducts = () => {
 
                 <div className="space-y-5 lg:col-span-2 lg:order-3">
                     {/* Pricing & Stock */}
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="flex items-center gap-2 px-5 py-3.5 border-b border-gray-100 bg-[#1F0A3C]/5">
+                    <div className="product-editor-card overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                        <div className="product-editor-card-header flex items-center gap-2 border-b border-gray-100 px-5 py-4">
                             <span className="p-1.5 bg-[#1F0A3C] text-white rounded-lg"><FaRupeeSign size={15} /></span>
                             <h2 className="text-sm font-bold text-[#1F0A3C]">Pricing & Stock</h2>
                         </div>
@@ -973,14 +1152,18 @@ const AddProducts = () => {
                                 {isNaturalCategory && (
                                     <div className="space-y-1">
                                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Unit</label>
-                                        <select name="unit" value={formData.unit} onChange={handleFormChange} className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-semibold text-gray-800">
-                                            {["Piece", "Kilogram (kg)", "Gram (g)", "Litre (L)", "Millilitre (ml)", "Pack", "Bottle", "Box"].map(unit => (
-                                                <option key={unit} value={unit}>{unit}</option>
-                                            ))}
-                                            {formData.unit && !["Piece", "Kilogram (kg)", "Gram (g)", "Litre (L)", "Millilitre (ml)", "Pack", "Bottle", "Box"].includes(formData.unit) && (
-                                                <option value={formData.unit}>{formData.unit}</option>
-                                            )}
-                                        </select>
+                                        <CustomDropdown
+                                            name="unit"
+                                            value={formData.unit}
+                                            onChange={handleFormChange}
+                                            options={[
+                                                "Piece", "Kilogram (kg)", "Gram (g)", "Litre (L)",
+                                                "Millilitre (ml)", "Pack", "Bottle", "Box",
+                                                ...(formData.unit && !["Piece", "Kilogram (kg)", "Gram (g)", "Litre (L)", "Millilitre (ml)", "Pack", "Bottle", "Box"].includes(formData.unit) ? [formData.unit] : []),
+                                            ]}
+                                            placeholder="Select unit"
+                                            ariaLabel="Unit"
+                                        />
                                     </div>
                                 )}
                             </div>
@@ -995,8 +1178,8 @@ const AddProducts = () => {
                     </div>
 
                     {/* Product Specifications */}
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 border-b border-gray-100 bg-[#1F0A3C]/5">
+                    <div className="product-editor-card overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                        <div className="product-editor-card-header flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
                             <div className="flex items-center gap-2">
                                 <span className="p-1.5 bg-[#1F0A3C] text-white rounded-lg"><FiInfo size={15} /></span>
                                 <h2 className="text-sm font-bold text-[#1F0A3C]">Specifications</h2>
@@ -1118,26 +1301,32 @@ const AddProducts = () => {
                 {/* Color and stock variants */}
                 {!isNaturalCategory && (
                 <div className={`space-y-4 lg:order-2 ${usesSideBySideProductLayout ? "lg:col-span-1" : "lg:col-span-2"}`}>
-                    <div className="flex items-center justify-between sticky  z-20 bg-white px-4 py-3 rounded-xl border border-gray-200 shadow-sm">
-                        <div className="flex items-center  gap-2">
-                            <FiBox className="text-[#1F0A3C] w-4 h-4" />
-                            <h3 className="text-sm font-bold text-[#1F0A3C] uppercase tracking-wider">{isClothingCategory ? "Color & Size Stock" : "Color & Stock"}</h3>
+                    <div className="product-editor-card-header flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-[#3D01B1]"><FiBox className="h-4 w-4" /></span>
+                            <div>
+                                <h3 className="text-sm font-bold text-[#1F0A3C]">{isClothingCategory ? "Color & Size Stock" : "Color & Stock"}</h3>
+                                <p className="mt-0.5 text-[11px] text-gray-500">{variants.length} {variants.length === 1 ? "variant" : "variants"} · Add colors and manage availability</p>
+                            </div>
                         </div>
-                        <button type="button" onClick={addVariant} className="bg-[#1F0A3C] text-white p-1.5 rounded-lg active:scale-90 transition-all shadow hover:bg-[#2d0f57]"><FiPlus size={15} /></button>
+                        <button type="button" onClick={addVariant} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#1F0A3C] px-3 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#3D01B1] active:scale-95">
+                            <FiPlus size={15} /> <span className="hidden sm:inline">Add color</span>
+                        </button>
                     </div>
 
                     {variants.map((v, vIndex) => (
-                        <div key={vIndex} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden group">
-                            <div className="flex items-center justify-between px-4 py-3 bg-[#1F0A3C]/5 border-b border-gray-100">
+                        <div key={vIndex} className="product-editor-card group overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+                            <div className="product-editor-variant-header flex items-center justify-between gap-3 border-b border-gray-100 px-4 py-3.5">
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
                                     <input
                                         type="color"
                                         value={v.color}
                                         onChange={(e) => handleVariantChange(vIndex, "color", e.target.value)}
-                                        className="w-8 h-8 rounded-lg border-2 border-white shadow cursor-pointer flex-shrink-0"
+                                        aria-label={`Choose color for variant ${vIndex + 1}`}
+                                        className="h-10 w-10 shrink-0 cursor-pointer rounded-xl border-2 border-white shadow ring-1 ring-gray-200"
                                     />
                                     <div className="flex-1 min-w-0">
-                                        <select
+                                        <CustomDropdown
                                             value={v.colorName}
                                             onChange={(e) => {
                                                 const selected = productColors.find(bc => bc.name === e.target.value);
@@ -1148,83 +1337,116 @@ const AddProducts = () => {
                                                     handleVariantChange(vIndex, "colorName", e.target.value);
                                                 }
                                             }}
-                                            className="w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-800 outline-none focus:border-[#1F0A3C]/40 transition-all cursor-pointer appearance-none"
-                                        >
-                                            <option value="">Select Shade</option>
-                                            {productColors.map(color => <option key={color.hex} value={color.name}>{color.name}</option>)}
-                                            {v.colorName && !productColors.find(color => color.name === v.colorName) && <option value={v.colorName}>{v.colorName}</option>}
-                                        </select>
-                                        <p className="text-[9px] text-gray-400 mt-0.5 ml-0.5">Hex: <span className="font-bold text-[#1F0A3C]">{v.color}</span></p>
+                                            options={[
+                                                { value: "", label: "Select Shade" },
+                                                ...productColors.map(color => ({ value: color.name, label: color.name })),
+                                                ...(v.colorName && !productColors.find(color => color.name === v.colorName) ? [{ value: v.colorName, label: v.colorName }] : []),
+                                            ]}
+                                            placeholder="Select Shade"
+                                            ariaLabel={`Color name for variant ${vIndex + 1}`}
+                                            className="py-2 text-xs"
+                                        />
+                                        <p className="mt-1 ml-0.5 text-[10px] text-gray-500">Hex: <span className="font-semibold text-[#1F0A3C]">{v.color}</span></p>
                                     </div>
                                 </div>
-                                {variants.length > 1 && <button type="button" onClick={() => removeVariant(vIndex)} className="text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 p-1 flex-shrink-0"><FiTrash2 size={14} /></button>}
+                                {variants.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeVariant(vIndex)}
+                                        aria-label={`Remove ${v.colorName || `color ${vIndex + 1}`} variant`}
+                                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-400 transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                    >
+                                        <FiTrash2 size={15} />
+                                    </button>
+                                )}
                             </div>
 
-                            <div className="px-4 pb-4 pt-3 space-y-3">
-                                {/* Stock by Size */}
-                                <div className="space-y-2">
-                                    {isClothingCategory ? (
-                                        <>
-                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Select sizes and enter quantity per size</label>
-                                            <div className="flex flex-wrap gap-1.5">
-                                                {sizeOptions.map(sz => (
-                                                    <button key={sz} type="button" onClick={() => toggleSize(vIndex, sz)} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${(v.selectedSizes || []).includes(sz) ? 'bg-[#1F0A3C] text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>{sz}</button>
-                                                ))}
-                                            </div>
-                                            {(v.selectedSizes || []).length > 0 && (
-                                                <div className="grid grid-cols-2 gap-2 pt-1">
-                                                    {v.selectedSizes.map(sz => (
-                                                        <div key={sz} className="bg-[#1F0A3C]/5 border border-[#1F0A3C]/15 p-2 rounded-lg flex items-center justify-between">
-                                                            <div>
-                                                                <p className="text-[9px] font-bold text-[#1F0A3C]/60 uppercase mb-0.5">{sz}</p>
-                                                                <input type="number" min="0" value={v.sizesStock?.[sz] ?? 0} onChange={(e) => handleStockChange(vIndex, sz, e.target.value)} className="w-full bg-transparent border-none outline-none p-0 text-sm font-bold text-[#1F0A3C] focus:ring-0" />
-                                                            </div>
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-[#1F0A3C]/30"></div>
+                                    <div className="space-y-4 p-4 sm:p-5">
+                                        {/* Stock by Size */}
+                                        <div className="product-editor-stock-panel space-y-3 rounded-xl border border-gray-100 bg-[#faf9fc] p-3.5 sm:p-4">
+                                            {isClothingCategory ? (
+                                                <>
+                                                    <div>
+                                                        <p className="text-xs font-bold uppercase tracking-wider text-gray-600">Stock by size</p>
+                                                        <p className="mt-1 text-[11px] text-gray-500">Choose sizes, then enter the available quantity.</p>
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {sizeOptions.map(sz => (
+                                                            <button key={sz} type="button" onClick={() => toggleSize(vIndex, sz)} className={`min-w-10 rounded-lg border px-3 py-2 text-xs font-bold transition-all ${(v.selectedSizes || []).includes(sz) ? 'border-[#1F0A3C] bg-[#1F0A3C] text-white shadow-sm' : 'border-gray-200 bg-white text-gray-600 hover:border-violet-300 hover:text-[#3D01B1]'}`}>{sz}</button>
+                                                        ))}
+                                                    </div>
+                                                    {(v.selectedSizes || []).length > 0 && (
+                                                        <div className="grid grid-cols-2 gap-2 pt-1 sm:grid-cols-3">
+                                                            {v.selectedSizes.map(sz => (
+                                                                <label key={sz} className="flex items-center justify-between gap-2 rounded-lg border border-violet-100 bg-white px-3 py-2">
+                                                                    <span className="text-xs font-bold text-[#1F0A3C]">{sz}</span>
+                                                                    <input type="number" min="0" value={v.sizesStock?.[sz] ?? 0} onChange={(e) => handleStockChange(vIndex, sz, e.target.value)} aria-label={`${sz} size quantity`} className="w-16 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-right text-sm font-bold text-[#1F0A3C] outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100" />
+                                                                </label>
+                                                            ))}
                                                         </div>
-                                                    ))}
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(150px,0.65fr)] sm:items-end">
+                                                    <div>
+                                                        <p className="text-xs font-bold uppercase tracking-wider text-gray-600">Stock quantity</p>
+                                                        <p className="mt-1 text-[11px] text-gray-500">Units available in this color.</p>
+                                                    </div>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            step="1"
+                                                            value={v.quantity ?? 0}
+                                                            onChange={e => handleColorStockChange(vIndex, e.target.value)}
+                                                            aria-label={`Stock quantity for ${v.colorName || `color ${vIndex + 1}`}`}
+                                                            className="product-editor-quantity-input w-full rounded-lg border border-gray-200 bg-white px-3.5 py-3 text-base font-bold text-[#1F0A3C] outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
+                                                        />
+                                                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wide text-gray-400">units</span>
+                                                    </div>
                                                 </div>
                                             )}
-                                        </>
-                                    ) : (
-                                        <div className="space-y-1">
-                                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock Quantity</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                value={v.quantity ?? 0}
-                                                onChange={e => handleColorStockChange(vIndex, e.target.value)}
-                                                aria-label={`Stock quantity for ${v.colorName || `color ${vIndex + 1}`}`}
-                                                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-semibold text-gray-800"
-                                            />
                                         </div>
-                                    )}
-                                </div>
 
-                                {/* Images */}
-                                <div className="grid grid-cols-3 gap-2">
-                                    {(v.images || []).slice(0, 5).map((img, iIndex) => (
-                                        <div key={iIndex} className="relative h-36 sm:h-40 rounded-xl overflow-hidden bg-gray-50 border border-gray-200 group/img">
-                                            <img src={resolveImageUrl(img)} alt="Product preview" className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-500" onError={(e) => { e.currentTarget.style.opacity = "0.35"; }} />
-                                            <button type="button" onClick={() => removeVariantImage(vIndex, iIndex)} className="absolute inset-0 bg-red-600/70 text-white flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity"><FiTrash2 size={13} /></button>
+                                        {/* Images */}
+                                        <div className="space-y-3">
+                                            <div className="flex flex-wrap items-end justify-between gap-2">
+                                                <div>
+                                                    <p className="text-xs font-bold uppercase tracking-wider text-gray-600">Color images</p>
+                                                    <p className="mt-1 text-[11px] text-gray-500">Upload up to 5 photos for this color.</p>
+                                                </div>
+                                                <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-bold text-violet-700">{(v.images || []).length}/5 added</span>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                                                {(v.images || []).slice(0, 5).map((img, iIndex) => (
+                                                    <div key={`${img}-${iIndex}`} className="group/img relative aspect-square overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+                                                        <img src={resolveImageUrl(img)} alt={`${v.colorName || "Color"} product view ${iIndex + 1}`} className="h-full w-full object-cover transition-transform duration-300 group-hover/img:scale-105" onError={(e) => { e.currentTarget.style.opacity = "0.35"; }} />
+                                                        <button type="button" onClick={() => removeVariantImage(vIndex, iIndex)} aria-label={`Remove ${v.colorName || "color"} image ${iIndex + 1}`} className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg border border-white/70 bg-white/95 text-gray-500 shadow-sm transition hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-200">
+                                                            <FiTrash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                                {(v.images || []).length < 5 && (
+                                                    <label className="product-editor-image-upload flex aspect-square w-full max-w-[208px] cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-violet-200 bg-violet-50/30 p-4 text-center transition hover:border-violet-400 hover:bg-violet-50">
+                                                        <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-white text-violet-600 shadow-sm"><FiUploadCloud size={20} /></span>
+                                                        <span className="text-xs font-bold text-[#1F0A3C]">Add color photos</span>
+                                                        <span className="mt-1 text-[10px] text-gray-500">JPG, PNG or WebP</span>
+                                                        <input type="file" multiple className="sr-only" accept="image/*" onChange={(e) => handleVariantImageUpload(vIndex, e)} />
+                                                    </label>
+                                                )}
+                                            </div>
                                         </div>
-                                    ))}
-                                    {(v.images || []).length < 5 && (
-                                        <label className="flex h-36 sm:h-40 flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 cursor-pointer hover:bg-[#1F0A3C]/5 hover:border-[#1F0A3C]/40 group/label transition-all">
-                                            <FiUploadCloud size={18} className="text-gray-300 group-hover/label:text-[#1F0A3C] transition-colors" />
-                                            <span className="mt-1 text-[10px] font-semibold text-gray-400">Color images</span>
-                                            <input type="file" multiple className="hidden" accept="image/*" onChange={(e) => handleVariantImageUpload(vIndex, e)} />
-                                        </label>
-                                    )}
-                                </div>
-                            </div>
+                                    </div>
                         </div>
                     ))}
                 </div>
                 )}
 
                 {/* Bottom Global Action Button */}
-                <div className="lg:col-span-2 lg:order-4 pt-5 pb-10 border-t border-gray-200 mt-2">
-                    <div className="flex items-center justify-end gap-3">
+                <div className="lg:col-span-2 lg:order-4 mt-2 border-t border-gray-200 pt-5 pb-10">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-gray-500">Your changes are saved when you submit this product.</p>
+                        <div className="flex items-center justify-end gap-3">
                         <button type="button" onClick={() => navigate(-1)} className="px-5 py-2.5 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
                             Cancel
                         </button>
@@ -1245,6 +1467,7 @@ const AddProducts = () => {
                                 </>
                             )}
                         </button>
+                        </div>
                     </div>
                 </div>
             </form>
