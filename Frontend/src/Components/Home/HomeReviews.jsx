@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { CalendarDays, ChevronLeft, ChevronRight, ExternalLink, MessageSquare, Quote, Star } from "lucide-react";
+import { Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import api from "../../api";
@@ -95,11 +96,16 @@ function HomeReviews() {
         ) : (
           <div className="overflow-hidden py-2">
             <Swiper
+              modules={[Autoplay]}
               onSwiper={(swiper) => {
                 swiperRef.current = swiper;
               }}
               slidesPerView={1.1}
               spaceBetween={12}
+              loop={reviews.length > 4}
+              autoplay={reviews.length > 4
+                ? { delay: 3500, disableOnInteraction: false, pauseOnMouseEnter: true }
+                : false}
               breakpoints={{
                 480: { slidesPerView: 1.5, spaceBetween: 12 },
                 640: { slidesPerView: 2, spaceBetween: 14 },
