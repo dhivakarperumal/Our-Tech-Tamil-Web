@@ -72,7 +72,7 @@ function Shop() {
             {searchQuery ? "No products matched your search." : "No products are available right now."}
           </p>
         ) : (
-          <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid w-full grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
             {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
