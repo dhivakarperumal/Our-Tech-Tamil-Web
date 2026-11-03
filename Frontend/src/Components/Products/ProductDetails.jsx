@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { ArrowLeft, Package, ShoppingCart, Zap } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
 import PageContainer from "../CommenComponents/PageContainer";
+import { StoreContext } from "../../PrivateRouter/StoreContext";
 
 function getImages(product) {
   const parseImages = (value) => {
@@ -41,6 +42,9 @@ function getImageUrl(image) {
 
 function ProductDetails() {
   const { id } = useParams();
+  const { addToCart } = useContext(StoreContext);
+  const navigate = useNavigate();
+  const [isBuying, setIsBuying] = useState(false);
   const [productState, setProductState] = useState({
     id: null,
     product: null,
@@ -94,6 +98,14 @@ function ProductDetails() {
   const price = Number(product.offer_price ?? product.mrp) || 0;
   const mrp = Number(product.mrp) || 0;
   const inStock = Number(product.total_stock) > 0;
+  const handleBuyNow = async () => {
+    setIsBuying(true);
+    try {
+      if (await addToCart(product)) navigate("/checkout");
+    } finally {
+      setIsBuying(false);
+    }
+  };
 
   return (
     <PageContainer className="py-6 sm:py-10">
@@ -163,6 +175,7 @@ function ProductDetails() {
           <div className="mt-6 grid grid-cols-2 gap-3">
             <button
               type="button"
+              onClick={() => addToCart(product)}
               disabled={!inStock}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary px-4 py-3 text-sm font-bold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
             >
@@ -171,11 +184,12 @@ function ProductDetails() {
             </button>
             <button
               type="button"
-              disabled={!inStock}
+              onClick={handleBuyNow}
+              disabled={!inStock || isBuying}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Zap size={17} aria-hidden="true" />
-              Buy Now
+              {isBuying ? "Please wait..." : "Buy Now"}
             </button>
           </div>
 

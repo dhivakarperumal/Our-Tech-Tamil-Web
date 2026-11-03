@@ -8,10 +8,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
 
   const totalItems = cart.reduce((total, item) => total + Number(item.quantity || 0), 0);
-  const totalAmount = cart.reduce(
-    (total, item) => total + Number(item.price || 0) * Number(item.quantity || 0),
-    0,
-  );
+  const totalAmount = cart.reduce((total, item) => total + Number(item.subtotal ?? item.total_price ?? 0), 0);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -84,7 +81,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
           ) : (
             <div className="space-y-4">
               {cart.map((item) => {
-                const itemSubtotal = Number(item.price || 0) * Number(item.quantity || 0);
+                const itemSubtotal = Number(item.subtotal ?? item.total_price ?? 0);
                 return (
                   <div key={item.id} className="flex gap-3 rounded-lg border border-gray-200 p-3">
                     <img
@@ -104,7 +101,13 @@ const CartDrawer = ({ isOpen, onClose }) => {
                           <FiTrash2 size={16} />
                         </button>
                       </div>
-                      <p className="mt-1 text-sm font-semibold text-primary">₹{Number(item.price || 0).toFixed(2)}</p>
+                      <p className="mt-1 text-xs text-gray-500">Code: {item.product_code || "—"}</p>
+                      <p className="mt-1 text-sm font-semibold text-primary">
+                        ₹{Number(item.offer_price ?? item.price ?? 0).toFixed(2)}
+                        {Number(item.mrp) > Number(item.offer_price ?? item.price ?? 0) && (
+                          <span className="ml-2 text-xs font-normal text-gray-400 line-through">₹{Number(item.mrp).toFixed(2)}</span>
+                        )}
+                      </p>
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-500">
                         {item.colorName && (
                           <span className="flex items-center gap-1.5">
@@ -160,10 +163,17 @@ const CartDrawer = ({ isOpen, onClose }) => {
             </div>
             <button
               type="button"
-              onClick={() => goTo("/checkout")}
+              onClick={() => goTo("/cart")}
               className="w-full rounded-lg bg-primary py-3 font-semibold text-white transition hover:bg-primary-dark"
             >
-              Checkout
+              View Cart
+            </button>
+            <button
+              type="button"
+              onClick={() => goTo("/checkout")}
+              className="mt-2 w-full rounded-lg bg-primary py-3 font-semibold text-white transition hover:bg-primary-dark"
+            >
+              Proceed to Checkout
             </button>
             <button
               type="button"

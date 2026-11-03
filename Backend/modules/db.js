@@ -243,6 +243,98 @@ async function initializeDatabase(pool) {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS cart_items (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL,
+      product_id BIGINT UNSIGNED NOT NULL,
+      product_name VARCHAR(255) NOT NULL,
+      product_image TEXT NULL,
+      product_code VARCHAR(100) NOT NULL,
+      mrp DECIMAL(10, 2) NOT NULL,
+      offer_price DECIMAL(10, 2) NOT NULL,
+      quantity INT UNSIGNED NOT NULL DEFAULT 1,
+      subtotal DECIMAL(10, 2) NOT NULL DEFAULT 0,
+      total DECIMAL(10, 2) NOT NULL DEFAULT 0,
+      variant_color VARCHAR(100) NOT NULL DEFAULT '',
+      variant_size VARCHAR(100) NOT NULL DEFAULT '',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY cart_items_user_product_variant_unique (user_id, product_id, variant_color, variant_size),
+      KEY cart_items_user_id_idx (user_id),
+      KEY cart_items_product_id_idx (product_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wishlist_items (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL,
+      product_id BIGINT UNSIGNED NOT NULL,
+      product_name VARCHAR(255) NOT NULL DEFAULT '',
+      product_image TEXT NULL,
+      product_code VARCHAR(100) NOT NULL DEFAULT '',
+      mrp DECIMAL(10, 2) NOT NULL DEFAULT 0,
+      offer_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+      variant_color VARCHAR(100) NOT NULL DEFAULT '',
+      variant_size VARCHAR(100) NOT NULL DEFAULT '',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY wishlist_user_product_variant_unique (user_id, product_id, variant_color, variant_size),
+      KEY wishlist_user_id_idx (user_id),
+      KEY wishlist_product_id_idx (product_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  const [wishlistColumnRows] = await pool.execute(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'wishlist_items'`,
+  );
+  const wishlistColumns = new Set(wishlistColumnRows.map((column) => column.COLUMN_NAME));
+  const wishlistColumnMigrations = [
+    ["product_name", "ALTER TABLE wishlist_items ADD COLUMN product_name VARCHAR(255) NOT NULL DEFAULT '' AFTER product_id"],
+    ["product_image", "ALTER TABLE wishlist_items ADD COLUMN product_image TEXT NULL AFTER product_name"],
+    ["product_code", "ALTER TABLE wishlist_items ADD COLUMN product_code VARCHAR(100) NOT NULL DEFAULT '' AFTER product_image"],
+    ["mrp", "ALTER TABLE wishlist_items ADD COLUMN mrp DECIMAL(10, 2) NOT NULL DEFAULT 0 AFTER product_code"],
+    ["offer_price", "ALTER TABLE wishlist_items ADD COLUMN offer_price DECIMAL(10, 2) NOT NULL DEFAULT 0 AFTER mrp"],
+    ["variant_color", "ALTER TABLE wishlist_items ADD COLUMN variant_color VARCHAR(100) NOT NULL DEFAULT '' AFTER offer_price"],
+    ["variant_size", "ALTER TABLE wishlist_items ADD COLUMN variant_size VARCHAR(100) NOT NULL DEFAULT '' AFTER variant_color"],
+    ["updated_at", "ALTER TABLE wishlist_items ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"],
+  ];
+  for (const [column, statement] of wishlistColumnMigrations) {
+    if (!wishlistColumns.has(column)) await pool.query(statement);
+  }
+  const [wishlistIndexes] = await pool.execute(
+    `SELECT INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'wishlist_items'`,
+  );
+  const oldWishlistIndex = wishlistIndexes.some((index) =>
+    index.INDEX_NAME === "wishlist_user_product_unique",
+  );
+  if (oldWishlistIndex) {
+    await pool.query("ALTER TABLE wishlist_items DROP INDEX wishlist_user_product_unique");
+  }
+  const hasVariantUniqueIndex = wishlistIndexes.some((index) =>
+    index.INDEX_NAME === "wishlist_user_product_variant_unique" &&
+    index.COLUMN_NAME === "variant_size" &&
+    index.SEQ_IN_INDEX === 4,
+  );
+  if (!hasVariantUniqueIndex) {
+    await pool.query(
+      "ALTER TABLE wishlist_items ADD UNIQUE KEY wishlist_user_product_variant_unique (user_id, product_id, variant_color, variant_size)",
+    );
+  }
+  await pool.query(`
+    UPDATE wishlist_items wi
+    INNER JOIN products p ON p.id = wi.product_id
+    SET wi.product_name = p.name,
+        wi.product_code = p.product_code,
+        wi.mrp = p.mrp,
+        wi.offer_price = p.offer_price
+    WHERE wi.product_name = '' OR wi.product_code = ''
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS addresses (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       user_id VARCHAR(255) NULL,
@@ -270,6 +362,8 @@ async function initializeDatabase(pool) {
       order_type VARCHAR(32) NOT NULL DEFAULT 'Shop',
       payment_method VARCHAR(64) NOT NULL DEFAULT 'Cash',
       payment_status VARCHAR(32) NOT NULL DEFAULT 'Pending',
+      razorpay_order_id VARCHAR(64) NULL,
+      razorpay_payment_id VARCHAR(64) NULL UNIQUE,
       status VARCHAR(32) NOT NULL DEFAULT 'Order Placed',
       total_amount DECIMAL(12, 2) NOT NULL DEFAULT 0,
       tracking_number VARCHAR(160) NULL,
@@ -310,6 +404,12 @@ async function initializeDatabase(pool) {
   const existingOrderColumns = new Set(orderColumns.map((column) => column.COLUMN_NAME));
   if (!existingOrderColumns.has("address_id")) {
     await pool.query("ALTER TABLE orders ADD COLUMN address_id BIGINT UNSIGNED NULL AFTER user_id");
+  }
+  if (!existingOrderColumns.has("razorpay_order_id")) {
+    await pool.query("ALTER TABLE orders ADD COLUMN razorpay_order_id VARCHAR(64) NULL");
+  }
+  if (!existingOrderColumns.has("razorpay_payment_id")) {
+    await pool.query("ALTER TABLE orders ADD COLUMN razorpay_payment_id VARCHAR(64) NULL UNIQUE");
   }
 
   if (existingOrderColumns.has("items")) {
