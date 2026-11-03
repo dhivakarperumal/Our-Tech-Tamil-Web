@@ -276,57 +276,7 @@ const AboutUs = () => {
         </PageContainer>
       </section>
 
-      {/* ── JOIN CTA ──────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#2d0060] via-primary to-[#7200d6] py-16">
-        {/* blobs */}
-        <div className="pointer-events-none absolute -top-20 right-0 h-80 w-80 rounded-full bg-white/5 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-10 left-10 h-56 w-56 rounded-full bg-white/5 blur-2xl" />
-
-        <PageContainer>
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            {/* Left */}
-            <div className="space-y-5">
-              <h2 className="text-3xl font-extrabold text-white sm:text-4xl leading-tight">
-                Join Our Shopping Family
-              </h2>
-              <p className="text-base text-white/75">
-                Be a part of thousands of happy shoppers today!
-              </p>
-              <Link
-                to="/shop"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-white bg-white px-7 py-3 text-sm font-bold text-primary shadow-xl transition hover:bg-white/90 hover:-translate-y-0.5"
-              >
-                Shop Now →
-              </Link>
-            </div>
-
-            {/* Right – decorative */}
-            <div className="flex justify-center gap-6">
-              <div className="flex flex-col items-center justify-end gap-3">
-                <span className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur text-4xl shadow-xl border border-white/20">
-                  🎧
-                </span>
-                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur text-3xl shadow-xl border border-white/20">
-                  ⌚
-                </span>
-              </div>
-              <div className="flex flex-col items-center justify-center gap-3">
-                <span className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/10 backdrop-blur text-5xl shadow-xl border border-white/20">
-                  💻
-                </span>
-              </div>
-              <div className="flex flex-col items-center justify-end gap-3">
-                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur text-3xl shadow-xl border border-white/20">
-                  🎮
-                </span>
-                <span className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur text-4xl shadow-xl border border-white/20">
-                  📱
-                </span>
-              </div>
-            </div>
-          </div>
-        </PageContainer>
-      </section>
+     
 
     </div>
   );
