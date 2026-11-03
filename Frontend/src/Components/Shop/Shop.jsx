@@ -511,51 +511,53 @@ function Shop() {
               </div>
             ) : (
               <>
-                <div className={`grid gap-3 sm:gap-4 ${listView ? "grid-cols-1" : filtersOpen ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}>
-                  {visibleProducts.map((product) => (
-                    <ProductCard key={product.id} product={product} compact horizontal={listView} />
-                  ))}
+                <div className="flex min-h-[620px] flex-col">
+                  <div className={`grid flex-1 gap-3 sm:gap-4 ${listView ? "grid-cols-1" : filtersOpen ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}>
+                    {visibleProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} compact horizontal={listView} />
+                    ))}
+                  </div>
+                  {totalPages > 1 && (
+                    <nav aria-label="Product pages" className="mt-6 flex items-center justify-center gap-1.5 pt-2">
+                      <button
+                        type="button"
+                        aria-label="Previous page"
+                        disabled={page === 1}
+                        onClick={() => changePage(page - 1)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e9e1f2] bg-white text-[#766c84] transition hover:border-[#4b00c8] hover:text-[#4b00c8] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronLeft size={15} aria-hidden="true" />
+                      </button>
+                      {Array.from({ length: totalPages }, (_, index) => index + 1)
+                        .filter((pageNumber) => pageNumber === 1 || pageNumber === totalPages || Math.abs(pageNumber - page) <= 1)
+                        .map((pageNumber, index, pages) => (
+                          <span key={pageNumber} className="contents">
+                            {index > 0 && pageNumber - pages[index - 1] > 1 && (
+                              <span className="px-1 text-xs text-[#8a8198]" aria-hidden="true">…</span>
+                            )}
+                            <button
+                              type="button"
+                              aria-label={`Page ${pageNumber}`}
+                              aria-current={pageNumber === page ? "page" : undefined}
+                              onClick={() => changePage(pageNumber)}
+                              className={`h-8 min-w-8 rounded-lg px-2 text-[11px] font-bold transition ${pageNumber === page ? "bg-[#4b00c8] text-white shadow-[0_3px_8px_rgba(75,0,200,0.2)]" : "border border-[#e9e1f2] bg-white text-[#70677d] hover:border-[#4b00c8] hover:text-[#4b00c8]"}`}
+                            >
+                              {pageNumber}
+                            </button>
+                          </span>
+                        ))}
+                      <button
+                        type="button"
+                        aria-label="Next page"
+                        disabled={page === totalPages}
+                        onClick={() => changePage(page + 1)}
+                        className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e9e1f2] bg-white text-[#766c84] transition hover:border-[#4b00c8] hover:text-[#4b00c8] disabled:cursor-not-allowed disabled:opacity-40"
+                      >
+                        <ChevronRight size={15} aria-hidden="true" />
+                      </button>
+                    </nav>
+                  )}
                 </div>
-                {totalPages > 1 && (
-                  <nav aria-label="Product pages" className="mt-6 flex items-center justify-center gap-1.5">
-                    <button
-                      type="button"
-                      aria-label="Previous page"
-                      disabled={page === 1}
-                      onClick={() => changePage(page - 1)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e9e1f2] bg-white text-[#766c84] transition hover:border-[#4b00c8] hover:text-[#4b00c8] disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <ChevronLeft size={15} aria-hidden="true" />
-                    </button>
-                    {Array.from({ length: totalPages }, (_, index) => index + 1)
-                      .filter((pageNumber) => pageNumber === 1 || pageNumber === totalPages || Math.abs(pageNumber - page) <= 1)
-                      .map((pageNumber, index, pages) => (
-                        <span key={pageNumber} className="contents">
-                          {index > 0 && pageNumber - pages[index - 1] > 1 && (
-                            <span className="px-1 text-xs text-[#8a8198]" aria-hidden="true">…</span>
-                          )}
-                          <button
-                            type="button"
-                            aria-label={`Page ${pageNumber}`}
-                            aria-current={pageNumber === page ? "page" : undefined}
-                            onClick={() => changePage(pageNumber)}
-                            className={`h-8 min-w-8 rounded-lg px-2 text-[11px] font-bold transition ${pageNumber === page ? "bg-[#4b00c8] text-white shadow-[0_3px_8px_rgba(75,0,200,0.2)]" : "border border-[#e9e1f2] bg-white text-[#70677d] hover:border-[#4b00c8] hover:text-[#4b00c8]"}`}
-                          >
-                            {pageNumber}
-                          </button>
-                        </span>
-                      ))}
-                    <button
-                      type="button"
-                      aria-label="Next page"
-                      disabled={page === totalPages}
-                      onClick={() => changePage(page + 1)}
-                      className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e9e1f2] bg-white text-[#766c84] transition hover:border-[#4b00c8] hover:text-[#4b00c8] disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      <ChevronRight size={15} aria-hidden="true" />
-                    </button>
-                  </nav>
-                )}
               </>
             )}
           </div>
