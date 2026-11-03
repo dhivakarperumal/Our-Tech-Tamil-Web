@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   Bell,
@@ -9,74 +9,10 @@ import {
   Sparkles,
   Star,
 } from "lucide-react";
+import api from "../../api";
 import PageContainer from "../CommenComponents/PageContainer";
 
-const mockContent = [
-  {
-    id: 1,
-    type: "article",
-    category: "ARTICLE",
-    title: "Top 10 Laptops for Work and Study in 2026",
-    description:
-      "A detailed guide to the best laptops for professionals and students, with performance features and price comparisons.",
-    date: "Oct 20, 2026",
-    views: "2.4K Views",
-    button: "Read Full Article",
-    image:
-      "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: 2,
-    type: "product_review",
-    category: "PRODUCT REVIEW",
-    title: "Sony WH-1000XM5 Headphones Review",
-    description:
-      "A complete review of Sony’s flagship noise-cancelling headphones, covering sound, battery life and real-world performance.",
-    rating: 4.8,
-    date: "Oct 18, 2026",
-    views: "3.1K Views",
-    button: "Read Review",
-    image:
-      "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=900&q=80",
-    features: [
-      { label: "Battery", value: "30 Hrs" },
-      { label: "Noise Cancel", value: "Yes" },
-      { label: "Weight", value: "250 g" },
-    ],
-  },
-  {
-    id: 3,
-    type: "article",
-    category: "ARTICLE",
-    title: "Smartphone Buying Guide: Things to Check Before You Buy",
-    description:
-      "Confused about which smartphone to buy? Here’s a simple guide covering the key features, specs, and tips.",
-    date: "Oct 15, 2026",
-    views: "4.7K Views",
-    button: "Read Full Article",
-    image:
-      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    id: 4,
-    type: "product_review",
-    category: "PRODUCT REVIEW",
-    title: "boAt Wave Connect Smartwatch Review",
-    description:
-      "A budget-friendly smartwatch with great features for fitness and daily use. Here’s our detailed review.",
-    rating: 4.6,
-    date: "Oct 12, 2026",
-    views: "1.9K Views",
-    button: "Read Review",
-    image:
-      "https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=900&q=80",
-    features: [
-      { label: "Health Tracking", value: "Yes" },
-      { label: "Water", value: "IP67" },
-      { label: "Battery", value: "7 Days" },
-    ],
-  },
-];
+const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
 
 const tabs = [
   { value: "all", label: "All Content" },
@@ -85,27 +21,28 @@ const tabs = [
 ];
 
 const highlightCards = [
-  {
-    icon: BookOpenText,
-    title: "Expert Articles",
-    subtitle: "Guides, tips & tech insights",
-  },
-  {
-    icon: Sparkles,
-    title: "Honest Reviews",
-    subtitle: "Real product experience",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Compare & Choose",
-    subtitle: "Find the best for your needs",
-  },
-  {
-    icon: Bell,
-    title: "Stay Updated",
-    subtitle: "Latest tech trends & launches",
-  },
+  { icon: BookOpenText, title: "Expert Articles", subtitle: "Guides, tips & tech insights" },
+  { icon: Sparkles, title: "Honest Reviews", subtitle: "Real product experience" },
+  { icon: ShieldCheck, title: "Compare & Choose", subtitle: "Find the best for your needs" },
+  { icon: Bell, title: "Stay Updated", subtitle: "Latest tech trends & launches" },
 ];
+
+function getImageUrl(value) {
+  if (!value) return "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1200&q=80";
+  if (value.startsWith("http")) return value;
+  return backendUrl + (value.startsWith("/") ? value : `/${value}`);
+}
+
+function formatDate(value) {
+  if (!value) return "Recently";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
 
 function StarRating({ value }) {
   const rounded = Math.round(Number(value || 0));
@@ -125,21 +62,50 @@ function StarRating({ value }) {
 }
 
 function Articles() {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [tab, setTab] = useState("all");
   const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    let active = true;
+
+    api
+      .get("/admin/content/articles")
+      .then(({ data }) => {
+        if (!active) return;
+        setArticles(Array.isArray(data.articles) ? data.articles : []);
+      })
+      .catch(() => {
+        if (active) {
+          setError("Unable to load articles right now.");
+          setArticles([]);
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filteredContent = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    return mockContent.filter((item) => {
-      const matchesTab = tab === "all" || item.type === tab;
+    return articles.filter((item) => {
+      const itemType = item.content_type || "article";
+      const title = item.content_type === "product_review" ? item.product_name || item.title : item.title || "";
+      const matchesTab = tab === "all" || itemType === tab;
       if (!matchesTab) return false;
       if (!query) return true;
 
-      const searchable = [item.title, item.description, item.category].join(" ").toLowerCase();
+      const searchable = [title, item.description || "", item.content_type || ""].join(" ").toLowerCase();
       return searchable.includes(query);
     });
-  }, [search, tab]);
+  }, [articles, search, tab]);
 
   return (
     <main className="bg-[#f7f3fb] pb-14">
@@ -169,8 +135,8 @@ function Articles() {
                 <div className="absolute left-8 top-10 h-20 w-20 rounded-full bg-[#f8d5ff]/30 blur-2xl" />
                 <div className="absolute bottom-0 right-0 h-24 w-24 rounded-full bg-[#ffffff]/20 blur-2xl" />
                 <img
-                  src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=1200&q=80"
-                  alt="Laptop and tech accessories"
+                  src={getImageUrl(articles[0]?.image_url)}
+                  alt="Tech accessories"
                   className="relative h-[230px] w-full rounded-[26px] object-cover shadow-[0_25px_80px_rgba(19,6,38,0.35)] sm:h-[280px]"
                 />
               </div>
@@ -237,111 +203,124 @@ function Articles() {
             </div>
           </div>
 
-          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-            {filteredContent.map((item) => (
-              <article
-                key={item.id}
-                className="flex min-h-[480px] flex-col overflow-hidden rounded-[22px] border border-[#e9def5] bg-white shadow-[0_10px_24px_rgba(92,54,150,0.07)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(92,54,150,0.12)]"
-              >
-                <div className="relative h-[212px] overflow-hidden bg-[#f0e7ff]">
-                  <img
-                    src={item.image}
-                    alt={item.title}
-                    className="h-full w-full object-cover transition duration-300 hover:scale-[1.03]"
-                  />
-                  {item.type === "product_review" && (
-                    <div className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5a2db3] shadow-sm">
-                      <Star size={12} className="fill-amber-400 text-amber-400" />
-                      Product Review
-                    </div>
-                  )}
-                  {item.type === "article" && (
-                    <div className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5a2db3] shadow-sm">
-                      <BookOpenText size={12} />
-                      Article
-                    </div>
-                  )}
+          {loading && (
+            <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="animate-pulse rounded-[22px] border border-[#e9def5] bg-white p-4">
+                  <div className="h-[212px] rounded-[16px] bg-[#f0e7ff]" />
+                  <div className="mt-4 h-4 w-20 rounded bg-[#f0e7ff]" />
+                  <div className="mt-3 h-5 rounded bg-[#f0e7ff]" />
+                  <div className="mt-2 h-3 rounded bg-[#f4f0fa]" />
+                  <div className="mt-1 h-3 w-2/3 rounded bg-[#f4f0fa]" />
                 </div>
+              ))}
+            </div>
+          )}
 
-                <div className="flex flex-1 flex-col p-4 sm:p-5">
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    {item.type === "product_review" ? (
-                      <div className="inline-flex items-center gap-2 rounded-full bg-[#fff4d8] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#ae6a00]">
-                        <Star size={12} className="fill-amber-400 text-amber-400" />
-                        {item.category}
-                      </div>
-                    ) : (
-                      <span className="inline-flex items-center rounded-full bg-[#f0e7ff] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5a2db3]">
-                        {item.category}
-                      </span>
-                    )}
+          {!loading && !error && filteredContent.length > 0 && (
+            <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+              {filteredContent.map((item) => {
+                const itemType = item.content_type || "article";
+                const title = itemType === "product_review" ? item.product_name || item.title : item.title || "Untitled";
+                const category = itemType === "product_review" ? "PRODUCT REVIEW" : "ARTICLE";
+                const image = getImageUrl(item.image_url);
+                const features = Array.isArray(item.product_features) ? item.product_features : [];
+                const links = Array.isArray(item.buy_links) ? item.buy_links.filter((link) => link && link.url) : [];
+                const buttonLabel = itemType === "product_review" ? "Read Review" : "Read Full Article";
 
-                    {item.type === "product_review" && (
-                      <div className="inline-flex items-center gap-1 rounded-full bg-[#f6f1ff] px-2 py-1 text-[11px] font-bold text-[#6d2ad5]">
-                        <Star size={12} className="fill-amber-400 text-amber-400" />
-                        {item.rating.toFixed(1)}
-                      </div>
-                    )}
-                  </div>
-
-                  <h3 className="text-[1.02rem] font-extrabold leading-tight text-[#1f1a2d] sm:text-[1.08rem]">
-                    {item.title}
-                  </h3>
-
-                  {item.type === "product_review" && item.features && (
-                    <div className="mt-3 flex items-center gap-2">
-                      <StarRating value={item.rating} />
-                    </div>
-                  )}
-
-                  <p className="mt-3 flex-1 text-sm leading-6 text-[#5d5a6d]">
-                    {item.description}
-                  </p>
-
-                  {item.type === "product_review" && item.features && (
-                    <div className="mt-4 grid grid-cols-3 gap-2">
-                      {item.features.map((feature) => (
-                        <div key={feature.label} className="rounded-xl bg-[#f7f2ff] px-2 py-2 text-center">
-                          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#716b83]">
-                            {feature.label}
-                          </div>
-                          <div className="mt-1 text-xs font-bold text-[#1f1a2d]">{feature.value}</div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="mt-5 flex items-center justify-between gap-3 text-xs text-[#5d5a6d]">
-                    <span className="inline-flex items-center gap-2">
-                      <span className="inline-block h-3.5 w-3.5 rounded-full border border-[#c6b7ee] bg-[#f0e7ff]" />
-                      {item.date}
-                    </span>
-                    <span>{item.views}</span>
-                  </div>
-
-                  <button
-                    type="button"
-                    className={`mt-5 inline-flex items-center justify-center gap-2 rounded-[14px] border px-4 py-3 text-sm font-bold transition ${
-                      item.type === "product_review"
-                        ? "border-[#6d2ad5] bg-[#6d2ad5] text-white hover:bg-[#5d1fc0]"
-                        : "border-[#7d4ae4] bg-white text-[#6d2ad5] hover:bg-[#f4ebff]"
-                    }`}
+                return (
+                  <article
+                    key={item.id || item.content_id}
+                    className="flex min-h-[480px] flex-col overflow-hidden rounded-[22px] border border-[#e9def5] bg-white shadow-[0_10px_24px_rgba(92,54,150,0.07)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(92,54,150,0.12)]"
                   >
-                    {item.button}
-                    <ArrowRight size={15} />
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+                    <div className="relative h-[212px] overflow-hidden bg-[#f0e7ff]">
+                      <img src={image} alt={title} className="h-full w-full object-cover transition duration-300 hover:scale-[1.03]" />
+                      <div className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5a2db3] shadow-sm">
+                        {itemType === "product_review" ? <Star size={12} className="fill-amber-400 text-amber-400" /> : <BookOpenText size={12} />}
+                        {itemType === "product_review" ? "Product Review" : "Article"}
+                      </div>
+                    </div>
 
-          {filteredContent.length === 0 && (
+                    <div className="flex flex-1 flex-col p-4 sm:p-5">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] ${itemType === "product_review" ? "bg-[#fff4d8] text-[#ae6a00]" : "bg-[#f0e7ff] text-[#5a2db3]"}`}>
+                          {category}
+                        </span>
+
+                        {itemType === "product_review" && (
+                          <div className="inline-flex items-center gap-1 rounded-full bg-[#f6f1ff] px-2 py-1 text-[11px] font-bold text-[#6d2ad5]">
+                            <Star size={12} className="fill-amber-400 text-amber-400" />
+                            {Number(item.rating || 0).toFixed(1)}
+                          </div>
+                        )}
+                      </div>
+
+                      <h3 className="text-[1.02rem] font-extrabold leading-tight text-[#1f1a2d] sm:text-[1.08rem]">
+                        {title}
+                      </h3>
+
+                      {itemType === "product_review" && item.rating && (
+                        <div className="mt-3 flex items-center gap-2">
+                          <StarRating value={item.rating} />
+                        </div>
+                      )}
+
+                      <p className="mt-3 flex-1 text-sm leading-6 text-[#5d5a6d]">
+                        {item.description || "No description available yet."}
+                      </p>
+
+                      {itemType === "product_review" && features.length > 0 && (
+                        <div className="mt-4 grid grid-cols-3 gap-2">
+                          {features.slice(0, 3).map((feature, index) => (
+                            <div key={`${feature.name || "feature"}-${index}`} className="rounded-xl bg-[#f7f2ff] px-2 py-2 text-center">
+                              <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#716b83]">
+                                {feature.name || "Feature"}
+                              </div>
+                              <div className="mt-1 text-xs font-bold text-[#1f1a2d]">{feature.value || "-"}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-5 flex items-center justify-between gap-3 text-xs text-[#5d5a6d]">
+                        <span className="inline-flex items-center gap-2">
+                          <span className="inline-block h-3.5 w-3.5 rounded-full border border-[#c6b7ee] bg-[#f0e7ff]" />
+                          {formatDate(item.created_at)}
+                        </span>
+                        <span>{links.length > 0 ? `${links.length} link${links.length > 1 ? "s" : ""}` : "View"}</span>
+                      </div>
+
+                      <button
+                        type="button"
+                        className={`mt-5 inline-flex items-center justify-center gap-2 rounded-[14px] border px-4 py-3 text-sm font-bold transition ${
+                          itemType === "product_review"
+                            ? "border-[#6d2ad5] bg-[#6d2ad5] text-white hover:bg-[#5d1fc0]"
+                            : "border-[#7d4ae4] bg-white text-[#6d2ad5] hover:bg-[#f4ebff]"
+                        }`}
+                      >
+                        {buttonLabel}
+                        <ArrowRight size={15} />
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+
+          {!loading && !error && filteredContent.length === 0 && (
             <div className="mt-12 rounded-[22px] border border-dashed border-[#d8c8f0] bg-white px-6 py-12 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#f0e7ff] text-[#5a2db3]">
                 <Search size={28} />
               </div>
               <h4 className="mt-4 text-xl font-bold text-[#1d1830]">No results found</h4>
               <p className="mt-2 text-sm text-[#5d5a6d]">Try another keyword or switch the content category.</p>
+            </div>
+          )}
+
+          {!loading && error && (
+            <div className="mt-12 rounded-[22px] border border-dashed border-[#d8c8f0] bg-white px-6 py-12 text-center">
+              <p className="text-base font-bold text-rose-600">{error}</p>
             </div>
           )}
         </section>
