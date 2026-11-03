@@ -247,6 +247,36 @@ async function initializeDatabase(pool) {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS admin_articles (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      content_id VARCHAR(40) NOT NULL,
+      content_type ENUM('article', 'product_review') NOT NULL,
+      title VARCHAR(200) NULL,
+      product_name VARCHAR(191) NULL,
+      description TEXT NOT NULL,
+      product_features TEXT NULL,
+      image_url VARCHAR(2048) NOT NULL,
+      rating DECIMAL(2, 1) NULL,
+      buy_link VARCHAR(2048) NULL,
+      buy_links LONGTEXT NULL,
+      more_details TEXT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY admin_articles_content_id_unique (content_id),
+      KEY admin_articles_type_created_idx (content_type, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  const [articleColumns] = await pool.execute(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'admin_articles'`,
+  );
+  if (!articleColumns.some((column) => column.COLUMN_NAME === "buy_links")) {
+    await pool.query("ALTER TABLE admin_articles ADD COLUMN buy_links LONGTEXT NULL AFTER buy_link");
+  }
+
   const [serviceColumns] = await pool.execute(
     `SELECT COLUMN_NAME
      FROM INFORMATION_SCHEMA.COLUMNS

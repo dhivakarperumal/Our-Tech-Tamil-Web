@@ -8,9 +8,11 @@ const requireAdmin = require("../middleware/requireAdmin");
 const uploadDirectory = path.join(__dirname, "..", "uploads", "youtube-videos");
 const youtubeImageDirectory = path.join(__dirname, "..", "uploads", "youtube");
 const servicesUploadDirectory = path.join(__dirname, "..", "uploads", "services");
+const articlesUploadDirectory = path.join(__dirname, "..", "uploads", "articles");
 fs.mkdirSync(uploadDirectory, { recursive: true });
 fs.mkdirSync(youtubeImageDirectory, { recursive: true });
 fs.mkdirSync(servicesUploadDirectory, { recursive: true });
+fs.mkdirSync(articlesUploadDirectory, { recursive: true });
 
 const imageExtensions = {
   "image/jpeg": ".jpg",
@@ -33,6 +35,7 @@ const serviceImageExtensions = {
   "image/webp": ".webp",
   "image/gif": ".gif",
 };
+const articleImageExtensions = { ...serviceImageExtensions };
 
 function createUploader(extensions, fileSize, maxFiles = 1) {
   return multer({
@@ -72,6 +75,26 @@ const uploadServiceImage = multer({
   },
 });
 
+const uploadArticleImage = multer({
+  storage: multer.diskStorage({
+    destination(request, file, callback) {
+      callback(null, articlesUploadDirectory);
+    },
+    filename(request, file, callback) {
+      callback(null, `${crypto.randomUUID()}${articleImageExtensions[file.mimetype]}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter(request, file, callback) {
+    if (!articleImageExtensions[file.mimetype]) {
+      const error = new Error("Upload a PNG, JPEG, WEBP, or GIF image.");
+      error.status = 400;
+      return callback(error);
+    }
+    return callback(null, true);
+  },
+});
+
 const uploadThumbnail = multer({
   storage: multer.diskStorage({
     destination: youtubeImageDirectory,
@@ -94,6 +117,18 @@ const uploadDocuments = createUploader(documentExtensions, 1024 * 1024, 4);
 function createAdminContentRouter(controller) {
   const router = express.Router();
   router.use(requireAdmin);
+
+  router.get("/articles", controller.listArticles);
+  router.get("/articles/next-id", controller.getNextArticleId);
+  router.post("/articles/upload-image", uploadArticleImage.single("file"), (request, response) => {
+    if (!request.file) {
+      return response.status(400).json({ message: "Choose an article or product image to upload." });
+    }
+    return response.status(201).json({ image: `/uploads/articles/${request.file.filename}` });
+  });
+  router.post("/articles", controller.createArticle);
+  router.put("/articles/:id", controller.updateArticle);
+  router.delete("/articles/:id", controller.deleteArticle);
 
   router.get("/services", controller.listServices);
   router.get("/services/next-id", controller.getNextServiceId);

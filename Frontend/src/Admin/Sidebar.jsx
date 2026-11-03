@@ -21,7 +21,8 @@ import {
   Archive,
   Handshake,
   Video,
-  Image
+  Image,
+  FilePlus2
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -57,6 +58,7 @@ const navItems = [
   },
   
   { path: "/admin/service", label: "Service", icon: Wrench },
+  { path: "/admin/articles", label: "Create Article", icon: FilePlus2 },
   { path: "/admin/youtube-videos", label: "Youtube Video", icon: Video },
   
 

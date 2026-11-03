@@ -32,6 +32,7 @@ const ProductDetail = React.lazy(() => import("./Admin/Products/ProductDetail.js
 const StockDetails = React.lazy(() => import("./Admin/Stocks/StockDetails.jsx"));
 const AddStock = React.lazy(() => import("./Admin/Stocks/AddStock.jsx"));
 const AdminServices = React.lazy(() => import("./Admin/Services/Services.jsx"));
+const AdminArticles = React.lazy(() => import("./Admin/Articles/Articles.jsx"));
 const AdminYoutubeVideos = React.lazy(() => import("./Admin/YoutubeVideos/YoutubeVideos.jsx"));
 const AdminReviews = React.lazy(() => import("./Admin/Reviews/Reviews.jsx"));
 
@@ -75,6 +76,7 @@ const router = createBrowserRouter([
       { path: "users/all", element: <AdminUsers /> },
       { path: "banners", element: <AdminBanners /> },
       { path: "service", element: <AdminServices /> },
+      { path: "articles", element: <AdminArticles /> },
       { path: "youtube-videos", element: <AdminYoutubeVideos /> },
       { path: "reviews", element: <AdminReviews /> },
     ],

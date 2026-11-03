@@ -189,8 +189,238 @@ function parseServiceInput(body) {
   return { service };
 }
 
+function parseArticleInput(body) {
+  const contentType = body.content_type;
+  const title = typeof body.title === "string" ? body.title.trim() : "";
+  const productName = typeof body.product_name === "string" ? body.product_name.trim() : "";
+  const description = typeof body.description === "string" ? body.description.trim() : "";
+  const productFeatures = body.product_features == null ? [] : body.product_features;
+  const buyLinks = body.buy_links == null ? [] : body.buy_links;
+  const imageUrl = typeof body.image_url === "string" ? body.image_url.trim() : "";
+  const moreDetails = typeof body.more_details === "string" ? body.more_details.trim() : "";
+  const rating = body.rating === "" || body.rating == null ? null : Number(body.rating);
+
+  if (!["article", "product_review"].includes(contentType)) {
+    return { error: "Choose Article or Product Review." };
+  }
+  if (contentType === "article" && (title.length < 2 || title.length > 200)) {
+    return { error: "Article title must be between 2 and 200 characters." };
+  }
+  if (contentType === "product_review" && (productName.length < 2 || productName.length > 191)) {
+    return { error: "Product name must be between 2 and 191 characters." };
+  }
+  if (!description || description.length > 5000) {
+    return { error: "Description is required and must be 5,000 characters or fewer." };
+  }
+  if (!Array.isArray(productFeatures) || productFeatures.length > 20 ||
+      !productFeatures.every((feature) =>
+        feature && typeof feature.name === "string" && feature.name.trim().length <= 120
+        && typeof feature.value === "string" && feature.value.trim().length <= 500
+        && (feature.name.trim() || feature.value.trim()))) {
+    return { error: "Add up to 20 product features with a name and value." };
+  }
+  if (!Array.isArray(buyLinks) || buyLinks.length > 20 ||
+      !buyLinks.every((link) =>
+        link && typeof link.name === "string" && link.name.trim().length <= 120
+        && typeof link.url === "string" && link.url.trim().length <= 2048
+        && (link.name.trim() || link.url.trim())
+        && (!link.url.trim() || validateOptionalUrl(link.url.trim())))) {
+    return { error: "Add up to 20 buy links with a name and valid HTTP or HTTPS URL." };
+  }
+  if (moreDetails.length > 5000) {
+    return { error: "Additional details must be 5,000 characters or fewer." };
+  }
+  if (!/^\/uploads\/articles\/[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\.(?:jpg|png|webp|gif)$/i.test(imageUrl)) {
+    return { error: "Upload a valid article or product image." };
+  }
+  if (contentType === "product_review" && (rating === null || !Number.isFinite(rating) || rating < 1 || rating > 5)) {
+    return { error: "Product rating must be between 1 and 5." };
+  }
+  if (buyLinks.some((link) => !link.name.trim() || !link.url.trim())) {
+    return { error: "Each link needs both a name and a valid URL." };
+  }
+  if (contentType === "product_review" && productFeatures.some((feature) => !feature.name.trim() || !feature.value.trim())) {
+    return { error: "Each product feature needs both a name and a value." };
+  }
+
+  return {
+    article: {
+      contentType,
+      title: contentType === "article" ? title : null,
+      productName: contentType === "product_review" ? productName : null,
+      description,
+      productFeatures: contentType === "product_review" ? productFeatures : [],
+      imageUrl,
+      rating: contentType === "product_review" ? rating : null,
+      buyLinks,
+      buyLink: buyLinks[0]?.url || null,
+      moreDetails: contentType === "product_review" ? moreDetails || null : null,
+    },
+  };
+}
+
+function parseArticleRows(value, fallback = []) {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== "string" || !value) return fallback;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeArticle(article) {
+  const productFeatures = parseArticleRows(
+    article.product_features,
+    typeof article.product_features === "string" && article.product_features
+      ? [{ name: "Details", value: article.product_features }]
+      : [],
+  );
+  const buyLinks = parseArticleRows(
+    article.buy_links,
+    article.buy_link ? [{ name: "Buy", url: article.buy_link }] : [],
+  );
+  return { ...article, product_features: productFeatures, buy_links: buyLinks };
+}
+
 function createAdminContentController(pool) {
   return {
+    async listArticles(request, response, next) {
+      try {
+        const [articles] = await pool.query(
+          "SELECT id, content_id, content_type, title, product_name, description, product_features, image_url, rating, buy_link, buy_links, more_details, created_at FROM admin_articles ORDER BY created_at DESC",
+        );
+        return response.json({ articles: articles.map(normalizeArticle) });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
+    async getNextArticleId(request, response, next) {
+      const contentType = request.query.type;
+      if (!["article", "product_review"].includes(contentType)) {
+        return response.status(400).json({ message: "Choose Article or Product Review." });
+      }
+
+      try {
+        const [rows] = await pool.query("SELECT COALESCE(MAX(id), 0) + 1 AS nextId FROM admin_articles");
+        const prefix = contentType === "article" ? "ART" : "REV";
+        const nextId = Number(rows[0]?.nextId) || 1;
+        return response.json({ content_id: `${prefix}-${String(nextId).padStart(5, "0")}` });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
+    async createArticle(request, response, next) {
+      const { article, error: validationError } = parseArticleInput(request.body || {});
+      if (validationError) return response.status(400).json({ message: validationError });
+
+      let connection;
+      try {
+        connection = await pool.getConnection();
+        await connection.beginTransaction();
+        const temporaryId = `TMP-${crypto.randomUUID()}`;
+        const [result] = await connection.execute(
+          `INSERT INTO admin_articles
+            (content_id, content_type, title, product_name, description, product_features, image_url, rating, buy_link, buy_links, more_details)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            temporaryId,
+            article.contentType,
+            article.title,
+            article.productName,
+            article.description,
+            article.productFeatures.length ? JSON.stringify(article.productFeatures) : null,
+            article.imageUrl,
+            article.rating,
+            article.buyLink,
+            article.buyLinks.length ? JSON.stringify(article.buyLinks) : null,
+            article.moreDetails,
+          ],
+        );
+        const prefix = article.contentType === "article" ? "ART" : "REV";
+        const contentId = `${prefix}-${String(result.insertId).padStart(5, "0")}`;
+        await connection.execute("UPDATE admin_articles SET content_id = ? WHERE id = ?", [contentId, result.insertId]);
+        const [articles] = await connection.execute(
+          "SELECT id, content_id, content_type, title, product_name, description, product_features, image_url, rating, buy_link, buy_links, more_details, created_at FROM admin_articles WHERE id = ?",
+          [result.insertId],
+        );
+        await connection.commit();
+        return response.status(201).json({ article: normalizeArticle(articles[0]) });
+      } catch (error) {
+        if (connection) await connection.rollback();
+        if (error.code === "ER_DUP_ENTRY") {
+          return response.status(409).json({ message: "Could not generate a unique content ID. Please try again." });
+        }
+        return next(error);
+      } finally {
+        connection?.release();
+      }
+    },
+
+    async updateArticle(request, response, next) {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) {
+        return response.status(400).json({ message: "Invalid article id." });
+      }
+      const { article, error: validationError } = parseArticleInput(request.body || {});
+      if (validationError) return response.status(400).json({ message: validationError });
+
+      try {
+        const [existing] = await pool.execute(
+          "SELECT content_type FROM admin_articles WHERE id = ? LIMIT 1",
+          [id],
+        );
+        if (!existing.length) return response.status(404).json({ message: "Article or product review not found." });
+        if (existing[0].content_type !== article.contentType) {
+          return response.status(400).json({ message: "Content type cannot be changed while editing." });
+        }
+
+        await pool.execute(
+          `UPDATE admin_articles
+           SET title = ?, product_name = ?, description = ?, product_features = ?, image_url = ?, rating = ?, buy_link = ?, buy_links = ?, more_details = ?
+           WHERE id = ?`,
+          [
+            article.title,
+            article.productName,
+            article.description,
+            article.productFeatures.length ? JSON.stringify(article.productFeatures) : null,
+            article.imageUrl,
+            article.rating,
+            article.buyLink,
+            article.buyLinks.length ? JSON.stringify(article.buyLinks) : null,
+            article.moreDetails,
+            id,
+          ],
+        );
+        const [articles] = await pool.execute(
+          "SELECT id, content_id, content_type, title, product_name, description, product_features, image_url, rating, buy_link, buy_links, more_details, created_at FROM admin_articles WHERE id = ? LIMIT 1",
+          [id],
+        );
+        return response.json({ article: normalizeArticle(articles[0]) });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
+    async deleteArticle(request, response, next) {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) {
+        return response.status(400).json({ message: "Invalid article id." });
+      }
+      try {
+        const [result] = await pool.execute("DELETE FROM admin_articles WHERE id = ?", [id]);
+        if (!result.affectedRows) {
+          return response.status(404).json({ message: "Article or product review not found." });
+        }
+        return response.status(204).end();
+      } catch (error) {
+        return next(error);
+      }
+    },
+
     async listServices(request, response, next) {
       try {
         const [services] = await pool.query(
