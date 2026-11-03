@@ -1,0 +1,136 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { MessageSquare, Star } from "lucide-react";
+import api from "../../api";
+import PageContainer from "../CommenComponents/PageContainer";
+
+function getReviewImageUrl(image) {
+  if (!image || /^(https?:|data:|blob:)/i.test(image)) return image || "";
+  const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000")
+    .replace(/\/$/, "");
+  return `${backendUrl}${image.startsWith("/") ? image : `/${image}`}`;
+}
+
+function HomeReviews() {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchFailed, setFetchFailed] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    api.get("/reviews/public")
+      .then((response) => {
+        if (active) setReviews(Array.isArray(response.data?.reviews) ? response.data.reviews : []);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch published reviews:", error);
+        if (active) setFetchFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return (
+    <PageContainer className="py-4 sm:py-5">
+      <section aria-labelledby="customer-reviews-heading">
+        <div className="mb-4">
+          <h2
+            id="customer-reviews-heading"
+            className="flex items-center gap-2 text-base font-extrabold tracking-tight text-text-primary sm:text-lg"
+          >
+            <span className="h-5 w-1 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+            Customer Reviews
+          </h2>
+          <p className="mt-1 text-xs text-text-secondary sm:text-sm">
+            See what customers are saying about our products.
+          </p>
+        </div>
+
+        {loading ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="Loading customer reviews">
+            {Array.from({ length: 3 }, (_, index) => (
+              <div key={index} className="h-48 animate-pulse rounded-2xl bg-[#faf8ff]" aria-hidden="true" />
+            ))}
+          </div>
+        ) : fetchFailed ? (
+          <p className="rounded-xl bg-[#faf8ff] px-4 py-5 text-center text-sm text-text-secondary">
+            Customer reviews could not be loaded. Please try again later.
+          </p>
+        ) : reviews.length === 0 ? (
+          <p className="rounded-xl bg-[#faf8ff] px-4 py-5 text-center text-sm text-text-secondary">
+            No published reviews yet.
+          </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {reviews.map((review) => (
+              <article
+                key={review.id}
+                className="rounded-2xl border border-border bg-white p-4 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold text-text-primary">{review.user_name}</p>
+                    <p className="mt-1 text-[11px] text-text-secondary">
+                      {review.created_at ? new Date(review.created_at).toLocaleDateString() : ""}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-0.5" aria-label={`${review.rating} out of 5 stars`}>
+                    {Array.from({ length: 5 }, (_, index) => (
+                      <Star
+                        key={index}
+                        size={14}
+                        className={index < Number(review.rating)
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-gray-200"}
+                        aria-hidden="true"
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {review.product_name && (
+                  <Link
+                    to={review.product_id ? `/product/${review.product_id}` : "/shop"}
+                    className="mt-3 block truncate text-xs font-semibold text-primary hover:underline"
+                  >
+                    {review.product_name}
+                  </Link>
+                )}
+                <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-text-secondary">
+                  {review.comment}
+                </p>
+                {review.review_image && (
+                  <img
+                    src={getReviewImageUrl(review.review_image)}
+                    alt={`Review by ${review.user_name}`}
+                    loading="lazy"
+                    className="mt-3 max-h-48 w-full rounded-xl object-cover"
+                  />
+                )}
+                {review.admin_reply && (
+                  <div className="mt-4 rounded-xl bg-[#faf7ff] p-3">
+                    <p className="flex items-center gap-1.5 text-[11px] font-bold text-primary">
+                      <MessageSquare size={13} aria-hidden="true" />
+                      Store reply
+                    </p>
+                    <p className="mt-1 whitespace-pre-line break-words text-xs leading-5 text-text-secondary">
+                      {review.admin_reply}
+                    </p>
+                  </div>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+    </PageContainer>
+  );
+}
+
+export default HomeReviews;

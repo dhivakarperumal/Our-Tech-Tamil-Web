@@ -6,6 +6,7 @@ import OfferBanner from "./OfferBanner";
 import TechBanner from "./TechBanner";
 import TopOfferProducts from "./TopOfferProducts";
 import TopRatedProducts from "./TopRatedProducts";
+import HomeReviews from "./HomeReviews";
 
 function HomeProducts() {
   const [products, setProducts] = useState([]);
@@ -57,6 +58,7 @@ function HomeProducts() {
       {!fetchFailed && products.length > 0 && (
         <TopRatedProducts products={products} loading={loading} />
       )}
+      <HomeReviews />
     </div>
   );
 }

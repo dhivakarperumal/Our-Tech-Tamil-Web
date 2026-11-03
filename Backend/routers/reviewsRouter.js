@@ -36,6 +36,7 @@ const uploadReviewImage = multer({
 function createReviewsRouter(pool) {
   const router = express.Router();
   const controller = createReviewsController(pool);
+  router.get("/public", controller.listPublicReviews);
   router.use(requireAdmin);
 
   router.get("/admin/all", controller.listAdminReviews);
