@@ -725,14 +725,25 @@ function MyAddresses({ user }) {
   }
 
   return (
-    <div className="rounded-2xl border border-[#e9def5] bg-white p-6 sm:p-8">
-      <div className="flex items-center justify-between gap-3 border-b border-[#f0e8ff] pb-5">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><MapPin size={20} /></span>
-          <div><h2 className="text-lg font-extrabold text-[#1a0745]">My Addresses</h2><p className="text-xs text-gray-500">Manage your saved delivery addresses.</p></div>
+    <div className="overflow-hidden rounded-3xl border border-[#eee2fc] bg-white shadow-sm">
+      <div className="relative flex items-center justify-between gap-4 overflow-hidden border-b border-[#f0e6fb] bg-gradient-to-r from-white via-[#fcf8ff] to-[#f6eaff] px-5 py-6 sm:px-8 sm:py-7">
+        <span className="pointer-events-none absolute -bottom-16 right-1/4 h-32 w-64 rounded-[50%] bg-[#ead5ff]/45 blur-2xl" />
+        <div className="relative flex min-w-0 items-center gap-4">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#f3e8ff] text-[#7100bd] sm:h-16 sm:w-16">
+            <MapPin size={28} strokeWidth={2.2} />
+          </span>
+          <span className="hidden h-12 w-px bg-[#d9c0f1] sm:block" />
+          <div className="min-w-0">
+            <h2 className="text-xl font-extrabold tracking-tight text-[#1a0745] sm:text-2xl">My Addresses</h2>
+            <p className="mt-1 text-xs text-[#51446a] sm:text-sm">Manage your saved delivery addresses.</p>
+          </div>
         </div>
-        <button type="button" onClick={addAddress} className="inline-flex items-center gap-2 rounded-xl bg-primary px-3 py-2 text-xs font-bold text-white transition hover:bg-primary-dark">
-          <Plus size={15} /> Add address
+        <button
+          type="button"
+          onClick={addAddress}
+          className="relative inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full bg-gradient-to-r from-[#7900dc] to-[#5900bd] px-3.5 py-2.5 text-xs font-bold text-white shadow-md shadow-purple-200 transition hover:brightness-110 sm:px-5 sm:py-3 sm:text-sm"
+        >
+          <Plus size={18} /> <span className="hidden sm:inline">Add Address</span><span className="sm:hidden">Add</span>
         </button>
       </div>
       {editingAddressId !== null && (
@@ -808,23 +819,62 @@ function MyAddresses({ user }) {
           <p className="text-xs text-gray-400">Addresses you use at checkout will be saved here.</p>
         </div>
       ) : (
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {addresses.map(function(address) {
+        <div className="grid gap-4 bg-[#fdfbff] p-5 sm:grid-cols-2 sm:p-7">
+          {addresses.map(function(address, index) {
+            var addressText = [
+              address.street_address,
+              address.city,
+              address.district,
+              address.state,
+              address.zip_code,
+              address.country,
+            ].filter(Boolean).join(", ");
             return (
-              <article key={address.id} className="rounded-xl border border-[#e9def5] bg-[#faf8ff] p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="font-bold text-[#1a0745]">{address.recipient_name}</h3>
-                    <p className="mt-1 text-sm text-gray-600">{address.phone}</p>
+              <article
+                key={address.id}
+                className={"relative rounded-2xl border bg-gradient-to-br from-white via-white to-[#fbf6ff] p-4 shadow-[0_5px_16px_rgba(80,35,125,0.06)] transition hover:-translate-y-0.5 hover:shadow-[0_9px_22px_rgba(80,35,125,0.11)] sm:p-5 " + (index === 0 ? "border-[#bd7aff] ring-1 ring-[#ead2ff]" : "border-[#eee1fb]")}
+              >
+                {index === 0 && (
+                  <span className="absolute -top-2 left-4 rounded-full bg-gradient-to-r from-[#7900dc] to-[#5900bd] px-3 py-1 text-[9px] font-extrabold uppercase tracking-wide text-white shadow-sm">
+                    Address 1
+                  </span>
+                )}
+                <div className={"flex items-start gap-4 " + (index === 0 ? "pt-2" : "")}>
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#f3e8ff] text-[#7100bd] sm:h-16 sm:w-16">
+                    <MapPin size={27} strokeWidth={1.8} />
                   </div>
-                  <div className="flex shrink-0 gap-2">
-                    <button type="button" onClick={function(){ editAddress(address); }} aria-label="Edit address" className="rounded-lg border border-[#e2d3f5] bg-white p-2 text-primary hover:bg-primary/5"><Pencil size={15} /></button>
-                    <button type="button" onClick={function(){ deleteAddress(address); }} aria-label="Delete address" className="rounded-lg border border-rose-200 bg-white p-2 text-rose-600 hover:bg-rose-50"><Trash2 size={15} /></button>
+                  <span className="hidden h-16 w-px shrink-0 bg-[#e6d7f6] sm:block" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="break-words text-base font-extrabold text-[#1a0745] sm:text-lg">{address.recipient_name}</h3>
+                      <div className="flex shrink-0 gap-2">
+                        <button
+                          type="button"
+                          onClick={function(){ editAddress(address); }}
+                          aria-label={"Edit address for " + address.recipient_name}
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-[#e6d3fa] bg-white text-[#7100bd] transition hover:bg-[#f5eaff]"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={function(){ deleteAddress(address); }}
+                          aria-label={"Delete address for " + address.recipient_name}
+                          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-rose-200 bg-white text-rose-600 transition hover:bg-rose-50"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="mt-2 flex items-center gap-2 text-sm font-bold text-[#40315d]">
+                      <Phone size={15} className="shrink-0 text-[#7100bd]" /> {address.phone}
+                    </p>
+                    <p className="mt-2 flex items-start gap-2 text-sm leading-6 text-[#51446a]">
+                      <MapPin size={16} className="mt-1 shrink-0 text-[#7100bd]" />
+                      <span className="break-words">{addressText || "Address details unavailable"}</span>
+                    </p>
                   </div>
                 </div>
-                <p className="mt-3 whitespace-pre-line text-sm leading-6 text-gray-600">
-                  {[address.street_address, address.city, address.district, address.state, address.zip_code, address.country].filter(Boolean).join(", ")}
-                </p>
               </article>
             );
           })}
