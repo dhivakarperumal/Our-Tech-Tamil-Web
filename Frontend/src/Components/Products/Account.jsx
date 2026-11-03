@@ -967,14 +967,14 @@ function Account() {
             aria-labelledby="logout-dialog-title"
             className="w-full max-w-md overflow-hidden rounded-3xl border border-[#ead8ff] bg-white shadow-[0_30px_100px_rgba(27,4,53,0.35)]"
           >
-            <header className="bg-white px-6 pb-5 pt-6 sm:px-8">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8509c9] to-[#5900a8] text-white shadow-md shadow-purple-200">
+            <header className="bg-white px-6 pb-5 pt-6 text-center sm:px-8">
+              <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8509c9] to-[#5900a8] text-white shadow-md shadow-purple-200">
                 <LogOut size={23} />
               </span>
               <h2 id="logout-dialog-title" className="mt-4 text-xl font-extrabold text-[#1a0745]">Sign out of your account?</h2>
               <p className="mt-1 text-sm text-slate-500">You can sign back in anytime to access your account.</p>
             </header>
-            <div className="flex flex-col-reverse gap-3 bg-[#fdfbff] p-5 sm:flex-row sm:justify-end sm:p-6">
+            <div className="flex flex-col-reverse justify-center gap-3 bg-[#fdfbff] p-5 sm:flex-row sm:p-6">
               <button
                 type="button"
                 onClick={function(){ setShowLogout(false); }}
