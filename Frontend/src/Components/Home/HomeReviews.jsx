@@ -110,26 +110,36 @@ function HomeReviews() {
               {reviews.map((review) => (
                 <SwiperSlide key={review.id} className="!h-auto">
                   <article className="h-full rounded-2xl border border-border bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-text-primary">{review.user_name}</p>
-                    <p className="mt-1 text-[11px] text-text-secondary">
-                      {review.created_at ? new Date(review.created_at).toLocaleDateString() : ""}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-0.5" aria-label={`${review.rating} out of 5 stars`}>
-                    {Array.from({ length: 5 }, (_, index) => (
-                      <Star
-                        key={index}
-                        size={14}
-                        className={index < Number(review.rating)
-                          ? "fill-amber-400 text-amber-400"
-                          : "text-gray-200"}
-                        aria-hidden="true"
-                      />
-                    ))}
-                  </div>
-                </div>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        {review.review_image && (
+                          <img
+                            src={getReviewImageUrl(review.review_image)}
+                            alt=""
+                            loading="lazy"
+                            className="h-16 w-16 shrink-0 rounded-lg object-cover"
+                          />
+                        )}
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-text-primary">{review.user_name}</p>
+                          <p className="mt-1 text-[11px] text-text-secondary">
+                            {review.created_at ? new Date(review.created_at).toLocaleDateString() : ""}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-0.5" aria-label={`${review.rating} out of 5 stars`}>
+                        {Array.from({ length: 5 }, (_, index) => (
+                          <Star
+                            key={index}
+                            size={14}
+                            className={index < Number(review.rating)
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-gray-200"}
+                            aria-hidden="true"
+                          />
+                        ))}
+                      </div>
+                    </div>
 
                 {review.product_name && (
                   <Link
@@ -142,14 +152,6 @@ function HomeReviews() {
                 <p className="mt-3 whitespace-pre-line break-words text-sm leading-6 text-text-secondary">
                   {review.comment}
                 </p>
-                {review.review_image && (
-                  <img
-                    src={getReviewImageUrl(review.review_image)}
-                    alt={`Review by ${review.user_name}`}
-                    loading="lazy"
-                    className="mt-3 h-16 w-16 rounded-lg object-cover"
-                  />
-                )}
                 {review.admin_reply && (
                   <div className="mt-4 rounded-xl bg-[#faf7ff] p-3">
                     <p className="flex items-center gap-1.5 text-[11px] font-bold text-primary">
