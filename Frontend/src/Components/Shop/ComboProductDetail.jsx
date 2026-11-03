@@ -67,7 +67,9 @@ function ComboProductDetail() {
   const gallery = parseList(combo?.gallery_images).map(imageUrl).filter(Boolean);
   const products = parseList(combo?.products);
   const specifications = parseList(combo?.specifications);
-  const activeImage = selectedImage.id === id ? selectedImage.image : gallery[0] || "";
+  const activeImage = selectedImage.id === id && selectedImage.image
+    ? selectedImage.image
+    : gallery[0] || "";
   const minimumQuantity = Math.max(1, Number(combo?.minimum_order_quantity) || 1);
   const maximumQuantity = Number(combo?.maximum_order_quantity) || 10000;
   const quantity = quantityState.id === id ? quantityState.value : minimumQuantity;
