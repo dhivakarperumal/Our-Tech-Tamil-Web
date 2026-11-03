@@ -306,6 +306,20 @@ function ComboProductDetail() {
                     Order quantity: {minimumQuantity}{maximumQuantity < 10000 ? `–${maximumQuantity}` : "+"}
                   </p>
 
+                  {specifications.length > 0 && (
+                    <section className="mt-6 border-t border-border pt-5">
+                      <h2 className="text-lg font-black text-slate-900">Combo specifications</h2>
+                      <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                        {specifications.map((specification, index) => (
+                          <div key={`${specification.key}-${index}`} className="rounded-xl bg-slate-50 p-3">
+                            <dt className="text-xs font-bold text-slate-500">{specification.key}</dt>
+                            <dd className="mt-1 text-sm text-slate-800">{specification.value}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </section>
+                  )}
+
                   {combo.description && (
                     <div className="mt-7 border-t border-border pt-5">
                       <h2 className="text-base font-bold text-text-primary">Combo details</h2>
@@ -417,20 +431,6 @@ function ComboProductDetail() {
                   </div>
                 ) : <p className="p-5 text-sm text-slate-500">Product details are currently unavailable.</p>}
               </section>
-
-              {specifications.length > 0 && (
-                <section className="mt-6 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
-                  <h2 className="text-lg font-black text-slate-900">Combo specifications</h2>
-                  <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                    {specifications.map((specification, index) => (
-                      <div key={`${specification.key}-${index}`} className="rounded-xl bg-slate-50 p-3">
-                        <dt className="text-xs font-bold text-slate-500">{specification.key}</dt>
-                        <dd className="mt-1 text-sm text-slate-800">{specification.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </section>
-              )}
 
               {(combo.return_policy || combo.delivery_information) && (
                 <section className="mt-6 grid gap-4 sm:grid-cols-2">
