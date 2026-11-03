@@ -885,23 +885,29 @@ const AddProducts = () => {
     return (
         <div className="product-editor-page space-y-6 rounded-3xl bg-[#f7f6fb] p-4 pb-20 md:p-6">
 
-            {/* Page Header */}
-            <div className="product-editor-heading flex flex-wrap items-center justify-between gap-4 pb-1">
-                <div className="flex items-center gap-3">
-                <button type="button" onClick={() => navigate(-1)} aria-label="Go back" className="flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 shadow-sm transition-all hover:border-violet-200 hover:text-[#1F0A3C]">
-                    <FiArrowLeft size={18} />
-                </button>
-                <div className="min-w-0">
-                    <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-600">Inventory management</p>
-                    <h1 className="text-xl font-extrabold tracking-tight text-[#1F0A3C] md:text-2xl">{isEdit ? 'Edit Product' : 'Add New Product'}</h1>
-                    <p className="mt-0.5 text-sm text-gray-500">Build a complete product listing, from details to stock.</p>
+            <header className="product-editor-heading relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#2e1065] via-[#4c1d95] to-[#86198f] text-white shadow-lg shadow-violet-950/10">
+                <div className="relative flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-7">
+                    <div className="flex min-w-0 items-center gap-4">
+                        <button
+                            type="button"
+                            onClick={() => navigate(-1)}
+                            aria-label="Go back"
+                            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/20"
+                        >
+                            <FiArrowLeft size={18} />
+                        </button>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-200">Inventory management</p>
+                            <h1 className="mt-1 text-2xl font-black tracking-tight sm:text-3xl">{isEdit ? "Edit Product" : "Add New Product"}</h1>
+                            <p className="mt-1 text-sm text-violet-100/80">Build a complete product listing, from details to stock.</p>
+                        </div>
+                    </div>
+                    <span className="inline-flex w-fit shrink-0 items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3.5 py-2 text-xs font-semibold text-white">
+                        <span className={`h-2 w-2 rounded-full ${formData.status === "Active" ? "bg-emerald-300" : "bg-gray-300"}`} />
+                        {formData.status === "Active" ? "Active listing" : "Inactive listing"}
+                    </span>
                 </div>
-                </div>
-                <span className="inline-flex items-center gap-2 rounded-full border border-violet-100 bg-white px-3.5 py-2 text-xs font-semibold text-gray-600 shadow-sm">
-                    <span className={`h-2 w-2 rounded-full ${formData.status === "Active" ? "bg-emerald-500" : "bg-gray-400"}`} />
-                    {formData.status === "Active" ? "Active listing" : "Inactive listing"}
-                </span>
-            </div>
+            </header>
 
             <form onSubmit={handleSubmit} className="product-editor-form grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
                 <div className={`space-y-5 lg:order-1 ${usesSideBySideProductLayout ? "lg:col-span-1" : "lg:col-span-2"}`}>
