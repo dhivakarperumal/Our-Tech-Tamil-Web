@@ -121,7 +121,7 @@ function HomeReviews() {
 
                 return (
                   <SwiperSlide key={review.id} className="!h-auto">
-                    <article className="flex h-full flex-col rounded-2xl border border-[#eadcf6] bg-white p-4 shadow-[0_8px_18px_rgba(47,20,78,0.08)]">
+                    <article className="flex h-full flex-col rounded-2xl border border-[#6b21a8] bg-[#f7effc] p-4 shadow-[0_0_10px_rgba(107,33,168,0.28),0_8px_18px_rgba(47,20,78,0.12)]">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-3">
                           {review.review_image && (
@@ -173,7 +173,7 @@ function HomeReviews() {
 
                       {hasStoreReply && (
                         <div className="mt-auto pt-5">
-                          <div className="rounded-2xl bg-[#f7effc] p-3.5">
+                          <div className="rounded-2xl bg-white p-3.5">
                             <button
                               type="button"
                               aria-expanded={isStoreReplyOpen}
