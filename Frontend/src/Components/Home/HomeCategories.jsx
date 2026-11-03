@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Boxes, ChevronRight } from "lucide-react";
 import { Autoplay } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -34,7 +35,8 @@ function CategoryCard({ category }) {
   const image = getCategoryImage(category.images);
 
   return (
-    <div
+    <Link
+      to={`/shop?category=${encodeURIComponent(category.name)}`}
       className="group flex h-[112px] cursor-pointer flex-col items-center justify-between rounded-xl border border-primary/10 bg-[#faf8ff] px-3 py-3 text-center transition duration-200 hover:-translate-y-0.5 hover:border-primary/50 hover:bg-[#f1e8ff] hover:shadow-[0_8px_20px_rgba(75,0,200,0.18)] sm:h-[124px] sm:px-4"
       title={category.name}
     >
@@ -55,7 +57,7 @@ function CategoryCard({ category }) {
       <span className="w-full truncate text-xs font-bold leading-tight text-text-primary transition-colors group-hover:text-primary sm:text-[13px]">
         {category.name}
       </span>
-    </div>
+    </Link>
   );
 }
 

@@ -377,14 +377,24 @@ function createProductsRouter(pool) {
     try {
       const page = Math.max(1, Number.parseInt(request.query.page, 10) || 1);
       const limit = Math.min(100, Math.max(1, Number.parseInt(request.query.limit, 10) || 10));
+      const search = typeof request.query.search === "string" ? request.query.search.trim() : "";
+      const filters = ["status = 'Active'"];
+      const params = [];
+      if (search) {
+        filters.push(
+          "(name LIKE ? OR product_code LIKE ? OR model_number LIKE ? OR category LIKE ? OR cat_type LIKE ? OR subcategory LIKE ? OR brand LIKE ? OR description LIKE ?)",
+        );
+        params.push(...Array(8).fill(`%${search}%`));
+      }
+      const where = `WHERE ${filters.join(" AND ")}`;
       const [[countRows], [rows]] = await Promise.all([
-        pool.execute("SELECT COUNT(*) AS total FROM products WHERE status = 'Active'"),
+        pool.execute(`SELECT COUNT(*) AS total FROM products ${where}`, params),
         pool.execute(
           `SELECT ${PRODUCT_COLUMNS} FROM products
-           WHERE status = 'Active'
+           ${where}
            ORDER BY created_at DESC, id DESC
            LIMIT ? OFFSET ?`,
-          [limit, (page - 1) * limit],
+          [...params, limit, (page - 1) * limit],
         ),
       ]);
       const total = Number(countRows[0].total) || 0;

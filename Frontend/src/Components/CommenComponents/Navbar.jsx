@@ -1,5 +1,5 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
   ChevronRight,
@@ -28,6 +28,7 @@ const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const { cart, wishlist } = useContext(StoreContext);
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileMenu, setMobileMenu] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
@@ -39,11 +40,26 @@ const Navbar = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
-  const [search, setSearch] = useState("");
+  const [searchState, setSearchState] = useState({ route: "", value: "" });
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState({
+    query: "",
+    products: [],
+    loading: false,
+    error: false,
+  });
+  const urlSearch = location.pathname === "/shop"
+    ? new URLSearchParams(location.search).get("search") || ""
+    : "";
+  const currentRoute = `${location.pathname}${location.search}`;
+  const search = searchState.route === currentRoute ? searchState.value : urlSearch;
 
   const menuRef = useRef(null);
   const categoryRef = useRef(null);
   const pagesRef = useRef(null);
+  const searchInputRef = useRef(null);
+  const suggestionQuery = search.trim();
+  const currentSuggestions = suggestions.query === suggestionQuery ? suggestions : null;
 
   const confirmLogout = () => {
     logout();
@@ -57,11 +73,55 @@ const Navbar = () => {
       if (menuRef.current && !menuRef.current.contains(event.target)) setUserMenu(false);
       if (categoryRef.current && !categoryRef.current.contains(event.target)) setCategoryMenu(false);
       if (pagesRef.current && !pagesRef.current.contains(event.target)) setPagesMenu(false);
+      if (!(event.target instanceof Element) || !event.target.closest("[data-navbar-search]")) {
+        setSearchOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (!searchOpen || suggestionQuery.length < 2) return undefined;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await api.get("/products/public", {
+          params: { search: suggestionQuery, limit: 6 },
+          signal: controller.signal,
+        });
+        if (!controller.signal.aborted) {
+          setSuggestions({
+            query: suggestionQuery,
+            products: Array.isArray(response.data?.products) ? response.data.products : [],
+            loading: false,
+            error: false,
+          });
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Failed to fetch product search suggestions:", error);
+          setSuggestions({
+            query: suggestionQuery,
+            products: [],
+            loading: false,
+            error: true,
+          });
+        }
+      }
+    }, 250);
+
+    return () => {
+      clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [searchOpen, suggestionQuery]);
 
   useEffect(() => {
     let active = true;
@@ -108,13 +168,183 @@ const Navbar = () => {
     };
   }, [user]);
 
+  const navigateToSearch = (value, replace) => {
+    const params = new URLSearchParams();
+    if (value.trim()) params.set("search", value.trim());
+    const route = `/shop${params.size ? `?${params.toString()}` : ""}`;
+    setSearchState({ route, value });
+    navigate(route, { replace });
+  };
+
+  const handleSearchChange = (event) => {
+    const value = event.target.value;
+    const query = value.trim();
+    setSearchOpen(true);
+    setSuggestions({
+      query,
+      products: [],
+      loading: query.length >= 2,
+      error: false,
+    });
+    navigateToSearch(value, location.pathname === "/shop");
+  };
+
   const submitSearch = (event) => {
     event.preventDefault();
-    const params = new URLSearchParams();
-    if (search.trim()) params.set("search", search.trim());
-    navigate(`/shop${params.size ? `?${params.toString()}` : ""}`);
+    navigateToSearch(search, location.pathname === "/shop");
+    setSearchOpen(false);
     setMobileMenu(false);
   };
+
+  const renderSearchSuggestions = (id) => {
+    if (!searchOpen || !search.trim()) return null;
+
+    return (
+      <div
+        role="listbox"
+        id={id}
+        aria-label="Product search suggestions"
+        className="absolute left-0 right-0 top-full z-[70] mt-2 overflow-hidden rounded-xl border border-[#e7dff0] bg-white py-1 shadow-[0_12px_30px_rgba(38,13,66,0.2)]"
+      >
+        {suggestionQuery.length < 2 ? (
+          <p className="px-4 py-3 text-sm text-gray-500">Type at least 2 characters to search.</p>
+        ) : currentSuggestions?.loading || !currentSuggestions ? (
+          <p className="px-4 py-3 text-sm text-gray-500">Searching products...</p>
+        ) : currentSuggestions.error ? (
+          <p className="px-4 py-3 text-sm text-red-600">Could not load suggestions. Please try again.</p>
+        ) : currentSuggestions.products.length ? (
+          <>
+            {currentSuggestions.products.map((product) => (
+              <button
+                key={product.id}
+                type="button"
+                role="option"
+                aria-selected="false"
+                onClick={() => {
+                  setSearchOpen(false);
+                  setMobileMenu(false);
+                  navigate(`/product/${product.id}`);
+                }}
+                className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left transition hover:bg-[#faf7ff]"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-gray-800">{product.name}</span>
+                  <span className="mt-0.5 block truncate text-xs text-gray-500">
+                    {[product.brand, product.category || product.cat_type].filter(Boolean).join(" · ") || "View product"}
+                  </span>
+                </span>
+                <span className="shrink-0 text-sm font-bold text-primary">
+                  ₹{Number(product.offer_price ?? product.mrp ?? 0).toLocaleString("en-IN")}
+                </span>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                navigateToSearch(search, location.pathname === "/shop");
+                setSearchOpen(false);
+              }}
+              className="w-full border-t border-[#eee8f5] px-4 py-2.5 text-left text-xs font-bold text-primary hover:bg-[#faf7ff]"
+            >
+              See all search results
+            </button>
+          </>
+        ) : (
+          <p className="px-4 py-3 text-sm text-gray-500">No matching products found.</p>
+        )}
+      </div>
+    );
+  };
+
+  const renderDesktopNavigation = () => (
+    <div className="hidden min-w-0 flex-1 items-center justify-center xl:flex">
+      <div className="flex min-h-[42px] items-center justify-center gap-1 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-2 shadow-[0_8px_20px_rgba(30,8,50,0.2)]">
+        <NavLink to="/" end className={navClass}><House size={18} aria-hidden="true" />Home</NavLink>
+        <NavLink to="/shop" className={navClass}><ShoppingBag size={18} aria-hidden="true" />Shop</NavLink>
+        <div className="relative" ref={categoryRef}>
+          <button
+            type="button"
+            onClick={() => setCategoryMenu((open) => !open)}
+            aria-expanded={categoryMenu}
+            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
+          >
+            <Grid2X2 size={18} aria-hidden="true" />
+            Categories
+            <ChevronDown size={14} className={`transition-transform ${categoryMenu ? "rotate-180" : ""}`} aria-hidden="true" />
+          </button>
+          {categoryMenu && (
+            <div className="absolute left-0 top-full z-[60] mt-3 w-72 overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-[0_18px_45px_rgba(37,12,69,0.2)] ring-1 ring-black/5">
+              <div className="flex items-center justify-between bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-4 py-3 text-white">
+                <div>
+                  <p className="text-sm font-bold">Shop by category</p>
+                  <p className="mt-0.5 text-[11px] text-white/75">Find something you love</p>
+                </div>
+                <span className="rounded-full bg-white/15 px-2 py-1 text-[10px] font-semibold">
+                  {categories.length} {categories.length === 1 ? "category" : "categories"}
+                </span>
+              </div>
+              <div className="max-h-72 overflow-y-auto p-2">
+                {categories.length ? categories.map((category) => (
+                  <NavLink
+                    key={category.id}
+                    to={`/shop?category=${encodeURIComponent(category.name)}`}
+                    onClick={() => setCategoryMenu(false)}
+                    className={({ isActive }) =>
+                      `group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition ${
+                        isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"
+                      }`
+                    }
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white">
+                        <Grid2X2 size={15} aria-hidden="true" />
+                      </span>
+                      <span className="truncate">{category.name}</span>
+                    </span>
+                    <ChevronRight size={15} className="shrink-0 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true" />
+                  </NavLink>
+                )) : <p className="px-3 py-5 text-center text-sm text-gray-500">No categories available</p>}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="relative" ref={pagesRef}>
+          <button
+            type="button"
+            onClick={() => setPagesMenu((open) => !open)}
+            aria-expanded={pagesMenu}
+            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
+          >
+            <FileText size={18} aria-hidden="true" />
+            Pages
+            <ChevronDown size={14} className={`transition-transform ${pagesMenu ? "rotate-180" : ""}`} aria-hidden="true" />
+          </button>
+          {pagesMenu && (
+            <div className="absolute right-0 top-full z-[60] mt-3 w-64 overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-[0_18px_45px_rgba(37,12,69,0.2)] ring-1 ring-black/5">
+              <div className="bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-4 py-3 text-white">
+                <p className="text-sm font-bold">Explore Our Store</p>
+                <p className="mt-0.5 text-[11px] text-white/75">More about us and what we offer</p>
+              </div>
+              <div className="space-y-1 p-2">
+                <NavLink to="/articles" onClick={() => setPagesMenu(false)} className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"}`}>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><FileText size={17} /></span>
+                  <span className="flex-1">Articles</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                </NavLink>
+                <NavLink to="/about" onClick={() => setPagesMenu(false)} className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"}`}>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><Users size={17} /></span>
+                  <span className="flex-1">About Us</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                </NavLink>
+                <NavLink to="/contactus" onClick={() => setPagesMenu(false)} className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"}`}>
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><Mail size={17} /></span>
+                  <span className="flex-1">Contact Us</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
+                </NavLink>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
   const navClass = ({ isActive }) =>
     `my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition ${
@@ -163,9 +393,9 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="relative bg-white shadow-[0_5px_18px_rgba(38,13,66,0.12)]">
+      <nav className="sticky top-0 z-50 bg-white shadow-[0_5px_18px_rgba(38,13,66,0.12)]">
       <PageContainer>
-        <div className="flex min-h-[60px] items-center justify-between gap-3 py-1.5 lg:min-h-[64px]">
+        <div className="flex min-h-[68px] items-center justify-between gap-3 py-2 lg:min-h-[72px]">
           <Link to="/" className="flex shrink-0 items-center" aria-label="Our Tech home">
             <img
               src="/images/logo.jpeg"
@@ -184,26 +414,25 @@ const Navbar = () => {
 
           <span className="hidden h-12 w-px shrink-0 bg-[#d8cce4] xl:block" aria-hidden="true" />
 
-          <form onSubmit={submitSearch} role="search" className="hidden min-w-0 max-w-[680px] flex-1 xl:flex">
-            <label htmlFor="desktop-product-search" className="sr-only">Search products</label>
-            <div className="flex w-full items-center overflow-hidden rounded-full border border-[#e7dff0] bg-white shadow-inner focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/10">
-              <Search size={19} className="ml-4 shrink-0 text-[#4c3b64]" aria-hidden="true" />
-              <input
-                id="desktop-product-search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search for products, brands and more..."
-                className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-gray-800 outline-none placeholder:text-gray-500"
-              />
-              <button type="submit" className="bg-gradient-to-r from-[#9d1db9] to-[#4b00c8] px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-110">
-                Search
-              </button>
-            </div>
-          </form>
+          {renderDesktopNavigation()}
 
           <span className="hidden h-12 w-px shrink-0 bg-[#d8cce4] xl:block" aria-hidden="true" />
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+            <div className="relative" data-navbar-search>
+              <button
+                type="button"
+                onClick={() => setSearchOpen((open) => !open)}
+                aria-label={searchOpen ? "Close product search" : "Open product search"}
+                aria-expanded={searchOpen}
+                aria-controls="navbar-product-search"
+                className={`relative flex h-8 w-8 items-center justify-center rounded-full border border-[#eee7f5] bg-white shadow-[0_3px_10px_rgba(34,12,60,0.10)] transition hover:-translate-y-0.5 sm:h-9 sm:w-9 ${
+                  searchOpen ? "text-primary" : "text-[#2b1745] hover:text-primary"
+                }`}
+              >
+                <Search size={20} aria-hidden="true" />
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => setWishlistOpen(true)}
@@ -235,143 +464,43 @@ const Navbar = () => {
           </div>
         </div>
 
-        <form onSubmit={submitSearch} role="search" className="pb-1.5 xl:hidden">
-          <label htmlFor="mobile-product-search" className="sr-only">Search products</label>
-          <div className="flex items-center overflow-hidden rounded-full border border-[#e7dff0] bg-white">
-            <Search size={17} className="ml-3 shrink-0 text-[#4c3b64]" aria-hidden="true" />
-            <input
-              id="mobile-product-search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search products, brands and more..."
-              className="min-w-0 flex-1 bg-transparent px-2.5 py-2 text-xs text-gray-800 outline-none placeholder:text-gray-500"
-            />
-            <button type="submit" aria-label="Search" className="bg-gradient-to-r from-[#9d1db9] to-[#4b00c8] px-4 py-2.5 text-white">
-              <Search size={15} aria-hidden="true" />
-            </button>
-          </div>
-        </form>
+        {searchOpen && (
+          <form
+            id="navbar-product-search"
+            onSubmit={submitSearch}
+            role="search"
+            data-navbar-search
+            className="relative mx-auto w-full max-w-[900px] pb-2 pt-1"
+          >
+            <label htmlFor="navbar-product-search-input" className="sr-only">Search products</label>
+            <div className="flex items-center overflow-hidden rounded-full border border-[#e7dff0] bg-white shadow-inner focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/10">
+              <Search size={18} className="ml-4 shrink-0 text-[#4c3b64]" aria-hidden="true" />
+              <input
+                ref={searchInputRef}
+                id="navbar-product-search-input"
+                value={search}
+                onChange={handleSearchChange}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setSearchOpen(false);
+                }}
+                placeholder="Search for products, brands and more..."
+                aria-autocomplete="list"
+                aria-controls="navbar-product-suggestions"
+                className="min-w-0 flex-1 bg-transparent px-3 py-2.5 text-sm text-gray-800 outline-none placeholder:text-gray-500"
+              />
+              <button
+                type="submit"
+                className="bg-gradient-to-r from-[#9d1db9] to-[#4b00c8] px-6 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+              >
+                Search
+              </button>
+            </div>
+            {renderSearchSuggestions("navbar-product-suggestions")}
+          </form>
+        )}
+
       </PageContainer>
       </nav>
-
-      <div className="sticky top-0 z-50 isolate hidden h-[58px] items-center justify-center bg-white xl:flex">
-        <svg
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[58px] w-full"
-          viewBox="0 0 2000 80"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <defs>
-            <linearGradient id="nav-wave-fill" x1="0" x2="1">
-              <stop offset="0%" stopColor="#7415a1" />
-              <stop offset="48%" stopColor="#350751" />
-              <stop offset="100%" stopColor="#7415a1" />
-            </linearGradient>
-            <linearGradient id="nav-wave-line" x1="0" x2="1">
-              <stop offset="0%" stopColor="#f4c844" />
-              <stop offset="50%" stopColor="#ffe77a" />
-              <stop offset="100%" stopColor="#f4c844" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M0 8 C110 8 100 48 220 55 C350 64 470 50 620 50 H1380 C1530 50 1650 64 1780 55 C1900 48 1890 8 2000 8 V80 H0 Z"
-            fill="url(#nav-wave-fill)"
-          />
-          <path
-            d="M0 8 C110 8 100 48 220 55 C350 64 470 50 620 50 H1380 C1530 50 1650 64 1780 55 C1900 48 1890 8 2000 8"
-            fill="none"
-            stroke="url(#nav-wave-line)"
-            strokeWidth="2"
-          />
-        </svg>
-        <div className="relative z-10 mx-auto w-full max-w-[740px] px-2">
-          <div className="flex min-h-[42px] items-center justify-center gap-3 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-4 shadow-[0_12px_26px_rgba(30,8,50,0.28)]">
-            <NavLink to="/" end className={navClass}><House size={19} aria-hidden="true" />Home</NavLink>
-            <NavLink to="/shop" className={navClass}><ShoppingBag size={19} aria-hidden="true" />Shop</NavLink>
-            <div className="relative" ref={categoryRef}>
-              <button
-                type="button"
-                onClick={() => setCategoryMenu((open) => !open)}
-                aria-expanded={categoryMenu}
-                className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
-              >
-                <Grid2X2 size={19} aria-hidden="true" />
-                Categories
-                <ChevronDown size={14} className={`transition-transform ${categoryMenu ? "rotate-180" : ""}`} aria-hidden="true" />
-              </button>
-              {categoryMenu && (
-                <div className="absolute left-0 top-full z-[60] mt-3 w-72 overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-[0_18px_45px_rgba(37,12,69,0.2)] ring-1 ring-black/5">
-                  <div className="flex items-center justify-between bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-4 py-3 text-white">
-                    <div>
-                      <p className="text-sm font-bold">Shop by category</p>
-                      <p className="mt-0.5 text-[11px] text-white/75">Find something you love</p>
-                    </div>
-                    <span className="rounded-full bg-white/15 px-2 py-1 text-[10px] font-semibold">
-                      {categories.length} {categories.length === 1 ? "category" : "categories"}
-                    </span>
-                  </div>
-                  <div className="max-h-72 overflow-y-auto p-2">
-                    {categories.length ? categories.map((category) => (
-                      <NavLink
-                        key={category.id}
-                        to={`/category/${category.slug || category.name}`}
-                        onClick={() => setCategoryMenu(false)}
-                        className={({ isActive }) =>
-                          `group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition ${
-                            isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"
-                          }`
-                        }
-                      >
-                        <span className="flex min-w-0 items-center gap-3">
-                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white">
-                            <Grid2X2 size={15} aria-hidden="true" />
-                          </span>
-                          <span className="truncate">{category.name}</span>
-                        </span>
-                        <ChevronRight size={15} className="shrink-0 text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" aria-hidden="true" />
-                      </NavLink>
-                    )) : <p className="px-3 py-5 text-center text-sm text-gray-500">No categories available</p>}
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="relative" ref={pagesRef}>
-              <button
-                type="button"
-                onClick={() => setPagesMenu((open) => !open)}
-                aria-expanded={pagesMenu}
-                className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
-              >
-                <FileText size={19} aria-hidden="true" />
-                Pages
-                <ChevronDown size={14} className={`transition-transform ${pagesMenu ? "rotate-180" : ""}`} aria-hidden="true" />
-              </button>
-              {pagesMenu && (
-                <div className="absolute left-0 top-full z-[60] mt-3 w-64 overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-[0_18px_45px_rgba(37,12,69,0.2)] ring-1 ring-black/5">
-                  <div className="bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-4 py-3 text-white">
-                    <p className="text-sm font-bold">Explore Our Store</p>
-                    <p className="mt-0.5 text-[11px] text-white/75">More about us and what we offer</p>
-                  </div>
-                  <div className="space-y-1 p-2">
-                    <NavLink to="/articles" onClick={() => setPagesMenu(false)} className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"}`}>
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><FileText size={17} /></span>
-                      <span className="flex-1">Articles</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
-                    </NavLink>
-                    <NavLink to="/about" onClick={() => setPagesMenu(false)} className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"}`}>
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><Users size={17} /></span>
-                      <span className="flex-1">About Us</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
-                    </NavLink>
-                    <NavLink to="/contactus" onClick={() => setPagesMenu(false)} className={({ isActive }) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${isActive ? "bg-[#f3eaff] font-semibold text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary"}`}>
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#f3eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><Mail size={17} /></span>
-                      <span className="flex-1">Contact Us</span><ChevronRight size={15} className="text-gray-400 transition group-hover:translate-x-0.5 group-hover:text-primary" />
-                    </NavLink>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {mobileMenu && (
         <div className="absolute inset-x-0 top-full z-[55] max-h-[calc(100dvh-120px)] overflow-y-auto border-t border-[#eee7f5] bg-white shadow-xl lg:hidden">
@@ -403,7 +532,7 @@ const Navbar = () => {
                 {categories.map((category) => (
                   <NavLink
                     key={category.id}
-                    to={`/category/${category.slug || category.name}`}
+                    to={`/shop?category=${encodeURIComponent(category.name)}`}
                     onClick={() => { setMobileCategory(false); setMobileMenu(false); }}
                     className="flex items-center justify-between rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"
                   >

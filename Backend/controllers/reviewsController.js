@@ -2,6 +2,23 @@ const REVIEW_STATUSES = new Set(["Pending", "Published", "Flagged"]);
 
 function createReviewsController(pool) {
   return {
+    async listPublicReviews(request, response, next) {
+      try {
+        const [reviews] = await pool.execute(
+          `SELECT r.id, r.product_id, p.name AS product_name, r.user_name,
+                  r.rating, r.comment, r.review_image, r.admin_reply, r.created_at
+           FROM reviews r
+           LEFT JOIN products p ON p.id = r.product_id
+           WHERE r.status = 'Published'
+           ORDER BY r.created_at DESC, r.id DESC
+           LIMIT 8`,
+        );
+        return response.json({ reviews });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
     async listAdminReviews(request, response, next) {
       const { status, rating, search } = request.query;
       const conditions = [];
