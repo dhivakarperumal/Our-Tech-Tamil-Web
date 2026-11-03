@@ -553,7 +553,7 @@ function Account() {
       <div className="bg-[#faf9fc] py-8 sm:py-12">
         <PageContainer>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-            <aside className="w-full shrink-0 lg:w-64">
+            <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:w-64 lg:self-start">
               <div className="rounded-2xl border border-[#e9def5] bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-3 border-b border-[#f0e8ff] pb-4">
                   <Avatar name={user.username} size="lg" />
@@ -577,7 +577,7 @@ function Account() {
               </div>
             </aside>
 
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
               {activeTab === "personal" && <PersonalDetails user={user} setUser={setUser} />}
               {activeTab === "orders"   && <MyOrders user={user} />}
               {activeTab === "address"  && <MyAddresses key={user.user_id} user={user} />}
