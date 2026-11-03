@@ -2,7 +2,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import {
   Camera,
-  ChevronRight,
+  CalendarDays,
+  Check,
+  CreditCard,
+  FileText,
   KeyRound,
   Lock,
   LogOut,
@@ -16,8 +19,10 @@ import {
   Plus,
   Save,
   Search,
+  ShoppingCart,
   ShoppingBag,
   Trash2,
+  Truck,
   User,
   UserRound,
   X,
@@ -142,7 +147,7 @@ function MyOrders({ user }) {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [search, setSearch] = useState("");
-  const [expanded, setExpanded] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
 
   useEffect(function() {
@@ -156,6 +161,15 @@ function MyOrders({ user }) {
     return function() { active = false; };
   }, [user?.user_id]);
 
+  useEffect(function() {
+    if (!selectedOrder) return undefined;
+    function closeOnEscape(event) {
+      if (event.key === "Escape") setSelectedOrder(null);
+    }
+    window.addEventListener("keydown", closeOnEscape);
+    return function() { window.removeEventListener("keydown", closeOnEscape); };
+  }, [selectedOrder]);
+
   const filtered = orders.filter(function(o) {
     var q = search.trim().toLowerCase();
     if (!q) return true;
@@ -167,6 +181,22 @@ function MyOrders({ user }) {
     if (/^(https?:|data:|blob:)/i.test(img)) return img;
     return backendUrl + (img.startsWith("/") ? img : "/" + img);
   }
+
+  var selectedOrderStep = selectedOrder
+    ? (selectedOrder.status === "Processing" || selectedOrder.status === "New")
+      ? 0
+      : selectedOrder.status === "Shipped"
+        ? 2
+        : Math.max(0, ORDER_STEPS.indexOf(selectedOrder.status || "Order Placed"))
+    : 0;
+  var selectedOrderItems = Array.isArray(selectedOrder?.items) ? selectedOrder.items : [];
+  var selectedOrderSubtotal = selectedOrderItems.reduce(function(total, item) {
+    var lineTotal = item.total === undefined || item.total === null
+      ? Number(item.price || 0) * Number(item.quantity || 0)
+      : Number(item.total);
+    return total + (Number.isFinite(lineTotal) ? lineTotal : 0);
+  }, 0);
+  var selectedOrderDiscount = Math.max(0, Number(selectedOrder?.discount_amount) || 0);
 
   return (
     <div className="rounded-2xl border border-[#e9def5] bg-white p-6 sm:p-8">
@@ -204,11 +234,9 @@ function MyOrders({ user }) {
             <div className="mt-4 space-y-3">
               {filtered.map(function(order) {
                 var status  = order.status || "Order Placed";
-                var stepIdx = (status === "Processing" || status === "New") ? 0 : status === "Shipped" ? 2 : Math.max(0, ORDER_STEPS.indexOf(status));
-                var isOpen  = expanded === order.id;
                 return (
                   <div key={order.id} className="overflow-hidden rounded-2xl border border-[#e9def5] bg-[#faf8ff] shadow-sm">
-                    <button type="button" onClick={function(){ setExpanded(isOpen ? null : order.id); }} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left">
+                    <button type="button" onClick={function(){ setSelectedOrder(order); }} aria-label={"View details for order " + (order.order_id || order.id)} className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-[#f5efff]">
                       <div className="min-w-0">
                         <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Order ID</p>
                         <p className="mt-0.5 font-extrabold text-[#1a0745]">#{order.order_id || order.id}</p>
@@ -217,65 +245,237 @@ function MyOrders({ user }) {
                       <div className="flex shrink-0 items-center gap-3">
                         <span className={"rounded-full border px-3 py-1 text-[11px] font-bold " + statusBadgeClass(status)}>{status}</span>
                         <strong className="text-sm text-[#1a0745]">Rs.{Number(order.total_amount || 0).toLocaleString("en-IN")}</strong>
-                        <ChevronRight size={16} className={"text-gray-400 transition-transform duration-200 " + (isOpen ? "rotate-90" : "")} />
+                        <Eye size={16} className="text-primary" />
                       </div>
                     </button>
-                    {isOpen && (
-                      <div className="border-t border-[#e9def5] px-5 pb-5 pt-4">
-                        {status !== "Cancelled" && (
-                          <div className="mb-5">
-                            <ol className="flex items-start justify-between gap-1">
-                              {ORDER_STEPS.map(function(s, i) {
-                                var done = stepIdx >= i;
-                                return (
-                                  <li key={s} className="flex flex-1 flex-col items-center gap-1 text-center">
-                                    <span className={"flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition " + (done ? "bg-primary text-white" : "bg-gray-100 text-gray-400")}>{done ? "v" : i+1}</span>
-                                    <span className={"text-[10px] font-semibold leading-tight " + (done ? "text-primary" : "text-gray-400")}>{s}</span>
-                                  </li>
-                                );
-                              })}
-                            </ol>
-                          </div>
-                        )}
-                        {status === "Cancelled" && (
-                          <p className="mb-4 rounded-xl bg-rose-50 p-3 text-sm text-rose-600">{order.cancellation_reason || "This order was cancelled."}</p>
-                        )}
-                        {order.items && order.items.length > 0 && (
-                          <div className="mb-4 space-y-2">
-                            <p className="mb-2 text-[11px] font-bold uppercase tracking-widest text-gray-400">Items</p>
-                            {order.items.map(function(item, idx) {
-                              var src = imgSrc(item.image);
-                              return (
-                                <div key={idx} className="flex items-center gap-3 rounded-xl border border-[#ede5f8] bg-white p-3">
-                                  {src ? <img src={src} alt={item.product_name} className="h-12 w-12 rounded-lg border border-[#e2d3f5] object-contain" /> : <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary"><Package size={20} /></span>}
-                                  <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-bold text-[#1a0745]">{item.product_name}</p>
-                                    <p className="text-xs text-gray-400">Qty: {item.quantity}{item.variant_color ? " - " + item.variant_color : ""}{item.variant_size ? " - " + item.variant_size : ""}</p>
-                                  </div>
-                                  <p className="shrink-0 text-sm font-bold text-primary">Rs.{Number(item.total || 0).toLocaleString("en-IN")}</p>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                        {(order.tracking_number || order.courier_name) && (
-                          <div className="mt-2 rounded-xl border border-[#ede5f8] bg-white p-3 text-xs text-gray-600">
-                            {order.tracking_number && <p>Tracking: <strong className="text-[#1a0745]">{order.tracking_number}</strong></p>}
-                            {order.courier_name    && <p>Courier: <strong className="text-[#1a0745]">{order.courier_name}</strong></p>}
-                          </div>
-                        )}
-                        <div className="mt-3 flex items-center justify-between border-t border-[#e9def5] pt-3">
-                          <span className="text-xs text-gray-400">Payment: <strong className="text-gray-600">{order.payment_method || "-"}</strong><span className="mx-2">-</span><strong className={order.payment_status === "Paid" ? "text-emerald-600" : "text-amber-600"}>{order.payment_status || "Pending"}</strong></span>
-                          <strong className="text-sm text-primary">Total: Rs.{Number(order.total_amount || 0).toLocaleString("en-IN")}</strong>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
           )}
         </>
+      )}
+      {selectedOrder && (
+        <div
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-[#150528]/55 p-3 backdrop-blur-sm sm:p-6"
+          onClick={function(event) {
+            if (event.target === event.currentTarget) setSelectedOrder(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="order-dialog-title"
+            className="flex max-h-[94dvh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-[#e9d8ff] bg-white shadow-[0_30px_100px_rgba(27,4,53,0.35)]"
+          >
+            <header className="relative flex items-center justify-between gap-4 overflow-hidden bg-gradient-to-r from-[#5b08b5] via-[#8509c9] to-[#4b078f] px-5 py-4 text-white sm:px-8 sm:py-5">
+              <span className="pointer-events-none absolute -right-8 -top-20 h-48 w-72 rotate-[-18deg] rounded-full border-[24px] border-white/5" />
+              <div className="relative flex min-w-0 items-center gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25 sm:h-14 sm:w-14">
+                  <Package size={27} />
+                </span>
+                <div className="min-w-0">
+                  <h3 id="order-dialog-title" className="text-xl font-extrabold sm:text-2xl">Order Details</h3>
+                  <p className="mt-0.5 text-xs text-purple-100 sm:text-sm">View complete information about your order</p>
+                </div>
+              </div>
+              <div className="relative flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={function(){ setSelectedOrder(null); }}
+                  aria-label="Close order details"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[#6505a7] shadow-sm transition hover:scale-105 hover:bg-purple-50 sm:h-10 sm:w-10"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+            </header>
+            <div className="min-h-0 overflow-y-auto bg-[#fdfbff]">
+              <div className="grid grid-cols-2 gap-3 border-b border-[#eee2fc] bg-white px-5 py-4 sm:grid-cols-4 sm:gap-0 sm:px-7">
+                <div className="flex min-w-0 items-center gap-3 sm:border-r sm:border-[#e8d9f9] sm:px-4 sm:first:pl-0">
+                  <span className="hidden text-[#8509c9] sm:block"><Package size={22} /></span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-slate-500">Order ID</p>
+                    <p className="truncate text-sm font-extrabold text-[#160b34]">#{selectedOrder.order_id || selectedOrder.id}</p>
+                  </div>
+                </div>
+                <div className="flex min-w-0 items-center gap-3 sm:border-r sm:border-[#e8d9f9] sm:px-4">
+                  <CalendarDays size={21} className="hidden shrink-0 text-[#8509c9] sm:block" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-slate-500">Order Date</p>
+                    <p className="truncate text-sm font-bold text-[#160b34]">{formatDate(selectedOrder.created_at)}</p>
+                  </div>
+                </div>
+                <div className="flex min-w-0 items-center gap-3 sm:border-r sm:border-[#e8d9f9] sm:px-4">
+                  <CreditCard size={21} className="hidden shrink-0 text-[#8509c9] sm:block" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-slate-500">Payment</p>
+                    <span className={"mt-0.5 inline-flex rounded-full px-3 py-0.5 text-xs font-bold " + (selectedOrder.payment_status === "Paid" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
+                      {selectedOrder.payment_status || "Pending"}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex min-w-0 items-center gap-3 sm:px-4 sm:pr-0">
+                  <Truck size={23} className="hidden shrink-0 text-[#8509c9] sm:block" />
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-slate-500">Order Status</p>
+                    <span className={"mt-0.5 inline-flex max-w-full truncate rounded-full border px-3 py-0.5 text-xs font-bold " + statusBadgeClass(selectedOrder.status || "Order Placed")}>
+                      {selectedOrder.status || "Order Placed"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="px-4 pt-4 sm:px-7 sm:pt-5">
+                {selectedOrder.status !== "Cancelled" ? (
+                  <section className="relative rounded-2xl border border-[#ead8ff] bg-gradient-to-r from-[#fcf8ff] via-[#f7efff] to-[#fcf8ff] px-3 py-5 sm:px-6 sm:py-6">
+                    <span className="absolute left-[10%] right-[10%] top-[2.15rem] h-1 rounded-full bg-[#ded6eb] sm:top-[2.55rem]" />
+                    <span
+                      className="absolute left-[10%] top-[2.15rem] h-1 rounded-full bg-gradient-to-r from-[#a30be0] to-[#6900bb] transition-all sm:top-[2.55rem]"
+                      style={{ width: `${selectedOrderStep * 20}%` }}
+                    />
+                    <ol className="relative grid grid-cols-5 gap-1">
+                      {ORDER_STEPS.map(function(step, index) {
+                        var complete = selectedOrderStep > index;
+                        var current = selectedOrderStep === index;
+                        return (
+                          <li key={step} className="flex min-w-0 flex-col items-center text-center">
+                            <span className={"z-10 flex h-7 w-7 items-center justify-center rounded-full ring-4 ring-[#f8f2ff] sm:h-9 sm:w-9 " + (complete || current ? "bg-gradient-to-br from-[#ad16e5] to-[#6900bd] text-white shadow-md shadow-purple-300/60" : "bg-[#c6c5d1] text-white")}>
+                              {step === "Out for Delivery" && current ? <Truck size={15} /> : complete ? <Check size={17} strokeWidth={3} /> : current ? <span className="h-2.5 w-2.5 rounded-full bg-white" /> : <Check size={15} />}
+                            </span>
+                            <span className={"mt-2 text-[9px] font-bold leading-tight sm:text-xs " + (complete || current ? "text-[#21103e]" : "text-slate-400")}>{step}</span>
+                            {current && <span className="mt-1 max-w-full truncate rounded-full bg-[#7900bd] px-2 py-0.5 text-[8px] font-bold text-white sm:text-[10px]">{step}</span>}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </section>
+                ) : (
+                  <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+                    <p className="font-bold">Order cancelled</p>
+                    <p className="mt-1">{selectedOrder.cancellation_reason || "This order was cancelled."}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid gap-4 px-4 py-4 sm:px-7 sm:pb-6 lg:grid-cols-[1.4fr_0.9fr]">
+                <section className="overflow-hidden rounded-2xl border border-[#e4d1ff] bg-white shadow-sm">
+                  <div className="flex items-center gap-2 border-b border-[#eee3fb] bg-gradient-to-r from-[#fbf6ff] to-white px-4 py-3">
+                    <ShoppingCart size={20} className="text-[#8509c9]" />
+                    <h4 className="font-extrabold text-[#1a0745]">Items <span className="text-[#8509c9]">({selectedOrderItems.length})</span></h4>
+                  </div>
+                  <div className="divide-y divide-[#eee7f6] px-4">
+                    {selectedOrderItems.map(function(item, index) {
+                      var src = imgSrc(item.image);
+                      return (
+                        <article key={item.product_id || item.combo_id || index} className="py-4">
+                          <div className="flex items-center gap-3">
+                            {src
+                              ? <img src={src} alt={item.product_name || item.name || "Order product"} className="h-16 w-16 shrink-0 rounded-xl border border-[#eee4f9] bg-[#fcf9ff] object-contain p-1.5 sm:h-20 sm:w-20" />
+                              : <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-[#eee4f9] bg-[#fcf9ff] text-[#8509c9] sm:h-20 sm:w-20"><Package size={25} /></span>}
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-extrabold text-[#181034] sm:text-base">{item.product_name || item.name || "Product"}</p>
+                              <p className="mt-1 text-xs text-slate-500">
+                                {item.variant_color ? `Color: ${item.variant_color}` : ""}
+                                {item.variant_color && item.variant_size ? " · " : ""}
+                                {item.variant_size ? `Size: ${item.variant_size}` : ""}
+                              </p>
+                              <p className="mt-1 text-xs font-medium text-slate-600">Qty: {item.quantity} · ₹{Number(item.price || 0).toLocaleString("en-IN")} each</p>
+                            </div>
+                            <p className="shrink-0 text-sm font-extrabold text-[#160b34] sm:text-base">₹{Number(item.total || 0).toLocaleString("en-IN")}</p>
+                          </div>
+                          {Array.isArray(item.included_products) && item.included_products.length > 0 && (
+                            <div className="ml-[4.75rem] mt-3 rounded-xl bg-[#faf6ff] p-3 sm:ml-[5.75rem]">
+                              <p className="mb-2 text-[10px] font-extrabold uppercase tracking-wider text-[#8509c9]">Products in this combo</p>
+                              <ul className="space-y-1.5">
+                                {item.included_products.map(function(product) {
+                                  return (
+                                    <li key={product.id} className="flex justify-between gap-3 text-xs text-slate-600">
+                                      <span>{product.name}{product.product_code ? ` (${product.product_code})` : ""}</span>
+                                      <span className="shrink-0">Qty: {Number(product.quantity || 1) * Number(item.quantity || 1)}</span>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          )}
+                        </article>
+                      );
+                    })}
+                    {selectedOrderItems.length === 0 && (
+                      <p className="py-5 text-sm text-slate-500">Product details are unavailable.</p>
+                    )}
+                  </div>
+                </section>
+
+                <div className="space-y-3">
+                  <section className="rounded-2xl border border-[#e4d1ff] bg-white p-4 shadow-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <MapPin size={20} className="text-[#8509c9]" />
+                        <h4 className="font-extrabold text-[#1a0745]">Shipping Address</h4>
+                      </div>
+                      <span className="rounded-full bg-[#f3e4ff] px-2.5 py-1 text-[10px] font-bold text-[#7900bd]">Delivery</span>
+                    </div>
+                    <div className="mt-3 pl-7 text-xs leading-5 text-slate-600">
+                      <p className="font-extrabold text-[#181034]">{selectedOrder.customer_name || user?.username || "Customer"}</p>
+                      <p>{[
+                        selectedOrder.street_address,
+                        selectedOrder.city,
+                        selectedOrder.district,
+                        selectedOrder.state,
+                        selectedOrder.zip_code,
+                        selectedOrder.country,
+                      ].filter(Boolean).join(", ") || "Address unavailable"}</p>
+                      {selectedOrder.customer_phone && <p className="mt-1 font-semibold text-[#4c3267]">{selectedOrder.customer_phone}</p>}
+                      {(selectedOrder.customer_email || user?.email) && <p className="break-all">{selectedOrder.customer_email || user?.email}</p>}
+                    </div>
+                  </section>
+
+                  <section className="overflow-hidden rounded-2xl border border-[#e4d1ff] bg-white shadow-sm">
+                    <div className="flex items-center gap-2 border-b border-[#eee3fb] bg-gradient-to-r from-[#fbf6ff] to-white px-4 py-3">
+                      <FileText size={19} className="text-[#8509c9]" />
+                      <h4 className="font-extrabold text-[#1a0745]">Price Summary</h4>
+                    </div>
+                    <div className="space-y-2.5 px-4 py-3 text-xs sm:text-sm">
+                      <div className="flex justify-between gap-3 text-slate-600">
+                        <span>Item Total ({selectedOrderItems.length} {selectedOrderItems.length === 1 ? "item" : "items"})</span>
+                        <strong className="text-[#181034]">₹{selectedOrderSubtotal.toLocaleString("en-IN")}</strong>
+                      </div>
+                      {selectedOrderDiscount > 0 && (
+                        <div className="flex justify-between gap-3 text-emerald-700">
+                          <span>Discount{selectedOrder.coupon_code ? ` (${selectedOrder.coupon_code})` : ""}</span>
+                          <strong>− ₹{selectedOrderDiscount.toLocaleString("en-IN")}</strong>
+                        </div>
+                      )}
+                      <div className="flex justify-between gap-3 border-t border-[#eee7f6] pt-3 text-sm font-extrabold text-[#7100b5]">
+                        <span>Total {selectedOrder.payment_status === "Paid" ? "Paid" : "Due"}</span>
+                        <span>₹{Number(selectedOrder.total_amount || 0).toLocaleString("en-IN")}</span>
+                      </div>
+                    </div>
+                  </section>
+
+                  {(selectedOrder.tracking_number || selectedOrder.courier_name) && (
+                    <section className="rounded-2xl border border-[#e4d1ff] bg-white p-4 shadow-sm">
+                      <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#8509c9]">Shipment</h4>
+                      {selectedOrder.courier_name && <p className="mt-2 text-sm text-slate-600">Courier: <strong className="text-[#181034]">{selectedOrder.courier_name}</strong></p>}
+                      {selectedOrder.tracking_number && <p className="mt-1 break-all text-sm text-slate-600">Tracking: <strong className="text-[#181034]">{selectedOrder.tracking_number}</strong></p>}
+                    </section>
+                  )}
+                </div>
+              </div>
+            </div>
+            <footer className="flex justify-end border-t border-[#eee2fc] bg-white px-5 py-3 sm:px-7">
+              <button
+                type="button"
+                onClick={function(){ setSelectedOrder(null); }}
+                className="rounded-xl bg-gradient-to-r from-[#8709c7] to-[#5c08a7] px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-purple-200 transition hover:brightness-110"
+              >
+                Close details
+              </button>
+            </footer>
+          </section>
+        </div>
       )}
     </div>
   );
