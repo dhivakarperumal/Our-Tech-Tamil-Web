@@ -1,7 +1,6 @@
 ﻿import { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
-  CalendarDays,
   Camera,
   ChevronRight,
   KeyRound,
@@ -87,16 +86,16 @@ function SelectBox({ icon: Icon, children, ...props }) {
 
 function PersonalDetails({ user, setUser }) {
   const { login } = useContext(AuthContext);
-  const [form, setForm] = useState({ username: user?.username || "", email: user?.email || "", phone: user?.phone || "", dob: user?.dob || "", gender: user?.gender || "" });
+  const [form, setForm] = useState({ username: user?.username || "", email: user?.email || "", phone: user?.phone || "" });
   const [saving, setSaving] = useState(false);
   const change = function(e) { setForm(function(p){ return { ...p, [e.target.name]: e.target.value }; }); };
-  const cancel = function() { setForm({ username: user?.username || "", email: user?.email || "", phone: user?.phone || "", dob: user?.dob || "", gender: user?.gender || "" }); };
+  const cancel = function() { setForm({ username: user?.username || "", email: user?.email || "", phone: user?.phone || "" }); };
   const save = async function(e) {
     e.preventDefault();
     if (!form.username.trim()) return toast.error("Full name is required.");
     setSaving(true);
     try {
-      const { data } = await api.put("/auth/profile", { username: form.username, phone: form.phone, dob: form.dob, gender: form.gender });
+      const { data } = await api.put("/auth/profile", { username: form.username, phone: form.phone });
       const updated = { ...user, ...data.user };
       setUser(updated);
       localStorage.setItem("user", JSON.stringify(updated));
@@ -122,9 +121,7 @@ function PersonalDetails({ user, setUser }) {
       <form onSubmit={save} className="mt-7 space-y-5">
         <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Full Name" required><InputBox icon={User} name="username" value={form.username} onChange={change} placeholder="Your full name" /></Field>
-          <Field label="Date of Birth"><InputBox icon={CalendarDays} name="dob" type="date" value={form.dob} onChange={change} /></Field>
           <Field label="Email Address" required><InputBox icon={Mail} name="email" type="email" value={form.email} disabled placeholder="you@example.com" /></Field>
-          <Field label="Gender"><SelectBox icon={User} name="gender" value={form.gender} onChange={change}><option value="">Select gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></SelectBox></Field>
           <Field label="Phone Number"><InputBox icon={Phone} name="phone" type="tel" value={form.phone} onChange={change} placeholder="+91 00000 00000" /></Field>
         </div>
         <div className="flex justify-end gap-3 pt-2">
