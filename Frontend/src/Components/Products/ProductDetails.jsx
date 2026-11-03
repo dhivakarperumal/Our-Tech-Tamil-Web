@@ -710,6 +710,21 @@ function ProductDetails() {
           )}
         </div>
       </div>
+      {relatedProducts.length > 0 && (
+        <section className="mt-10 sm:mt-14" aria-labelledby="related-products-heading">
+          <div className="mb-5">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">More to explore</p>
+            <h2 id="related-products-heading" className="mt-1 text-xl font-extrabold text-text-primary sm:text-2xl">
+              Related Products
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-5 lg:grid-cols-3 2xl:grid-cols-4">
+            {relatedProducts.map((relatedProduct) => (
+              <ProductCard key={relatedProduct.id} product={relatedProduct} compact dense />
+            ))}
+          </div>
+        </section>
+      )}
       <section className="mt-10 border-t border-border pt-8 sm:mt-14" aria-labelledby="product-reviews-heading">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div>
@@ -724,7 +739,7 @@ function ProductDetails() {
                 type="button"
                 onClick={() => reviewsSwiper.current?.slidePrev()}
                 aria-label="Previous product reviews"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-100 bg-white text-text-secondary shadow-sm transition hover:border-primary hover:text-primary"
               >
                 <ChevronLeft size={18} aria-hidden="true" />
               </button>
@@ -732,7 +747,7 @@ function ProductDetails() {
                 type="button"
                 onClick={() => reviewsSwiper.current?.slideNext()}
                 aria-label="Next product reviews"
-                className="flex h-9 w-9 items-center justify-center rounded-full border border-border text-text-secondary transition hover:border-primary hover:text-primary"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-violet-100 bg-white text-text-secondary shadow-sm transition hover:border-primary hover:text-primary"
               >
                 <ChevronRight size={18} aria-hidden="true" />
               </button>
@@ -741,7 +756,7 @@ function ProductDetails() {
         </div>
 
         {!reviewsLoading && !reviewsFailed && (
-          <div className="mb-6 grid gap-5 rounded-xl border border-border bg-white p-4 sm:grid-cols-[minmax(160px,0.7fr)_1.3fr] sm:items-center sm:p-5">
+          <div className="mb-6 grid gap-5 rounded-2xl border border-violet-100 bg-white p-5 shadow-[0_8px_24px_rgba(75,0,200,0.04)] sm:grid-cols-[minmax(180px,0.7fr)_1.3fr] sm:items-center sm:p-6">
             <div className="text-center sm:border-r sm:border-border sm:pr-5">
               <p className="text-4xl font-extrabold text-text-primary">
                 {reviewRatings.length ? reviewAverage.toFixed(1) : "—"}
@@ -749,19 +764,19 @@ function ProductDetails() {
               </p>
               <div className="mt-1 flex justify-center text-amber-500" aria-label={`${reviewAverage.toFixed(1)} out of 5 stars`}>
                 {[1, 2, 3, 4, 5].map((star) => (
-                  <Star key={star} size={17} fill={star <= Math.round(reviewAverage) ? "currentColor" : "none"} />
+                  <Star key={star} size={19} fill={star <= Math.round(reviewAverage) ? "currentColor" : "none"} />
                 ))}
               </div>
               <p className="mt-1 text-sm text-text-secondary">
                 {reviewRatings.length} {reviewRatings.length === 1 ? "rating" : "ratings"}
               </p>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {ratingBreakdown.map(({ rating, count }) => (
-                <div key={rating} className="grid grid-cols-[2.5rem_1fr_2rem] items-center gap-2 text-xs text-text-secondary">
-                  <span>{rating} star{rating === 1 ? "" : "s"}</span>
+                <div key={rating} className="grid grid-cols-[3rem_1fr_2rem] items-center gap-2 text-xs text-text-secondary">
+                  <span>{rating} {rating === 1 ? "star" : "stars"}</span>
                   <div
-                    className="h-2 overflow-hidden rounded-full bg-gray-100"
+                    className="h-2.5 overflow-hidden rounded-full bg-gray-100"
                     role="progressbar"
                     aria-label={`${rating} star ratings`}
                     aria-valuemin={0}
@@ -769,7 +784,7 @@ function ProductDetails() {
                     aria-valuenow={count}
                   >
                     <div
-                      className="h-full rounded-full bg-amber-400"
+                      className="h-full rounded-full bg-amber-400 transition-[width]"
                       style={{ width: `${reviewRatings.length ? (count / reviewRatings.length) * 100 : 0}%` }}
                     />
                   </div>
@@ -796,7 +811,7 @@ function ProductDetails() {
                 setReviewUserName(user.username || user.name || "");
                 setIsReviewModalOpen(true);
               }}
-              className="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white transition hover:bg-primary-dark"
+              className="rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-primary-dark"
             >
               Write a review
             </button>
@@ -823,17 +838,17 @@ function ProductDetails() {
               slidesPerView={1}
               spaceBetween={12}
               breakpoints={{
-                640: { slidesPerView: 1.5, spaceBetween: 16 },
-                900: { slidesPerView: 3, spaceBetween: 16 },
+                640: { slidesPerView: 2, spaceBetween: 16 },
+                1024: { slidesPerView: 3, spaceBetween: 18 },
               }}
               aria-label="Published product reviews"
             >
             {reviews.map((review) => (
               <SwiperSlide key={review.id} className="!h-auto">
-              <article className="h-full rounded-xl border border-border bg-white p-4 text-center">
+              <article className="h-full rounded-2xl border border-violet-100 bg-white p-5 text-center shadow-[0_6px_20px_rgba(75,0,200,0.04)]">
                 <div className="flex flex-col items-center gap-1">
-                  <span className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary" aria-hidden="true">
-                    <UserRound size={21} />
+                  <span className="mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-violet-100 text-primary" aria-hidden="true">
+                    <UserRound size={23} />
                   </span>
                   <h3 className="font-bold text-text-primary">{review.user_name}</h3>
                   <time className="text-xs text-text-secondary" dateTime={review.created_at}>
@@ -845,7 +860,7 @@ function ProductDetails() {
                     <Star key={star} size={15} fill={star <= Number(review.rating) ? "currentColor" : "none"} />
                   ))}
                 </div>
-                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-text-secondary">{review.comment}</p>
+                <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-text-secondary">{review.comment}</p>
                 {review.admin_reply && (
                   <div className="mt-4 rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50/90 to-fuchsia-50/70 p-3 text-left sm:p-4">
                     <p className="flex items-center justify-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wide text-violet-800 sm:justify-start">
@@ -1010,21 +1025,6 @@ function ProductDetails() {
             </form>
           </section>
         </div>
-      )}
-      {relatedProducts.length > 0 && (
-        <section className="mt-10 sm:mt-14" aria-labelledby="related-products-heading">
-          <div className="mb-5">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">More to explore</p>
-            <h2 id="related-products-heading" className="mt-1 text-xl font-extrabold text-text-primary sm:text-2xl">
-              Related Products
-            </h2>
-          </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
-            {relatedProducts.map((relatedProduct) => (
-              <ProductCard key={relatedProduct.id} product={relatedProduct} dense />
-            ))}
-          </div>
-        </section>
       )}
       </PageContainer>
     </>
