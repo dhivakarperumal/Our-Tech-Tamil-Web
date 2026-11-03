@@ -35,6 +35,24 @@ const emptyVideo = {
   follow_up_notes: "",
   status: "Active",
 };
+const youtubeVideoUrlIsValid = (value) => {
+  try {
+    const url = new URL(value.trim());
+    const hostname = url.hostname.toLowerCase();
+    const videoId = hostname === "youtu.be" || hostname === "www.youtu.be"
+      ? url.pathname.split("/").filter(Boolean)[0]
+      : hostname === "youtube.com" || hostname.endsWith(".youtube.com")
+        ? url.pathname === "/watch"
+          ? url.searchParams.get("v")
+          : ["embed", "shorts", "live"].includes(url.pathname.split("/").filter(Boolean)[0])
+            ? url.pathname.split("/").filter(Boolean)[1]
+            : ""
+        : "";
+    return /^[A-Za-z0-9_-]{11}$/.test(videoId || "");
+  } catch {
+    return false;
+  }
+};
 const inputClass = "mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100";
 const allowedDocumentTypes = new Set([
   "application/pdf",
@@ -76,6 +94,7 @@ const parseJsonArray = (value) => {
 const YoutubeVideos = () => {
   const [videos, setVideos] = useState([]);
   const [form, setForm] = useState(emptyVideo);
+  const [validationErrors, setValidationErrors] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingThumbnail, setUploadingThumbnail] = useState(false);
@@ -158,6 +177,11 @@ const YoutubeVideos = () => {
         throw new Error("The thumbnail upload did not return a saved image.");
       }
       setForm((current) => ({ ...current, thumbnail_image: data.image, thumbnail_url: "" }));
+      setValidationErrors((current) => {
+        const next = { ...current };
+        delete next.thumbnail_image;
+        return next;
+      });
       toast.success("Thumbnail image ready.");
     } catch (error) {
       console.error("Could not upload thumbnail image:", error);
@@ -218,6 +242,7 @@ const YoutubeVideos = () => {
         throw new Error("The server did not return a Video ID.");
       }
       setForm({ ...emptyVideo, video_code: data.video_code });
+      setValidationErrors({});
       setEditingVideoId(null);
       setIsAddModalOpen(true);
     } catch (error) {
@@ -240,19 +265,50 @@ const YoutubeVideos = () => {
       thumbnail_image: video.thumbnail_image || "",
       thumbnail_url: video.thumbnail_url || "",
     });
+    setValidationErrors({});
     setEditingVideoId(video.id);
     setIsAddModalOpen(true);
   };
 
   const submitVideo = async (event) => {
     event.preventDefault();
-    const invalidLink = form.application_links.find((link) =>
-      (link.title.trim() && !link.url.trim()) || (!link.title.trim() && link.url.trim())
-    );
-    if (invalidLink) {
-      toast.error("Every application link needs both a title and a URL.");
+    const errors = {};
+    if (form.title.trim().length < 2) {
+      errors.title = "Enter a video title with at least 2 characters.";
+    }
+    if (!youtubeVideoUrlIsValid(form.video_url)) {
+      errors.video_url = "Enter a valid YouTube video URL.";
+    }
+    if (!form.thumbnail_image && !form.thumbnail_url) {
+      errors.thumbnail_image = "Upload a thumbnail image.";
+    }
+    const invalidApplicationLink = form.application_links.some((link) => {
+      const title = link.title.trim();
+      const url = link.url.trim();
+      if (!title && !url) return false;
+      if (!title || !url) return true;
+      try {
+        const parsedUrl = new URL(url);
+        return !["http:", "https:"].includes(parsedUrl.protocol);
+      } catch {
+        return true;
+      }
+    });
+    if (invalidApplicationLink) {
+      errors.application_links = "Every application link needs a title and a valid HTTP or HTTPS URL.";
+    }
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      toast.error("Complete the required fields before saving.");
+      const firstInvalidField = Object.keys(errors)[0];
+      requestAnimationFrame(() => {
+        const field = document.querySelector(`[data-validation-field="${firstInvalidField}"]`);
+        field?.scrollIntoView({ behavior: "smooth", block: "center" });
+        field?.focus({ preventScroll: true });
+      });
       return;
     }
+    setValidationErrors({});
     setSaving(true);
     const payload = {
       ...form,
@@ -279,6 +335,7 @@ const YoutubeVideos = () => {
         ? current.map((video) => video.id === editingVideoId ? savedVideo : video)
         : [savedVideo, ...current]);
       setForm(emptyVideo);
+      setValidationErrors({});
       setEditingVideoId(null);
       setIsAddModalOpen(false);
       toast.success(editingVideoId ? "YouTube video updated." : "YouTube video added.");
@@ -435,9 +492,18 @@ const YoutubeVideos = () => {
 
             <form
               id="add-youtube-form"
+              noValidate
               onSubmit={submitVideo}
               className="min-h-0 flex-1 basis-0 space-y-5 overflow-x-hidden overflow-y-auto overscroll-y-contain p-5 sm:p-7"
             >
+              {Object.keys(validationErrors).length > 0 && (
+                <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                  <p className="font-bold">Please fix the following before saving:</p>
+                  <ul className="mt-1 list-inside list-disc space-y-0.5">
+                    {Object.values(validationErrors).map((message) => <li key={message}>{message}</li>)}
+                  </ul>
+                </div>
+              )}
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block text-sm font-semibold text-slate-700">
                   Video ID (Auto-generated)
@@ -454,11 +520,21 @@ const YoutubeVideos = () => {
                     required
                     minLength={2}
                     maxLength={160}
+                    data-validation-field="title"
+                    aria-invalid={Boolean(validationErrors.title)}
                     value={form.title}
-                    onChange={(event) => setForm({ ...form, title: event.target.value })}
+                    onChange={(event) => {
+                      setForm({ ...form, title: event.target.value });
+                      setValidationErrors((current) => {
+                        const next = { ...current };
+                        delete next.title;
+                        return next;
+                      });
+                    }}
                     placeholder="e.g. Apply for our latest opportunity"
                     className={inputClass}
                   />
+                  {validationErrors.title && <span className="mt-1 block text-xs font-medium text-rose-600">{validationErrors.title}</span>}
                 </label>
               </div>
 
@@ -468,14 +544,28 @@ const YoutubeVideos = () => {
                   required
                   type="url"
                   maxLength={2048}
+                  data-validation-field="video_url"
+                  aria-invalid={Boolean(validationErrors.video_url)}
                   value={form.video_url}
-                  onChange={(event) => setForm({ ...form, video_url: event.target.value })}
+                  onChange={(event) => {
+                    setForm({ ...form, video_url: event.target.value });
+                    setValidationErrors((current) => {
+                      const next = { ...current };
+                      delete next.video_url;
+                      return next;
+                    });
+                  }}
                   placeholder="https://www.youtube.com/watch?v=..."
                   className={inputClass}
                 />
+                {validationErrors.video_url && <span className="mt-1 block text-xs font-medium text-rose-600">{validationErrors.video_url}</span>}
               </label>
 
-              <section className="rounded-2xl border border-slate-200 p-4">
+              <section
+                className="rounded-2xl border border-slate-200 p-4"
+                data-validation-field="thumbnail_image"
+                tabIndex={-1}
+              >
                 <div className="mb-3">
                   <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
                     <ImagePlus className="h-4 w-4 text-violet-700" />
@@ -512,9 +602,14 @@ const YoutubeVideos = () => {
                     </>
                   )}
                 </div>
+                {validationErrors.thumbnail_image && <p className="mt-2 text-xs font-medium text-rose-600">{validationErrors.thumbnail_image}</p>}
               </section>
 
-              <section className="space-y-3 rounded-2xl border border-slate-200 p-4">
+              <section
+                className="space-y-3 rounded-2xl border border-slate-200 p-4"
+                data-validation-field="application_links"
+                tabIndex={-1}
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800">
@@ -569,6 +664,7 @@ const YoutubeVideos = () => {
                     </button>
                   </div>
                 ))}
+                {validationErrors.application_links && <p className="text-xs font-medium text-rose-600">{validationErrors.application_links}</p>}
               </section>
 
               <section className="space-y-3 rounded-2xl border border-slate-200 p-4">

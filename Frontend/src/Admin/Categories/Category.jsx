@@ -31,6 +31,139 @@ const CATEGORY_TYPES = [
     "Clothing & Fashion",
 ];
 
+const CategoryTypeDropdown = ({ value, onChange, invalid }) => {
+    const dropdownId = useId();
+    const triggerRef = useRef(null);
+    const menuRef = useRef(null);
+    const [isOpen, setIsOpen] = useState(false);
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [position, setPosition] = useState(null);
+    const selectedIndex = CATEGORY_TYPES.indexOf(value);
+
+    const updatePosition = useCallback(() => {
+        if (!triggerRef.current) return;
+        const rect = triggerRef.current.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom - 8;
+        const spaceAbove = rect.top - 8;
+        const openBelow = spaceBelow >= 180 || spaceBelow >= spaceAbove;
+        const maxHeight = Math.max(100, Math.min(220, openBelow ? spaceBelow : spaceAbove));
+        setPosition({
+            left: Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8)),
+            top: openBelow ? rect.bottom + 6 : Math.max(8, rect.top - maxHeight - 6),
+            width: rect.width,
+            maxHeight,
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!isOpen) return undefined;
+        updatePosition();
+        const closeOnOutsideClick = (event) => {
+            if (!triggerRef.current?.contains(event.target) && !menuRef.current?.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("pointerdown", closeOnOutsideClick);
+        window.addEventListener("resize", updatePosition);
+        window.addEventListener("scroll", updatePosition, true);
+        return () => {
+            document.removeEventListener("pointerdown", closeOnOutsideClick);
+            window.removeEventListener("resize", updatePosition);
+            window.removeEventListener("scroll", updatePosition, true);
+        };
+    }, [isOpen, updatePosition]);
+
+    const open = () => {
+        setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
+        setIsOpen(true);
+    };
+
+    const select = (categoryType) => {
+        onChange(categoryType);
+        setIsOpen(false);
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            if (!isOpen) {
+                open();
+                return;
+            }
+            const direction = event.key === "ArrowDown" ? 1 : -1;
+            setActiveIndex(index => (index + direction + CATEGORY_TYPES.length) % CATEGORY_TYPES.length);
+        } else if (event.key === "Home" && isOpen) {
+            event.preventDefault();
+            setActiveIndex(0);
+        } else if (event.key === "End" && isOpen) {
+            event.preventDefault();
+            setActiveIndex(CATEGORY_TYPES.length - 1);
+        } else if ((event.key === "Enter" || event.key === " ") && isOpen) {
+            event.preventDefault();
+            select(CATEGORY_TYPES[activeIndex]);
+        } else if (event.key === "Escape" && isOpen) {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsOpen(false);
+        }
+    };
+
+    return (
+        <>
+            <button
+                ref={triggerRef}
+                id="category-type"
+                type="button"
+                role="combobox"
+                aria-label="Category Type"
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
+                aria-controls={`${dropdownId}-listbox`}
+                aria-activedescendant={isOpen ? `${dropdownId}-option-${activeIndex}` : undefined}
+                aria-invalid={invalid || undefined}
+                data-validation-field="categoryType"
+                onClick={() => isOpen ? setIsOpen(false) : open()}
+                onKeyDown={handleKeyDown}
+                className={`group flex w-full items-center justify-between gap-3 rounded-xl border bg-white px-4 py-2.5 text-left text-sm font-medium text-slate-800 shadow-sm transition-all focus:outline-none focus:ring-4 ${invalid ? "border-red-400 bg-red-50/40 focus:ring-red-100" : "border-gray-200 focus:border-purple-500 focus:ring-purple-100"} hover:border-purple-300`}
+            >
+                <span className={value ? "" : "text-slate-400"}>{value || "Select category type"}</span>
+                <FiChevronDown className={`shrink-0 text-gray-400 transition-transform group-hover:text-purple-700 ${isOpen ? "rotate-180 text-purple-700" : ""}`} />
+            </button>
+            {isOpen && position && createPortal(
+                <div
+                    ref={menuRef}
+                    id={`${dropdownId}-listbox`}
+                    role="listbox"
+                    aria-label="Category Type"
+                    className="fixed z-[10000] overflow-y-auto rounded-xl border border-violet-100 bg-white p-1.5 shadow-[0_16px_40px_rgba(31,10,60,0.18)]"
+                    style={position}
+                >
+                    {CATEGORY_TYPES.map((categoryType, index) => {
+                        const selected = categoryType === value;
+                        const active = index === activeIndex;
+                        return (
+                            <button
+                                key={categoryType}
+                                id={`${dropdownId}-option-${index}`}
+                                type="button"
+                                role="option"
+                                aria-selected={selected}
+                                onMouseEnter={() => setActiveIndex(index)}
+                                onClick={() => select(categoryType)}
+                                className={`flex min-h-10 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${selected ? "bg-violet-50 font-bold text-violet-700" : "font-medium text-gray-700"} ${active ? "bg-violet-100 text-slate-900" : "hover:bg-violet-50"}`}
+                            >
+                                {categoryType}
+                                {selected && <FiCheckCircle className="h-4 w-4 shrink-0 text-violet-700" />}
+                            </button>
+                        );
+                    })}
+                </div>,
+                document.body
+            )}
+        </>
+    );
+};
+
 const resolveCategoryImageUrl = (image) => {
     if (!image || typeof image !== "string") return "";
     if (/^(https?:|data:|blob:)/i.test(image)) return image;
@@ -84,6 +217,7 @@ const Category = () => {
 
     const [subcategories, setSubcategories] = useState([]);
     const [subInput, setSubInput] = useState("");
+    const [validationErrors, setValidationErrors] = useState({});
 
     useEffect(() => {
         if (!isModalOpen) return undefined;
@@ -132,6 +266,12 @@ const Category = () => {
             setSubcategories(current =>
                 current.includes(subcategory) ? current : [...current, subcategory]
             );
+            setValidationErrors(current => {
+                if (!current.subcategories) return current;
+                const next = { ...current };
+                delete next.subcategories;
+                return next;
+            });
             setSubInput("");
         }
     };
@@ -144,11 +284,34 @@ const Category = () => {
     };
 
     const removeSubcategory = (subToRemove) => {
-        setSubcategories(subcategories.filter(sub => sub !== subToRemove));
+        const remaining = subcategories.filter(sub => sub !== subToRemove);
+        setSubcategories(remaining);
+        if (!remaining.length) {
+            setValidationErrors(current => ({ ...current, subcategories: "Add at least one subcategory." }));
+        }
     };
 
     const handleInputChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData(current => ({ ...current, [name]: value }));
+        if (name === "name" && value.trim()) {
+            setValidationErrors(current => {
+                if (!current.name) return current;
+                const next = { ...current };
+                delete next.name;
+                return next;
+            });
+        }
+    };
+
+    const handleCategoryTypeChange = (categoryType) => {
+        setFormData(current => ({ ...current, categoryType }));
+        setValidationErrors(current => {
+            if (!current.categoryType) return current;
+            const next = { ...current };
+            delete next.categoryType;
+            return next;
+        });
     };
 
     const handleImageUpload = async (e) => {
@@ -174,6 +337,12 @@ const Category = () => {
                 throw new Error("The category image URL was not returned by the server.");
             }
             setFormData(p => ({ ...p, images: [response.data.image] }));
+            setValidationErrors(current => {
+                if (!current.image) return current;
+                const next = { ...current };
+                delete next.image;
+                return next;
+            });
             toast.success("Category image updated!");
         } catch (error) {
             console.error("Image upload failed:", error);
@@ -185,10 +354,34 @@ const Category = () => {
 
     const removeImage = () => {
         setFormData(p => ({ ...p, images: [] }));
+        setValidationErrors(current => ({ ...current, image: "Category image is required." }));
     };
 
     const handleSaveCategory = async () => {
-        if (!formData.catId || !formData.name) return;
+        const errors = {};
+        if (!formData.name.trim()) errors.name = "Category name is required.";
+        if (!formData.categoryType) errors.categoryType = "Select a category type.";
+        if (!subcategories.some(subcategory => typeof subcategory === "string" && subcategory.trim())) {
+            errors.subcategories = "Add at least one subcategory.";
+        }
+        if (!formData.images?.length || !formData.images[0]) errors.image = "Upload a category image.";
+        if (!formData.catId) {
+            toast.error("Category ID is unavailable. Close and reopen the form.");
+            return;
+        }
+        if (isImageUploading || isSavingCategory) return;
+        if (Object.keys(errors).length) {
+            setValidationErrors(errors);
+            const firstInvalidField = Object.keys(errors)[0];
+            requestAnimationFrame(() => {
+                const invalidElement = document.querySelector(`[data-validation-field="${firstInvalidField}"]`);
+                invalidElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+                invalidElement?.focus({ preventScroll: true });
+            });
+            toast.error("Please complete all required category fields.");
+            return;
+        }
+        setValidationErrors({});
 
         const newCatData = {
             ...formData,
@@ -237,6 +430,8 @@ const Category = () => {
     const resetModalForm = () => {
         setFormData({ catId: "", name: "", categoryType: "", description: "", subcategory: "", images: [] });
         setSubcategories([]);
+        setSubInput("");
+        setValidationErrors({});
         setIsEditing(false);
     };
 
@@ -267,6 +462,8 @@ const Category = () => {
                 : (category.images ? [category.images] : [])
         });
         setSubcategories(category.subcategory || []);
+        setSubInput("");
+        setValidationErrors({});
         setIsEditing(true);
         setIsModalOpen(true);
     };
@@ -589,6 +786,14 @@ const Category = () => {
                         </header>
 
                         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain p-5 sm:p-7">
+                            {Object.keys(validationErrors).length > 0 && (
+                                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3" role="alert" aria-live="polite">
+                                    <p className="text-sm font-bold text-red-800">Please complete the required category fields:</p>
+                                    <ul className="mt-1 list-inside list-disc text-xs text-red-700">
+                                        {Object.values(validationErrors).map((message, index) => <li key={`${message}-${index}`}>{message}</li>)}
+                                    </ul>
+                                </div>
+                            )}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Left Column: Inputs */}
                                 <div className="space-y-4">
@@ -603,29 +808,29 @@ const Category = () => {
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1.5">Category Name</label>
+                                        <label htmlFor="category-name" className="mb-1.5 block text-xs font-bold text-gray-700">Category Name *</label>
                                         <input
                                             type="text"
+                                            id="category-name"
                                             name="name"
                                             value={formData.name}
                                             onChange={handleInputChange}
+                                            data-validation-field="name"
+                                            aria-invalid={Boolean(validationErrors.name)}
+                                            aria-required="true"
                                             placeholder="e.g. Wireless Earbuds"
-                                            className="w-full bg-white border border-gray-200 text-slate-800 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all font-medium text-sm"
+                                            className={`w-full rounded-xl border px-4 py-2.5 text-sm font-medium text-slate-800 transition-all focus:outline-none focus:ring-2 ${validationErrors.name ? "border-red-400 bg-red-50/40 focus:border-red-500 focus:ring-red-100" : "border-gray-200 bg-white focus:border-purple-500 focus:ring-purple-500/20"}`}
                                         />
+                                        {validationErrors.name && <p className="mt-1.5 text-xs font-medium text-red-600">{validationErrors.name}</p>}
                                     </div>
                                     <div>
-                                        <label htmlFor="category-type" className="mb-1.5 block text-xs font-bold text-gray-700">Category Type</label>
-                                        <select
-                                            id="category-type"
+                                        <label htmlFor="category-type" className="mb-1.5 block text-xs font-bold text-gray-700">Category Type *</label>
+                                        <CategoryTypeDropdown
                                             value={formData.categoryType}
-                                            onChange={(event) => setFormData((current) => ({ ...current, categoryType: event.target.value }))}
-                                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition-all focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-                                        >
-                                            <option value="">Select category type</option>
-                                            {CATEGORY_TYPES.map((categoryType) => (
-                                                <option key={categoryType} value={categoryType}>{categoryType}</option>
-                                            ))}
-                                        </select>
+                                            onChange={handleCategoryTypeChange}
+                                            invalid={Boolean(validationErrors.categoryType)}
+                                        />
+                                        {validationErrors.categoryType && <p className="mt-1.5 text-xs font-medium text-red-600">{validationErrors.categoryType}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-700 mb-1.5">Description</label>
@@ -645,10 +850,10 @@ const Category = () => {
                                     {/* Multiple Subcategories Input */}
                                     <div>
                                         <label className="flex items-center justify-between text-xs font-bold text-gray-700 mb-1.5">
-                                            <span>Subcategories</span>
+                                            <span>Subcategories *</span>
                                             <span className="text-[10px] text-gray-400 font-medium">Press Enter or + to add</span>
                                         </label>
-                                        <div className="bg-white border border-gray-200 rounded-xl p-2 min-h-[100px] focus-within:ring-2 focus-within:ring-purple-500/20 focus-within:border-purple-500 transition-all">
+                                        <div data-validation-field="subcategories" tabIndex={-1} aria-invalid={Boolean(validationErrors.subcategories)} className={`rounded-xl border bg-white p-2 min-h-[100px] transition-all focus-within:ring-2 ${validationErrors.subcategories ? "border-red-400 ring-2 ring-red-100" : "border-gray-200 focus-within:border-purple-500 focus-within:ring-purple-500/20"}`}>
                                             <div className="flex flex-wrap gap-2 mb-2">
                                                 {subcategories.map((sub, idx) => (
                                                     <span key={idx} className="flex items-center gap-1.5 bg-purple-50 text-purple-600 px-2 py-1 rounded-lg text-xs font-bold">
@@ -684,11 +889,12 @@ const Category = () => {
                                                 </button>
                                             </div>
                                         </div>
+                                        {validationErrors.subcategories && <p className="mt-1.5 text-xs font-medium text-red-600">{validationErrors.subcategories}</p>}
                                     </div>
 
                                     {/* Image Dropzone */}
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-700 mb-1.5">Category Image</label>
+                                        <label className="block text-xs font-bold text-gray-700 mb-1.5">Category Image *</label>
                                         {formData.images && formData.images.length > 0 ? (
                                             <div className="flex items-center gap-3">
                                                 <img
@@ -710,7 +916,7 @@ const Category = () => {
                                                 </button>
                                             </div>
                                         ) : (
-                                            <label className="relative border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-purple-50/50 hover:border-purple-400 rounded-xl overflow-hidden transition-all cursor-pointer flex flex-col items-center justify-center p-6 text-center min-h-[100px]">
+                                            <label data-validation-field="image" tabIndex={-1} className={`relative flex min-h-[130px] cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed p-6 text-center transition-all hover:bg-purple-50/50 hover:border-purple-400 ${validationErrors.image ? "border-red-300 bg-red-50/40" : "border-gray-300 bg-gray-50"}`}>
                                                 <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                                                 <div className="w-8 h-8 bg-white shadow-sm rounded-full flex items-center justify-center mb-2 text-purple-500">
                                                     <FiUploadCloud size={16} />
@@ -719,6 +925,7 @@ const Category = () => {
                                                 <p className="text-[10px] text-gray-500 mt-0.5 font-medium">PNG, JPG up to 5MB</p>
                                             </label>
                                         )}
+                                        {validationErrors.image && <p className="mt-1.5 text-xs font-medium text-red-600">{validationErrors.image}</p>}
                                     </div>
                                 </div>
                             </div>
@@ -738,7 +945,7 @@ const Category = () => {
                             <button
                                 type="button"
                                 onClick={handleSaveCategory}
-                                disabled={!formData.name || isImageUploading || isSavingCategory}
+                                disabled={isImageUploading || isSavingCategory}
                                 className="admin-button-primary px-6 py-2.5 text-sm font-bold rounded-xl shadow-md active:scale-95 flex items-center gap-2"
                             >
                                 {isImageUploading ? 'Uploading image...' : isEditing ? 'Update Category' : 'Save Category'}

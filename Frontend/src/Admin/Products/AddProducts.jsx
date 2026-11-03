@@ -111,7 +111,7 @@ const createSlug = (value) => value
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
-const CustomDropdown = ({ name, value, options, placeholder, onChange, disabled = false, required = false, ariaLabel, className = "" }) => {
+const CustomDropdown = ({ name, value, options, placeholder, onChange, disabled = false, required = false, ariaLabel, validationField, invalid = false, className = "" }) => {
     const dropdownId = useId();
     const triggerRef = useRef(null);
     const menuRef = useRef(null);
@@ -208,6 +208,8 @@ const CustomDropdown = ({ name, value, options, placeholder, onChange, disabled 
                 role="combobox"
                 aria-label={ariaLabel}
                 aria-required={required || undefined}
+                aria-invalid={invalid || undefined}
+                data-validation-field={validationField}
                 aria-haspopup="listbox"
                 aria-expanded={isOpen}
                 aria-controls={`${dropdownId}-listbox`}
@@ -215,7 +217,7 @@ const CustomDropdown = ({ name, value, options, placeholder, onChange, disabled 
                 disabled={disabled}
                 onClick={() => isOpen ? setIsOpen(false) : openMenu()}
                 onKeyDown={handleKeyDown}
-                className={`product-dropdown-trigger group flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white px-3.5 py-2.5 text-left text-sm font-semibold text-gray-800 shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50/30 focus:outline-none focus:ring-4 focus:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+                className={`product-dropdown-trigger group flex w-full items-center justify-between gap-3 rounded-xl border ${invalid ? "border-red-400 bg-red-50/40" : "border-gray-200 bg-white"} px-3.5 py-2.5 text-left text-sm font-semibold text-gray-800 shadow-sm transition-all hover:border-violet-300 hover:bg-violet-50/30 focus:outline-none focus:ring-4 focus:ring-violet-100 disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
             >
                 <span className={`min-w-0 truncate ${selectedOption ? "" : "font-medium text-gray-400"}`}>
                     {selectedOption?.label ?? placeholder}
@@ -274,6 +276,7 @@ const AddProducts = () => {
     const [pendingUploads, setPendingUploads] = useState(0);
     const [editingSpecificationIndex, setEditingSpecificationIndex] = useState(null);
     const [specificationDraft, setSpecificationDraft] = useState({ key: "", value: "" });
+    const [validationErrors, setValidationErrors] = useState({});
 
     // Main State
     const [formData, setFormData] = useState({
@@ -466,16 +469,12 @@ const AddProducts = () => {
                     ]);
 
                     const categoryList = Array.isArray(catRes.data) ? catRes.data : [];
-                    const initialTypeCategory = categoryList.find(cat =>
-                        CATEGORY_TYPES.includes(cat.categoryType || cat.category_type)
-                    );
-                    const initialType = initialTypeCategory?.categoryType || initialTypeCategory?.category_type || "";
                     setCategories(categoryList);
                     setFormData(prev => ({
                         ...prev,
-                        cat_type: initialTypeCategory ? initialType : "",
-                        category: initialTypeCategory?.name || "",
-                        subcategory: initialTypeCategory?.subcategory?.[0] || "",
+                        cat_type: "",
+                        category: "",
+                        subcategory: "",
                         product_code: codeRes.data.latestCode || "OTP0001"
                     }));
                     setVariants([]);
@@ -503,6 +502,13 @@ const AddProducts = () => {
     const handleFormChange = (e) => {
         const { name, value } = e.target;
         if (name === "total_stock") setIsStockManuallyEdited(true);
+        setValidationErrors(prev => {
+            if (!prev[name] && !(name === "total_stock" && prev.color_stock)) return prev;
+            const next = { ...prev };
+            delete next[name];
+            if (name === "total_stock") delete next.color_stock;
+            return next;
+        });
         setFormData(prev => ({
             ...prev,
             [name]: value,
@@ -511,8 +517,15 @@ const AddProducts = () => {
     };
 
     const handleOfferPercentageChange = (e) => {
-        const percentage = Math.min(100, Math.max(0, Number(e.target.value) || 0));
-        setFormData(prev => ({ ...prev, offer: String(percentage) }));
+        const input = e.target.value;
+        const percentage = input === "" ? "" : String(Math.min(100, Math.max(0, Number(input) || 0)));
+        setValidationErrors(prev => {
+            if (!prev.offer) return prev;
+            const next = { ...prev };
+            delete next.offer;
+            return next;
+        });
+        setFormData(prev => ({ ...prev, offer: percentage }));
     };
 
     const addSpecification = () => {
@@ -564,14 +577,18 @@ const AddProducts = () => {
 
     const handleCategoryTypeChange = (e) => {
         const catType = e.target.value;
-        const firstCategory = categories.find(cat =>
-            (cat.categoryType || cat.category_type || "General") === catType
-        );
+        setValidationErrors(prev => {
+            const next = { ...prev };
+            delete next.cat_type;
+            delete next.category;
+            delete next.subcategory;
+            return next;
+        });
         setFormData(prev => ({
             ...prev,
             cat_type: catType,
-            category: firstCategory?.name || "",
-            subcategory: firstCategory?.subcategory?.[0] || "",
+            category: "",
+            subcategory: "",
             total_stock: "0",
             size_chart: "",
         }));
@@ -580,11 +597,16 @@ const AddProducts = () => {
     };
 
     const handleCategoryChange = (e) => {
-        const category = categoriesForType.find(cat => cat.name === e.target.value);
+        setValidationErrors(prev => {
+            const next = { ...prev };
+            delete next.category;
+            delete next.subcategory;
+            return next;
+        });
         setFormData(prev => ({
             ...prev,
             category: e.target.value,
-            subcategory: Array.isArray(category?.subcategory) ? category.subcategory[0] || "" : "",
+            subcategory: "",
             total_stock: "0",
         }));
         setVariants([]);
@@ -626,11 +648,22 @@ const AddProducts = () => {
         };
         setVariants([...variants, initialVariant]);
         setIsStockManuallyEdited(false);
+        setValidationErrors(prev => {
+            const next = { ...prev };
+            delete next.color_stock;
+            return next;
+        });
     };
 
     const removeVariant = (index) => {
         setVariants(variants.filter((_, i) => i !== index));
         setIsStockManuallyEdited(false);
+        setValidationErrors(prev => {
+            if (!prev.color_stock) return prev;
+            const next = { ...prev };
+            delete next.color_stock;
+            return next;
+        });
     };
 
     const handleVariantChange = (index, field, value) => {
@@ -644,6 +677,12 @@ const AddProducts = () => {
 
         updated[index] = newVariant;
         setVariants(updated);
+        setValidationErrors(prev => {
+            if (!prev.color_stock) return prev;
+            const next = { ...prev };
+            delete next.color_stock;
+            return next;
+        });
     };
 
     const toggleSize = (vIndex, size) => {
@@ -659,6 +698,12 @@ const AddProducts = () => {
         }
         setVariants(updated);
         setIsStockManuallyEdited(false);
+        setValidationErrors(prev => {
+            if (!prev.color_stock) return prev;
+            const next = { ...prev };
+            delete next.color_stock;
+            return next;
+        });
     };
 
     const handleStockChange = (vIndex, size, value) => {
@@ -667,6 +712,12 @@ const AddProducts = () => {
         updated[vIndex].sizesStock[size] = Math.max(0, parseInt(value, 10) || 0);
         setVariants(updated);
         setIsStockManuallyEdited(false);
+        setValidationErrors(prev => {
+            if (!prev.color_stock) return prev;
+            const next = { ...prev };
+            delete next.color_stock;
+            return next;
+        });
     };
 
     const handleColorStockChange = (vIndex, value) => {
@@ -674,6 +725,12 @@ const AddProducts = () => {
         updated[vIndex] = { ...updated[vIndex], quantity: Math.max(0, Number.parseInt(value, 10) || 0) };
         setVariants(updated);
         setIsStockManuallyEdited(false);
+        setValidationErrors(prev => {
+            if (!prev.color_stock) return prev;
+            const next = { ...prev };
+            delete next.color_stock;
+            return next;
+        });
     };
 
     const handleProductImageUpload = async (e) => {
@@ -695,6 +752,11 @@ const AddProducts = () => {
             compressedFiles.forEach(file => uploadData.append("images", file));
             const response = await api.post("/products/upload", uploadData);
             setFormData(prev => ({ ...prev, images: [...prev.images, ...response.data.images] }));
+            setValidationErrors(prev => {
+                const next = { ...prev };
+                delete next.product_image;
+                return next;
+            });
             toast.success("Product images uploaded.");
         } catch (error) {
             console.error("Product image upload error:", error);
@@ -794,6 +856,11 @@ const AddProducts = () => {
                     ? { ...variant, images: [...(variant.images || []), ...uploadedImages] }
                     : variant
             )));
+            setValidationErrors(prev => {
+                const next = { ...prev };
+                delete next.product_image;
+                return next;
+            });
             toast.success(`${uploadedImages.length} color images uploaded.`);
         } catch (error) {
             console.error("Product image upload error:", error);
@@ -811,6 +878,10 @@ const AddProducts = () => {
         )));
     };
 
+    const renderFieldError = (field) => validationErrors[field] ? (
+        <p className="mt-1.5 text-xs font-medium text-red-600" role="alert">{validationErrors[field]}</p>
+    ) : null;
+
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
 
@@ -818,11 +889,75 @@ const AddProducts = () => {
             toast.error("Save or cancel the specification you are editing before submitting.");
             return;
         }
-        if (!formData.name.trim() || !formData.product_code.trim() || !formData.slug.trim() ||
-            !formData.cat_type || !formData.category || !formData.mrp) {
-            toast.error("Complete the required product, category, SKU, and price fields.");
+        if (pendingUploads > 0) {
+            toast.error("Wait for product media uploads to finish.");
             return;
         }
+
+        const errors = {};
+        if (!formData.name.trim()) errors.name = "Product name is required.";
+        if (!formData.product_code.trim() || !formData.slug.trim()) {
+            errors.sku = "The generated SKU is missing. Refresh the form and try again.";
+        }
+        if (!formData.cat_type) errors.cat_type = "Select a category type.";
+        if (!formData.category) errors.category = "Select a category.";
+        if (!formData.subcategory) errors.subcategory = subcategories.length
+            ? "Select a subcategory."
+            : "No subcategory is available. Add one to this category first.";
+        if (!String(formData.rating).trim() || !Number.isFinite(Number(formData.rating)) ||
+            Number(formData.rating) < 1 || Number(formData.rating) > 5) {
+            errors.rating = "Select a rating.";
+        }
+        if (!formData.description.trim()) errors.description = "Full description is required.";
+
+        const mrp = Number(formData.mrp);
+        if (!String(formData.mrp).trim() || !Number.isFinite(mrp) || mrp <= 0) {
+            errors.mrp = "Enter an MRP greater than zero.";
+        }
+        const offer = Number(formData.offer);
+        if (!String(formData.offer).trim() || !Number.isFinite(offer) || offer < 0 || offer > 100) {
+            errors.offer = "Enter an offer percentage from 0 to 100.";
+        }
+
+        const hasProductImage = isNaturalCategory
+            ? formData.images.length > 0
+            : formData.images.length > 0 || variants.some(variant => variant.images?.length > 0);
+        if (!hasProductImage) errors.product_image = "Upload at least one product image.";
+
+        const stockQuantity = Number(formData.total_stock);
+        const invalidTotalStock = !String(formData.total_stock).trim() ||
+            !Number.isInteger(stockQuantity) || stockQuantity < 0;
+        const invalidVariantStock = !isNaturalCategory && (
+            !variants.length || variants.some(variant => {
+                if (!variant.colorName?.trim() || !/^#[0-9a-f]{6}$/i.test(variant.color || "")) return true;
+                if (isClothingCategory) {
+                    return !variant.selectedSizes?.length || variant.selectedSizes.some(size => {
+                        const quantity = Number(variant.sizesStock?.[size]);
+                        return !Number.isInteger(quantity) || quantity < 0;
+                    });
+                }
+                const quantity = Number(variant.quantity);
+                return !Number.isInteger(quantity) || quantity < 0;
+            })
+        );
+        if (invalidTotalStock || invalidVariantStock) {
+            errors.color_stock = isClothingCategory
+                ? "Add a color, select at least one size, and enter a valid stock quantity for each size."
+                : "Add a color and enter a valid non-negative stock quantity.";
+        }
+
+        if (Object.keys(errors).length) {
+            setValidationErrors(errors);
+            const firstInvalidField = Object.keys(errors)[0];
+            requestAnimationFrame(() => {
+                const invalidElement = document.querySelector(`[data-validation-field="${firstInvalidField}"]`);
+                invalidElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+                invalidElement?.focus({ preventScroll: true });
+            });
+            toast.error("Please complete all required fields before saving.");
+            return;
+        }
+        setValidationErrors({});
         if (Number(formData.offer_price) > Number(formData.mrp)) {
             toast.error("Offer price cannot be greater than MRP.");
             return;
@@ -832,11 +967,6 @@ const AddProducts = () => {
             toast.error("Expiry date cannot be before manufacturing date.");
             return;
         }
-        if (pendingUploads > 0) {
-            toast.error("Wait for product media uploads to finish.");
-            return;
-        }
-
         setLoading(true);
         try {
             const activeVariants = variants;
@@ -903,7 +1033,15 @@ const AddProducts = () => {
                 </span>
             </div>
 
-            <form onSubmit={handleSubmit} className="product-editor-form grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
+            <form noValidate onSubmit={handleSubmit} className="product-editor-form grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
+                {Object.keys(validationErrors).length > 0 && (
+                    <div className="lg:col-span-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3" role="alert" aria-live="polite">
+                        <p className="text-sm font-bold text-red-800">Please fix the required fields below:</p>
+                        <ul className="mt-1 list-inside list-disc text-xs text-red-700">
+                            {Object.values(validationErrors).map((message, index) => <li key={`${message}-${index}`}>{message}</li>)}
+                        </ul>
+                    </div>
+                )}
                 <div className={`space-y-5 lg:order-1 ${usesSideBySideProductLayout ? "lg:col-span-1" : "lg:col-span-2"}`}>
                     <div className={`grid grid-cols-1 gap-5 ${usesSideBySideProductLayout ? "lg:grid-cols-1" : "lg:grid-cols-2"}`}>
                     {/* Primary Categorization & Identity */}
@@ -911,7 +1049,7 @@ const AddProducts = () => {
                         <div className="product-editor-card-header flex items-center justify-between gap-3 border-b border-gray-100 px-5 py-4">
                             <div className="flex items-center gap-2">
                                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#3D01B1] to-[#1F0A3C] text-white shadow-sm"><FiLayers size={16} /></span>
-                                <div>
+                                <div data-validation-field="product_image" tabIndex={-1} className="rounded-xl outline-none">
                                     <h2 className="text-sm font-bold text-[#1F0A3C]">Product Foundation</h2>
                                     <p className="mt-0.5 text-[11px] text-gray-500">Identity, category and visibility</p>
                                 </div>
@@ -933,8 +1071,11 @@ const AddProducts = () => {
                                         options={categoryTypes}
                                         placeholder="Select category type first"
                                         ariaLabel="Category type"
+                                        validationField="cat_type"
+                                        invalid={Boolean(validationErrors.cat_type)}
                                         required
                                     />
+                                    {renderFieldError("cat_type")}
                                     {categoryTypes.length === 0 && <p className="text-xs text-amber-700">Create a category before adding products.</p>}
                                 </div>
                                 <div className="space-y-1">
@@ -946,26 +1087,32 @@ const AddProducts = () => {
                                         options={categoriesForType.map(cat => ({ value: cat.name, label: cat.name }))}
                                         placeholder="Select category"
                                         ariaLabel="Category"
+                                        validationField="category"
+                                        invalid={Boolean(validationErrors.category)}
                                         required
                                         disabled={!formData.cat_type}
                                     />
+                                    {renderFieldError("category")}
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Name *</label>
-                                    <input type="text" name="name" value={formData.name} onChange={handleFormChange} placeholder="e.g. Wireless Noise-Cancelling Headphones" className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm font-semibold text-gray-800" required />
+                                    <input type="text" name="name" value={formData.name} onChange={handleFormChange} data-validation-field="name" aria-invalid={Boolean(validationErrors.name)} placeholder="e.g. Wireless Noise-Cancelling Headphones" className={`w-full rounded-lg border px-3.5 py-2.5 text-sm font-semibold text-gray-800 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[#1F0A3C]/10 ${validationErrors.name ? "border-red-400 bg-red-50/40" : "border-gray-200 bg-gray-50 focus:border-[#1F0A3C]/40"}`} required />
+                                    {renderFieldError("name")}
                                 </div>
                                 <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Code / SKU *</label>
-                                    <input type="text" name="product_code" value={formData.product_code} placeholder="Generating..." className="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-200 rounded-lg text-sm font-semibold text-gray-500 cursor-not-allowed" readOnly required />
+                                    <input type="text" name="product_code" value={formData.product_code} placeholder="Generating..." data-validation-field="sku" aria-invalid={Boolean(validationErrors.sku)} className={`w-full rounded-lg border px-3.5 py-2.5 text-sm font-semibold text-gray-500 ${validationErrors.sku ? "border-red-400 bg-red-50/40" : "border-gray-200 bg-gray-100"} cursor-not-allowed`} readOnly required />
+                                    {renderFieldError("sku")}
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Subcategory</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Subcategory *</label>
+                                    <div data-validation-field="subcategory" tabIndex={-1} className="rounded-xl outline-none focus:ring-2 focus:ring-red-200">
                                     <CustomDropdown
                                         name="subcategory"
                                         value={formData.subcategory}
@@ -973,11 +1120,14 @@ const AddProducts = () => {
                                         options={subcategories}
                                         placeholder="Select subcategory"
                                         ariaLabel="Subcategory"
+                                        required
                                         disabled={!subcategories.length}
                                     />
+                                    </div>
+                                    {renderFieldError("subcategory")}
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Rating</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Rating *</label>
                                     <CustomDropdown
                                         name="rating"
                                         value={formData.rating}
@@ -985,7 +1135,11 @@ const AddProducts = () => {
                                         options={[1, 2, 3, 4, 5].map(rating => ({ value: String(rating), label: `${rating} Star${rating > 1 ? "s" : ""}` }))}
                                         placeholder="Select rating"
                                         ariaLabel="Rating"
+                                        validationField="rating"
+                                        invalid={Boolean(validationErrors.rating)}
+                                        required
                                     />
+                                    {renderFieldError("rating")}
                                 </div>
                             </div>
 
@@ -1015,8 +1169,9 @@ const AddProducts = () => {
                             </div>
 
                             <div className="space-y-1">
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Full Description</label>
-                                <textarea name="description" value={formData.description} onChange={handleFormChange} rows="5" placeholder="Describe product features, specifications, and what's included..." className="w-full px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm text-gray-700 resize-y" />
+                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Full Description *</label>
+                                <textarea name="description" value={formData.description} onChange={handleFormChange} data-validation-field="description" aria-invalid={Boolean(validationErrors.description)} required rows="5" placeholder="Describe product features, specifications, and what's included..." className={`w-full rounded-lg border px-3.5 py-2.5 text-sm text-gray-700 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[#1F0A3C]/10 resize-y ${validationErrors.description ? "border-red-400 bg-red-50/40" : "border-gray-200 bg-gray-50 focus:border-[#1F0A3C]/40"}`} />
+                                {renderFieldError("description")}
                             </div>
                             {isClothingCategory && (
                                 <div className="space-y-2">
@@ -1062,7 +1217,7 @@ const AddProducts = () => {
                         <div className="p-5 space-y-5">
                             <div>
                                 <div className="mb-3 flex items-center justify-between gap-3">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Images (up to 10)</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Images * (up to 10)</label>
                                     {formData.images.length < 10 && (
                                         <label className="admin-button-secondary cursor-pointer rounded-lg px-3 py-2 text-xs font-bold">
                                             Add Images
@@ -1082,12 +1237,13 @@ const AddProducts = () => {
                                         ))}
                                     </div>
                                 ) : (
-                                    <label className="flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 text-sm font-semibold text-gray-500 hover:border-violet-400 hover:bg-violet-50">
+                                    <label className={`flex min-h-28 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed text-sm font-semibold text-gray-500 hover:border-violet-400 hover:bg-violet-50 ${validationErrors.product_image ? "border-red-300 bg-red-50/40" : "border-gray-300 bg-gray-50"}`}>
                                         <FiUploadCloud size={20} className="mb-2 text-violet-500" />
                                         Choose product images
                                         <input type="file" accept="image/*" multiple onChange={handleProductImageUpload} className="hidden" />
                                     </label>
                                 )}
+                                {renderFieldError("product_image")}
                             </div>
                             <div className="space-y-2">
                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Product Video (optional)</label>
@@ -1120,15 +1276,17 @@ const AddProducts = () => {
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">MRP *</label>
                                     <div className="relative">
                                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-sm">₹</span>
-                                        <input type="number" name="mrp" min="0.01" step="0.01" value={formData.mrp} onChange={handleFormChange} className="w-full pl-7 pr-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:bg-white focus:border-[#1F0A3C]/40 focus:ring-2 focus:ring-[#1F0A3C]/10 transition-all text-sm font-bold text-gray-900" required />
+                                        <input type="number" name="mrp" min="0.01" step="0.01" value={formData.mrp} onChange={handleFormChange} data-validation-field="mrp" aria-invalid={Boolean(validationErrors.mrp)} className={`w-full rounded-lg border py-2.5 pl-7 pr-3 text-sm font-bold text-gray-900 outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[#1F0A3C]/10 ${validationErrors.mrp ? "border-red-400 bg-red-50/40" : "border-gray-200 bg-gray-50 focus:border-[#1F0A3C]/40"}`} required />
                                     </div>
+                                    {renderFieldError("mrp")}
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Offer (%)</label>
+                                    <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Offer (%) *</label>
                                     <div className="relative">
                                         <FiPercent className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500 w-3.5 h-3.5" />
-                                        <input type="number" min="0" max="100" step="0.01" value={formData.offer} onChange={handleOfferPercentageChange} className="w-full pl-7 pr-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg outline-none focus:bg-white focus:border-amber-400 text-sm font-bold text-amber-700" />
+                                        <input type="number" name="offer" min="0" max="100" step="0.01" value={formData.offer} onChange={handleOfferPercentageChange} data-validation-field="offer" aria-invalid={Boolean(validationErrors.offer)} className={`w-full rounded-lg border py-2.5 pl-7 pr-3 text-sm font-bold outline-none focus:bg-white ${validationErrors.offer ? "border-red-400 bg-red-50/40 text-red-700" : "border-amber-200 bg-amber-50 text-amber-700 focus:border-amber-400"}`} required />
                                     </div>
+                                    {renderFieldError("offer")}
                                 </div>
                                 <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Offer Price · Auto</label>
@@ -1139,15 +1297,16 @@ const AddProducts = () => {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider flex items-center justify-between">
-                                        Stock Quantity
+                                        Stock Quantity *
                                         {isStockManuallyEdited && !isClothingCategory && (
                                             <button onClick={resetStockCalculation} className="text-[9px] bg-[#1F0A3C]/10 text-[#1F0A3C] px-1.5 py-0.5 rounded hover:bg-[#1F0A3C] hover:text-white transition-colors uppercase tracking-widest">Auto</button>
                                         )}
                                     </label>
                                     <div className="relative">
                                         <FiActivity className={`absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${isStockManuallyEdited ? 'text-amber-500' : 'text-[#1F0A3C]'}`} />
-                                        <input type="number" name="total_stock" min="0" value={formData.total_stock} onChange={handleFormChange} readOnly={isClothingCategory} className={`w-full pl-7 pr-3 py-2.5 border rounded-lg outline-none transition-all text-sm font-bold ${isStockManuallyEdited ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-[#1F0A3C]/5 border-[#1F0A3C]/20 text-[#1F0A3C]'} ${isClothingCategory ? "cursor-not-allowed" : ""}`} />
+                                        <input type="number" name="total_stock" min="0" step="1" value={formData.total_stock} onChange={handleFormChange} data-validation-field={isNaturalCategory ? "color_stock" : undefined} aria-invalid={Boolean(isNaturalCategory && validationErrors.color_stock)} readOnly={isClothingCategory} required className={`w-full rounded-lg border py-2.5 pl-7 pr-3 text-sm font-bold outline-none transition-all ${validationErrors.color_stock && isNaturalCategory ? "border-red-400 bg-red-50/40 text-red-700" : isStockManuallyEdited ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-[#1F0A3C]/20 bg-[#1F0A3C]/5 text-[#1F0A3C]'} ${isClothingCategory ? "cursor-not-allowed" : ""}`} />
                                     </div>
+                                    {isNaturalCategory && renderFieldError("color_stock")}
                                 </div>
                                 {isNaturalCategory && (
                                     <div className="space-y-1">
@@ -1300,12 +1459,16 @@ const AddProducts = () => {
 
                 {/* Color and stock variants */}
                 {!isNaturalCategory && (
-                <div className={`space-y-4 lg:order-2 ${usesSideBySideProductLayout ? "lg:col-span-1" : "lg:col-span-2"}`}>
+                <div
+                    data-validation-field="color_stock"
+                    tabIndex={-1}
+                    className={`space-y-4 rounded-2xl outline-none lg:order-2 ${usesSideBySideProductLayout ? "lg:col-span-1" : "lg:col-span-2"} ${validationErrors.color_stock ? "ring-2 ring-red-200 ring-offset-2" : ""}`}
+                >
                     <div className="product-editor-card-header flex items-center justify-between gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3.5 shadow-sm">
                         <div className="flex min-w-0 items-center gap-3">
                             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-[#3D01B1]"><FiBox className="h-4 w-4" /></span>
                             <div>
-                                <h3 className="text-sm font-bold text-[#1F0A3C]">{isClothingCategory ? "Color & Size Stock" : "Color & Stock"}</h3>
+                                <h3 className="text-sm font-bold text-[#1F0A3C]">{isClothingCategory ? "Color & Size Stock *" : "Color & Stock *"}</h3>
                                 <p className="mt-0.5 text-[11px] text-gray-500">{variants.length} {variants.length === 1 ? "variant" : "variants"} · Add colors and manage availability</p>
                             </div>
                         </div>
@@ -1344,6 +1507,7 @@ const AddProducts = () => {
                                             ]}
                                             placeholder="Select Shade"
                                             ariaLabel={`Color name for variant ${vIndex + 1}`}
+                                            required
                                             className="py-2 text-xs"
                                         />
                                         <p className="mt-1 ml-0.5 text-[10px] text-gray-500">Hex: <span className="font-semibold text-[#1F0A3C]">{v.color}</span></p>
@@ -1409,7 +1573,7 @@ const AddProducts = () => {
                                         </div>
 
                                         {/* Images */}
-                                        <div className="space-y-3">
+                                        <div data-validation-field="product_image" tabIndex={-1} className="space-y-3 rounded-xl outline-none">
                                             <div className="flex flex-wrap items-end justify-between gap-2">
                                                 <div>
                                                     <p className="text-xs font-bold uppercase tracking-wider text-gray-600">Color images</p>
@@ -1439,6 +1603,8 @@ const AddProducts = () => {
                                     </div>
                         </div>
                     ))}
+                    {renderFieldError("product_image")}
+                    {renderFieldError("color_stock")}
                 </div>
                 )}
 

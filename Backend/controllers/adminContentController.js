@@ -111,6 +111,7 @@ function parseYoutubeVideoInput(body) {
   if (!parsedVideo) return { error: "Enter a valid YouTube video URL." };
   if (description.length > 5000) return { error: "Description must be 5,000 characters or fewer." };
   if (followUpNotes.length > 5000) return { error: "Follow-up notes must be 5,000 characters or fewer." };
+  if (!thumbnailImage && !thumbnailUrl) return { error: "Upload a thumbnail image." };
   if (thumbnailImage
     && !validateDataFile(thumbnailImage, new Set(["image/jpeg", "image/png", "image/webp"]), 3 * 1024 * 1024)
     && !validateUploadedYoutubeAsset(thumbnailImage, "youtube", "jpg|png|webp")
@@ -235,6 +236,9 @@ function parseArticleInput(body) {
   }
   if (contentType === "product_review" && (rating === null || !Number.isFinite(rating) || rating < 1 || rating > 5)) {
     return { error: "Product rating must be between 1 and 5." };
+  }
+  if (contentType === "product_review" && buyLinks.length === 0) {
+    return { error: "Add at least one buy link with a name and valid URL." };
   }
   if (buyLinks.some((link) => !link.name.trim() || !link.url.trim())) {
     return { error: "Each link needs both a name and a valid URL." };
