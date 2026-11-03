@@ -103,6 +103,9 @@ function ProductDetails() {
   });
   const [activeImage, setActiveImage] = useState("");
   const [imageFailed, setImageFailed] = useState(false);
+  const [isImageZoomOpen, setIsImageZoomOpen] = useState(false);
+  const [isImageHovered, setIsImageHovered] = useState(false);
+  const [imageZoomOrigin, setImageZoomOrigin] = useState("50% 50%");
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -148,6 +151,15 @@ function ProductDetails() {
   const ownReview = ownReviewMatchesUser ? ownReviewState.review : null;
   const ownReviewLoading = Boolean(user?.user_id) && (!ownReviewMatchesUser || ownReviewState.loading);
   const ownReviewFailed = ownReviewMatchesUser && ownReviewState.failed;
+
+  useEffect(() => {
+    if (!isImageZoomOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setIsImageZoomOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isImageZoomOpen]);
 
   useEffect(() => {
     return () => {
@@ -424,8 +436,24 @@ function ProductDetails() {
       <PageHeader title={product.name} align="left" />
       <PageContainer className="py-6 sm:py-10">
       <div className="grid gap-6 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-6 lg:grid-cols-2 lg:gap-10 lg:p-8">
-        <div>
-          <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-[#faf8ff] p-5 sm:aspect-[4/3]">
+        <div className="relative lg:z-20">
+          <button
+            type="button"
+            onClick={() => activeImage && !imageFailed && setIsImageZoomOpen(true)}
+            onPointerMove={(event) => {
+              if (event.pointerType !== "mouse") return;
+              const bounds = event.currentTarget.getBoundingClientRect();
+              const x = ((event.clientX - bounds.left) / bounds.width) * 100;
+              const y = ((event.clientY - bounds.top) / bounds.height) * 100;
+              setImageZoomOrigin(`${x}% ${y}%`);
+            }}
+            onPointerEnter={(event) => {
+              if (event.pointerType === "mouse" && activeImage && !imageFailed) setIsImageHovered(true);
+            }}
+            onPointerLeave={() => setIsImageHovered(false)}
+            aria-label={`View ${product.name} image enlarged`}
+            className="group relative flex aspect-square w-full cursor-zoom-in items-center justify-center overflow-hidden rounded-xl bg-[#faf8ff] p-5 sm:aspect-[4/3]"
+          >
             {activeImage && !imageFailed ? (
               <img
                 src={getImageUrl(activeImage)}
@@ -436,7 +464,49 @@ function ProductDetails() {
             ) : (
               <Package className="h-16 w-16 text-primary/35" strokeWidth={1.5} aria-hidden="true" />
             )}
-          </div>
+            {activeImage && !imageFailed && (
+              <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-600 opacity-0 shadow transition-opacity group-hover:opacity-100">
+                Move to zoom · click to enlarge
+              </span>
+            )}
+          </button>
+          {isImageHovered && activeImage && !imageFailed && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute left-[calc(100%+2.5rem)] top-0 z-30 hidden aspect-[4/3] w-full rounded-xl border border-border bg-white shadow-xl lg:block"
+              style={{
+                backgroundImage: `url("${getImageUrl(activeImage)}")`,
+                backgroundPosition: imageZoomOrigin,
+                backgroundRepeat: "no-repeat",
+                backgroundSize: "200% 200%",
+              }}
+            />
+          )}
+          {isImageZoomOpen && activeImage && !imageFailed && (
+            <div
+              className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 p-4 sm:p-8"
+              role="dialog"
+              aria-modal="true"
+              aria-label={`Enlarged image of ${product.name}`}
+              onClick={(event) => {
+                if (event.target === event.currentTarget) setIsImageZoomOpen(false);
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setIsImageZoomOpen(false)}
+                aria-label="Close enlarged image"
+                className="absolute right-4 top-4 flex h-11 w-11 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25"
+              >
+                <X size={22} aria-hidden="true" />
+              </button>
+              <img
+                src={getImageUrl(activeImage)}
+                alt={product.name}
+                className="max-h-[90vh] max-w-full object-contain"
+              />
+            </div>
+          )}
           {images.length > 1 && (
             <div className="mt-3 flex gap-2 overflow-x-auto">
               {images.map((image) => (
