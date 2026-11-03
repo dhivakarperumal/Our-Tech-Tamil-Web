@@ -24,6 +24,7 @@ const Checkout = React.lazy(() => import("./Components/Products/Checkout.jsx"));
 const Account = React.lazy(() => import("./Components/Products/Account.jsx"));
 const TrackOrders = React.lazy(() => import("./Components/Products/TrackOrders.jsx"));
 const Articles = React.lazy(() => import("./Components/Articles/Articles.jsx"));
+const YoutubeVideosPage = React.lazy(() => import("./Components/CommenComponents/YoutubeVideosPage.jsx"));
 const ContactUs = React.lazy(() => import("./Components/CommenComponents/ContactUs.jsx"));
 
 const Login = React.lazy(() => import("./Components/Auth/Login.jsx"));
@@ -69,6 +70,7 @@ const router = createBrowserRouter([
       { path: "about", element: <AboutUs /> },
       { path: "termsandconditions", element: <TermsAndConditions /> },
       { path: "articles", element: <Articles /> },
+      { path: "youtube-videos", element: <YoutubeVideosPage /> },
       { path: "contactus", element: <ContactUs /> },
       { path: "account", element: <Account /> },
       { path: "cart", element: <Cart /> },
