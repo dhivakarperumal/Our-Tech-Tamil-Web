@@ -121,7 +121,7 @@ function HomeReviews() {
 
                 return (
                   <SwiperSlide key={review.id} className="!h-auto">
-                    <article className="flex h-full flex-col rounded-2xl border border-[#6b21a8] bg-[#f7effc] p-4 shadow-[0_0_10px_rgba(107,33,168,0.28),0_8px_18px_rgba(47,20,78,0.12)]">
+                    <article className="flex h-full flex-col rounded-2xl bg-[#f7effc] p-4 shadow-[0_0_14px_rgba(107,33,168,0.34),0_8px_18px_rgba(47,20,78,0.12)]">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex min-w-0 items-center gap-3">
                           {review.review_image && (
