@@ -17,6 +17,7 @@ const ORDER_COLUMNS = `
   o.id, o.order_id, o.user_id, o.address_id, a.recipient_name AS customer_name,
   o.customer_email, a.phone AS customer_phone, a.street_address, a.city, a.district, a.state, a.country,
   a.zip_code, o.order_type, o.items_type, o.payment_method, o.payment_status, o.status, o.total_amount,
+  o.coupon_code, o.discount_amount,
   o.tracking_number, o.courier_name, o.shipped_at, o.cancellation_reason, o.cancelled_at,
   o.created_at, o.updated_at
 `;
