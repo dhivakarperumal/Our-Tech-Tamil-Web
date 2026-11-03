@@ -57,6 +57,10 @@ const Navbar = () => {
   const urlSearch = location.pathname === "/shop"
     ? new URLSearchParams(location.search).get("search") || ""
     : "";
+  const isCategoryRoute = location.pathname === "/shop"
+    && new URLSearchParams(location.search).has("category");
+  const isPagesRoute = ["/articles", "/youtube-videos", "/about", "/contactus", "/termsandconditions"]
+    .some((route) => location.pathname === route || location.pathname.startsWith(`${route}/`));
   const currentRoute = `${location.pathname}${location.search}`;
   const search = searchState.route === currentRoute ? searchState.value : urlSearch;
 
@@ -262,7 +266,9 @@ const Navbar = () => {
               setActiveCategoryId("");
             }}
             aria-expanded={categoryMenu}
-            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+            className={`my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2.5 text-sm font-semibold transition ${
+              isCategoryRoute ? "bg-gradient-to-r from-accent to-[#ffe98a] text-[#29104b] shadow-sm" : "text-white hover:bg-white/10"
+            }`}
           >
             <Grid2X2 size={18} aria-hidden="true" />
             Categories
@@ -351,7 +357,9 @@ const Navbar = () => {
             type="button"
             onClick={() => setPagesMenu((open) => !open)}
             aria-expanded={pagesMenu}
-            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
+            className={`my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2.5 text-sm font-semibold transition ${
+              isPagesRoute ? "bg-gradient-to-r from-accent to-[#ffe98a] text-[#29104b] shadow-sm" : "text-white hover:bg-white/10"
+            }`}
           >
             <FileText size={18} aria-hidden="true" />
             Pages
@@ -550,10 +558,10 @@ const Navbar = () => {
               <NavLink to="/" end onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><House size={18} /></span>Home</NavLink>
               <NavLink to="/shop" onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><ShoppingBag size={18} /></span>Shop</NavLink>
               <NavLink to="/combos" onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><Boxes size={18} /></span>Combo Offers</NavLink>
-              <button type="button" onClick={() => setMobileCategory(true)} className="flex min-h-14 w-full items-center justify-between rounded-2xl border border-[#eee7f5] bg-white px-4 py-3 text-sm font-semibold text-gray-800 transition hover:border-violet-200 hover:bg-violet-50">
+              <button type="button" onClick={() => setMobileCategory(true)} className={`flex min-h-14 w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition hover:border-violet-200 hover:bg-violet-50 ${isCategoryRoute ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800"}`}>
                 <span className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><Grid2X2 size={18} /></span>Categories</span><ChevronRight size={18} className="text-violet-500" />
               </button>
-              <button type="button" onClick={() => setMobilePages(true)} className="flex min-h-14 w-full items-center justify-between rounded-2xl border border-[#eee7f5] bg-white px-4 py-3 text-sm font-semibold text-gray-800 transition hover:border-violet-200 hover:bg-violet-50">
+              <button type="button" onClick={() => setMobilePages(true)} className={`flex min-h-14 w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition hover:border-violet-200 hover:bg-violet-50 ${isPagesRoute ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800"}`}>
                 <span className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><FileText size={18} /></span>Pages</span><ChevronRight size={18} className="text-violet-500" />
               </button>
               <div className="mt-1 flex min-h-14 items-center justify-between rounded-2xl border border-[#eee7f5] bg-white px-4 py-3 sm:hidden">
