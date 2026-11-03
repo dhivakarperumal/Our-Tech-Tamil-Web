@@ -9,6 +9,10 @@ import {
   Rocket,
   ShoppingCart,
   Trophy,
+  Target,
+  Eye,
+  BadgeCheck,
+  Tag,
 } from "lucide-react";
 import PageContainer from "./PageContainer";
 
@@ -193,6 +197,85 @@ const AboutUs = () => {
               title="Customer Care"
               desc="We're here to help you, always — 24/7 support."
             />
+          </div>
+        </PageContainer>
+      </section>
+
+      {/* ── MISSION, VISION & WHY CHOOSE US ─────────────────── */}
+      <section className="py-10 sm:py-14">
+        <PageContainer>
+          <div className="overflow-hidden rounded-3xl border border-[#eadcf6] bg-gradient-to-br from-[#fbf7ff] via-[#f5edff] to-[#fdf9ff] p-5 shadow-[0_12px_30px_rgba(74,27,120,0.08)] sm:p-8">
+            <div className="grid gap-4 md:grid-cols-2">
+              <article className="flex items-start gap-4 rounded-2xl border border-white/80 bg-white/75 p-5 shadow-sm">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0e2ff] text-primary">
+                  <Target size={23} aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="text-base font-extrabold text-[#1a0745]">Our Mission</h2>
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    To deliver high-quality gadgets and a seamless shopping experience with trust, value, and great customer support.
+                  </p>
+                </div>
+              </article>
+
+              <article className="flex items-start gap-4 rounded-2xl border border-white/80 bg-white/75 p-5 shadow-sm">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0e2ff] text-primary">
+                  <Eye size={23} aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="text-base font-extrabold text-[#1a0745]">Our Vision</h2>
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    To be a leading and trusted tech store, bringing the latest technology to everyone for a smarter lifestyle.
+                  </p>
+                </div>
+              </article>
+            </div>
+
+            <div className="my-7 flex items-center gap-3 sm:my-8">
+              <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#c89af1] to-[#a855f7]" />
+              <h2 className="shrink-0 text-center text-lg font-extrabold text-[#1a0745] sm:text-xl">
+                Why Choose Us?
+              </h2>
+              <span className="h-px flex-1 bg-gradient-to-l from-transparent via-[#c89af1] to-[#a855f7]" />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  icon: BadgeCheck,
+                  title: "Trusted Store",
+                  description: "Carefully selected products from reliable brands.",
+                },
+                {
+                  icon: Tag,
+                  title: "Best Prices",
+                  description: "Great value on quality tech and accessories.",
+                },
+                {
+                  icon: Truck,
+                  title: "Quick Delivery",
+                  description: "Fast, dependable delivery across India.",
+                },
+                {
+                  icon: Headphones,
+                  title: "Customer Support",
+                  description: "Friendly help whenever you need us.",
+                },
+              ].map(({ icon: Icon, title, description }) => (
+                <article
+                  key={title}
+                  className="flex items-center gap-3 rounded-xl border border-[#eadcf6] bg-white/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#f3eaff] text-primary">
+                    <Icon size={20} aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-[#1a0745]">{title}</h3>
+                    <p className="mt-0.5 text-xs leading-5 text-gray-500">{description}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         </PageContainer>
       </section>
