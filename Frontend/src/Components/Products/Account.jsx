@@ -144,7 +144,7 @@ function MyOrders({ user }) {
   useEffect(function() {
     if (!user?.user_id) { setLoading(false); return; }
     var active = true;
-    api.get("/orders").then(function({ data }) {
+    api.get("/orders/mine").then(function({ data }) {
       if (active) { setOrders(Array.isArray(data) ? data : []); setLoading(false); }
     }).catch(function() {
       if (active) { setFailed(true); setLoading(false); }
