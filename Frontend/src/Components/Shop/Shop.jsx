@@ -221,7 +221,7 @@ function Shop() {
       return matchesSearch
         && (!selectedCategories.length || selectedCategories.some((selectedCategory) =>
           productCategoryValues.includes(String(selectedCategory).trim().toLowerCase())))
-        && (!hasProductsForSelectedSubcategory
+        && (!urlSubcategory || !hasProductsForSelectedSubcategory
           || String(product.subcategory || "").trim().toLowerCase() === urlSubcategory.trim().toLowerCase())
         && (!selectedBrands.length || selectedBrands.includes(product.brand))
         && price >= minPrice
