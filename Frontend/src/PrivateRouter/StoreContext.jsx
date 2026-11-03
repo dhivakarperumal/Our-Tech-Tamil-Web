@@ -108,14 +108,14 @@ export const StoreProvider = ({ children }) => {
     const addToCart = async (product, variant = null, size = null, qty = 1) => {
         if (!user?.user_id) {
             toast.error("Please login to add items to cart");
-            return;
+            return false;
         }
 
         const productId = product?.product_id ?? product?.productId ?? product?.id;
         if (!productId || !Number.isInteger(Number(productId)) || Number(productId) < 1) {
             console.error("Add to cart skipped: product has no valid id", product);
             toast.error("Unable to add this product to cart");
-            return;
+            return false;
         }
 
         const selectedVariant = variant || product.variants?.[0] || null;
@@ -123,17 +123,17 @@ export const StoreProvider = ({ children }) => {
         const quantity = Number(qty);
         if (!Number.isSafeInteger(quantity) || quantity < 1) {
             toast.error("Enter a valid quantity");
-            return;
+            return false;
         }
 
         const availableStock = getProductStock(product, selectedVariant, selectedSize);
         if (availableStock < 1) {
             toast.error("This product is out of stock");
-            return;
+            return false;
         }
         if (quantity > availableStock) {
             toast.error(`Only ${availableStock} item${availableStock === 1 ? "" : "s"} available`);
-            return;
+            return false;
         }
         const variantColor = selectedVariant?.colorName || selectedVariant?.color || "";
 
@@ -146,9 +146,11 @@ export const StoreProvider = ({ children }) => {
             });
             toast.success("Product added to cart successfully");
             await fetchCart();
+            return true;
         } catch (err) {
             console.error("Add to cart error:", err);
             toast.error(err.response?.data?.message || "Failed to add to cart");
+            return false;
         }
     };
 

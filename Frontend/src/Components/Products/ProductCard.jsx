@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Heart, Leaf, Package, Shirt, ShoppingCart, Sparkles, Zap } from "lucide-react";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 
@@ -62,7 +62,9 @@ function getCategoryIcon(category) {
 
 function ProductCard({ product }) {
   const [imageFailed, setImageFailed] = useState(false);
+  const [isBuying, setIsBuying] = useState(false);
   const { addToCart, toggleWishlist, wishlist } = useContext(StoreContext);
+  const navigate = useNavigate();
   const image = getProductImage(product);
   const isWishlisted = wishlist.some((item) => Number(item.product_id ?? item.productId ?? item.id) === Number(product.id));
   const productDetailsPath = `/product/${product.id}`;
@@ -73,6 +75,14 @@ function ProductCard({ product }) {
   const savedAmount = hasDiscount ? Math.max(0, mrp - offerPrice) : 0;
   const categoryLabel = [product.cat_type, product.category].filter(Boolean).join(" ") || "Product";
   const CategoryIcon = getCategoryIcon(categoryLabel);
+  const handleBuyNow = async () => {
+    setIsBuying(true);
+    try {
+      if (await addToCart(product)) navigate("/checkout");
+    } finally {
+      setIsBuying(false);
+    }
+  };
 
   return (
     <article className="group w-full min-w-0 rounded-[28px] border border-[#e2d3f5] bg-[#f7f0fb] p-3 shadow-[0_12px_28px_rgba(75,0,200,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(75,0,200,0.12)]">
@@ -159,10 +169,12 @@ function ProductCard({ product }) {
           </button>
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-1.5 rounded-[12px] bg-[#4B00C8] px-2 py-2.5 text-[0.7rem] font-extrabold text-white shadow-[0_8px_18px_rgba(75,0,200,0.25)] transition hover:bg-[#3d00a9]"
+            onClick={handleBuyNow}
+            disabled={isBuying || Number(product.total_stock) < 1}
+            className="inline-flex items-center justify-center gap-1.5 rounded-[12px] bg-[#4B00C8] px-2 py-2.5 text-[0.7rem] font-extrabold text-white shadow-[0_8px_18px_rgba(75,0,200,0.25)] transition hover:bg-[#3d00a9] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Zap size={14} aria-hidden="true" />
-            Buy Now
+            {isBuying ? "Please wait..." : "Buy Now"}
           </button>
         </div>
       </div>

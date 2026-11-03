@@ -13,6 +13,45 @@ const formatPrice = (value) => Number(value || 0).toLocaleString("en-IN", {
   maximumFractionDigits: 2,
 });
 
+const indianStates = [
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
+];
+
 let razorpayScriptPromise;
 const loadRazorpay = () => {
   if (window.Razorpay) return Promise.resolve(true);
@@ -423,7 +462,15 @@ function Checkout() {
                 </label>
                 <label className="text-sm font-semibold text-text-primary">
                   State *
-                  <input className={inputClass} name="state" value={form.state} onChange={handleChange} maxLength={120} autoComplete="address-level1" required />
+                  <select className={inputClass} name="state" value={form.state} onChange={handleChange} autoComplete="address-level1" required>
+                    <option value="" disabled>Select a state or union territory</option>
+                    {form.state && !indianStates.includes(form.state) && (
+                      <option value={form.state}>{form.state}</option>
+                    )}
+                    {indianStates.map((state) => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
                 </label>
                 <label className="text-sm font-semibold text-text-primary">
                   Postal code *
