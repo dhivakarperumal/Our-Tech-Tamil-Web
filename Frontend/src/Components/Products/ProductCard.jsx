@@ -72,10 +72,10 @@ function ProductCard({ product }) {
   const CategoryIcon = getCategoryIcon(categoryLabel);
 
   return (
-    <article className="group w-full max-w-[300px] rounded-[28px] border border-[#e2d3f5] bg-[#f7f0fb] p-3 shadow-[0_12px_28px_rgba(75,0,200,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(75,0,200,0.12)]">
+    <article className="group w-full max-w-[240px] rounded-[28px] border border-[#e2d3f5] bg-[#f7f0fb] p-3 shadow-[0_12px_28px_rgba(75,0,200,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(75,0,200,0.12)]">
       <div className="relative">
         {discount > 0 && (
-          <span className="absolute left-3 top-3 z-10 rounded-full bg-[#4B00C8] px-3 py-1.5 text-[12px] font-extrabold tracking-tight text-white shadow-sm">
+          <span className="absolute left-3 top-3 z-10 rounded-full bg-[#4B00C8] px-2.5 py-1 text-[10px] font-extrabold tracking-tight text-white shadow-sm">
             {discount}% OFF
           </span>
         )}
@@ -83,9 +83,9 @@ function ProductCard({ product }) {
         <button
           type="button"
           aria-label="Add to wishlist"
-          className="absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-[#e6d8f7] bg-white/90 text-[#4B00C8] shadow-sm transition hover:scale-105 hover:bg-white"
+          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[#e6d8f7] bg-white/90 text-[#4B00C8] shadow-sm transition hover:scale-105 hover:bg-white"
         >
-          <Heart size={18} strokeWidth={2.2} aria-hidden="true" />
+          <Heart size={16} strokeWidth={2.2} aria-hidden="true" />
         </button>
 
         <Link
@@ -117,7 +117,7 @@ function ProductCard({ product }) {
           </span>
         </div>
 
-        <h3 className="mt-2 line-clamp-2 min-h-[3rem] text-[1.7rem] font-extrabold leading-[1.08] tracking-[-0.04em] text-[#111027] sm:text-[1.55rem]">
+        <h3 className="mt-2 line-clamp-2 min-h-[2.4rem] text-[1.2rem] font-extrabold leading-[1.2] tracking-[-0.04em] text-[#111027] sm:text-[1.08rem]">
           <Link to={productDetailsPath} className="transition hover:text-[#4B00C8]">
             {product.name}
           </Link>
@@ -125,36 +125,36 @@ function ProductCard({ product }) {
 
         <div className="mt-3 flex items-end justify-between gap-2">
           <div className="flex items-baseline gap-2">
-            <span className="text-[1.8rem] font-extrabold tracking-[-0.04em] text-[#4B00C8] sm:text-[1.7rem]">
+            <span className="text-[1.2rem] font-extrabold tracking-[-0.04em] text-[#4B00C8] sm:text-[1.08rem]">
               ₹{offerPrice.toLocaleString("en-IN")}
             </span>
             {hasDiscount && (
-              <span className="text-[0.9rem] font-medium text-[#6B6478] line-through">
+              <span className="text-[0.76rem] font-medium text-[#6B6478] line-through">
                 ₹{mrp.toLocaleString("en-IN")}
               </span>
             )}
           </div>
 
           {hasDiscount && (
-            <span className="rounded-full bg-[#efe0ff] px-2.5 py-1 text-[10px] font-bold text-[#4B00C8]">
+            <span className="rounded-full bg-[#efe0ff] px-2 py-1 text-[8px] font-bold text-[#4B00C8]">
               Save ₹{savedAmount.toLocaleString("en-IN")}
             </span>
           )}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2.5">
+        <div className="mt-4 grid grid-cols-2 gap-2">
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-[14px] border border-[#4B00C8] bg-white px-2 py-3 text-[0.82rem] font-extrabold text-[#4B00C8] shadow-sm transition hover:bg-[#f1ebff]"
+            className="inline-flex items-center justify-center gap-1.5 rounded-[12px] border border-[#4B00C8] bg-white px-2 py-2.5 text-[0.7rem] font-extrabold text-[#4B00C8] shadow-sm transition hover:bg-[#f1ebff]"
           >
-            <ShoppingCart size={16} aria-hidden="true" />
+            <ShoppingCart size={14} aria-hidden="true" />
             Add to Cart
           </button>
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-2 rounded-[14px] bg-[#4B00C8] px-2 py-3 text-[0.82rem] font-extrabold text-white shadow-[0_8px_18px_rgba(75,0,200,0.25)] transition hover:bg-[#3d00a9]"
+            className="inline-flex items-center justify-center gap-1.5 rounded-[12px] bg-[#4B00C8] px-2 py-2.5 text-[0.7rem] font-extrabold text-white shadow-[0_8px_18px_rgba(75,0,200,0.25)] transition hover:bg-[#3d00a9]"
           >
-            <Zap size={16} aria-hidden="true" />
+            <Zap size={14} aria-hidden="true" />
             Buy Now
           </button>
         </div>
