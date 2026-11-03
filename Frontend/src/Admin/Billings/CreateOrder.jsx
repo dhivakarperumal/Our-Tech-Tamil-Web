@@ -9,6 +9,7 @@ const CreateOrder = () => {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState([]);
+    const [selectedCategoryType, setSelectedCategoryType] = useState("");
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [products, setProducts] = useState([]);
     const [productSearchTerm, setProductSearchTerm] = useState("");
@@ -43,13 +44,17 @@ const CreateOrder = () => {
         const fetchData = async () => {
             try {
                 const [prodRes, userRes, catRes] = await Promise.all([
-                    api.get("/products"),
+                    api.get("/products", { params: { limit: 100 } }),
                     api.get("/auth/users"),
                     api.get("/categories")
                 ]);
-                setProducts(prodRes.data || []);
-                setUsers(userRes.data || []);
-                setCategories(catRes.data || []);
+                setProducts(Array.isArray(prodRes.data)
+                    ? prodRes.data
+                    : Array.isArray(prodRes.data?.products)
+                        ? prodRes.data.products
+                        : []);
+                setUsers(Array.isArray(userRes.data) ? userRes.data : []);
+                setCategories(Array.isArray(catRes.data) ? catRes.data : []);
             } catch (error) {
                 console.error("Error fetching data:", error);
                 toast.error("Failed to load initial data");
@@ -191,11 +196,22 @@ const CreateOrder = () => {
         }
     };
 
+    const categoryTypes = [...new Set(categories
+        .map(category => category.categoryType || category.category_type || "General")
+        .filter(Boolean))];
+    const filteredCategories = categories.filter(category =>
+        !selectedCategoryType ||
+        (category.categoryType || category.category_type || "General") === selectedCategoryType
+    );
     const filteredProducts = products.filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
-            p.product_code?.toLowerCase().includes(productSearchTerm.toLowerCase());
+        const search = productSearchTerm.toLowerCase();
+        const matchesSearch = String(p.name || "").toLowerCase().includes(search) ||
+            String(p.product_code || "").toLowerCase().includes(search);
+        const productCategoryType = p.cat_type || p.category_type ||
+            categories.find(category => category.name === p.category)?.categoryType || "General";
+        const matchesCategoryType = !selectedCategoryType || productCategoryType === selectedCategoryType;
         const matchesCategory = !selectedCategory || p.category === selectedCategory.name;
-        return matchesSearch && matchesCategory;
+        return matchesSearch && matchesCategoryType && matchesCategory;
     });
 
     const filteredUsers = users.filter(u =>
@@ -249,10 +265,27 @@ const CreateOrder = () => {
                     {step === 1 ? (
                         /* Step 1: Product Selection */
                         <div className="bg-white p-6 sm:p-8 rounded-xl border border-gray-200 shadow-sm space-y-8">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="space-y-4">
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">1. Select Category Type</label>
+                                    <select
+                                        value={selectedCategoryType}
+                                        onChange={(e) => {
+                                            setSelectedCategoryType(e.target.value);
+                                            setSelectedCategory(null);
+                                            setSelectedProductForVariant(null);
+                                        }}
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#4b0b78] transition-all font-medium text-slate-800 appearance-none cursor-pointer"
+                                    >
+                                        <option value="">All Category Types</option>
+                                        {categoryTypes.map(categoryType => (
+                                            <option key={categoryType} value={categoryType}>{categoryType}</option>
+                                        ))}
+                                    </select>
+                                </div>
                                 {/* Category Selection */}
                                 <div className="space-y-4">
-                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">1. Select Category</label>
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">2. Select Category</label>
                                     <select
                                         value={selectedCategory ? selectedCategory.id : ""}
                                         onChange={(e) => {
@@ -260,7 +293,7 @@ const CreateOrder = () => {
                                             if (!val) {
                                                 setSelectedCategory(null);
                                             } else {
-                                                const cat = categories.find(c => c.id.toString() === val);
+                                                const cat = filteredCategories.find(c => c.id.toString() === val);
                                                 setSelectedCategory(cat || null);
                                             }
                                             setSelectedProductForVariant(null);
@@ -268,14 +301,14 @@ const CreateOrder = () => {
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:border-[#4b0b78] transition-all font-medium text-slate-800 appearance-none cursor-pointer"
                                     >
                                         <option value="">All Categories</option>
-                                        {categories.map(cat => (
+                                        {filteredCategories.map(cat => (
                                             <option key={cat.id} value={cat.id}>{cat.name}</option>
                                         ))}
                                     </select>
                                 </div>
 
                                 <div className="space-y-4">
-                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">2. Select Product</label>
+                                    <label className="text-xs font-black text-gray-400 uppercase tracking-widest ml-1">3. Select Product</label>
                                     <select
                                         value={selectedProductForVariant ? selectedProductForVariant.id : ""}
                                         onChange={(e) => {
