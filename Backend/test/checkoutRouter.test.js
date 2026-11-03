@@ -8,11 +8,33 @@ const createCheckoutRouter = require("../routers/checkoutRouter");
 
 process.env.JWT_SECRET = "checkout-router-test-secret";
 
-function createPool({ stock = 5, quantity = 2, coupon = null } = {}) {
+function createPool({ stock = 5, quantity = 2, coupon = null, combo = false } = {}) {
   const statements = [];
   const addresses = [];
   const orders = [];
-  const cartRows = [{
+  const cartRows = [combo ? {
+    cart_item_id: 7,
+    product_id: null,
+    combo_id: 5,
+    product_name: "Bundle deal",
+    product_image: "/uploads/combo.png",
+    product_code: "COMBO-005",
+    quantity,
+    variant_color: "",
+    variant_size: "",
+    name: "Bundle deal",
+    current_product_code: "COMBO-005",
+    mrp: "300.00",
+    offer_price: "250.00",
+    total_stock: stock,
+    status: "Active",
+    track_inventory: 1,
+    allow_backorders: 0,
+    minimum_order_quantity: 1,
+    maximum_order_quantity: 10,
+    images: "[]",
+    variants: "[]",
+  } : {
     cart_item_id: 7,
     product_id: 9,
     product_name: "Headphones",
@@ -127,6 +149,7 @@ function createPool({ stock = 5, quantity = 2, coupon = null } = {}) {
       return [{ affectedRows: 1 }];
     }
     if (query.includes("UPDATE products SET total_stock")) return [{ affectedRows: 1 }];
+    if (query.includes("UPDATE combos SET available_stock")) return [{ affectedRows: 1 }];
     if (query.includes("DELETE FROM cart_items")) return [{ affectedRows: 1 }];
     throw new Error(`Unexpected checkout query: ${query}`);
   };
@@ -241,6 +264,28 @@ test("checkout requires a non-empty cart and sufficient current stock", async (t
   const message = (await response.json()).message;
   assert.match(message, /Only 1 Headphones item/);
   assert.ok(!pool.statements.some(({ query }) => query.includes("INSERT INTO orders")));
+});
+
+test("checkout creates combo order lines and decrements combo inventory", async (t) => {
+  const pool = createPool({ combo: true, stock: 4, quantity: 2 });
+  const url = await startServer(t, pool);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(address),
+  });
+  const order = await response.json();
+
+  assert.equal(response.status, 201, JSON.stringify(order));
+  assert.equal(order.total_amount, 500);
+  assert.equal(order.items[0].product_id, null);
+  assert.equal(order.items[0].combo_id, 5);
+  assert.equal(order.items[0].product_name, "Bundle deal");
+  const itemInsert = pool.statements.find(({ query }) => query.includes("INSERT INTO order_items"));
+  assert.equal(itemInsert.params[1], null);
+  assert.equal(itemInsert.params[2], 5);
+  const comboUpdate = pool.statements.find(({ query }) => query.includes("UPDATE combos SET available_stock"));
+  assert.deepEqual(comboUpdate.params, [2, "Low Stock", 5]);
 });
 
 test("customer can validate and redeem a coupon against the server-calculated cart total", async (t) => {

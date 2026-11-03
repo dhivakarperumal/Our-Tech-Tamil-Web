@@ -3,6 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
   ChevronRight,
+  Boxes,
   FileText,
   Grid2X2,
   Heart,
@@ -220,6 +221,7 @@ const Navbar = () => {
       <div className="flex min-h-[42px] items-center justify-center gap-1 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-14 shadow-[0_8px_20px_rgba(30,8,50,0.2)]">
         <NavLink to="/" end className={navClass}><House size={18} aria-hidden="true" />Home</NavLink>
         <NavLink to="/shop" className={navClass}><ShoppingBag size={18} aria-hidden="true" />Shop</NavLink>
+        <NavLink to="/combos" className={navClass}><Boxes size={18} aria-hidden="true" />Combos</NavLink>
         <div className="relative" ref={categoryRef}>
           <button
             type="button"
@@ -462,6 +464,7 @@ const Navbar = () => {
             <div className="space-y-2 p-4">
               <NavLink to="/" end onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><House size={18} />Home</NavLink>
               <NavLink to="/shop" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><ShoppingBag size={18} />Shop</NavLink>
+              <NavLink to="/combos" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><Boxes size={18} />Combo Offers</NavLink>
               <button type="button" onClick={() => setMobileCategory(true)} className="flex w-full items-center justify-between rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary">
                 <span className="flex items-center gap-3"><Grid2X2 size={18} />Categories</span><ChevronRight size={17} />
               </button>

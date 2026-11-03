@@ -10,7 +10,7 @@ const resolveImageUrl = (image) => {
 };
 
 const WishlistDrawer = ({ isOpen, onClose }) => {
-  const { wishlist, loadingWishlist, removeFromWishlist, addToCart } = useContext(StoreContext);
+  const { wishlist, loadingWishlist, removeFromWishlist, addToCart, addComboToCart } = useContext(StoreContext);
   const navigate = useNavigate();
   const [quantities, setQuantities] = useState({});
 
@@ -31,6 +31,10 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
   };
 
   const handleAddToCart = async (item) => {
+    if (item.combo_id) {
+      await addComboToCart(item, quantities[item.id] || 1);
+      return;
+    }
     const matchingVariant = item.variants?.find(
       (variant) => variant.color === item.colorName || variant.colorName === item.colorName,
     ) || item.variants?.[0] || null;
@@ -96,7 +100,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
           ) : (
             <div className="space-y-4">
               {wishlist.map((item) => (
-                <div key={item.id || item.product_id} className="flex gap-3 rounded-lg border border-gray-200 p-3">
+                <div key={item.id || item.product_id || item.combo_id} className="flex gap-3 rounded-lg border border-gray-200 p-3">
                   <img
                     src={resolveImageUrl(item.image) || "https://ui-avatars.com/api/?name=Product&background=f3f4f6&color=240046"}
                     alt={item.name || "Product"}
@@ -104,7 +108,13 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                   />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
-                      <h3 className="truncate text-sm font-semibold text-gray-800">{item.name || "Product"}</h3>
+                      <button
+                        type="button"
+                        onClick={() => item.combo_id && goTo(`/combos/${item.combo_id}`)}
+                        className={`truncate text-left text-sm font-semibold text-gray-800 ${item.combo_id ? "hover:text-primary" : ""}`}
+                      >
+                        {item.name || "Product"}{item.combo_id ? " · Combo" : ""}
+                      </button>
                       <button type="button" onClick={() => removeFromWishlist(item)} aria-label={`Remove ${item.name || "item"}`} className="shrink-0 rounded p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-500">
                         <FiTrash2 size={16} />
                       </button>
@@ -155,7 +165,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
         {wishlist.length > 0 && !loadingWishlist && (
           <div className="space-y-2 border-t border-gray-100 bg-white px-5 py-4">
             <button type="button" onClick={handleAddAllToCart} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white transition hover:bg-primary-dark">
-              Add All Products to Cart
+              Add All Favorites to Cart
             </button>
             <button type="button" onClick={() => goTo("/shop")} className="w-full rounded-lg border border-primary py-3 text-sm font-semibold text-primary transition hover:bg-primary/10">
               Continue Shopping

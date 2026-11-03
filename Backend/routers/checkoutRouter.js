@@ -331,11 +331,14 @@ function createCheckoutRouter(pool) {
   router.post("/coupon", async (request, response, next) => {
     try {
       const [cartRows] = await pool.execute(
-        `SELECT ci.product_id, ci.quantity, p.mrp, p.offer_price,
-                (SELECT MIN(id) FROM categories WHERE name = p.category) AS category_id
+        `SELECT ci.product_id, ci.combo_id, ci.quantity,
+                COALESCE(c.mrp, p.mrp) AS mrp,
+                COALESCE(c.final_price, p.offer_price, p.mrp) AS offer_price,
+                (SELECT MIN(id) FROM categories WHERE name = COALESCE(c.category, p.category)) AS category_id
          FROM cart_items ci
-         INNER JOIN products p ON p.id = ci.product_id
-         WHERE ci.user_id = ? AND p.status = 'Active'
+         LEFT JOIN products p ON p.id = ci.product_id
+         LEFT JOIN combos c ON c.id = ci.combo_id
+         WHERE ci.user_id = ? AND COALESCE(c.status, p.status) = 'Active'
          ORDER BY ci.id`,
         [request.user.user_id],
       );
@@ -370,32 +373,42 @@ function createCheckoutRouter(pool) {
     try {
       const credentials = getRazorpayCredentials();
       const [cartRows] = await pool.execute(
-        `SELECT ci.product_id, ci.quantity, ci.variant_color, ci.variant_size,
-                p.name, p.mrp, p.offer_price, p.total_stock, p.status, p.variants,
-                (SELECT MIN(id) FROM categories WHERE name = p.category) AS category_id
+        `SELECT ci.product_id, ci.combo_id, ci.quantity, ci.variant_color, ci.variant_size,
+                COALESCE(c.name, p.name) AS name,
+                COALESCE(c.mrp, p.mrp) AS mrp,
+                COALESCE(c.final_price, p.offer_price, p.mrp) AS offer_price,
+                COALESCE(c.available_stock, p.total_stock) AS total_stock,
+                COALESCE(c.status, p.status) AS status, p.variants,
+                COALESCE(c.track_inventory, 1) AS track_inventory,
+                COALESCE(c.allow_backorders, 0) AS allow_backorders,
+                c.minimum_order_quantity, c.maximum_order_quantity,
+                (SELECT MIN(id) FROM categories WHERE name = COALESCE(c.category, p.category)) AS category_id
          FROM cart_items ci
-         INNER JOIN products p ON p.id = ci.product_id
+         LEFT JOIN products p ON p.id = ci.product_id
+         LEFT JOIN combos c ON c.id = ci.combo_id
          WHERE ci.user_id = ?
          ORDER BY ci.id`,
         [request.user.user_id],
       );
       if (!cartRows.length) throw httpError(400, "Your cart is empty.");
 
-      const quantitiesByProduct = new Map();
+      const quantitiesByItem = new Map();
       let totalCents = 0;
       for (const row of cartRows) {
         const quantity = Number(row.quantity);
         if (row.status !== "Active" || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 10000) {
           throw httpError(400, "Your cart has an unavailable product or invalid quantity.");
         }
-        const variantStock = validateVariant(row, row.variant_color || "", row.variant_size || "");
+        if (row.combo_id && (quantity < (Number(row.minimum_order_quantity) || 1) ||
+            (Number(row.maximum_order_quantity) > 0 && quantity > Number(row.maximum_order_quantity)))) {
+          throw httpError(400, `The quantity for ${row.name} does not meet its order limits.`);
+        }
+        const variantStock = row.combo_id ? null : validateVariant(row, row.variant_color || "", row.variant_size || "");
         if (variantStock !== null && variantStock < quantity) {
           throw httpError(400, `Only ${Math.max(0, variantStock)} ${row.name} item(s) are available in the selected option.`);
         }
-        quantitiesByProduct.set(
-          Number(row.product_id),
-          (quantitiesByProduct.get(Number(row.product_id)) || 0) + quantity,
-        );
+        const itemKey = row.combo_id ? `combo:${row.combo_id}` : `product:${row.product_id}`;
+        quantitiesByItem.set(itemKey, (quantitiesByItem.get(itemKey) || 0) + quantity);
         const offerValue = row.offer_price === null || row.offer_price === undefined || row.offer_price === ""
           ? row.mrp
           : row.offer_price;
@@ -406,8 +419,10 @@ function createCheckoutRouter(pool) {
         }
       }
 
-      for (const [productId, quantity] of quantitiesByProduct) {
-        const row = cartRows.find((item) => Number(item.product_id) === productId);
+      for (const [itemKey, quantity] of quantitiesByItem) {
+        const [itemType, itemId] = itemKey.split(":");
+        const row = cartRows.find((item) => Number(itemType === "combo" ? item.combo_id : item.product_id) === Number(itemId));
+        if (itemType === "combo" && (Number(row.track_inventory) !== 1 || Number(row.allow_backorders) === 1)) continue;
         if (!Number.isSafeInteger(Number(row.total_stock)) || Number(row.total_stock) < quantity) {
           throw httpError(400, `Only ${Math.max(0, Number(row.total_stock) || 0)} ${row.name} item(s) are available.`);
         }
@@ -495,13 +510,20 @@ function createCheckoutRouter(pool) {
       }
 
       const [cartRows] = await connection.execute(
-        `SELECT ci.id AS cart_item_id, ci.product_id, ci.product_name, ci.product_image,
+        `SELECT ci.id AS cart_item_id, ci.product_id, ci.combo_id, ci.product_name, ci.product_image,
                 ci.product_code, ci.quantity, ci.variant_color, ci.variant_size,
-                p.name, p.product_code AS current_product_code, p.mrp, p.offer_price,
-                p.total_stock, p.status, p.images, p.variants,
-                (SELECT MIN(id) FROM categories WHERE name = p.category) AS category_id
+                COALESCE(c.name, p.name) AS name,
+                COALESCE(c.code, p.product_code) AS current_product_code,
+                COALESCE(c.mrp, p.mrp) AS mrp,
+                COALESCE(c.final_price, p.offer_price, p.mrp) AS offer_price,
+                COALESCE(c.available_stock, p.total_stock) AS total_stock,
+                COALESCE(c.status, p.status) AS status,
+                p.images, p.variants, c.track_inventory, c.allow_backorders,
+                c.minimum_order_quantity, c.maximum_order_quantity
+                , (SELECT MIN(id) FROM categories WHERE name = COALESCE(c.category, p.category)) AS category_id
          FROM cart_items ci
-         INNER JOIN products p ON p.id = ci.product_id
+         LEFT JOIN products p ON p.id = ci.product_id
+         LEFT JOIN combos c ON c.id = ci.combo_id
          WHERE ci.user_id = ?
          ORDER BY ci.id
          FOR UPDATE`,
@@ -509,7 +531,7 @@ function createCheckoutRouter(pool) {
       );
       if (!cartRows.length) throw httpError(400, "Your cart is empty.");
 
-      const quantitiesByProduct = new Map();
+      const quantitiesByItem = new Map();
       for (const row of cartRows) {
         if (row.status !== "Active") {
           throw httpError(400, `${row.name || row.product_name} is no longer available.`);
@@ -518,18 +540,22 @@ function createCheckoutRouter(pool) {
         if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 10000) {
           throw httpError(400, "A cart item has an invalid quantity. Please update your cart.");
         }
-        const variantStock = validateVariant(row, row.variant_color || "", row.variant_size || "");
+        if (row.combo_id && (quantity < (Number(row.minimum_order_quantity) || 1) ||
+            (Number(row.maximum_order_quantity) > 0 && quantity > Number(row.maximum_order_quantity)))) {
+          throw httpError(400, `The quantity for ${row.name || row.product_name} does not meet its order limits.`);
+        }
+        const variantStock = row.combo_id ? null : validateVariant(row, row.variant_color || "", row.variant_size || "");
         if (variantStock !== null && variantStock < quantity) {
           throw httpError(400, `Only ${Math.max(0, variantStock)} ${row.name || row.product_name} item(s) are available in the selected option.`);
         }
-        quantitiesByProduct.set(
-          Number(row.product_id),
-          (quantitiesByProduct.get(Number(row.product_id)) || 0) + quantity,
-        );
+        const itemKey = row.combo_id ? `combo:${row.combo_id}` : `product:${row.product_id}`;
+        quantitiesByItem.set(itemKey, (quantitiesByItem.get(itemKey) || 0) + quantity);
       }
 
-      for (const [productId, quantity] of quantitiesByProduct) {
-        const row = cartRows.find((item) => Number(item.product_id) === productId);
+      for (const [itemKey, quantity] of quantitiesByItem) {
+        const [itemType, itemId] = itemKey.split(":");
+        const row = cartRows.find((item) => Number(itemType === "combo" ? item.combo_id : item.product_id) === Number(itemId));
+        if (itemType === "combo" && (Number(row.track_inventory) !== 1 || Number(row.allow_backorders) === 1)) continue;
         const stock = Number(row.total_stock);
         if (!Number.isSafeInteger(stock) || stock < quantity) {
           throw httpError(400, `Only ${Math.max(0, Number.isFinite(stock) ? stock : 0)} ${row.name || row.product_name} item(s) are available.`);
@@ -553,7 +579,8 @@ function createCheckoutRouter(pool) {
           throw httpError(400, "Your order total exceeds the supported amount.");
         }
         return {
-          product_id: Number(row.product_id),
+          product_id: row.product_id === null ? null : Number(row.product_id),
+          combo_id: row.combo_id === null ? null : Number(row.combo_id),
           product_name: row.name || row.product_name,
           price: Number((unitPriceCents / 100).toFixed(2)),
           quantity,
@@ -636,12 +663,13 @@ function createCheckoutRouter(pool) {
       for (const item of orderItems) {
         await connection.execute(
           `INSERT INTO order_items
-            (order_id, product_id, product_name, price, quantity, total,
+            (order_id, product_id, combo_id, product_name, price, quantity, total,
              variant_color, variant_size, image)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             orderResult.insertId,
             item.product_id,
+            item.combo_id,
             item.product_name,
             item.price,
             item.quantity,
@@ -653,8 +681,20 @@ function createCheckoutRouter(pool) {
         );
       }
 
-      for (const [productId, quantity] of quantitiesByProduct) {
-        const row = cartRows.find((item) => Number(item.product_id) === productId);
+      for (const [itemKey, quantity] of quantitiesByItem) {
+        const [itemType, itemId] = itemKey.split(":");
+        const row = cartRows.find((item) => Number(itemType === "combo" ? item.combo_id : item.product_id) === Number(itemId));
+        if (itemType === "combo") {
+          if (Number(row.track_inventory) !== 1 || Number(row.allow_backorders) === 1) continue;
+          const remainingStock = Number(row.total_stock) - quantity;
+          const stockStatus = remainingStock === 0 ? "Out of Stock" : remainingStock <= 10 ? "Low Stock" : "In Stock";
+          await connection.execute(
+            "UPDATE combos SET available_stock = ?, stock_status = ? WHERE id = ?",
+            [remainingStock, stockStatus, Number(itemId)],
+          );
+          continue;
+        }
+        const productId = Number(itemId);
         const remainingStock = Number(row.total_stock) - quantity;
         const stockStatus = remainingStock === 0 ? "Out of Stock" : remainingStock < 10 ? "Low Stock" : "In Stock";
         const productRows = cartRows.filter((item) => Number(item.product_id) === productId);

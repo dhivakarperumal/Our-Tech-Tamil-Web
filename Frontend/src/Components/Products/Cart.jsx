@@ -91,6 +91,7 @@ function Cart() {
                       </td>
                       <td className="px-5 py-4">
                         <p className="font-semibold text-text-primary">{item.name || "Product"}</p>
+                        {item.item_type === "combo" && <span className="mt-1 inline-flex rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-700">Combo</span>}
                         {(item.colorName || item.size) && <p className="mt-1 text-xs text-text-secondary">{[item.colorName, item.size].filter(Boolean).join(" · ")}</p>}
                       </td>
                       <td className="px-5 py-4 text-sm text-text-secondary">{item.product_code || "—"}</td>
@@ -98,7 +99,7 @@ function Cart() {
                       <td className="px-5 py-4 text-sm font-semibold text-text-primary">₹{formatPrice(item.offer_price ?? item.price)}</td>
                       <td className="px-5 py-4">
                         <div className="inline-flex items-center overflow-hidden rounded-lg border border-border">
-                          <button type="button" aria-label={`Decrease ${item.name} quantity`} disabled={Number(item.quantity) <= 1} onClick={() => updateCartQuantity(item.id, Number(item.quantity) - 1)} className="p-2 text-text-primary hover:bg-gray-50 disabled:opacity-40"><FiMinus size={14} /></button>
+                          <button type="button" aria-label={`Decrease ${item.name} quantity`} disabled={Number(item.quantity) <= Number(item.minimum_order_quantity || 1)} onClick={() => updateCartQuantity(item.id, Number(item.quantity) - 1)} className="p-2 text-text-primary hover:bg-gray-50 disabled:opacity-40"><FiMinus size={14} /></button>
                           <span className="min-w-9 text-center text-sm font-semibold">{item.quantity}</span>
                           <button type="button" aria-label={`Increase ${item.name} quantity`} onClick={() => updateCartQuantity(item.id, Number(item.quantity) + 1)} className="p-2 text-text-primary hover:bg-gray-50"><FiPlus size={14} /></button>
                         </div>
@@ -120,7 +121,10 @@ function Cart() {
                 <img src={item.image || "https://ui-avatars.com/api/?name=Product&background=f3f4f6&color=240046"} alt={item.name || "Product"} className="h-24 w-20 shrink-0 rounded-lg bg-gray-50 object-contain" />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <h2 className="line-clamp-2 text-sm font-bold text-text-primary">{item.name || "Product"}</h2>
+                    <div className="min-w-0">
+                      <h2 className="line-clamp-2 text-sm font-bold text-text-primary">{item.name || "Product"}</h2>
+                      {item.item_type === "combo" && <span className="mt-1 inline-flex rounded-full bg-violet-50 px-2 py-0.5 text-[10px] font-bold uppercase text-violet-700">Combo</span>}
+                    </div>
                     <button type="button" aria-label={`Remove ${item.name} from cart`} onClick={() => removeFromCart(item.id)} className="shrink-0 rounded p-1 text-gray-400 hover:text-rose-600"><FiTrash2 size={16} /></button>
                   </div>
                   <p className="mt-1 text-xs text-text-secondary">Code: {item.product_code || "—"}</p>
@@ -128,7 +132,7 @@ function Cart() {
                   <p className="text-sm font-bold text-primary">Offer: ₹{formatPrice(item.offer_price ?? item.price)}</p>
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <div className="inline-flex items-center overflow-hidden rounded-lg border border-border">
-                      <button type="button" aria-label={`Decrease ${item.name} quantity`} disabled={Number(item.quantity) <= 1} onClick={() => updateCartQuantity(item.id, Number(item.quantity) - 1)} className="p-1.5 disabled:opacity-40"><FiMinus size={13} /></button>
+                      <button type="button" aria-label={`Decrease ${item.name} quantity`} disabled={Number(item.quantity) <= Number(item.minimum_order_quantity || 1)} onClick={() => updateCartQuantity(item.id, Number(item.quantity) - 1)} className="p-1.5 disabled:opacity-40"><FiMinus size={13} /></button>
                       <span className="min-w-8 text-center text-sm font-semibold">{item.quantity}</span>
                       <button type="button" aria-label={`Increase ${item.name} quantity`} onClick={() => updateCartQuantity(item.id, Number(item.quantity) + 1)} className="p-1.5"><FiPlus size={13} /></button>
                     </div>

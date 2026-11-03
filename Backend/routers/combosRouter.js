@@ -182,6 +182,98 @@ const COMBO_COLUMNS = `
 
 function createCombosRouter(pool) {
   const router = express.Router();
+
+  router.get("/public", async (request, response, next) => {
+    try {
+      const [rows] = await pool.execute(
+        `SELECT id, name, code, category_type, category, subcategory, description,
+                gallery_images, status, products, mrp, offer_price, final_price,
+                total_savings, available_stock, stock_status, track_inventory,
+                allow_backorders, minimum_order_quantity, maximum_order_quantity
+         FROM combos WHERE status = 'Active' ORDER BY created_at DESC, id DESC`,
+      );
+      return response.json({
+        success: true,
+        combos: rows.map((combo) => ({
+          id: combo.id,
+          name: combo.name,
+          code: combo.code,
+          category_type: combo.category_type,
+          category: combo.category,
+          subcategory: combo.subcategory,
+          description: combo.description,
+          gallery_images: parseList(combo.gallery_images, "Gallery images", 10),
+          products: parseList(combo.products, "Selected products", 100),
+          mrp: combo.mrp,
+          offer_price: combo.offer_price,
+          final_price: combo.final_price,
+          total_savings: combo.total_savings,
+          available_stock: combo.available_stock,
+          stock_status: combo.stock_status,
+          track_inventory: combo.track_inventory,
+          allow_backorders: combo.allow_backorders,
+          minimum_order_quantity: combo.minimum_order_quantity,
+          maximum_order_quantity: combo.maximum_order_quantity,
+        })),
+      });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.get("/public/:id", async (request, response, next) => {
+    try {
+      const id = Number(request.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) throw httpError(400, "Invalid combo ID.");
+      const [rows] = await pool.execute(
+        `SELECT id, name, code, category_type, category, subcategory, description,
+                gallery_images, video, status, products, mrp, offer, offer_price,
+                final_price, total_savings, available_stock, stock_status,
+                track_inventory, allow_backorders, minimum_order_quantity, maximum_order_quantity,
+                specifications, warranty, return_policy, delivery_information
+         FROM combos WHERE id = ? AND status = 'Active' LIMIT 1`,
+        [id],
+      );
+      if (!rows.length) throw httpError(404, "Combo product not found.");
+
+      const combo = rows[0];
+      const selectedProducts = parseList(combo.products, "Selected products", 100);
+      const productIds = selectedProducts
+        .map((item) => Number(item.id))
+        .filter((productId) => Number.isSafeInteger(productId) && productId > 0);
+      let productRows = [];
+      if (productIds.length) {
+        const [products] = await pool.execute(
+          `SELECT id, name, product_code, category, subcategory, mrp, offer_price, images
+           FROM products WHERE status = 'Active' AND id IN (${productIds.map(() => "?").join(", ")})`,
+          productIds,
+        );
+        productRows = products;
+      }
+      const productById = new Map(productRows.map((product) => [Number(product.id), product]));
+
+      return response.json({
+        success: true,
+        combo: {
+          ...combo,
+          gallery_images: parseList(combo.gallery_images, "Gallery images", 10),
+          specifications: parseList(combo.specifications, "Specifications", 100),
+          products: selectedProducts.map((item) => {
+            const product = productById.get(Number(item.id));
+            return product ? {
+              ...product,
+              images: parseList(product.images, "Product images", 100),
+              quantity: Number(item.quantity) || 1,
+            } : null;
+          }).filter(Boolean),
+        },
+      });
+    } catch (error) {
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    }
+  });
+
   router.use(requireAdmin);
 
   router.get("/next-code", async (request, response, next) => {

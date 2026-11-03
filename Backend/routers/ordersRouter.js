@@ -71,6 +71,7 @@ function parseItems(value) {
 function toOrderItem(row) {
   return {
     product_id: row.product_id,
+    ...(row.combo_id ? { combo_id: Number(row.combo_id), item_type: "combo" } : {}),
     product_name: row.product_name,
     name: row.product_name,
     price: Number(row.price),
@@ -87,7 +88,7 @@ async function attachOrderItems(pool, orders) {
   const orderIds = orders.map((order) => order.id);
   const placeholders = orderIds.map(() => "?").join(", ");
   const [rows] = await pool.execute(
-    `SELECT order_id, product_id, product_name, price, quantity, total,
+    `SELECT order_id, product_id, combo_id, product_name, price, quantity, total,
             variant_color, variant_size, image
      FROM order_items
      WHERE order_id IN (${placeholders})
