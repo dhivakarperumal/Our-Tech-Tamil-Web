@@ -113,7 +113,7 @@ const Navbar = () => {
   };
 
   const navClass = ({ isActive }) =>
-    `inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition ${
+    `inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition ${
       isActive ? "bg-gradient-to-r from-accent to-[#ffe98a] text-[#29104b] shadow-sm" : "text-white hover:bg-white/10"
     }`;
 
@@ -248,9 +248,9 @@ const Navbar = () => {
         </form>
       </PageContainer>
 
-      <div className="relative isolate hidden h-[44px] items-center justify-center xl:flex">
+      <div className="relative isolate hidden h-[58px] items-center justify-center xl:flex">
         <svg
-          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[44px] w-full"
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[58px] w-full"
           viewBox="0 0 2000 80"
           preserveAspectRatio="none"
           aria-hidden="true"
@@ -287,7 +287,7 @@ const Navbar = () => {
                 type="button"
                 onClick={() => setCategoryMenu((open) => !open)}
                 aria-expanded={categoryMenu}
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
               >
                 <Grid2X2 size={19} aria-hidden="true" />
                 Categories
