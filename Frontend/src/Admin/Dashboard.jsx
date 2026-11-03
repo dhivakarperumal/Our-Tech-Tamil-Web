@@ -17,7 +17,7 @@ import {
 } from "react-icons/fi";
 import { FaRupeeSign, FaTshirt, FaTruck } from "react-icons/fa";
 import { Bar, Doughnut } from 'react-chartjs-2';
-import { ArrowRight, CalendarDays, RefreshCw, Sparkles, Video } from "lucide-react";
+import { ArrowRight, CalendarDays, Image, RefreshCw, Sparkles, Video } from "lucide-react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -711,9 +711,13 @@ const Dashboard = () => {
                     </div>
                     <span className="hidden rounded-full bg-violet-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-violet-700 sm:inline-flex">Shortcuts</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
                     {[
                         { label: "Add product", icon: <FiBox size={19} />, path: "/admin/products/add", tone: "from-violet-100 to-fuchsia-100 text-violet-700 group-hover:from-violet-600 group-hover:to-fuchsia-600" },
+                        { label: "Add combo", icon: <FiShoppingBag size={19} />, path: "/admin/products/combos/add", tone: "from-fuchsia-100 to-pink-100 text-fuchsia-700 group-hover:from-fuchsia-600 group-hover:to-pink-600" },
+                        { label: "Hero section", icon: <Sparkles size={19} />, path: "/admin/banners", tone: "from-indigo-100 to-violet-100 text-indigo-700 group-hover:from-indigo-600 group-hover:to-violet-600" },
+                        { label: "Banners", icon: <Image size={19} />, path: "/admin/banners", tone: "from-sky-100 to-cyan-100 text-sky-700 group-hover:from-sky-600 group-hover:to-cyan-600" },
+                        { label: "Coupons", icon: <FiTag size={19} />, path: "/admin/coupons", tone: "from-amber-100 to-yellow-100 text-amber-700 group-hover:from-amber-500 group-hover:to-yellow-500" },
                         { label: "Products", icon: <FaTshirt size={19} />, path: "/admin/products/all", tone: "from-amber-100 to-orange-100 text-amber-700 group-hover:from-amber-500 group-hover:to-orange-500" },
                         { label: "Categories", icon: <FiTag size={19} />, path: "/admin/products/category", tone: "from-sky-100 to-cyan-100 text-sky-700 group-hover:from-sky-500 group-hover:to-cyan-500" },
                         { label: "Stock", icon: <FiAlertTriangle size={19} />, path: "/admin/products/stock", tone: "from-rose-100 to-pink-100 text-rose-700 group-hover:from-rose-500 group-hover:to-pink-500" },
