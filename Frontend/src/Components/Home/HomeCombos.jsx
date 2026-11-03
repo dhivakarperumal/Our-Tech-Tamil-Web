@@ -27,7 +27,22 @@ function HomeCombos() {
     let active = true;
     api.get("/combos/public")
       .then(({ data }) => {
-        if (active) setCombos(Array.isArray(data.combos) ? data.combos.slice(0, 4) : []);
+        const featuredCombos = Array.isArray(data.combos) ? data.combos.slice(0, 5) : [];
+        if (active) setCombos(featuredCombos);
+
+        return Promise.all(featuredCombos.map(async (combo) => {
+          try {
+            const { data: detailData } = await api.get(`/combos/public/${combo.id}`);
+            const firstProduct = detailData.combo?.products?.[0];
+            return { ...combo, firstProductImage: firstProduct?.images?.[0] || firstProduct?.image || "" };
+          } catch (error) {
+            console.error(`Failed to load the first product image for combo ${combo.id}:`, error);
+            return combo;
+          }
+        }));
+      })
+      .then((featuredCombos) => {
+        if (active && featuredCombos) setCombos(featuredCombos);
       })
       .catch((error) => {
         console.error("Failed to load home page combos:", error);
@@ -59,11 +74,16 @@ function HomeCombos() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          {loading ? [1, 2, 3, 4].map((item) => (
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {loading ? [1, 2, 3, 4, 5].map((item) => (
             <div key={item} className="aspect-[4/5] animate-pulse rounded-[26px] border border-violet-100 bg-white p-2.5 shadow-sm" />
           )) : combos.map((combo) => {
-            const image = getImageUrl(combo.gallery_images?.[0]);
+            const image = getImageUrl(
+              combo.firstProductImage
+              || combo.products?.[0]?.image
+              || combo.products?.[0]?.images?.[0]
+              || combo.gallery_images?.[0],
+            );
             const price = Number(combo.final_price ?? combo.offer_price ?? 0);
             const mrp = Number(combo.mrp ?? 0);
             const hasDiscount = mrp > price;
@@ -79,7 +99,7 @@ function HomeCombos() {
             return (
               <article
                 key={combo.id}
-                className="group w-full min-w-0 rounded-[26px] border border-[#e2d3f5] bg-[#f7f0fb] p-2.5 shadow-[0_12px_28px_rgba(75,0,200,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(75,0,200,0.12)]"
+                className="group flex h-full w-full min-w-0 flex-col rounded-[26px] border border-[#e2d3f5] bg-[#f7f0fb] p-2 shadow-[0_12px_28px_rgba(75,0,200,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(75,0,200,0.12)] sm:p-2.5"
               >
                 <div className="relative">
                   {hasDiscount && (
@@ -99,14 +119,14 @@ function HomeCombos() {
                   <Link
                     to={`/combos/${combo.id}`}
                     aria-label={`View ${combo.name} details`}
-                    className="relative block aspect-square overflow-hidden rounded-[18px] bg-[#f2ebf8]"
+                    className="relative block aspect-square overflow-hidden rounded-[18px] bg-[#f7f3fb]"
                   >
                     {image ? (
                       <img
                         src={image}
                         alt={combo.name}
                         loading="lazy"
-                        className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                        className="h-full w-full object-contain p-2 transition duration-300 group-hover:scale-105 sm:p-3"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center text-[#4B00C8]/30">
@@ -115,7 +135,7 @@ function HomeCombos() {
                     )}
                   </Link>
                 </div>
-                <div className="px-1 pb-1 pt-3">
+                <div className="flex flex-1 flex-col px-1 pb-1 pt-3">
                   <div className="flex min-w-0 items-center gap-2 text-[#4B00C8]">
                     <Boxes size={14} strokeWidth={2.3} aria-hidden="true" />
                     <span className="truncate text-[9px] font-extrabold uppercase tracking-[0.14em]">
@@ -157,7 +177,7 @@ function HomeCombos() {
                       </span>
                     )}
                   </div>
-                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="mt-auto grid grid-cols-1 gap-2 pt-3 sm:grid-cols-2">
                     <button
                       type="button"
                       onClick={() => addComboToCart(combo, minQuantity)}
