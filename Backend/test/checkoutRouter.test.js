@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 const { once } = require("node:events");
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const { createHmac } = require("node:crypto");
 const createCheckoutRouter = require("../routers/checkoutRouter");
 
 process.env.JWT_SECRET = "checkout-router-test-secret";
@@ -10,6 +11,7 @@ process.env.JWT_SECRET = "checkout-router-test-secret";
 function createPool({ stock = 5, quantity = 2 } = {}) {
   const statements = [];
   const addresses = [];
+  const orders = [];
   const cartRows = [{
     cart_item_id: 7,
     product_id: 9,
@@ -39,6 +41,11 @@ function createPool({ stock = 5, quantity = 2 } = {}) {
         .map(({ id, recipient_name, phone, street_address, city, district, state, country, zip_code }) => ({
           id, recipient_name, phone, street_address, city, district, state, country, zip_code,
         }))];
+    }
+    if (query.includes("FROM orders") && query.includes("razorpay_payment_id")) {
+      return [orders.filter((order) =>
+        order.user_id === params[0] && order.razorpay_payment_id === params[1],
+      )];
     }
     if (query.includes("FROM addresses")) {
       const [
@@ -75,9 +82,31 @@ function createPool({ stock = 5, quantity = 2 } = {}) {
       });
       return [{ insertId: 31 }];
     }
-    if (query.includes("INSERT INTO orders")) return [{ insertId: 45 }];
+    if (query.includes("INSERT INTO orders")) {
+      const [
+        user_id, address_id, customer_email, payment_method, payment_status,
+        total_amount, razorpay_order_id, razorpay_payment_id,
+      ] = params;
+      orders.push({
+        id: 45,
+        user_id,
+        address_id,
+        customer_email,
+        payment_method,
+        payment_status,
+        total_amount,
+        razorpay_order_id,
+        razorpay_payment_id,
+        status: "Order Placed",
+      });
+      return [{ insertId: 45 }];
+    }
     if (query.includes("INSERT INTO order_items")) return [{ insertId: 61 }];
-    if (query.includes("UPDATE orders SET order_id")) return [{ affectedRows: 1 }];
+    if (query.includes("UPDATE orders SET order_id")) {
+      const order = orders.find((item) => item.id === params[1]);
+      if (order) order.order_id = params[0];
+      return [{ affectedRows: 1 }];
+    }
     if (query.includes("UPDATE products SET total_stock")) return [{ affectedRows: 1 }];
     if (query.includes("DELETE FROM cart_items")) return [{ affectedRows: 1 }];
     throw new Error(`Unexpected checkout query: ${query}`);
@@ -85,6 +114,7 @@ function createPool({ stock = 5, quantity = 2 } = {}) {
   return {
     statements,
     addresses,
+    orders,
     execute,
     async getConnection() {
       return {
@@ -140,17 +170,16 @@ test("checkout creates an order from authenticated user's cart and database pric
   assert.equal(response.status, 201, JSON.stringify(result));
   assert.equal(result.order_id, "ORD00045");
   assert.equal(result.total_amount, 300);
-  assert.match(
-    pool.statements.find(({ query }) => query.includes("INSERT INTO orders")).query,
-    /'Online', 'Cash on Delivery'/,
-  );
+  const orderInsert = pool.statements.find(({ query }) => query.includes("INSERT INTO orders"));
+  assert.match(orderInsert.query, /'Online'/);
+  assert.equal(orderInsert.params[3], "Cash on Delivery");
   assert.equal(result.payment_method, "Cash on Delivery");
+  assert.equal(result.payment_status, "Pending");
   assert.equal(result.items[0].price, 150);
   assert.equal(result.items[0].total, 300);
   assert.equal(result.items[0].image, "/uploads/headphones.png");
 
   const addressInsert = pool.statements.find(({ query }) => query.includes("INSERT INTO addresses"));
-  const orderInsert = pool.statements.find(({ query }) => query.includes("INSERT INTO orders"));
   const productUpdate = pool.statements.find(({ query }) => query.includes("UPDATE products SET total_stock"));
   assert.equal(addressInsert.params[0], "customer-uuid");
   assert.equal(orderInsert.params[0], "customer-uuid");
@@ -234,4 +263,143 @@ test("checkout rejects unauthenticated customers and invalid addresses", async (
     body: JSON.stringify({ ...address, street_address: "" }),
   });
   assert.equal(invalidAddress.status, 400);
+});
+
+test("Razorpay order and payment verification use server-calculated totals", async (t) => {
+  const previousKeyId = process.env.RAZORPAY_KEY_ID;
+  const previousKeySecret = process.env.RAZORPAY_KEY_SECRET;
+  const previousFetch = global.fetch;
+  process.env.RAZORPAY_KEY_ID = "rzp_test_public";
+  process.env.RAZORPAY_KEY_SECRET = "test_secret";
+  t.after(() => {
+    if (previousKeyId === undefined) delete process.env.RAZORPAY_KEY_ID;
+    else process.env.RAZORPAY_KEY_ID = previousKeyId;
+    if (previousKeySecret === undefined) delete process.env.RAZORPAY_KEY_SECRET;
+    else process.env.RAZORPAY_KEY_SECRET = previousKeySecret;
+    global.fetch = previousFetch;
+  });
+  global.fetch = async (url, options) => {
+    if (!String(url).startsWith("https://api.razorpay.com/")) {
+      return previousFetch(url, options);
+    }
+    if (url.endsWith("/orders") && options.method === "POST") {
+      const request = JSON.parse(options.body);
+      assert.equal(request.amount, 30000);
+      assert.equal(request.notes.user_id, "customer-uuid");
+      return Response.json({ id: "order_test123", amount: 30000, currency: "INR" });
+    }
+    if (url.endsWith("/payments/pay_test123")) {
+      return Response.json({
+        id: "pay_test123",
+        order_id: "order_test123",
+        amount: 30000,
+        currency: "INR",
+        status: "captured",
+      });
+    }
+    if (url.endsWith("/orders/order_test123")) {
+      return Response.json({
+        id: "order_test123",
+        amount: 30000,
+        currency: "INR",
+        status: "created",
+        notes: { user_id: "customer-uuid" },
+      });
+    }
+    throw new Error(`Unexpected Razorpay request: ${url}`);
+  };
+
+  const pool = createPool();
+  const url = await startServer(t, pool);
+  const orderResponse = await fetch(`${url}/razorpay/order`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  const paymentOrder = await orderResponse.json();
+  assert.equal(orderResponse.status, 201);
+  assert.equal(paymentOrder.amount, 30000);
+
+  const paymentId = "pay_test123";
+  const paymentOrderId = "order_test123";
+  const signature = createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+    .update(`${paymentOrderId}|${paymentId}`)
+    .digest("hex");
+  const verifyResponse = await fetch(`${url}/razorpay/verify`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({
+      ...address,
+      razorpay_order_id: paymentOrderId,
+      razorpay_payment_id: paymentId,
+      razorpay_signature: signature,
+    }),
+  });
+  const order = await verifyResponse.json();
+  const orderInsert = pool.statements.find(({ query }) => query.includes("INSERT INTO orders"));
+
+  assert.equal(verifyResponse.status, 201, JSON.stringify(order));
+  assert.equal(order.payment_method, "Razorpay");
+  assert.equal(order.payment_status, "Paid");
+  assert.equal(orderInsert.params[3], "Razorpay");
+  assert.equal(orderInsert.params[4], "Paid");
+  assert.equal(orderInsert.params[6], paymentOrderId);
+  assert.equal(orderInsert.params[7], paymentId);
+
+  const retryResponse = await fetch(`${url}/razorpay/verify`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({
+      ...address,
+      razorpay_order_id: paymentOrderId,
+      razorpay_payment_id: paymentId,
+      razorpay_signature: signature,
+    }),
+  });
+  const retryOrder = await retryResponse.json();
+  assert.equal(retryResponse.status, 200);
+  assert.equal(retryOrder.order_id, "ORD00045");
+  assert.equal(pool.orders.length, 1);
+});
+
+test("Razorpay rejects invalid signatures and unavailable credentials", async (t) => {
+  const previousKeyId = process.env.RAZORPAY_KEY_ID;
+  const previousKeySecret = process.env.RAZORPAY_KEY_SECRET;
+  const previousFetch = global.fetch;
+  process.env.RAZORPAY_KEY_ID = "rzp_test_public";
+  process.env.RAZORPAY_KEY_SECRET = "test_secret";
+  global.fetch = async (url, options) => {
+    if (!String(url).startsWith("https://api.razorpay.com/")) {
+      return previousFetch(url, options);
+    }
+    throw new Error("Invalid signatures must not call Razorpay.");
+  };
+  t.after(() => {
+    if (previousKeyId === undefined) delete process.env.RAZORPAY_KEY_ID;
+    else process.env.RAZORPAY_KEY_ID = previousKeyId;
+    if (previousKeySecret === undefined) delete process.env.RAZORPAY_KEY_SECRET;
+    else process.env.RAZORPAY_KEY_SECRET = previousKeySecret;
+    global.fetch = previousFetch;
+  });
+
+  const pool = createPool();
+  const url = await startServer(t, pool);
+  const invalidResponse = await fetch(`${url}/razorpay/verify`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify({
+      ...address,
+      razorpay_order_id: "order_test123",
+      razorpay_payment_id: "pay_test123",
+      razorpay_signature: "0".repeat(64),
+    }),
+  });
+  assert.equal(invalidResponse.status, 400);
+  assert.equal(pool.statements.some(({ query }) => query.includes("INSERT INTO orders")), false);
+
+  delete process.env.RAZORPAY_KEY_ID;
+  const unavailableResponse = await fetch(`${url}/razorpay/order`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  assert.equal(unavailableResponse.status, 503);
 });

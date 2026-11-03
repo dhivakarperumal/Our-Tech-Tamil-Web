@@ -1,10 +1,11 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import defaultBg from "/assets/purpleph.jpg";
 
-const PageHeader = ({ title, background }) => {
-
-  const bgImage = background || defaultBg;
+const PageHeader = ({ title, background, align = "center" }) => {
+  const bgImage = background || "/images/loginbanner.png";
+  const contentAlignment = align === "left"
+    ? "w-full max-w-[1700px] mx-auto px-[6%] sm:px-[5%] lg:px-[3%] text-left"
+    : "relative text-center px-4";
 
   return (
     <div
@@ -20,14 +21,14 @@ const PageHeader = ({ title, background }) => {
       <div className="absolute inset-0"></div>
 
       {/* Content */}
-      <div className="relative text-center px-4">
+      <div className={contentAlignment}>
 
         <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 md:mb-3">
           {title}
         </h1>
 
         {/* Breadcrumb */}
-        <div className="text-xs sm:text-sm md:text-base flex justify-center items-center gap-2">
+        <div className={`text-xs sm:text-sm md:text-base flex ${align === "left" ? "justify-start" : "justify-center"} items-center gap-2`}>
 
           <Link
             to="/"

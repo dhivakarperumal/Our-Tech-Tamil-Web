@@ -1,21 +1,41 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiArrowLeft, FiCheckCircle, FiLoader, FiLock, FiMapPin, FiSearch } from "react-icons/fi";
+import { FiCheckCircle, FiLoader, FiLock, FiMapPin, FiSearch } from "react-icons/fi";
 import toast from "react-hot-toast";
 import api from "../../api";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import PageContainer from "../CommenComponents/PageContainer";
+import PageHeader from "../CommenComponents/PageHeader";
 
 const formatPrice = (value) => Number(value || 0).toLocaleString("en-IN", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
+let razorpayScriptPromise;
+const loadRazorpay = () => {
+  if (window.Razorpay) return Promise.resolve(true);
+  if (!razorpayScriptPromise) {
+    razorpayScriptPromise = new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => {
+        razorpayScriptPromise = null;
+        resolve(false);
+      };
+      document.body.appendChild(script);
+    });
+  }
+  return razorpayScriptPromise;
+};
+
 function Checkout() {
   const { user } = useContext(AuthContext);
   const { cart, loadingCart, fetchCart } = useContext(StoreContext);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("cod");
   const [isLocating, setIsLocating] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [isLoadingAddresses, setIsLoadingAddresses] = useState(false);
@@ -196,72 +216,123 @@ function Checkout() {
 
     setIsSubmitting(true);
     try {
-      const { data } = await api.post("/checkout", form);
-      setPlacedOrder(data);
-      await fetchCart();
-      toast.success("Order placed successfully.");
+      if (paymentMethod === "cod") {
+        const { data } = await api.post("/checkout", form);
+        setPlacedOrder(data);
+        await fetchCart();
+        toast.success("Order placed successfully.");
+        return;
+      }
+
+      const isRazorpayLoaded = await loadRazorpay();
+      if (!isRazorpayLoaded) throw new Error("Unable to load Razorpay checkout. Please try again.");
+      const { data: paymentOrder } = await api.post("/checkout/razorpay/order");
+      const payment = new window.Razorpay({
+        key: paymentOrder.key_id,
+        amount: paymentOrder.amount,
+        currency: paymentOrder.currency,
+        name: "Our Tech Tamil",
+        description: "Order payment",
+        order_id: paymentOrder.order_id,
+        prefill: {
+          name: form.recipient_name,
+          email: form.customer_email,
+          contact: form.phone,
+        },
+        handler: async (result) => {
+          try {
+            const { data } = await api.post("/checkout/razorpay/verify", {
+              ...form,
+              ...result,
+            });
+            setPlacedOrder(data);
+            await fetchCart();
+            toast.success("Payment successful and order placed.");
+          } catch (error) {
+            toast.error(error.response?.data?.message || "Payment verification failed. Please contact support if you were charged.");
+          } finally {
+            setIsSubmitting(false);
+          }
+        },
+        modal: {
+          ondismiss: () => setIsSubmitting(false),
+        },
+        theme: { color: "#5b21b6" },
+      });
+      payment.on("payment.failed", (failure) => {
+        toast.error(failure.error?.description || "Payment failed. Please try again.");
+        setIsSubmitting(false);
+      });
+      payment.open();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Unable to place your order.");
-    } finally {
+      toast.error(error.response?.data?.message || error.message || "Unable to place your order.");
       setIsSubmitting(false);
     }
   };
 
   if (!user) {
     return (
-      <PageContainer className="py-12">
-        <div className="mx-auto max-w-xl rounded-2xl border border-border bg-white p-8 text-center">
-          <h1 className="text-xl font-bold text-text-primary">Sign in to checkout</h1>
-          <p className="mt-2 text-sm text-text-secondary">Please sign in to place your order.</p>
-          <Link to="/login" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white">
-            Sign in
-          </Link>
-        </div>
-      </PageContainer>
+      <>
+        <PageHeader title="Checkout" align="left" />
+        <PageContainer className="py-12">
+          <div className="mx-auto max-w-xl rounded-2xl border border-border bg-white p-8 text-center">
+            <h1 className="text-xl font-bold text-text-primary">Sign in to checkout</h1>
+            <p className="mt-2 text-sm text-text-secondary">Please sign in to place your order.</p>
+            <Link to="/login" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white">
+              Sign in
+            </Link>
+          </div>
+        </PageContainer>
+      </>
     );
   }
 
   if (placedOrder) {
     return (
-      <PageContainer className="py-12 sm:py-16">
-        <div className="mx-auto max-w-xl rounded-2xl border border-emerald-100 bg-white p-8 text-center shadow-sm">
-          <FiCheckCircle className="mx-auto text-emerald-600" size={52} />
-          <h1 className="mt-4 text-2xl font-extrabold text-text-primary">Order placed!</h1>
-          <p className="mt-2 text-sm text-text-secondary">Your order number is <strong>{placedOrder.order_id}</strong>.</p>
-          <p className="mt-1 text-sm text-text-secondary">Payment: Cash on Delivery</p>
-          <p className="mt-4 text-lg font-extrabold text-primary">₹{formatPrice(placedOrder.total_amount)}</p>
-          <Link to="/shop" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary-dark">
-            Continue Shopping
-          </Link>
-        </div>
-      </PageContainer>
+      <>
+        <PageHeader title="Order placed" align="left" />
+        <PageContainer className="py-12 sm:py-16">
+          <div className="mx-auto max-w-xl rounded-2xl border border-emerald-100 bg-white p-8 text-center shadow-sm">
+            <FiCheckCircle className="mx-auto text-emerald-600" size={52} />
+            <h1 className="mt-4 text-2xl font-extrabold text-text-primary">Order placed!</h1>
+            <p className="mt-2 text-sm text-text-secondary">Your order number is <strong>{placedOrder.order_id}</strong>.</p>
+            <p className="mt-1 text-sm text-text-secondary">
+              Payment: {placedOrder.payment_method}
+              {placedOrder.payment_status ? ` · ${placedOrder.payment_status}` : ""}
+            </p>
+            <p className="mt-4 text-lg font-extrabold text-primary">₹{formatPrice(placedOrder.total_amount)}</p>
+            <Link to="/shop" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white transition hover:bg-primary-dark">
+              Continue Shopping
+            </Link>
+          </div>
+        </PageContainer>
+      </>
     );
   }
 
   if (!loadingCart && cart.length === 0) {
     return (
-      <PageContainer className="py-12">
-        <div className="mx-auto max-w-xl rounded-2xl border border-border bg-white p-8 text-center">
-          <h1 className="text-xl font-bold text-text-primary">Your cart is empty</h1>
-          <p className="mt-2 text-sm text-text-secondary">Add products before continuing to checkout.</p>
-          <Link to="/shop" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white">
-            Continue Shopping
-          </Link>
-        </div>
-      </PageContainer>
+      <>
+        <PageHeader title="Checkout" align="left" />
+        <PageContainer className="py-12">
+          <div className="mx-auto max-w-xl rounded-2xl border border-border bg-white p-8 text-center">
+            <h1 className="text-xl font-bold text-text-primary">Your cart is empty</h1>
+            <p className="mt-2 text-sm text-text-secondary">Add products before continuing to checkout.</p>
+            <Link to="/shop" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white">
+              Continue Shopping
+            </Link>
+          </div>
+        </PageContainer>
+      </>
     );
   }
 
   const inputClass = "mt-1.5 w-full rounded-lg border border-border bg-white px-3.5 py-3 text-sm text-text-primary outline-none transition placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/10";
 
   return (
-    <PageContainer className="py-8 sm:py-12">
-      <Link to="/cart" className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-text-secondary transition hover:text-primary">
-        <FiArrowLeft size={16} /> Back to cart
-      </Link>
-      <h1 className="text-2xl font-extrabold text-text-primary sm:text-3xl">Checkout</h1>
-      <p className="mt-1 text-sm text-text-secondary">Enter your delivery details to place the order.</p>
-
+    <>
+      <PageHeader title="Checkout" align="left" />
+      <PageContainer className="py-8 sm:py-12">
       {loadingCart ? (
         <div className="mt-6 rounded-xl border border-border bg-white p-8 text-center text-sm text-text-secondary">Loading your cart...</div>
       ) : (
@@ -363,12 +434,23 @@ function Checkout() {
 
             <section className="rounded-xl bg-gray-50 p-4">
               <h2 className="text-sm font-bold text-text-primary">Payment method</h2>
-              <p className="mt-1 text-sm text-text-secondary">Cash on Delivery</p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <label className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm font-semibold transition ${paymentMethod === "cod" ? "border-primary bg-white text-primary" : "border-border bg-white text-text-primary"}`}>
+                  <input type="radio" name="payment_method" value="cod" checked={paymentMethod === "cod"} onChange={() => setPaymentMethod("cod")} />
+                  Cash on Delivery
+                </label>
+                <label className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 text-sm font-semibold transition ${paymentMethod === "razorpay" ? "border-primary bg-white text-primary" : "border-border bg-white text-text-primary"}`}>
+                  <input type="radio" name="payment_method" value="razorpay" checked={paymentMethod === "razorpay"} onChange={() => setPaymentMethod("razorpay")} />
+                  Pay Online with Razorpay
+                </label>
+              </div>
             </section>
 
             <button type="submit" disabled={isSubmitting || !cart.length} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3.5 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60">
               <FiLock size={16} />
-              {isSubmitting ? "Placing order..." : `Place Order · ₹${formatPrice(orderTotal)}`}
+              {isSubmitting
+                ? (paymentMethod === "razorpay" ? "Opening secure payment..." : "Placing order...")
+                : `${paymentMethod === "razorpay" ? "Pay securely" : "Place Order"} · ₹${formatPrice(orderTotal)}`}
             </button>
           </form>
 
@@ -394,7 +476,8 @@ function Checkout() {
           </aside>
         </div>
       )}
-    </PageContainer>
+      </PageContainer>
+    </>
   );
 }
 

@@ -362,6 +362,8 @@ async function initializeDatabase(pool) {
       order_type VARCHAR(32) NOT NULL DEFAULT 'Shop',
       payment_method VARCHAR(64) NOT NULL DEFAULT 'Cash',
       payment_status VARCHAR(32) NOT NULL DEFAULT 'Pending',
+      razorpay_order_id VARCHAR(64) NULL,
+      razorpay_payment_id VARCHAR(64) NULL UNIQUE,
       status VARCHAR(32) NOT NULL DEFAULT 'Order Placed',
       total_amount DECIMAL(12, 2) NOT NULL DEFAULT 0,
       tracking_number VARCHAR(160) NULL,
@@ -402,6 +404,12 @@ async function initializeDatabase(pool) {
   const existingOrderColumns = new Set(orderColumns.map((column) => column.COLUMN_NAME));
   if (!existingOrderColumns.has("address_id")) {
     await pool.query("ALTER TABLE orders ADD COLUMN address_id BIGINT UNSIGNED NULL AFTER user_id");
+  }
+  if (!existingOrderColumns.has("razorpay_order_id")) {
+    await pool.query("ALTER TABLE orders ADD COLUMN razorpay_order_id VARCHAR(64) NULL");
+  }
+  if (!existingOrderColumns.has("razorpay_payment_id")) {
+    await pool.query("ALTER TABLE orders ADD COLUMN razorpay_payment_id VARCHAR(64) NULL UNIQUE");
   }
 
   if (existingOrderColumns.has("items")) {
