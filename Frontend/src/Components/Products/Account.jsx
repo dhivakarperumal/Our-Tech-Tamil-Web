@@ -22,6 +22,7 @@ import toast from "react-hot-toast";
 import api from "../../api";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import PageContainer from "../CommenComponents/PageContainer";
+import PageHeader from "../CommenComponents/PageHeader";
 
 function getInitials(name) {
   if (!name) return "";
@@ -360,19 +361,7 @@ function Account() {
 
   return (
     <>
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#2d0060] via-primary to-[#7200d6] py-10">
-        <div className="pointer-events-none absolute -top-10 right-0 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
-        <div className="pointer-events-none absolute bottom-0 left-0 h-40 w-40 rounded-full bg-white/5 blur-2xl" />
-        <PageContainer>
-          <div className="flex items-center gap-2 text-xs text-white/60">
-            <Link to="/" className="hover:text-white">Home</Link>
-            <ChevronRight size={13} />
-            <span className="text-white/90">My Account</span>
-          </div>
-          <h1 className="mt-3 text-3xl font-extrabold text-white sm:text-4xl">My Account</h1>
-          <p className="mt-1 text-sm text-white/70">Manage your profile, orders, addresses and security.</p>
-        </PageContainer>
-      </div>
+      <PageHeader title="My Account" align="left" />
 
       <div className="bg-[#faf9fc] py-8 sm:py-12">
         <PageContainer>
