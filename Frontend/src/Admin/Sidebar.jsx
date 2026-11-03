@@ -57,7 +57,7 @@ const navItems = [
     ],
   },
   
-  { path: "/admin/service", label: "Service", icon: Wrench },
+  // { path: "/admin/service", label: "Service", icon: Wrench },
   { path: "/admin/articles", label: "Create Article", icon: FilePlus2 },
   { path: "/admin/youtube-videos", label: "Youtube Video", icon: Video },
   
