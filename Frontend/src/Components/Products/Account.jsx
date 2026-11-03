@@ -580,7 +580,7 @@ function Account() {
             <div className="min-w-0 flex-1">
               {activeTab === "personal" && <PersonalDetails user={user} setUser={setUser} />}
               {activeTab === "orders"   && <MyOrders user={user} />}
-              {activeTab === "address"  && <MyAddresses user={user} />}
+              {activeTab === "address"  && <MyAddresses key={user.user_id} user={user} />}
               {activeTab === "password" && <ChangePassword />}
             </div>
           </div>
