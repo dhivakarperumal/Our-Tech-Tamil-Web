@@ -59,7 +59,7 @@ function HomeCombos() {
           </Link>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4">
           {loading ? [1, 2, 3, 4].map((item) => (
             <div key={item} className="aspect-[4/5] animate-pulse rounded-[26px] border border-violet-100 bg-white p-2.5 shadow-sm" />
           )) : combos.map((combo) => {
@@ -157,12 +157,12 @@ function HomeCombos() {
                       </span>
                     )}
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <button
                       type="button"
                       onClick={() => addComboToCart(combo, minQuantity)}
                       disabled={!available}
-                      className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-[12px] border border-[#4B00C8] bg-white px-2 py-2 text-[10px] font-extrabold text-[#4B00C8] shadow-sm transition hover:bg-[#f1ebff] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[12px] border border-[#4B00C8] bg-white px-2 py-2.5 text-[10px] font-extrabold text-[#4B00C8] shadow-sm transition hover:bg-[#f1ebff] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <ShoppingCart className="shrink-0" size={14} aria-hidden="true" />
                       <span className="whitespace-nowrap">Add to Cart</span>
@@ -171,7 +171,7 @@ function HomeCombos() {
                       type="button"
                       onClick={() => buyNow(combo)}
                       disabled={!available}
-                      className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-[12px] bg-[#4B00C8] px-2 py-2 text-[10px] font-extrabold text-white shadow-[0_8px_18px_rgba(75,0,200,0.25)] transition hover:bg-[#3d00a9] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[12px] bg-[#4B00C8] px-2 py-2.5 text-[10px] font-extrabold text-white shadow-[0_8px_18px_rgba(75,0,200,0.25)] transition hover:bg-[#3d00a9] disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Zap className="shrink-0" size={14} aria-hidden="true" />
                       <span className="whitespace-nowrap">Buy Now</span>

@@ -301,6 +301,28 @@ function createAdminContentController(pool) {
       }
     },
 
+    async listPublicArticles(request, response, next) {
+      try {
+        const [articles] = await pool.execute(
+          `SELECT id, content_id, title, description, image_url, buy_link, buy_links, created_at
+           FROM admin_articles
+           WHERE content_type = 'article'
+           ORDER BY created_at DESC, id DESC`,
+        );
+        return response.json({
+          articles: articles.map((article) => ({
+            ...article,
+            buy_links: parseArticleRows(
+              article.buy_links,
+              article.buy_link ? [{ name: "Read More", url: article.buy_link }] : [],
+            ),
+          })),
+        });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
     async getNextArticleId(request, response, next) {
       const contentType = request.query.type;
       if (!["article", "product_review"].includes(contentType)) {
@@ -560,8 +582,8 @@ function createAdminContentController(pool) {
     async listPublicYoutubeVideos(request, response, next) {
       try {
         const [videos] = await pool.execute(
-          `SELECT id, title, video_url, video_id, thumbnail_image, thumbnail_url, description,
-                  application_links
+          `SELECT id, video_code, title, video_url, video_id, thumbnail_image, thumbnail_url,
+                  description, application_links, documents, follow_up_notes, created_at
            FROM admin_youtube_videos
            WHERE status = 'Active'
            ORDER BY created_at DESC, id DESC`,
@@ -576,6 +598,9 @@ function createAdminContentController(pool) {
               && typeof link.url === "string"
               && validateOptionalUrl(link.url.trim()),
             ),
+            documents: parseJsonArray(video.documents)
+              .filter((document) => validateDocuments([document]))
+              .map(({ name, type, url, data }) => ({ name, type, url, data })),
           })),
         });
       } catch (error) {

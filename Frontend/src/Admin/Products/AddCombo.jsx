@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Boxes, Check, Edit2, ImagePlus, LoaderCircle, PackagePlus, Plus, Search, Star, Trash2, Video, X } from "lucide-react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { ArrowLeft, Boxes, Check, ChevronDown, Edit2, ImagePlus, LoaderCircle, PackagePlus, Plus, Search, Star, Trash2, Video, X } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import api from "../../api";
@@ -43,6 +44,154 @@ const resolveImage = (image) => {
 const sectionCard = "overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm";
 const fieldClass = "w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:bg-white focus:ring-4 focus:ring-violet-500/10";
 
+function ComboDropdown({ value, options, placeholder, onChange, disabled = false, invalid = false, required = false, name }) {
+  const dropdownId = useId();
+  const triggerRef = useRef(null);
+  const menuRef = useRef(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [menuPosition, setMenuPosition] = useState(null);
+  const selectedOption = options.find((option) => String(option.value) === String(value));
+
+  const updateMenuPosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    const estimatedHeight = Math.min(256, options.length * 40 + 8);
+    const openBelow = spaceBelow >= estimatedHeight || spaceBelow >= spaceAbove;
+    const maxHeight = Math.max(100, Math.min(256, openBelow ? spaceBelow : spaceAbove));
+    setMenuPosition({
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - rect.width - 8)),
+      top: openBelow ? rect.bottom + 6 : Math.max(8, rect.top - maxHeight - 6),
+      width: rect.width,
+      maxHeight,
+    });
+  }, [options.length]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    updateMenuPosition();
+    const handleOutsidePointer = (event) => {
+      if (!triggerRef.current?.contains(event.target) && !menuRef.current?.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("pointerdown", handleOutsidePointer);
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsidePointer);
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [isOpen, updateMenuPosition]);
+
+  const openMenu = () => {
+    if (disabled || options.length === 0) return;
+    const selectedIndex = options.findIndex((option) => String(option.value) === String(value));
+    setActiveIndex(selectedIndex >= 0 ? selectedIndex : 0);
+    setIsOpen(true);
+  };
+
+  const chooseOption = (option) => {
+    onChange(option.value);
+    setIsOpen(false);
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!isOpen) {
+        openMenu();
+        return;
+      }
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      setActiveIndex((index) => (index + direction + options.length) % options.length);
+    } else if (event.key === "Home" && isOpen) {
+      event.preventDefault();
+      setActiveIndex(0);
+    } else if (event.key === "End" && isOpen) {
+      event.preventDefault();
+      setActiveIndex(options.length - 1);
+    } else if ((event.key === "Enter" || event.key === " ") && isOpen) {
+      event.preventDefault();
+      if (options[activeIndex]) chooseOption(options[activeIndex]);
+    } else if (event.key === "Escape" && isOpen) {
+      event.preventDefault();
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        name={name}
+        role="combobox"
+        aria-label={placeholder}
+        aria-required={required || undefined}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-controls={`${dropdownId}-listbox`}
+        aria-activedescendant={isOpen ? `${dropdownId}-option-${activeIndex}` : undefined}
+        aria-invalid={invalid || undefined}
+        disabled={disabled}
+        onClick={() => (isOpen ? setIsOpen(false) : openMenu())}
+        onKeyDown={handleKeyDown}
+        className={`group flex w-full items-center justify-between gap-3 rounded-xl border px-3.5 py-3 text-left text-sm shadow-sm outline-none transition focus:ring-4 disabled:cursor-not-allowed disabled:opacity-50 ${
+          invalid
+            ? "border-rose-400 bg-rose-50/50 focus:border-rose-500 focus:ring-rose-500/10"
+            : "border-slate-200 bg-slate-50 text-slate-800 hover:border-violet-300 hover:bg-violet-50/30 focus:border-violet-500 focus:bg-white focus:ring-violet-500/10"
+        }`}
+      >
+        <span className={`min-w-0 flex-1 truncate ${selectedOption ? "" : "text-slate-400"}`}>
+          {selectedOption?.label ?? placeholder}
+        </span>
+        <ChevronDown
+          size={16}
+          className={`shrink-0 text-slate-400 transition-transform group-hover:text-violet-700 ${isOpen ? "rotate-180 text-violet-700" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+      {isOpen && menuPosition && createPortal(
+        <div
+          ref={menuRef}
+          id={`${dropdownId}-listbox`}
+          role="listbox"
+          aria-label={placeholder}
+          className="fixed z-[9999] overflow-y-auto rounded-xl border border-violet-100 bg-white p-1.5 shadow-[0_16px_40px_rgba(31,10,60,0.18)]"
+          style={menuPosition}
+        >
+          {options.map((option, index) => {
+            const selected = String(option.value) === String(value);
+            const active = index === activeIndex;
+            return (
+              <div
+                key={`${option.value}-${index}`}
+                id={`${dropdownId}-option-${index}`}
+                role="option"
+                aria-selected={selected}
+                onMouseEnter={() => setActiveIndex(index)}
+                onClick={() => chooseOption(option)}
+                className={`flex min-h-10 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                  active ? "bg-violet-100 text-[#1f0a3c]" : selected ? "bg-violet-50 font-bold text-[#3d01b1]" : "font-medium text-slate-700 hover:bg-violet-50"
+                }`}
+              >
+                <span className="min-w-0 truncate">{option.label}</span>
+                {selected && <Check size={16} className="shrink-0 text-violet-700" aria-hidden="true" />}
+              </div>
+            );
+          })}
+        </div>,
+        document.body,
+      )}
+    </>
+  );
+}
+
 function SectionHeader({ icon: Icon, title, description, number }) {
   return (
     <div className="flex items-center gap-3 bg-gradient-to-r from-[#35106d] via-[#5625a5] to-[#783ed0] px-5 py-4 text-white">
@@ -58,13 +207,13 @@ function SectionHeader({ icon: Icon, title, description, number }) {
 
 function Field({ label, required, children, error }) {
   return (
-    <label className="block min-w-0 space-y-1.5">
+    <div className="block min-w-0 space-y-1.5">
       <span className="block text-xs font-bold uppercase tracking-wide text-slate-600">
         {label}{required && <span className="ml-1 text-rose-500">*</span>}
       </span>
       {children}
       {error && <span className="block text-xs font-medium text-rose-600">{error}</span>}
-    </label>
+    </div>
   );
 }
 
@@ -320,7 +469,33 @@ function AddCombo() {
     }
   };
 
-  const selectClass = `${fieldClass} appearance-none`;
+  const categoryTypeOptions = [
+    { value: "", label: "Select category type" },
+    ...categoryTypes.map((type) => ({ value: type, label: type })),
+  ];
+  const categoryOptions = [
+    { value: "", label: "Select category" },
+    ...categoriesForType.map((category) => ({ value: category.name, label: category.name })),
+  ];
+  const subcategoryOptions = [
+    { value: "", label: "Select subcategory" },
+    ...subcategories.map((subcategory) => ({ value: subcategory, label: subcategory })),
+  ];
+  const ratingOptions = [5, 4, 3, 2, 1].map((rating) => ({
+    value: String(rating),
+    label: `${rating} Star${rating === 1 ? "" : "s"}`,
+  }));
+  const statusOptions = ["Active", "Inactive", "Draft"].map((status) => ({ value: status, label: status }));
+  const productCategoryOptions = [
+    { value: "", label: "All categories" },
+    ...[...new Set(categoriesForType.map((category) => category.name))]
+      .map((category) => ({ value: category, label: category })),
+  ];
+  const productSubcategoryOptions = [
+    { value: "", label: "All subcategories" },
+    ...[...new Set(categories.filter((category) => category.name === productCategory).flatMap((category) => category.subcategory || []))]
+      .map((subcategory) => ({ value: subcategory, label: subcategory })),
+  ];
 
   return (
     <div className="min-h-full bg-slate-50/70 px-3 py-5 sm:px-6 sm:py-7 lg:px-8">
@@ -356,37 +531,51 @@ function AddCombo() {
                   <input value={form.code || "Generating..."} readOnly className={`${fieldClass} cursor-not-allowed bg-slate-100 font-bold text-violet-800`} />
                 </Field>
                 <Field label="Category Type" required error={errors.category_type}>
-                  <select name="category_type" value={form.category_type} onChange={(event) => handleCategoryType(event.target.value)} className={selectClass}>
-                    <option value="">Select category type</option>
-                    {categoryTypes.map((type) => <option key={type} value={type}>{type}</option>)}
-                  </select>
+                  <ComboDropdown
+                    name="category_type"
+                    value={form.category_type}
+                    options={categoryTypeOptions}
+                    placeholder="Select category type"
+                    onChange={handleCategoryType}
+                    required
+                    invalid={Boolean(errors.category_type)}
+                  />
                 </Field>
                 <Field label="Category" required error={errors.category}>
-                  <select name="category" value={form.category} onChange={(event) => handleCategory(event.target.value)} className={selectClass} disabled={!form.category_type}>
-                    <option value="">Select category</option>
-                    {categoriesForType.map((category) => <option key={category.id} value={category.name}>{category.name}</option>)}
-                  </select>
+                  <ComboDropdown
+                    name="category"
+                    value={form.category}
+                    options={categoryOptions}
+                    placeholder="Select category"
+                    onChange={handleCategory}
+                    disabled={!form.category_type}
+                    required
+                    invalid={Boolean(errors.category)}
+                  />
                 </Field>
                 <Field label="Subcategory" required error={errors.subcategory}>
-                  <select name="subcategory" value={form.subcategory} onChange={(event) => updateForm("subcategory", event.target.value)} className={selectClass} disabled={!subcategories.length}>
-                    <option value="">Select subcategory</option>
-                    {subcategories.map((subcategory) => <option key={subcategory} value={subcategory}>{subcategory}</option>)}
-                  </select>
+                  <ComboDropdown
+                    name="subcategory"
+                    value={form.subcategory}
+                    options={subcategoryOptions}
+                    placeholder="Select subcategory"
+                    onChange={(value) => updateForm("subcategory", value)}
+                    disabled={!subcategories.length}
+                    required
+                    invalid={Boolean(errors.subcategory)}
+                  />
                 </Field>
                 <Field label="Rating" required error={errors.rating}>
                   <div className="flex items-center gap-2">
-                    <select
+                    <ComboDropdown
                       name="rating"
                       value={form.rating}
-                      onChange={(event) => updateForm("rating", event.target.value)}
-                      className={`${selectClass} flex-1`}
-                    >
-                      <option value="5">5 Stars</option>
-                      <option value="4">4 Stars</option>
-                      <option value="3">3 Stars</option>
-                      <option value="2">2 Stars</option>
-                      <option value="1">1 Star</option>
-                    </select>
+                      options={ratingOptions}
+                      placeholder="Select rating"
+                      onChange={(value) => updateForm("rating", value)}
+                      required
+                      invalid={Boolean(errors.rating)}
+                    />
                     <div className="flex items-center gap-0.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2.5 shadow-sm">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
@@ -407,9 +596,13 @@ function AddCombo() {
                   </div>
                 </Field>
                 <Field label="Status">
-                  <select value={form.status} onChange={(event) => updateForm("status", event.target.value)} className={selectClass}>
-                    <option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Draft">Draft</option>
-                  </select>
+                  <ComboDropdown
+                    name="status"
+                    value={form.status}
+                    options={statusOptions}
+                    placeholder="Select status"
+                    onChange={(value) => updateForm("status", value)}
+                  />
                 </Field>
                 <div className="sm:col-span-2">
                   <Field label="Full Description">
@@ -464,14 +657,21 @@ function AddCombo() {
                     <input value={productSearch} onChange={(event) => { setProductSearch(event.target.value); setProductPage(1); }} placeholder="Search name or product code..." className={`${fieldClass} pl-10`} />
                   </label>
                   <div className="grid grid-cols-2 gap-3">
-                    <select value={productCategory} onChange={(event) => { setProductCategory(event.target.value); setProductSubcategory(""); setProductPage(1); }} className={selectClass}>
-                      <option value="">All categories</option>
-                      {[...new Set(categoriesForType.map((category) => category.name))].map((category) => <option key={category} value={category}>{category}</option>)}
-                    </select>
-                    <select value={productSubcategory} onChange={(event) => { setProductSubcategory(event.target.value); setProductPage(1); }} className={selectClass} disabled={!productCategory}>
-                      <option value="">All subcategories</option>
-                      {[...new Set(categories.filter((category) => category.name === productCategory).flatMap((category) => category.subcategory || []))].map((subcategory) => <option key={subcategory} value={subcategory}>{subcategory}</option>)}
-                    </select>
+                    <ComboDropdown
+                      name="product-category"
+                      value={productCategory}
+                      options={productCategoryOptions}
+                      placeholder="All categories"
+                      onChange={(value) => { setProductCategory(value); setProductSubcategory(""); setProductPage(1); }}
+                    />
+                    <ComboDropdown
+                      name="product-subcategory"
+                      value={productSubcategory}
+                      options={productSubcategoryOptions}
+                      placeholder="All subcategories"
+                      onChange={(value) => { setProductSubcategory(value); setProductPage(1); }}
+                      disabled={!productCategory}
+                    />
                   </div>
                 </div>
                 {errors.products && <p className="text-xs font-semibold text-rose-600">{errors.products}</p>}

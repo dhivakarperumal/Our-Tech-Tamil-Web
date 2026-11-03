@@ -17,7 +17,7 @@ import {
 } from "react-icons/fi";
 import { FaRupeeSign, FaTshirt, FaTruck } from "react-icons/fa";
 import { Bar, Doughnut } from 'react-chartjs-2';
-import { ArrowRight, CalendarDays, RefreshCw, Sparkles, Video } from "lucide-react";
+import { ArrowRight, CalendarDays, Image, RefreshCw, Sparkles, Video } from "lucide-react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -243,8 +243,8 @@ const Dashboard = () => {
     const dashboardOrderCounts = orderStatusCounts && typeof orderStatusCounts === "object" ? orderStatusCounts : {};
     const ordersAvailable = dataAvailability.orders !== false;
     const salesAvailable = dataAvailability.sales !== false;
-    const orderSummary = visibleDashboardData.orderSummary || sampleDashboardData.orderSummary;
-    const revenueSummary = visibleDashboardData.revenueSummary || sampleDashboardData.revenueSummary;
+    const orderSummary = visibleDashboardData.orderSummary || { total: 0, today: 0, cancelled: 0, delivery: 0 };
+    const revenueSummary = visibleDashboardData.revenueSummary || { total: 0, today: 0 };
     const contentSummary = visibleDashboardData.contentSummary || sampleDashboardData.contentSummary;
 
     // ── Bar Chart: Real Revenue Trends ──────────────────────────────
@@ -563,14 +563,7 @@ const Dashboard = () => {
                         <RefreshCw size={16} className={refreshing ? "animate-spin" : ""} />
                         Refresh
                     </button>
-                    <button
-                        type="button"
-                        onClick={() => navigate("/admin/products/add")}
-                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-[#FFD52E] px-4 py-2.5 text-sm font-bold text-[#210839] shadow-lg shadow-black/10 transition hover:-translate-y-0.5 hover:bg-[#FFE36A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-                    >
-                        <FiBox size={16} />
-                        Add product
-                    </button>
+
                 </div>
             </section>
 
@@ -598,8 +591,8 @@ const Dashboard = () => {
             <section className="space-y-3">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {[
-                        { label: "Total Revenue", value: `₹${Number(revenueSummary.total || 0).toLocaleString("en-IN")}`, icon: <FaRupeeSign size={21} />, style: { surface: "bg-orange-50/90", icon_bg: "bg-gradient-to-br from-amber-100 to-orange-100", icon_color: "text-amber-700", accent: "bg-gradient-to-b from-amber-400 to-orange-600", glow: "from-amber-200/70" } },
-                        { label: "Today Revenue", value: `₹${Number(revenueSummary.today || 0).toLocaleString("en-IN")}`, icon: <CalendarDays size={21} />, style: { surface: "bg-cyan-50/90", icon_bg: "bg-gradient-to-br from-cyan-100 to-sky-100", icon_color: "text-cyan-700", accent: "bg-gradient-to-b from-cyan-400 to-sky-600", glow: "from-cyan-200/70" } },
+                        { label: "Total Revenue", value: `₹${Number(revenueSummary.total || 0).toLocaleString("en-IN")}`, note: "Delivered orders only", icon: <FaRupeeSign size={21} />, style: { surface: "bg-orange-50/90", icon_bg: "bg-gradient-to-br from-amber-100 to-orange-100", icon_color: "text-amber-700", accent: "bg-gradient-to-b from-amber-400 to-orange-600", glow: "from-amber-200/70" } },
+                        { label: "Today Revenue", value: `₹${Number(revenueSummary.today || 0).toLocaleString("en-IN")}`, note: "Delivered orders today", icon: <CalendarDays size={21} />, style: { surface: "bg-cyan-50/90", icon_bg: "bg-gradient-to-br from-cyan-100 to-sky-100", icon_color: "text-cyan-700", accent: "bg-gradient-to-b from-cyan-400 to-sky-600", glow: "from-cyan-200/70" } },
                         { label: "Services", value: Number(contentSummary.services || 0).toLocaleString("en-IN"), icon: <FiCheckCircle size={21} />, style: { surface: "bg-indigo-50/90", icon_bg: "bg-gradient-to-br from-indigo-100 to-violet-100", icon_color: "text-indigo-700", accent: "bg-gradient-to-b from-indigo-400 to-violet-600", glow: "from-indigo-200/70" } },
                         { label: "YouTube Videos", value: Number(contentSummary.youtubeVideos || 0).toLocaleString("en-IN"), icon: <Video size={21} />, style: { surface: "bg-red-50/90", icon_bg: "bg-gradient-to-br from-red-100 to-rose-100", icon_color: "text-red-700", accent: "bg-gradient-to-b from-red-400 to-rose-600", glow: "from-rose-200/70" } },
                     ].map((stat) => (
@@ -616,7 +609,7 @@ const Dashboard = () => {
                                 </div>
                             </div>
                             <div className="relative mt-4 border-t border-slate-100 pt-3 text-xs font-medium text-slate-400">
-                                Current total
+                                {stat.note || "Current total"}
                             </div>
                         </article>
                     ))}
@@ -718,9 +711,13 @@ const Dashboard = () => {
                     </div>
                     <span className="hidden rounded-full bg-violet-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-violet-700 sm:inline-flex">Shortcuts</span>
                 </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
                     {[
                         { label: "Add product", icon: <FiBox size={19} />, path: "/admin/products/add", tone: "from-violet-100 to-fuchsia-100 text-violet-700 group-hover:from-violet-600 group-hover:to-fuchsia-600" },
+                        { label: "Add combo", icon: <FiShoppingBag size={19} />, path: "/admin/products/combos/add", tone: "from-fuchsia-100 to-pink-100 text-fuchsia-700 group-hover:from-fuchsia-600 group-hover:to-pink-600" },
+                        { label: "Hero section", icon: <Sparkles size={19} />, path: "/admin/banners", tone: "from-indigo-100 to-violet-100 text-indigo-700 group-hover:from-indigo-600 group-hover:to-violet-600" },
+                        { label: "Banners", icon: <Image size={19} />, path: "/admin/banners", tone: "from-sky-100 to-cyan-100 text-sky-700 group-hover:from-sky-600 group-hover:to-cyan-600" },
+                        { label: "Coupons", icon: <FiTag size={19} />, path: "/admin/coupons", tone: "from-amber-100 to-yellow-100 text-amber-700 group-hover:from-amber-500 group-hover:to-yellow-500" },
                         { label: "Products", icon: <FaTshirt size={19} />, path: "/admin/products/all", tone: "from-amber-100 to-orange-100 text-amber-700 group-hover:from-amber-500 group-hover:to-orange-500" },
                         { label: "Categories", icon: <FiTag size={19} />, path: "/admin/products/category", tone: "from-sky-100 to-cyan-100 text-sky-700 group-hover:from-sky-500 group-hover:to-cyan-500" },
                         { label: "Stock", icon: <FiAlertTriangle size={19} />, path: "/admin/products/stock", tone: "from-rose-100 to-pink-100 text-rose-700 group-hover:from-rose-500 group-hover:to-pink-500" },

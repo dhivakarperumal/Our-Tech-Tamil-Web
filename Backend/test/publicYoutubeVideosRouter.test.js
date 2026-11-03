@@ -5,7 +5,7 @@ const { once } = require("node:events");
 const { createAdminContentController } = require("../controllers/adminContentController");
 const createPublicYoutubeVideosRouter = require("../routers/publicYoutubeVideosRouter");
 
-test("public YouTube endpoint returns active videos without authentication or admin fields", async (t) => {
+test("public YouTube endpoint returns active videos with valid links and supporting details", async (t) => {
   let query = "";
   const pool = {
     async execute(statement) {
@@ -18,6 +18,13 @@ test("public YouTube endpoint returns active videos without authentication or ad
         thumbnail_image: "/uploads/youtube/video.png",
         thumbnail_url: null,
         description: "A short product guide.",
+        video_code: "YT-00008",
+        documents: JSON.stringify([
+          { name: "Guide.pdf", type: "application/pdf", url: "/uploads/youtube-videos/123e4567-e89b-12d3-a456-426614174000.pdf" },
+          { name: "Unsafe file", type: "application/pdf", url: "javascript:alert(1)" },
+        ]),
+        follow_up_notes: "Remember to check the setup tips.",
+        created_at: "2026-11-02T10:00:00.000Z",
         application_links: JSON.stringify([
           { title: "Get the app", url: "https://example.com/app" },
           { title: "Invalid link", url: "javascript:alert(1)" },
@@ -42,6 +49,9 @@ test("public YouTube endpoint returns active videos without authentication or ad
   assert.deepEqual(result.videos[0].application_links, [
     { title: "Get the app", url: "https://example.com/app" },
   ]);
-  assert.equal("documents" in result.videos[0], false);
-  assert.equal("follow_up_notes" in result.videos[0], false);
+  assert.equal(result.videos[0].video_code, "YT-00008");
+  assert.equal(result.videos[0].documents.length, 1);
+  assert.equal(result.videos[0].documents[0].name, "Guide.pdf");
+  assert.equal(result.videos[0].follow_up_notes, "Remember to check the setup tips.");
+  assert.equal(result.videos[0].created_at, "2026-11-02T10:00:00.000Z");
 });
