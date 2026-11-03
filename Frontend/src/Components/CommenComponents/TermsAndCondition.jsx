@@ -1,20 +1,24 @@
 import React from "react";
 import PageHeader from "../CommenComponents/PageHeader";
+import PageContainer from "./PageContainer";
 
 const TermsAndConditions = () => {
   return (
     <>
       <PageHeader title="Terms & Conditions" />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-gray-700 leading-relaxed space-y-8">
+      <main className="bg-[#faf8fd]">
+        <PageContainer className="py-8 sm:py-12">
+          <div className="mx-auto max-w-5xl space-y-4 text-sm leading-7 text-[#525b70] sm:space-y-5 [&>section]:rounded-2xl [&>section]:border [&>section]:border-[#ece2f4] [&>section]:bg-white [&>section]:p-5 [&>section]:shadow-[0_8px_24px_rgba(54,22,93,0.05)] sm:[&>section]:p-7">
 
-        <section>
-          <h1 className="text-3xl font-bold text-primary-dark mb-4">
+        <section className="border-t-4 border-t-primary bg-gradient-to-br from-white to-[#f6edff]">
+          <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.18em] text-primary">Our Tech • Customer information</p>
+          <h1 className="mb-4 text-2xl font-extrabold tracking-tight text-[#17122b] sm:text-3xl">
             Terms & Conditions
           </h1>
 
           <p>
-            Welcome to our online saree store. By accessing, browsing, or using
+            Welcome to Our Tech. By accessing, browsing, or using
             this website, you agree to comply with the following Terms &
             Conditions. These terms apply to all visitors, customers, and users
             of our website and services.
@@ -29,7 +33,7 @@ const TermsAndConditions = () => {
 
         {/* Website Usage */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">1. Website Usage</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">1. Website Usage</h2>
           <p>
             Users agree to access this website only for lawful purposes and not
             to engage in activities that may harm, disrupt, or compromise the
@@ -44,7 +48,7 @@ const TermsAndConditions = () => {
 
         {/* User Accounts */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">2. User Accounts</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">2. User Accounts</h2>
 
           <p>
             Customers may create an account to place orders and track their
@@ -60,28 +64,27 @@ const TermsAndConditions = () => {
 
         {/* Product Information */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">3. Product Information</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">3. Product Information</h2>
 
           <p>
             We make every effort to ensure product descriptions, images, and
-            pricing are accurate. However, slight variations may occur due to
-            fabric textures, weaving methods, and lighting conditions used
-            during photography.
+            pricing are accurate. However, variations may occur due to
+            manufacturing differences, photography, and the way screens display
+            colors.
           </p>
 
           <p className="mt-2">
-            Handwoven sarees and traditional fabrics may have natural
-            irregularities that reflect the authenticity of the craft and
-            should not be considered defects.
+            Product specifications and included accessories are listed on each
+            product page. Please review those details before placing an order.
           </p>
         </section>
 
         {/* Color Disclaimer */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">4. Color Variation Disclaimer</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">4. Color Variation Disclaimer</h2>
 
           <p>
-            The color of sarees displayed on our website may vary slightly from
+            The colors of products displayed on our website may vary slightly from
             the actual product due to differences in screen resolution,
             lighting conditions, and device display settings.
           </p>
@@ -89,7 +92,7 @@ const TermsAndConditions = () => {
 
         {/* Pricing */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">5. Pricing & Payments</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">5. Pricing & Payments</h2>
 
           <p>
             All prices listed on the website are in Indian Rupees (₹) unless
@@ -105,7 +108,7 @@ const TermsAndConditions = () => {
 
         {/* Product Availability */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">6. Product Availability</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">6. Product Availability</h2>
 
           <p>
             While we strive to maintain accurate inventory levels, certain
@@ -117,7 +120,7 @@ const TermsAndConditions = () => {
 
         {/* Order Confirmation */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">7. Order Confirmation</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">7. Order Confirmation</h2>
 
           <p>
             After placing an order, customers will receive an order confirmation
@@ -133,7 +136,7 @@ const TermsAndConditions = () => {
 
         {/* Order Cancellation */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">8. Order Cancellation</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">8. Order Cancellation</h2>
 
           <p>
             Customers may cancel orders before the product is shipped. Once the
@@ -143,7 +146,7 @@ const TermsAndConditions = () => {
 
         {/* Shipping */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">9. Shipping Policy</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">9. Shipping Policy</h2>
 
           <p>
             Orders are usually processed within 1–2 business days after payment
@@ -164,7 +167,7 @@ const TermsAndConditions = () => {
 
         {/* Returns */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">10. Return & Refund Policy</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">10. Return & Refund Policy</h2>
 
           <p>
             Returns are accepted only for damaged or incorrect products reported
@@ -185,7 +188,7 @@ const TermsAndConditions = () => {
 
         {/* Privacy */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">11. Privacy Policy</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">11. Privacy Policy</h2>
 
           <p>
             We respect your privacy and are committed to protecting your
@@ -202,7 +205,7 @@ const TermsAndConditions = () => {
 
         {/* Fraud */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">12. Fraud Prevention</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">12. Fraud Prevention</h2>
 
           <p>
             We reserve the right to cancel orders if fraudulent activity,
@@ -213,7 +216,7 @@ const TermsAndConditions = () => {
 
         {/* Intellectual Property */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">13. Intellectual Property</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">13. Intellectual Property</h2>
 
           <p>
             All website content including images, designs, logos, graphics, and
@@ -223,7 +226,7 @@ const TermsAndConditions = () => {
 
         {/* Force Majeure */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">14. Force Majeure</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">14. Force Majeure</h2>
 
           <p>
             We shall not be liable for delays or failure to perform obligations
@@ -234,7 +237,7 @@ const TermsAndConditions = () => {
 
         {/* Governing Law */}
         <section>
-          <h2 className="text-xl font-semibold mb-2">15. Governing Law</h2>
+          <h2 className="mb-3 text-lg font-extrabold text-[#211936] sm:text-xl">15. Governing Law</h2>
 
           <p>
             These Terms & Conditions are governed by the laws of India. Any
@@ -243,7 +246,9 @@ const TermsAndConditions = () => {
           </p>
         </section>
 
-      </div>
+          </div>
+        </PageContainer>
+      </main>
     </>
   );
 };
