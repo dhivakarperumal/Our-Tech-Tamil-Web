@@ -127,12 +127,12 @@ function ProductCard({ product }) {
       <div className="px-1 pb-1 pt-4">
         <div className="flex items-center gap-2 text-[#4B00C8]">
           <CategoryIcon size={18} strokeWidth={2.3} aria-hidden="true" />
-          <span className="truncate text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#4B00C8]">
+          <span className="truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-[#4B00C8]">
             {categoryLabel}
           </span>
         </div>
 
-        <h3 className="mt-2 line-clamp-2 min-h-[2.4rem] text-[1.2rem] font-extrabold leading-[1.2] tracking-[-0.04em] text-[#111027] sm:text-[1.08rem]">
+        <h3 className="mt-2 line-clamp-2 min-h-[2.4rem] text-[0.95rem] font-bold leading-[1.2] tracking-[-0.02em] text-[#111027] sm:text-[0.88rem]">
           <Link to={productDetailsPath} className="transition hover:text-[#4B00C8]">
             {product.name}
           </Link>
@@ -140,7 +140,7 @@ function ProductCard({ product }) {
 
         <div className="mt-3 flex items-end justify-between gap-2">
           <div className="flex items-baseline gap-2">
-            <span className="text-[1.2rem] font-extrabold tracking-[-0.04em] text-[#4B00C8] sm:text-[1.08rem]">
+            <span className="text-[0.95rem] font-bold tracking-[-0.02em] text-[#4B00C8] sm:text-[0.88rem]">
               ₹{offerPrice.toLocaleString("en-IN")}
             </span>
             {hasDiscount && (
