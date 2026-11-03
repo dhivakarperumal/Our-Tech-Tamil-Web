@@ -39,7 +39,6 @@ const Navbar = () => {
   const [mobilePages, setMobilePages] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [wishlistOpen, setWishlistOpen] = useState(false);
-  const [orderCount, setOrderCount] = useState(0);
   const [searchState, setSearchState] = useState({ route: "", value: "" });
   const [searchOpen, setSearchOpen] = useState(false);
   const [suggestions, setSuggestions] = useState({
@@ -138,35 +137,6 @@ const Navbar = () => {
       active = false;
     };
   }, []);
-
-  useEffect(() => {
-    let active = true;
-
-    const fetchOrderCount = async () => {
-      if (!user) {
-        setOrderCount(0);
-        return;
-      }
-
-      try {
-        const response = await api.get("/orders");
-        const orders = Array.isArray(response.data) ? response.data : (response.data.data || []);
-        const userOrders = orders.filter(
-          (order) => (order.user_id === user.user_id || order.user_id === user.id) && order.status !== "Delivered",
-        );
-        if (active) setOrderCount(userOrders.length);
-      } catch (error) {
-        console.error("Error fetching order count:", error);
-      }
-    };
-
-    fetchOrderCount();
-    const interval = setInterval(fetchOrderCount, 30000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, [user]);
 
   const handleSearchChange = (event) => {
     const value = event.target.value;
@@ -363,10 +333,6 @@ const Navbar = () => {
           <Link to="/account" onClick={() => setUserMenu(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-[#faf7ff] hover:text-primary">
             My Account
           </Link>
-          <Link to="/ordersmain" onClick={() => setUserMenu(false)} className="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-[#faf7ff] hover:text-primary">
-            Track Orders
-            {orderCount > 0 && <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] text-white">{orderCount}</span>}
-          </Link>
           {user.role === "admin" && (
             <Link to="/admin" onClick={() => setUserMenu(false)} className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-[#faf7ff] hover:text-primary">
               Admin Panel
@@ -502,8 +468,6 @@ const Navbar = () => {
               <button type="button" onClick={() => setMobilePages(true)} className="flex w-full items-center justify-between rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary">
                 <span className="flex items-center gap-3"><FileText size={18} />Pages</span><ChevronRight size={17} />
               </button>
-              <NavLink to="/termsandconditions" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><FileText size={18} />Terms &amp; Conditions</NavLink>
-              <Link to="/ordersmain" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><ShoppingCart size={18} />Track Order</Link>
               <div className="flex items-center justify-between border-t border-gray-100 pt-3 sm:hidden">
                 {user ? (
                   <>
