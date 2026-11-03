@@ -284,7 +284,7 @@ const Navbar = () => {
             strokeWidth="2"
           />
         </svg>
-        <div className="relative z-10 mx-auto w-full max-w-[820px] px-4">
+        <div className="relative z-10 mx-auto w-full max-w-[740px] px-2">
           <div className="flex min-h-[42px] items-center justify-center gap-3 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-4 shadow-[0_12px_26px_rgba(30,8,50,0.28)]">
             <NavLink to="/" end className={navClass}><House size={19} aria-hidden="true" />Home</NavLink>
             <NavLink to="/shop" className={navClass}><ShoppingBag size={19} aria-hidden="true" />Shop</NavLink>
