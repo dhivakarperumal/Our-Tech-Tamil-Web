@@ -82,12 +82,42 @@ function Shop() {
   const [sortBy, setSortBy] = useState("popular");
   const [pagination, setPagination] = useState({ filterKey: "", page: 1 });
   const [listView, setListView] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1024,
+  );
   const [filtersOpen, setFiltersOpen] = useState(
     () => typeof window !== "undefined" && window.innerWidth >= 1024,
   );
   const [showAllCategories, setShowAllCategories] = useState(() => Boolean(urlCategory));
   const [showAllBrands, setShowAllBrands] = useState(false);
-  const productsPerPage = filtersOpen ? 8 : 10;
+  const productsPerPage = isDesktop && filtersOpen ? 8 : 10;
+
+  useEffect(() => {
+    const desktopQuery = window.matchMedia("(min-width: 1024px)");
+    const handleBreakpointChange = (event) => {
+      setIsDesktop(event.matches);
+      setFiltersOpen(event.matches);
+    };
+
+    desktopQuery.addEventListener("change", handleBreakpointChange);
+    return () => desktopQuery.removeEventListener("change", handleBreakpointChange);
+  }, []);
+
+  useEffect(() => {
+    if (!filtersOpen || isDesktop) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setFiltersOpen(false);
+    };
+
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [filtersOpen, isDesktop]);
 
   useEffect(() => {
     let active = true;
@@ -319,27 +349,57 @@ function Shop() {
 
         <div className={`grid items-start gap-4 ${filtersOpen ? "lg:grid-cols-[230px_minmax(0,1fr)] xl:grid-cols-[250px_minmax(0,1fr)]" : "grid-cols-1"}`}>
           {filtersOpen && (
+          <>
+          {!isDesktop && (
+            <button
+              type="button"
+              aria-label="Close filters"
+              onClick={() => setFiltersOpen(false)}
+              className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-[1px] lg:hidden"
+            />
+          )}
           <aside
             id="shop-filters"
-            className="rounded-xl border border-[#eee8f5] bg-white p-3 shadow-[0_4px_18px_rgba(54,22,93,0.06)] sm:p-4 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
+            className={`rounded-xl border border-[#eee8f5] bg-white p-3 shadow-[0_4px_18px_rgba(54,22,93,0.06)] sm:p-4 ${
+              isDesktop
+                ? "lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
+                : "fixed inset-x-3 top-28 z-50 max-h-[calc(100dvh-8rem)] overflow-y-auto"
+            }`}
+            role={isDesktop ? undefined : "dialog"}
+            aria-modal={isDesktop ? undefined : true}
+            aria-labelledby="shop-filters-heading"
           >
             <div className="mb-1 flex items-center justify-between gap-2 pb-2">
               <h2 className="flex items-center gap-2 text-sm font-extrabold">
+                <span id="shop-filters-heading" className="flex items-center gap-2">
                 <SlidersHorizontal size={15} className="text-[#4b00c8]" aria-hidden="true" />
                 Filters
+                </span>
                 {activeFiltersCount > 0 && (
                   <span className="rounded-full bg-[#f0e8ff] px-1.5 py-0.5 text-[10px] text-[#4b00c8]">
                     {activeFiltersCount}
                   </span>
                 )}
               </h2>
-              <button
-                type="button"
-                onClick={clearFilters}
-                className="text-[11px] font-bold text-[#4b00c8] hover:underline"
-              >
-                Clear All
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="text-[11px] font-bold text-[#4b00c8] hover:underline"
+                >
+                  Clear All
+                </button>
+                {!isDesktop && (
+                  <button
+                    type="button"
+                    aria-label="Close filters"
+                    onClick={() => setFiltersOpen(false)}
+                    className="rounded-md p-1 text-[#625970] hover:bg-[#f3eaff] hover:text-[#4b00c8]"
+                  >
+                    <X size={17} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
             </div>
 
             <FilterSection title="Categories" icon={Grid2X2}>
@@ -487,6 +547,7 @@ function Shop() {
               </label>
             </FilterSection>
           </aside>
+          </>
           )}
 
           <div ref={productsRef} className="min-w-0 scroll-mt-24">
