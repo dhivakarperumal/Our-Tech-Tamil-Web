@@ -269,7 +269,7 @@ const Navbar = () => {
             <ChevronDown size={14} className={`transition-transform ${categoryMenu ? "rotate-180" : ""}`} aria-hidden="true" />
           </button>
           {categoryMenu && (
-            <div className="absolute right-0 top-full z-[60] w-[680px] overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-[0_18px_45px_rgba(37,12,69,0.2)] ring-1 ring-black/5 xl:right-auto xl:left-1/2 xl:translate-x-[-34%]">
+            <div className="absolute right-0 mt-3 top-full z-[60] w-[680px] overflow-hidden rounded-2xl border border-[#e9def5] bg-white shadow-[0_18px_45px_rgba(37,12,69,0.2)] ring-1 ring-black/5 xl:right-auto xl:left-1/2 xl:translate-x-[-34%]">
               <div className="bg-gradient-to-r from-secondary-dark via-primary to-gradient-middle px-4 py-3 text-white">
                 <p className="text-sm font-bold">Shop by category</p>
                 <p className="mt-0.5 text-[11px] text-white/75">Browse category types, categories, and subcategories</p>

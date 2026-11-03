@@ -203,8 +203,8 @@ function Articles() {
                     key={item.id || item.content_id}
                     className="flex min-h-[480px] flex-col overflow-hidden rounded-[22px] border border-[#e9def5] bg-white shadow-[0_10px_24px_rgba(92,54,150,0.07)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(92,54,150,0.12)]"
                   >
-                    <div className="relative h-[212px] overflow-hidden bg-[#f0e7ff]">
-                      <img src={image} alt={title} className="h-full w-full object-cover transition duration-300 hover:scale-[1.03]" />
+                    <div className="relative h-[220px] w-full shrink-0 overflow-hidden bg-[#f0e7ff] sm:h-[240px]">
+                      <img src={image} alt={title} className="absolute inset-0 block h-full min-h-full w-full min-w-full object-cover transition duration-300 hover:scale-[1.03]" />
                       <div className="absolute left-3 top-3 inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/90 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#5a2db3] shadow-sm">
                         {itemType === "product_review" ? <Star size={12} className="fill-amber-400 text-amber-400" /> : <BookOpenText size={12} />}
                         {itemType === "product_review" ? "Product Review" : "Article"}
