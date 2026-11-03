@@ -257,7 +257,7 @@ function Shop() {
               <Search size={13} className="text-[#a198af]" aria-hidden="true" />
             </label>
             <label className="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-[#625970] sm:text-xs">
-              Sort by:
+             
               <select
                 value={sortBy}
                 onChange={(event) => setSortBy(event.target.value)}
@@ -289,7 +289,7 @@ function Shop() {
                 </span>
               )}
             </button>
-            <div className="hidden items-center rounded-lg border border-[#e9e1f2] bg-white p-1 sm:flex">
+            {/* <div className="hidden items-center rounded-lg border border-[#e9e1f2] bg-white p-1 sm:flex">
               <button
                 type="button"
                 aria-label="Grid view"
@@ -308,7 +308,7 @@ function Shop() {
               >
                 <List size={15} aria-hidden="true" />
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
 
