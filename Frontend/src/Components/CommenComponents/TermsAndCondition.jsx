@@ -200,20 +200,31 @@ const TermsAndConditions = () => {
             {sections.map(({ num, icon: Icon, title, bullets }) => (
               <div
                 key={num}
-                className="flex items-start gap-4 rounded-2xl border border-[#e4d8f8] bg-white px-5 py-5 shadow-sm sm:gap-6 sm:px-7 sm:py-6"
+                className="grid rounded-2xl border border-[#e4d8f8] bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6"
+                style={{ gridTemplateColumns: "auto 1fr", gridTemplateRows: "auto 1fr", gap: "8px 20px" }}
               >
-                {/* Left: number + icon stacked, fixed width */}
-                <div className="flex w-14 shrink-0 flex-col items-center gap-2 sm:w-16">
-                  <span className="text-sm font-extrabold text-primary">{num}</span>
+                {/* Row 1 Col 1 — dark purple number badge */}
+                <div className="flex items-center">
+                  <span className="flex h-8 w-12 items-center justify-center rounded-lg bg-[#17122b] text-xs font-extrabold tracking-widest text-white">
+                    {num}
+                  </span>
+                </div>
+
+                {/* Row 1 Col 2 — title */}
+                <div className="flex items-center">
+                  <h2 className="text-base font-extrabold text-[#17122b] sm:text-lg">{title}</h2>
+                </div>
+
+                {/* Row 2 Col 1 — icon */}
+                <div className="flex items-start justify-center pt-1">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#ede4fb] text-primary">
                     <Icon size={22} />
                   </div>
                 </div>
 
-                {/* Right: title + bullets */}
-                <div className="flex-1 min-w-0 pt-0.5">
-                  <h2 className="text-base font-extrabold text-[#17122b] sm:text-lg">{title}</h2>
-                  <ul className="mt-3 space-y-2">
+                {/* Row 2 Col 2 — bullets */}
+                <div className="flex-1 min-w-0">
+                  <ul className="space-y-2">
                     {bullets.map((b, i) => (
                       <li key={i} className="flex items-start gap-2.5 text-sm leading-6 text-[#525b70]">
                         <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
