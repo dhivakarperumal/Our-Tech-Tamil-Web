@@ -95,9 +95,62 @@ async function attachOrderItems(pool, orders) {
      ORDER BY id`,
     orderIds,
   );
+  const comboIds = [...new Set(rows
+    .map((row) => Number(row.combo_id))
+    .filter((id) => Number.isSafeInteger(id) && id > 0))];
+  const comboProductsById = new Map();
+  if (comboIds.length) {
+    const comboPlaceholders = comboIds.map(() => "?").join(", ");
+    const [combos] = await pool.execute(
+      `SELECT id, products FROM combos WHERE id IN (${comboPlaceholders})`,
+      comboIds,
+    );
+    const selectedProducts = combos.flatMap((combo) => {
+      let products = combo.products;
+      if (typeof products === "string") {
+        try {
+          products = JSON.parse(products);
+        } catch {
+          products = [];
+        }
+      }
+      const entries = Array.isArray(products) ? products : [];
+      return entries.flatMap((item) => {
+        const productId = Number(item?.id ?? item?.product_id);
+        const quantity = Number(item?.quantity) || 1;
+        if (!Number.isSafeInteger(productId) || productId < 1 ||
+            !Number.isSafeInteger(quantity) || quantity < 1) return [];
+        return [{ comboId: Number(combo.id), productId, quantity }];
+      });
+    });
+    const productIds = [...new Set(selectedProducts.map((item) => item.productId))];
+    let products = [];
+    if (productIds.length) {
+      const productPlaceholders = productIds.map(() => "?").join(", ");
+      [products] = await pool.execute(
+        `SELECT id, name, product_code, images FROM products WHERE id IN (${productPlaceholders})`,
+        productIds,
+      );
+    }
+    const productById = new Map(products.map((product) => [Number(product.id), product]));
+    for (const item of selectedProducts) {
+      const product = productById.get(item.productId);
+      const images = parseImageList(product?.images);
+      if (!comboProductsById.has(item.comboId)) comboProductsById.set(item.comboId, []);
+      comboProductsById.get(item.comboId).push({
+        id: item.productId,
+        name: product?.name || `Product #${item.productId}`,
+        product_code: product?.product_code || "",
+        quantity: item.quantity,
+        image: images[0] || "",
+      });
+    }
+  }
   const itemsByOrderId = new Map(orderIds.map((id) => [String(id), []]));
   for (const row of rows) {
-    itemsByOrderId.get(String(row.order_id))?.push(toOrderItem(row));
+    const item = toOrderItem(row);
+    if (row.combo_id) item.included_products = comboProductsById.get(Number(row.combo_id)) || [];
+    itemsByOrderId.get(String(row.order_id))?.push(item);
   }
   return orders.map((order) => ({
     ...order,
