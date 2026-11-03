@@ -64,7 +64,7 @@ function HomeCategories() {
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const [carouselLayout, setCarouselLayout] = useState({ slidesPerView: 1, slideWidth: 128 });
+  const [carouselLayout, setCarouselLayout] = useState({ slideWidth: 128 });
   const carouselContainerRef = useRef(null);
   const swiperRef = useRef(null);
 
@@ -101,9 +101,14 @@ function HomeCategories() {
     const container = carouselContainerRef.current;
     const updateSlidesPerView = () => {
       const availableWidth = container.clientWidth;
-      const slideWidth = window.matchMedia("(min-width: 640px)").matches ? 144 : 128;
+      const minimumSlideWidth = window.matchMedia("(min-width: 640px)").matches ? 144 : 128;
+      const slidesPerView = Math.max(
+        1,
+        Math.floor((availableWidth + 8) / (minimumSlideWidth + 8)),
+      );
+      const slideWidth = (availableWidth - (slidesPerView - 1) * 8) / slidesPerView;
+
       setCarouselLayout({
-        slidesPerView: Math.max(1, Math.floor((availableWidth + 8) / (slideWidth + 8))),
         slideWidth,
       });
     };
@@ -200,7 +205,7 @@ function HomeCategories() {
             ))}
           </div>
         ) : (
-          <div ref={carouselContainerRef}>
+          <div ref={carouselContainerRef} className="overflow-visible py-1">
             <Swiper
               modules={[Autoplay]}
               onSwiper={(swiper) => {
@@ -218,16 +223,14 @@ function HomeCategories() {
                   : false
               }
               navigation={false}
-              className="home-category-swiper !ml-0 !mr-auto"
-              style={{
-                width: `${carouselLayout.slidesPerView * (carouselLayout.slideWidth + 8) - 8}px`,
-              }}
+              className="home-category-swiper !ml-0 !mr-auto !overflow-visible"
+              style={{ width: "100%" }}
               aria-label="Shop by category"
             >
               {slides.map((category) => (
                 <SwiperSlide
                   key={category.slideKey}
-                  className="!w-[128px] sm:!w-[144px]"
+                  style={{ width: `${carouselLayout.slideWidth}px` }}
                 >
                   <CategoryCard category={category} />
                 </SwiperSlide>
