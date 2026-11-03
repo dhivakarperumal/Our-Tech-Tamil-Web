@@ -7,6 +7,7 @@ import {
   Grid2X2,
   Heart,
   House,
+  Mail,
   Menu,
   Search,
   ShoppingBag,
@@ -176,7 +177,9 @@ const Navbar = () => {
             </span>
           </Link>
 
-          <form onSubmit={submitSearch} role="search" className="hidden min-w-0 max-w-[600px] flex-1 lg:flex">
+          <span className="hidden h-12 w-px shrink-0 bg-[#d8cce4] xl:block" aria-hidden="true" />
+
+          <form onSubmit={submitSearch} role="search" className="hidden min-w-0 max-w-[680px] flex-1 xl:flex">
             <label htmlFor="desktop-product-search" className="sr-only">Search products</label>
             <div className="flex w-full items-center overflow-hidden rounded-full border border-[#e7dff0] bg-white shadow-inner focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/10">
               <Search size={19} className="ml-4 shrink-0 text-[#4c3b64]" aria-hidden="true" />
@@ -192,6 +195,8 @@ const Navbar = () => {
               </button>
             </div>
           </form>
+
+          <span className="hidden h-12 w-px shrink-0 bg-[#d8cce4] xl:block" aria-hidden="true" />
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <button
@@ -216,7 +221,7 @@ const Navbar = () => {
             <button
               type="button"
               onClick={() => setMobileMenu((open) => !open)}
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#eee7f5] text-[#2b1745] lg:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-[#eee7f5] text-[#2b1745] xl:hidden"
               aria-label={mobileMenu ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenu}
             >
@@ -225,7 +230,7 @@ const Navbar = () => {
           </div>
         </div>
 
-        <form onSubmit={submitSearch} role="search" className="pb-3 lg:hidden">
+        <form onSubmit={submitSearch} role="search" className="pb-3 xl:hidden">
           <label htmlFor="mobile-product-search" className="sr-only">Search products</label>
           <div className="flex items-center overflow-hidden rounded-full border border-[#e7dff0] bg-white">
             <Search size={17} className="ml-3 shrink-0 text-[#4c3b64]" aria-hidden="true" />
@@ -243,12 +248,40 @@ const Navbar = () => {
         </form>
       </PageContainer>
 
-      <div className="relative hidden bg-gradient-to-r from-[#3d075d] via-[#220b3d] to-[#3d075d] py-2.5 lg:block">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-accent to-transparent" aria-hidden="true" />
-        <div className="mx-auto max-w-[1050px] px-6">
-          <div className="flex items-center justify-center gap-1 rounded-full border border-accent/70 bg-gradient-to-r from-[#32114e] via-[#200b38] to-[#32114e] px-4 py-1.5 shadow-[0_8px_18px_rgba(30,8,50,0.28)]">
-            <NavLink to="/" end className={navClass}><House size={17} aria-hidden="true" />Home</NavLink>
-            <NavLink to="/shop" className={navClass}><ShoppingBag size={17} aria-hidden="true" />Shop</NavLink>
+      <div className="relative isolate hidden h-[60px] items-center justify-center xl:flex">
+        <svg
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[58px] w-full"
+          viewBox="0 0 2000 80"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient id="nav-wave-fill" x1="0" x2="1">
+              <stop offset="0%" stopColor="#7415a1" />
+              <stop offset="48%" stopColor="#350751" />
+              <stop offset="100%" stopColor="#7415a1" />
+            </linearGradient>
+            <linearGradient id="nav-wave-line" x1="0" x2="1">
+              <stop offset="0%" stopColor="#f4c844" />
+              <stop offset="50%" stopColor="#ffe77a" />
+              <stop offset="100%" stopColor="#f4c844" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M0 8 C110 8 100 48 220 55 C350 64 470 50 620 50 H1380 C1530 50 1650 64 1780 55 C1900 48 1890 8 2000 8 V80 H0 Z"
+            fill="url(#nav-wave-fill)"
+          />
+          <path
+            d="M0 8 C110 8 100 48 220 55 C350 64 470 50 620 50 H1380 C1530 50 1650 64 1780 55 C1900 48 1890 8 2000 8"
+            fill="none"
+            stroke="url(#nav-wave-line)"
+            strokeWidth="2"
+          />
+        </svg>
+        <div className="mx-auto w-full max-w-[1120px] px-8">
+          <div className="flex min-h-[50px] items-center justify-center gap-1 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-[#35134f] via-[#200b38] to-[#35134f] px-6 shadow-[0_12px_26px_rgba(30,8,50,0.28)]">
+            <NavLink to="/" end className={navClass}><House size={19} aria-hidden="true" />Home</NavLink>
+            <NavLink to="/shop" className={navClass}><ShoppingBag size={19} aria-hidden="true" />Shop</NavLink>
             <div className="relative" ref={categoryRef}>
               <button
                 type="button"
@@ -256,7 +289,7 @@ const Navbar = () => {
                 aria-expanded={categoryMenu}
                 className="inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
               >
-                <Grid2X2 size={17} aria-hidden="true" />
+                <Grid2X2 size={19} aria-hidden="true" />
                 Categories
                 <ChevronDown size={14} className={`transition-transform ${categoryMenu ? "rotate-180" : ""}`} aria-hidden="true" />
               </button>
@@ -275,8 +308,9 @@ const Navbar = () => {
                 </div>
               )}
             </div>
-            <NavLink to="/about" className={navClass}><Users size={17} aria-hidden="true" />About Us</NavLink>
-            <NavLink to="/contactus" className={navClass}><Phone size={16} aria-hidden="true" />Contact Us</NavLink>
+            <NavLink to="/articles" className={navClass}><FileText size={19} aria-hidden="true" />Articles</NavLink>
+            <NavLink to="/about" className={navClass}><Users size={19} aria-hidden="true" />About Us</NavLink>
+            <NavLink to="/contactus" className={navClass}><Mail size={19} aria-hidden="true" />Contact Us</NavLink>
           </div>
         </div>
       </div>
@@ -290,6 +324,7 @@ const Navbar = () => {
               <button type="button" onClick={() => setMobileCategory(true)} className="flex w-full items-center justify-between rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary">
                 <span className="flex items-center gap-3"><Grid2X2 size={18} />Categories</span><ChevronRight size={17} />
               </button>
+              <NavLink to="/articles" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><FileText size={18} />Articles</NavLink>
               <NavLink to="/about" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><Users size={18} />About Us</NavLink>
               <NavLink to="/contactus" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><Phone size={18} />Contact Us</NavLink>
               <NavLink to="/termsandconditions" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><FileText size={18} />Terms &amp; Conditions</NavLink>
