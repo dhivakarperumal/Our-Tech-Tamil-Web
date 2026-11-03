@@ -3,6 +3,7 @@ import { ArrowLeft, Package, ShoppingCart, Zap } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
 import PageContainer from "../CommenComponents/PageContainer";
+import PageHeader from "../CommenComponents/PageHeader";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 
 function getImages(product) {
@@ -77,20 +78,26 @@ function ProductDetails() {
 
   if (loading) {
     return (
-      <PageContainer className="py-12">
-        <div className="mx-auto h-80 max-w-5xl animate-pulse rounded-2xl bg-[#faf8ff]" />
-      </PageContainer>
+      <>
+        <PageHeader title={product.name} />
+        <PageContainer className="py-12">
+          <div className="mx-auto h-80 max-w-5xl animate-pulse rounded-2xl bg-[#faf8ff]" />
+        </PageContainer>
+      </>
     );
   }
 
   if (fetchFailed || !product) {
     return (
-      <PageContainer className="py-16 text-center">
-        <p className="text-sm text-text-secondary">This product could not be found.</p>
-        <Link to="/shop" className="mt-4 inline-flex items-center gap-2 font-bold text-primary">
-          <ArrowLeft size={17} /> Back to shop
-        </Link>
-      </PageContainer>
+      <>
+        <PageHeader title="Product Details" />
+        <PageContainer className="py-16 text-center">
+          <p className="text-sm text-text-secondary">This product could not be found.</p>
+          <Link to="/shop" className="mt-4 inline-flex items-center gap-2 font-bold text-primary">
+            <ArrowLeft size={17} /> Back to shop
+          </Link>
+        </PageContainer>
+      </>
     );
   }
 
@@ -108,11 +115,13 @@ function ProductDetails() {
   };
 
   return (
-    <PageContainer className="py-6 sm:py-10">
-      <Link to="/shop" className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-text-secondary transition hover:text-primary">
-        <ArrowLeft size={17} /> Back to shop
-      </Link>
-      <div className="grid gap-6 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-6 lg:grid-cols-2 lg:gap-10 lg:p-8">
+    <>
+      <PageHeader title="Product Details" />
+      <PageContainer className="py-6 sm:py-10">
+        <Link to="/shop" className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-text-secondary transition hover:text-primary">
+          <ArrowLeft size={17} /> Back to shop
+        </Link>
+        <div className="grid gap-6 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-6 lg:grid-cols-2 lg:gap-10 lg:p-8">
         <div>
           <div className="flex aspect-square items-center justify-center overflow-hidden rounded-xl bg-[#faf8ff] p-5 sm:aspect-[4/3]">
             {activeImage ? (
@@ -210,8 +219,9 @@ function ProductDetails() {
             </dl>
           )}
         </div>
-      </div>
-    </PageContainer>
+        </div>
+      </PageContainer>
+    </>
   );
 }
 

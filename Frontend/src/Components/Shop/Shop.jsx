@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import PageContainer from "../CommenComponents/PageContainer";
+import PageHeader from "../CommenComponents/PageHeader";
 import ProductCard from "../Products/ProductCard";
 import { fetchAllPublicProducts } from "../Products/publicProducts";
 
@@ -222,8 +223,10 @@ function Shop() {
   const lastProduct = Math.min(page * PRODUCTS_PER_PAGE, filteredProducts.length);
 
   return (
-    <PageContainer className="!max-w-[1700px] px-3 py-5 sm:px-5 sm:py-7 lg:px-6">
-      <section aria-labelledby="shop-heading" className="text-[#211936]">
+    <>
+      <PageHeader title="Shop" />
+      <PageContainer className="!max-w-[1700px] px-3 py-5 sm:px-5 sm:py-7 lg:px-6">
+        <section aria-labelledby="shop-heading" className="text-[#211936]">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 id="shop-heading" className="text-xl font-extrabold tracking-tight sm:text-2xl">
@@ -525,8 +528,9 @@ function Shop() {
             )}
           </div>
         </div>
-      </section>
-    </PageContainer>
+        </section>
+      </PageContainer>
+    </>
   );
 }
 
