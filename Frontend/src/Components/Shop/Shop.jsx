@@ -609,6 +609,18 @@ function Shop() {
 
             <FilterSection title="Categories" icon={Grid2X2}>
               <div className="space-y-2">
+                <label className="flex cursor-pointer items-center gap-2 text-[11px] text-[#504760]">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategories.length === 0}
+                    onChange={() => setSelectedCategories([])}
+                    className="h-3.5 w-3.5 accent-[#4b00c8]"
+                  />
+                  <span className="min-w-0 flex-1">All</span>
+                  <span className="text-[10px] text-[#8d8499]">
+                    ({categories.reduce((total, [, count]) => total + count, 0)})
+                  </span>
+                </label>
                 {categories.map(([category, count]) => (
                   <label key={category} className="flex cursor-pointer items-center gap-2 text-[11px] text-[#504760]">
                     <input
