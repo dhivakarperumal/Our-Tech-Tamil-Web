@@ -153,6 +153,59 @@ async function initializeDatabase(pool) {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS combos (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(191) NOT NULL,
+      code VARCHAR(100) NOT NULL,
+      category_type VARCHAR(100) NOT NULL,
+      category VARCHAR(191) NOT NULL,
+      subcategory VARCHAR(191) NOT NULL,
+      brand VARCHAR(120) NULL,
+      short_description VARCHAR(500) NULL,
+      description TEXT NULL,
+      thumbnail VARCHAR(512) NULL,
+      gallery_images JSON NOT NULL,
+      video VARCHAR(512) NULL,
+      status ENUM('Draft', 'Active', 'Inactive') NOT NULL DEFAULT 'Draft',
+      products JSON NOT NULL,
+      mrp DECIMAL(12, 2) NOT NULL DEFAULT 0,
+      offer DECIMAL(5, 2) NOT NULL DEFAULT 0,
+      offer_price DECIMAL(12, 2) NOT NULL DEFAULT 0,
+      total_savings DECIMAL(12, 2) NOT NULL DEFAULT 0,
+      gst DECIMAL(5, 2) NOT NULL DEFAULT 0,
+      final_price DECIMAL(12, 2) NOT NULL DEFAULT 0,
+      available_stock INT UNSIGNED NOT NULL DEFAULT 0,
+      minimum_order_quantity INT UNSIGNED NOT NULL DEFAULT 1,
+      maximum_order_quantity INT UNSIGNED NOT NULL DEFAULT 0,
+      stock_status VARCHAR(32) NOT NULL DEFAULT 'Out of Stock',
+      track_inventory BOOLEAN NOT NULL DEFAULT TRUE,
+      allow_backorders BOOLEAN NOT NULL DEFAULT FALSE,
+      specifications JSON NOT NULL,
+      warranty VARCHAR(191) NULL,
+      return_policy TEXT NULL,
+      delivery_information TEXT NULL,
+      rating DECIMAL(2, 1) NOT NULL DEFAULT 5,
+      featured BOOLEAN NOT NULL DEFAULT FALSE,
+      trending BOOLEAN NOT NULL DEFAULT FALSE,
+      new_arrival BOOLEAN NOT NULL DEFAULT FALSE,
+      created_by VARCHAR(255) NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY combos_code_unique (code),
+      KEY combos_status_created_idx (status, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  const [comboColumns] = await pool.execute(
+    `SELECT COLUMN_NAME, IS_NULLABLE
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'combos'`,
+  );
+  const thumbnailColumn = comboColumns.find((column) => column.COLUMN_NAME === "thumbnail");
+  if (thumbnailColumn && thumbnailColumn.IS_NULLABLE === "NO") {
+    await pool.query("ALTER TABLE combos MODIFY thumbnail VARCHAR(512) NULL");
+  }
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS reviews (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       product_id BIGINT UNSIGNED NOT NULL,

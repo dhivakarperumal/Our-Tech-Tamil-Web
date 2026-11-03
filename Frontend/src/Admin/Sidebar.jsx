@@ -63,6 +63,7 @@ const navItems = [
         activePathPatterns: [/^\/admin\/products\/(?:edit\/[^/]+|\d+)$/i],
       },
       { path: "/admin/products/add", label: "Add Product", icon: PlusCircle },
+      { path: "/admin/products/combos/add", label: "Add Combo Product", icon: Layers },
       { path: "/admin/products/category", label: "Categories", icon: Layers },
       {
         path: "/admin/products/stock",
