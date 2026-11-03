@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import PageContainer from "../CommenComponents/PageContainer";
 import ProductCard from "../Products/ProductCard";
 import { fetchAllPublicProducts } from "../Products/publicProducts";
@@ -7,6 +8,8 @@ function Shop() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search")?.trim().toLowerCase() || "";
 
   useEffect(() => {
     let active = true;
@@ -28,16 +31,24 @@ function Shop() {
     };
   }, []);
 
+  const filteredProducts = searchQuery
+    ? products.filter((product) =>
+        [product.name, product.category, product.cat_type, product.description]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(searchQuery)),
+      )
+    : products;
+
   return (
     <PageContainer className="py-6 sm:py-9">
       <section aria-labelledby="shop-heading">
         <div className="mb-5">
           <h1 id="shop-heading" className="text-2xl font-extrabold tracking-tight text-text-primary sm:text-3xl">
-            Shop All Products
+            {searchQuery ? `Search Results for "${searchParams.get("search")?.trim()}"` : "Shop All Products"}
           </h1>
           {!loading && !fetchFailed && (
             <p className="mt-1 text-sm text-text-secondary">
-              {products.length} {products.length === 1 ? "product" : "products"} available
+              {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"} available
             </p>
           )}
         </div>
@@ -56,13 +67,13 @@ function Shop() {
           <p className="rounded-xl bg-[#faf8ff] px-4 py-5 text-center text-sm text-text-secondary">
             Products could not be loaded. Please try again later.
           </p>
-        ) : products.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <p className="rounded-xl bg-[#faf8ff] px-4 py-5 text-center text-sm text-text-secondary">
-            No products are available right now.
+            {searchQuery ? "No products matched your search." : "No products are available right now."}
           </p>
         ) : (
           <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
