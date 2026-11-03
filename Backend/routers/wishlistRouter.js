@@ -187,6 +187,21 @@ function createWishlistRouter(pool) {
     }
   });
 
+  router.delete("/item/:wishlistItemId", async (request, response, next) => {
+    try {
+      const wishlistItemId = parseProductId(request.params.wishlistItemId);
+      const [result] = await pool.execute(
+        "DELETE FROM wishlist_items WHERE user_id = ? AND id = ?",
+        [request.user.user_id, wishlistItemId],
+      );
+      if (!result.affectedRows) throw httpError(404, "Favorite not found.");
+      return response.json({ message: "Product removed from favorites." });
+    } catch (error) {
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    }
+  });
+
   router.delete("/:productId", async (request, response, next) => {
     try {
       const productId = parseProductId(request.params.productId);

@@ -6,6 +6,7 @@ import PageContainer from "../CommenComponents/PageContainer";
 import PageHeader from "../CommenComponents/PageHeader";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import { getProductStock } from "../../utils/stock";
+import ProductCard from "./ProductCard";
 
 function parseList(value) {
   if (Array.isArray(value)) return value;
@@ -98,6 +99,7 @@ function ProductDetails() {
   const [selectedColor, setSelectedColor] = useState("");
   const [selectedSize, setSelectedSize] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [relatedProductState, setRelatedProductState] = useState({ productId: null, items: [] });
   const loading = productState.id !== id;
   const product = loading ? null : productState.product;
   const fetchFailed = !loading && productState.failed;
@@ -132,6 +134,48 @@ function ProductDetails() {
       active = false;
     };
   }, [id]);
+
+  useEffect(() => {
+    const currentProduct = productState.id === id ? productState.product : null;
+    if (!currentProduct) return undefined;
+
+    let active = true;
+    const loadRelatedProducts = async () => {
+      try {
+        const searchTerm = currentProduct.cat_type || currentProduct.category;
+        const { data } = await api.get("/products/public", {
+          params: { limit: 100, ...(searchTerm ? { search: searchTerm } : {}) },
+        });
+        const products = Array.isArray(data.products) ? data.products : [];
+        const exactCategory = String(currentProduct.category || "").trim().toLowerCase();
+        const productType = String(currentProduct.cat_type || "").trim().toLowerCase();
+        const related = products
+          .filter((item) => Number(item.id) !== Number(currentProduct.id))
+          .filter((item) => {
+            const sameCategory = exactCategory &&
+              String(item.category || "").trim().toLowerCase() === exactCategory;
+            const sameType = productType &&
+              String(item.cat_type || "").trim().toLowerCase() === productType;
+            return sameCategory || sameType;
+          })
+          .sort((left, right) => {
+            const leftExact = String(left.category || "").trim().toLowerCase() === exactCategory;
+            const rightExact = String(right.category || "").trim().toLowerCase() === exactCategory;
+            return Number(rightExact) - Number(leftExact);
+          })
+          .slice(0, 4);
+        if (active) setRelatedProductState({ productId: id, items: related });
+      } catch (error) {
+        console.error("Failed to load related products:", error);
+        if (active) setRelatedProductState({ productId: id, items: [] });
+      }
+    };
+
+    loadRelatedProducts();
+    return () => {
+      active = false;
+    };
+  }, [id, productState]);
 
   if (loading) {
     return (
@@ -175,6 +219,7 @@ function ProductDetails() {
       ? Object.keys(selectedVariant.sizesStock)
       : parseList(product.available_sizes);
   const selectedStock = getProductStock(product, selectedVariant, selectedSize);
+  const relatedProducts = relatedProductState.productId === id ? relatedProductState.items : [];
   const price = Number(product.offer_price ?? product.mrp) || 0;
   const mrp = Number(product.mrp) || 0;
   const inStock = selectedStock > 0;
@@ -407,6 +452,21 @@ function ProductDetails() {
           )}
         </div>
       </div>
+      {relatedProducts.length > 0 && (
+        <section className="mt-10 sm:mt-14" aria-labelledby="related-products-heading">
+          <div className="mb-5">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">More to explore</p>
+            <h2 id="related-products-heading" className="mt-1 text-xl font-extrabold text-text-primary sm:text-2xl">
+              Related Products
+            </h2>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4">
+            {relatedProducts.map((relatedProduct) => (
+              <ProductCard key={relatedProduct.id} product={relatedProduct} />
+            ))}
+          </div>
+        </section>
+      )}
       </PageContainer>
     </>
   );
