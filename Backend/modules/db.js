@@ -501,6 +501,7 @@ async function initializeDatabase(pool) {
       address_id BIGINT UNSIGNED NULL,
       customer_email VARCHAR(191) NULL,
       order_type VARCHAR(32) NOT NULL DEFAULT 'Shop',
+      items_type VARCHAR(16) NOT NULL DEFAULT 'Single',
       payment_method VARCHAR(64) NOT NULL DEFAULT 'Cash',
       payment_status VARCHAR(32) NOT NULL DEFAULT 'Pending',
       razorpay_order_id VARCHAR(64) NULL,
@@ -553,6 +554,26 @@ async function initializeDatabase(pool) {
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders'`,
   );
   const existingOrderColumns = new Set(orderColumns.map((column) => column.COLUMN_NAME));
+  if (!existingOrderColumns.has("items_type")) {
+    await pool.query("ALTER TABLE orders ADD COLUMN items_type VARCHAR(16) NOT NULL DEFAULT 'Single' AFTER order_type");
+    await pool.query(`
+      UPDATE orders
+      SET items_type = CASE
+        WHEN EXISTS (
+          SELECT 1 FROM order_items oi
+          WHERE oi.order_id = orders.id AND oi.combo_id IS NOT NULL
+        ) AND EXISTS (
+          SELECT 1 FROM order_items oi
+          WHERE oi.order_id = orders.id AND oi.combo_id IS NULL
+        ) THEN 'Mixed'
+        WHEN EXISTS (
+          SELECT 1 FROM order_items oi
+          WHERE oi.order_id = orders.id AND oi.combo_id IS NOT NULL
+        ) THEN 'Combo'
+        ELSE 'Single'
+      END
+    `);
+  }
   if (!existingOrderColumns.has("address_id")) {
     await pool.query("ALTER TABLE orders ADD COLUMN address_id BIGINT UNSIGNED NULL AFTER user_id");
   }

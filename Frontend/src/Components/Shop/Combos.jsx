@@ -106,7 +106,7 @@ function Combos() {
                       </div>
                       {combo.description && <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-500">{combo.description}</p>}
                       <div className="mt-4 flex items-end justify-between border-t border-slate-100 pt-4">
-                        <div>
+                        <div className="flex flex-wrap items-baseline gap-x-2">
                           <p className="text-2xl font-black text-slate-900">₹{price.toLocaleString("en-IN")}</p>
                           {mrp > price && <p className="text-sm text-slate-400 line-through">₹{mrp.toLocaleString("en-IN")}</p>}
                         </div>

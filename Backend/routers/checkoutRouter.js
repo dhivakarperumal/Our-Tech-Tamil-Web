@@ -591,6 +591,11 @@ function createCheckoutRouter(pool) {
           mrp: Number((mrpCents / 100).toFixed(2)),
         };
       });
+      const hasComboItems = cartRows.some((row) => row.combo_id != null);
+      const hasSingleItems = cartRows.some((row) => row.combo_id == null);
+      const itemsType = hasComboItems && hasSingleItems
+        ? "Mixed"
+        : hasComboItems ? "Combo" : "Single";
 
       const coupon = await applyCoupon(
         connection,
@@ -642,8 +647,8 @@ function createCheckoutRouter(pool) {
         `INSERT INTO orders
           (user_id, address_id, customer_email, order_type, payment_method,
            payment_status, status, total_amount, razorpay_order_id, razorpay_payment_id,
-           coupon_code, discount_amount)
-         VALUES (?, ?, ?, 'Online', ?, ?, 'Order Placed', ?, ?, ?, ?, ?)`,
+           coupon_code, discount_amount, items_type)
+         VALUES (?, ?, ?, 'Online', ?, ?, 'Order Placed', ?, ?, ?, ?, ?, ?)`,
         [
           userId,
           addressId,
@@ -655,6 +660,7 @@ function createCheckoutRouter(pool) {
           payment?.paymentId || null,
           coupon?.code || null,
           Number(((coupon?.discountCents || 0) / 100).toFixed(2)),
+          itemsType,
         ],
       );
       const orderId = `ORD${String(orderResult.insertId).padStart(5, "0")}`;
@@ -718,6 +724,7 @@ function createCheckoutRouter(pool) {
         order_id: orderId,
         address_id: addressId,
         total_amount: Number((totalCents / 100).toFixed(2)),
+        items_type: itemsType,
         coupon_code: coupon?.code || null,
         discount_amount: Number(((coupon?.discountCents || 0) / 100).toFixed(2)),
         payment_method: payment?.method || "Cash on Delivery",

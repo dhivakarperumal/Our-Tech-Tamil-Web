@@ -613,6 +613,14 @@ const OrderDetail = () => {
                                 <span className="text-right text-sm font-bold text-slate-800">{order.payment_method || "—"}</span>
                             </div>
                             <div className="flex items-center justify-between gap-3">
+                                <span className="text-sm text-slate-500">Order type</span>
+                                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                                  order.items_type === "Combo" ? "bg-violet-50 text-violet-700" :
+                                    order.items_type === "Mixed" ? "bg-amber-50 text-amber-700" :
+                                      "bg-slate-100 text-slate-600"
+                                }`}>{order.items_type || "Single"}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-3">
                                 <span className="text-sm text-slate-500">Payment status</span>
                                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${order.payment_status === "Paid" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
                                     {order.payment_status || "Pending"}

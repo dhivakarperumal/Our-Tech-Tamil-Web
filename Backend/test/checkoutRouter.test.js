@@ -120,7 +120,7 @@ function createPool({ stock = 5, quantity = 2, coupon = null, combo = false } = 
     if (query.includes("INSERT INTO orders")) {
       const [
         user_id, address_id, customer_email, payment_method, payment_status,
-        total_amount, razorpay_order_id, razorpay_payment_id, coupon_code, discount_amount,
+        total_amount, razorpay_order_id, razorpay_payment_id, coupon_code, discount_amount, items_type,
       ] = params;
       orders.push({
         id: 45,
@@ -134,6 +134,7 @@ function createPool({ stock = 5, quantity = 2, coupon = null, combo = false } = 
         razorpay_payment_id,
         coupon_code,
         discount_amount,
+        items_type,
         status: "Order Placed",
       });
       return [{ insertId: 45 }];
@@ -234,6 +235,7 @@ test("checkout creates an order from authenticated user's cart and database pric
   assert.equal(response.status, 201, JSON.stringify(result));
   assert.equal(result.order_id, "ORD00045");
   assert.equal(result.total_amount, 300);
+  assert.equal(result.items_type, "Single");
   const orderInsert = pool.statements.find(({ query }) => query.includes("INSERT INTO orders"));
   assert.match(orderInsert.query, /'Online'/);
   assert.equal(orderInsert.params[3], "Cash on Delivery");
@@ -278,6 +280,7 @@ test("checkout creates combo order lines and decrements combo inventory", async 
 
   assert.equal(response.status, 201, JSON.stringify(order));
   assert.equal(order.total_amount, 500);
+  assert.equal(order.items_type, "Combo");
   assert.equal(order.items[0].product_id, null);
   assert.equal(order.items[0].combo_id, 5);
   assert.equal(order.items[0].product_name, "Bundle deal");
