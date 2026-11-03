@@ -489,10 +489,9 @@ const Navbar = () => {
         )}
 
       </PageContainer>
-      </nav>
 
       {mobileMenu && (
-        <div className="absolute inset-x-0 top-full z-[55] max-h-[calc(100dvh-120px)] overflow-y-auto border-t border-[#eee7f5] bg-white shadow-xl lg:hidden">
+        <div className="absolute inset-x-0 top-full z-[55] max-h-[calc(100dvh-6rem)] overflow-y-auto border-t border-[#eee7f5] bg-white shadow-xl xl:hidden">
           {!mobileCategory && !mobilePages ? (
             <div className="space-y-2 p-4">
               <NavLink to="/" end onClick={() => setMobileMenu(false)} className="flex items-center gap-3 rounded-xl bg-[#faf7ff] px-4 py-3 text-sm font-semibold text-gray-800 hover:text-primary"><House size={18} />Home</NavLink>
@@ -543,6 +542,7 @@ const Navbar = () => {
           )}
         </div>
       )}
+      </nav>
 
       {logoutConfirm && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4">
