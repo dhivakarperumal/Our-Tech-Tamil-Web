@@ -166,62 +166,62 @@ const TermsAndConditions = () => {
     <>
       <PageHeader title="Terms & Conditions" />
 
-      <main className="bg-[#faf8fd] py-8 sm:py-12">
+      <main className="bg-[#f5f0fc] py-8 sm:py-12">
         <PageContainer>
-          <div className="mx-auto max-w-4xl space-y-5">
+          <div className="space-y-4">
 
-            {/* Hero intro card */}
-            <div className="flex flex-col gap-4 rounded-2xl border border-[#e2d4f7] bg-white p-6 shadow-sm sm:flex-row sm:items-start sm:gap-6 sm:p-8">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#f0e7ff] text-primary">
-                <Scale size={28} />
+            {/* ── Hero Intro Card ── */}
+            <div className="relative flex flex-col gap-4 overflow-hidden rounded-2xl bg-[#ede4fb] px-6 py-6 sm:flex-row sm:items-center sm:gap-6 sm:px-8 sm:py-7">
+              {/* icon */}
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white shadow-sm text-primary">
+                <Scale size={26} />
               </div>
-              <div className="flex-1">
-                <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-primary">
-                  Our Tech - Customer Information
-                </p>
-                <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-[#17122b] sm:text-3xl">
+
+              {/* text */}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl font-extrabold text-[#17122b] sm:text-2xl">
                   Welcome to Our Tech
                 </h1>
-                <p className="mt-2 text-sm leading-7 text-[#525b70]">
+                <p className="mt-1 text-sm leading-6 text-[#525b70]">
                   Welcome to Our Tech. By accessing, browsing, or using this website, you agree to comply with the
-                  following Terms & Conditions. These terms apply to all visitors, customers, and users of our
+                  following Terms &amp; Conditions. These terms apply to all visitors, customers, and users of our
                   website and services.
                 </p>
-                <p className="mt-2 text-sm leading-7 text-[#525b70]">
-                  If you do not agree with these terms, please refrain from using the website. We reserve the right
-                  to update or modify these terms at any time without prior notice.
-                </p>
               </div>
-              <div className="flex shrink-0 items-center gap-2 rounded-xl border border-[#e2d4f7] bg-[#faf5ff] px-4 py-3 text-xs sm:self-start">
-                <CalendarDays size={15} className="text-primary" />
-                <div>
-                  <p className="font-semibold text-[#525b70]">Last Updated</p>
-                  <p className="font-extrabold text-[#17122b]">12 Oct 2026</p>
+
+              {/* Last Updated badge — top right */}
+              <div className="flex shrink-0 flex-col items-end self-start sm:items-center sm:self-auto">
+                <div className="flex items-center gap-2 rounded-xl border border-[#d5c2f5] bg-white px-4 py-2.5 text-xs shadow-sm">
+                  <CalendarDays size={15} className="text-primary" />
+                  <div className="text-right">
+                    <p className="text-[11px] font-semibold text-[#525b70]">Last Updated</p>
+                    <p className="font-extrabold text-[#17122b]">12 Oct 2026</p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Section cards */}
+            {/* ── Section Cards ── */}
             {sections.map(({ num, icon: Icon, title, bullets }) => (
               <div
                 key={num}
-                className="flex gap-4 rounded-2xl border border-[#e2d4f7] bg-white p-5 shadow-sm transition hover:shadow-md sm:gap-6 sm:p-7"
+                className="flex gap-5 rounded-2xl border border-[#e4d8f8] bg-white px-6 py-5 shadow-sm sm:gap-7 sm:px-8 sm:py-6"
               >
-                {/* Number + icon */}
+                {/* Left: number + icon stacked */}
                 <div className="flex shrink-0 flex-col items-center gap-2">
-                  <span className="text-[11px] font-extrabold tracking-widest text-primary">{num}</span>
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f0e7ff] text-primary">
-                    <Icon size={20} />
+                  <span className="text-sm font-extrabold leading-none text-primary">{num}</span>
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#ede4fb] text-primary">
+                    <Icon size={21} />
                   </div>
                 </div>
 
-                {/* Content */}
+                {/* Right: title + bullets */}
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-base font-extrabold text-[#211936] sm:text-lg">{title}</h2>
+                  <h2 className="text-base font-extrabold text-[#17122b] sm:text-lg">{title}</h2>
                   <ul className="mt-3 space-y-2">
                     {bullets.map((b, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm leading-6 text-[#525b70]">
-                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                      <li key={i} className="flex items-start gap-2.5 text-sm leading-6 text-[#525b70]">
+                        <span className="mt-2.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                         {b}
                       </li>
                     ))}
@@ -230,34 +230,36 @@ const TermsAndConditions = () => {
               </div>
             ))}
 
-            {/* CTA Banner */}
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#4B00C8] via-[#7000d8] to-[#B000D8] p-7 sm:p-10">
-              <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20 text-white">
-                    <Headphones size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-extrabold text-white sm:text-2xl">
-                      Still Have Questions?
-                    </h3>
-                    <p className="mt-1 text-sm leading-6 text-white/80">
-                      If you need clarification about our terms and conditions, feel free to get in touch
-                      with our customer support team.
-                    </p>
-                  </div>
+            {/* ── Still Have Questions CTA ── */}
+            <div className="relative flex flex-col items-start justify-between gap-6 overflow-hidden rounded-2xl bg-gradient-to-r from-[#4B00C8] via-[#7b00d4] to-[#B000D8] px-7 py-7 sm:flex-row sm:items-center sm:px-10 sm:py-8">
+              {/* content */}
+              <div className="flex items-start gap-4 z-10">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20">
+                  <Headphones size={24} className="text-white" />
                 </div>
-                <Link
-                  to="/contact"
-                  className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-white px-6 py-3 text-sm font-extrabold text-primary shadow transition hover:bg-[#f0e7ff]"
-                >
-                  Contact Us
-                  <ArrowRight size={16} />
-                </Link>
+                <div>
+                  <h3 className="text-xl font-extrabold text-white sm:text-2xl">
+                    Still Have Questions?
+                  </h3>
+                  <p className="mt-1 max-w-md text-sm leading-6 text-white/80">
+                    If you need clarification about our terms and conditions, feel free to get in touch
+                    with our customer support team.
+                  </p>
+                </div>
               </div>
-              {/* decorative circles */}
-              <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-white/5" />
-              <div className="pointer-events-none absolute -bottom-8 right-24 h-32 w-32 rounded-full bg-white/5" />
+
+              {/* button */}
+              <Link
+                to="/contact"
+                className="z-10 inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-extrabold text-primary shadow transition hover:bg-[#f0e7ff]"
+              >
+                Contact Us
+                <ArrowRight size={16} />
+              </Link>
+
+              {/* decorative blobs */}
+              <div className="pointer-events-none absolute -right-12 -top-12 h-52 w-52 rounded-full bg-white/5" />
+              <div className="pointer-events-none absolute -bottom-10 right-32 h-36 w-36 rounded-full bg-white/5" />
             </div>
 
           </div>
