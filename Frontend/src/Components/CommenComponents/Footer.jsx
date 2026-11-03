@@ -166,7 +166,7 @@ const Footer = () => {
                 const CategoryIcon = getCategoryIcon(category.name);
                 return (
                   <li key={category.catId || category.id || category.name}>
-                    <Link to="/shop" className={linkClass}>
+                    <Link to={`/shop?category=${encodeURIComponent(category.name)}`} className={linkClass}>
                       <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-secondary-light">
                         <CategoryIcon size={17} aria-hidden="true" />
                       </span>
