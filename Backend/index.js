@@ -50,7 +50,7 @@ app.get("/api/health", async (request, response) => {
   }
 });
 
-app.use("/api/auth", createAuthRouter(authController));
+app.use("/api/auth", (req, res, next) => { req.pool = pool; next(); }, createAuthRouter(authController));
 app.use("/api/dashboard", createDashboardRouter(dashboardController));
 app.use("/api/admin/content", createAdminContentRouter(adminContentController));
 app.use("/api/admin/banners", createBannersRouter(bannerController));

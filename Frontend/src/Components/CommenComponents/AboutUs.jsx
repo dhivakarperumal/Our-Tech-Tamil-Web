@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import {
   Users,
   ShoppingBag,
@@ -9,8 +8,14 @@ import {
   Rocket,
   ShoppingCart,
   Trophy,
+  Target,
+  Eye,
+  BadgeCheck,
+  Tag,
+  Play,
 } from "lucide-react";
 import PageContainer from "./PageContainer";
+import PageHeader from "./PageHeader";
 
 /* ─── Stat Card ─────────────────────────────────────────── */
 const StatCard = ({ icon: Icon, value, label }) => (
@@ -55,103 +60,55 @@ const AboutUs = () => {
   return (
     <div className="bg-[#faf9fc] pb-0">
 
-      {/* ── HERO ─────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#f3e8ff] via-[#ede0ff] to-[#e8d5ff] py-16">
-        {/* decorative blobs */}
-        <div className="pointer-events-none absolute -top-16 -right-16 h-72 w-72 rounded-full bg-gradient-to-br from-primary/20 to-gradient-middle/10 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-10 -left-10 h-56 w-56 rounded-full bg-gradient-to-br from-gradient-middle/20 to-primary/10 blur-2xl" />
-
-        <PageContainer>
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            {/* Left */}
-            <div className="space-y-5">
-              <span className="inline-block rounded-full border border-primary/25 bg-white/70 px-4 py-1 text-xs font-semibold text-primary shadow-sm backdrop-blur">
-                About Us
-              </span>
-              <h1 className="text-4xl font-extrabold leading-tight text-[#1a0745] sm:text-5xl">
-                Your Trusted <br className="hidden sm:block" />
-                <span className="bg-gradient-to-r from-primary to-gradient-middle bg-clip-text text-transparent">
-                  Gadgets Store
-                </span>
-              </h1>
-              <p className="max-w-md text-base text-gray-600 leading-relaxed">
-                We bring a wide range of quality tech products to your
-                fingertips — from electronics to accessories, all in one place.
-              </p>
-              <Link
-                to="/shop"
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-gradient-middle px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:brightness-110 hover:-translate-y-0.5"
-              >
-                Shop Now →
-              </Link>
-            </div>
-
-            {/* Right – decorative graphic */}
-            <div className="flex justify-center">
-              <div className="relative flex h-64 w-64 items-center justify-center sm:h-80 sm:w-80">
-                {/* glow ring */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary/30 to-gradient-middle/20 blur-2xl" />
-                {/* inner circle */}
-                <div className="relative flex h-52 w-52 flex-col items-center justify-center gap-3 rounded-full bg-gradient-to-br from-primary to-gradient-middle shadow-2xl sm:h-64 sm:w-64">
-                  <ShoppingBag size={56} className="text-white/90" />
-                  <span className="text-lg font-extrabold text-white">Our Tech</span>
-                  <span className="text-xs font-semibold text-white/70 tracking-widest uppercase">Gadgets Store</span>
-                </div>
-                {/* floating badges */}
-                <span className="absolute top-2 right-2 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-xl text-2xl">
-                  🎮
-                </span>
-                <span className="absolute bottom-4 left-0 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-xl text-xl">
-                  💻
-                </span>
-                <span className="absolute top-10 -left-2 flex h-12 w-12 items-center justify-center rounded-full bg-accent shadow-xl text-xl">
-                  🎧
-                </span>
-              </div>
-            </div>
-          </div>
-        </PageContainer>
-      </section>
+     <PageHeader title="About Us" />
 
       {/* ── WHO WE ARE ───────────────────────────────────────── */}
-      <section className="py-16">
+      <section className="py-10 sm:py-14">
         <PageContainer>
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            {/* Left – office image placeholder */}
-            <div className="relative">
-              <div className="overflow-hidden rounded-3xl bg-gradient-to-br from-[#e9d5ff] to-[#f3e8ff] shadow-xl">
-                <div className="flex h-64 items-center justify-center sm:h-80">
-                  <div className="flex flex-col items-center gap-3 text-primary/60">
-                    <ShoppingBag size={72} strokeWidth={1.2} />
-                    <span className="text-lg font-bold text-primary">Our Tech</span>
-                    <span className="text-xs font-semibold tracking-widest uppercase text-primary/50">Gadgets Store</span>
-                  </div>
-                </div>
-              </div>
-              {/* accent badge */}
-              <div className="absolute -bottom-4 -right-4 rounded-2xl border border-[#e9def5] bg-white px-5 py-3 shadow-lg">
-                <p className="text-[11px] font-semibold text-gray-500">Est.</p>
-                <p className="text-2xl font-extrabold text-primary">2020</p>
+          <div className="grid items-center gap-7 lg:grid-cols-2 lg:gap-10">
+            <div className="relative overflow-hidden rounded-2xl bg-[#23094c] shadow-[0_12px_30px_rgba(47,12,86,0.2)]">
+              <img
+                src="/images/loginbanner.png"
+                alt="Our Tech collection of gadgets and electronics"
+                className="aspect-[16/9] h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#1b063f]/45 via-transparent to-transparent" aria-hidden="true" />
+              <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
+                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/60 bg-primary/90 text-white shadow-[0_0_0_8px_rgba(255,255,255,0.18)] sm:h-16 sm:w-16">
+                  <Play size={24} className="ml-1 fill-current" />
+                </span>
               </div>
             </div>
 
-            {/* Right */}
-            <div className="space-y-5">
-              <span className="inline-block rounded-full border border-primary/25 bg-[#f3eaff] px-4 py-1 text-xs font-semibold text-primary">
+            <div className="space-y-3">
+              <span className="inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary sm:text-xs">
+                <span className="h-px w-7 bg-gradient-to-r from-primary to-gradient-middle" aria-hidden="true" />
                 Who We Are
+                <span className="h-px w-7 bg-gradient-to-r from-primary to-gradient-middle" aria-hidden="true" />
               </span>
-              <h2 className="text-3xl font-extrabold text-[#1a0745] sm:text-4xl">
-                About Our Tech
+              <h2 className="text-2xl font-extrabold leading-tight text-[#1a0745] sm:text-3xl">
+                Our Tech Gadgets Store
               </h2>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Our Tech is your go-to online destination for all things gadgets and electronics.
-                We offer a curated selection of high-quality products — from smartphones and laptops
-                to gaming gear and accessories — paired with great deals, secure payments, and fast
-                delivery right to your door.
+              <p className="text-sm leading-6 text-gray-600">
+                We are a technology retail platform dedicated to bringing you a wide range of genuine electronics and accessories at the best prices. From laptops and mobile phones to smart accessories, we make it easy to shop for quality tech with confidence.
               </p>
 
-              {/* Stats row */}
-              <div className="grid grid-cols-3 gap-3 pt-2">
+              <div className="grid grid-cols-3 gap-2 pt-1">
+                {[
+                  { icon: Shield, label: "Genuine Products" },
+                  { icon: Truck, label: "Fast & Safe Delivery" },
+                  { icon: Headphones, label: "Dedicated Support" },
+                ].map(({ icon: Icon, label }) => (
+                  <div key={label} className="flex min-w-0 items-center gap-2 text-[10px] font-bold leading-4 text-[#33284a] sm:text-xs">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f1e6fc] text-primary">
+                      <Icon size={16} aria-hidden="true" />
+                    </span>
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-2 sm:gap-3">
                 <StatCard icon={Users} value="50K+" label="Happy Customers" />
                 <StatCard icon={ShoppingBag} value="10K+" label="Products" />
                 <StatCard icon={Headphones} value="24/7" label="Support" />
@@ -193,6 +150,85 @@ const AboutUs = () => {
               title="Customer Care"
               desc="We're here to help you, always — 24/7 support."
             />
+          </div>
+        </PageContainer>
+      </section>
+
+      {/* ── MISSION, VISION & WHY CHOOSE US ─────────────────── */}
+      <section className="py-10 sm:py-14">
+        <PageContainer>
+          <div className="overflow-hidden rounded-3xl border border-[#eadcf6] bg-gradient-to-br from-[#fbf7ff] via-[#f5edff] to-[#fdf9ff] p-5 shadow-[0_12px_30px_rgba(74,27,120,0.08)] sm:p-8">
+            <div className="grid gap-4 md:grid-cols-2">
+              <article className="flex items-start gap-4 rounded-2xl border border-white/80 bg-white/75 p-5 shadow-sm">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0e2ff] text-primary">
+                  <Target size={23} aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="text-base font-extrabold text-[#1a0745]">Our Mission</h2>
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    To deliver high-quality gadgets and a seamless shopping experience with trust, value, and great customer support.
+                  </p>
+                </div>
+              </article>
+
+              <article className="flex items-start gap-4 rounded-2xl border border-white/80 bg-white/75 p-5 shadow-sm">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0e2ff] text-primary">
+                  <Eye size={23} aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="text-base font-extrabold text-[#1a0745]">Our Vision</h2>
+                  <p className="mt-1 text-sm leading-6 text-gray-600">
+                    To be a leading and trusted tech store, bringing the latest technology to everyone for a smarter lifestyle.
+                  </p>
+                </div>
+              </article>
+            </div>
+
+            <div className="my-7 flex items-center gap-3 sm:my-8">
+              <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#c89af1] to-[#a855f7]" />
+              <h2 className="shrink-0 text-center text-lg font-extrabold text-[#1a0745] sm:text-xl">
+                Why Choose Us?
+              </h2>
+              <span className="h-px flex-1 bg-gradient-to-l from-transparent via-[#c89af1] to-[#a855f7]" />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  icon: BadgeCheck,
+                  title: "Trusted Store",
+                  description: "Carefully selected products from reliable brands.",
+                },
+                {
+                  icon: Tag,
+                  title: "Best Prices",
+                  description: "Great value on quality tech and accessories.",
+                },
+                {
+                  icon: Truck,
+                  title: "Quick Delivery",
+                  description: "Fast, dependable delivery across India.",
+                },
+                {
+                  icon: Headphones,
+                  title: "Customer Support",
+                  description: "Friendly help whenever you need us.",
+                },
+              ].map(({ icon: Icon, title, description }) => (
+                <article
+                  key={title}
+                  className="flex items-center gap-3 rounded-xl border border-[#eadcf6] bg-white/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#f3eaff] text-primary">
+                    <Icon size={20} aria-hidden="true" />
+                  </span>
+                  <div>
+                    <h3 className="text-sm font-extrabold text-[#1a0745]">{title}</h3>
+                    <p className="mt-0.5 text-xs leading-5 text-gray-500">{description}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
         </PageContainer>
       </section>
@@ -248,57 +284,7 @@ const AboutUs = () => {
         </PageContainer>
       </section>
 
-      {/* ── JOIN CTA ──────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#2d0060] via-primary to-[#7200d6] py-16">
-        {/* blobs */}
-        <div className="pointer-events-none absolute -top-20 right-0 h-80 w-80 rounded-full bg-white/5 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-10 left-10 h-56 w-56 rounded-full bg-white/5 blur-2xl" />
-
-        <PageContainer>
-          <div className="grid items-center gap-10 lg:grid-cols-2">
-            {/* Left */}
-            <div className="space-y-5">
-              <h2 className="text-3xl font-extrabold text-white sm:text-4xl leading-tight">
-                Join Our Shopping Family
-              </h2>
-              <p className="text-base text-white/75">
-                Be a part of thousands of happy shoppers today!
-              </p>
-              <Link
-                to="/shop"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-white bg-white px-7 py-3 text-sm font-bold text-primary shadow-xl transition hover:bg-white/90 hover:-translate-y-0.5"
-              >
-                Shop Now →
-              </Link>
-            </div>
-
-            {/* Right – decorative */}
-            <div className="flex justify-center gap-6">
-              <div className="flex flex-col items-center justify-end gap-3">
-                <span className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur text-4xl shadow-xl border border-white/20">
-                  🎧
-                </span>
-                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur text-3xl shadow-xl border border-white/20">
-                  ⌚
-                </span>
-              </div>
-              <div className="flex flex-col items-center justify-center gap-3">
-                <span className="flex h-24 w-24 items-center justify-center rounded-2xl bg-white/10 backdrop-blur text-5xl shadow-xl border border-white/20">
-                  💻
-                </span>
-              </div>
-              <div className="flex flex-col items-center justify-end gap-3">
-                <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur text-3xl shadow-xl border border-white/20">
-                  🎮
-                </span>
-                <span className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur text-4xl shadow-xl border border-white/20">
-                  📱
-                </span>
-              </div>
-            </div>
-          </div>
-        </PageContainer>
-      </section>
+     
 
     </div>
   );

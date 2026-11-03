@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
   ChevronDown,
@@ -63,6 +63,7 @@ function Shop() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
+  const productsRef = useRef(null);
   const [searchParams] = useSearchParams();
   const urlSearch = searchParams.get("search") || "";
   const urlCategory = searchParams.get("category") || "";
@@ -224,6 +225,10 @@ function Shop() {
     .filter(([brand]) => brand.toLowerCase().includes(brandSearch.toLowerCase()));
   const firstProduct = filteredProducts.length ? (page - 1) * PRODUCTS_PER_PAGE + 1 : 0;
   const lastProduct = Math.min(page * PRODUCTS_PER_PAGE, filteredProducts.length);
+  const changePage = (nextPage) => {
+    setPagination({ filterKey, page: Math.max(1, Math.min(nextPage, totalPages)) });
+    productsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <>
@@ -257,7 +262,7 @@ function Shop() {
               <Search size={13} className="text-[#a198af]" aria-hidden="true" />
             </label>
             <label className="flex shrink-0 items-center gap-1.5 text-[11px] font-semibold text-[#625970] sm:text-xs">
-              Sort by:
+             
               <select
                 value={sortBy}
                 onChange={(event) => setSortBy(event.target.value)}
@@ -289,7 +294,7 @@ function Shop() {
                 </span>
               )}
             </button>
-            <div className="hidden items-center rounded-lg border border-[#e9e1f2] bg-white p-1 sm:flex">
+            {/* <div className="hidden items-center rounded-lg border border-[#e9e1f2] bg-white p-1 sm:flex">
               <button
                 type="button"
                 aria-label="Grid view"
@@ -308,7 +313,7 @@ function Shop() {
               >
                 <List size={15} aria-hidden="true" />
               </button>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -484,7 +489,7 @@ function Shop() {
           </aside>
           )}
 
-          <div className="min-w-0">
+          <div ref={productsRef} className="min-w-0 scroll-mt-24">
             {loading ? (
               <div className={`grid gap-3 sm:gap-4 ${filtersOpen ? "grid-cols-2 md:grid-cols-3 xl:grid-cols-4" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6"}`}>
                 {Array.from({ length: 10 }, (_, index) => (
@@ -517,7 +522,7 @@ function Shop() {
                       type="button"
                       aria-label="Previous page"
                       disabled={page === 1}
-                      onClick={() => setPagination({ filterKey, page: Math.max(1, page - 1) })}
+                      onClick={() => changePage(page - 1)}
                       className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e9e1f2] bg-white text-[#766c84] transition hover:border-[#4b00c8] hover:text-[#4b00c8] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <ChevronLeft size={15} aria-hidden="true" />
@@ -533,7 +538,7 @@ function Shop() {
                             type="button"
                             aria-label={`Page ${pageNumber}`}
                             aria-current={pageNumber === page ? "page" : undefined}
-                            onClick={() => setPagination({ filterKey, page: pageNumber })}
+                            onClick={() => changePage(pageNumber)}
                             className={`h-8 min-w-8 rounded-lg px-2 text-[11px] font-bold transition ${pageNumber === page ? "bg-[#4b00c8] text-white shadow-[0_3px_8px_rgba(75,0,200,0.2)]" : "border border-[#e9e1f2] bg-white text-[#70677d] hover:border-[#4b00c8] hover:text-[#4b00c8]"}`}
                           >
                             {pageNumber}
@@ -544,7 +549,7 @@ function Shop() {
                       type="button"
                       aria-label="Next page"
                       disabled={page === totalPages}
-                      onClick={() => setPagination({ filterKey, page: Math.min(totalPages, page + 1) })}
+                      onClick={() => changePage(page + 1)}
                       className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#e9e1f2] bg-white text-[#766c84] transition hover:border-[#4b00c8] hover:text-[#4b00c8] disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       <ChevronRight size={15} aria-hidden="true" />
