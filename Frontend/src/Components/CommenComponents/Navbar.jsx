@@ -250,9 +250,9 @@ const Navbar = () => {
       </PageContainer>
       </nav>
 
-      <div className="sticky top-0 z-50 isolate hidden h-[58px] items-center justify-center xl:flex">
+      <div className="sticky top-0 z-50 isolate hidden h-[58px] items-center justify-center bg-white xl:flex">
         <svg
-          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[58px] w-full"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[58px] w-full"
           viewBox="0 0 2000 80"
           preserveAspectRatio="none"
           aria-hidden="true"
@@ -280,7 +280,7 @@ const Navbar = () => {
             strokeWidth="2"
           />
         </svg>
-        <div className="mx-auto w-full max-w-[980px] px-8">
+        <div className="relative z-10 mx-auto w-full max-w-[980px] px-8">
           <div className="flex min-h-[42px] items-center justify-center gap-3 rounded-full border-2 border-[#e6bd3f] bg-gradient-to-r from-[#45156a] via-[#32134f] to-[#45156a] px-4 shadow-[0_12px_26px_rgba(30,8,50,0.28)]">
             <NavLink to="/" end className={navClass}><House size={19} aria-hidden="true" />Home</NavLink>
             <NavLink to="/shop" className={navClass}><ShoppingBag size={19} aria-hidden="true" />Shop</NavLink>
