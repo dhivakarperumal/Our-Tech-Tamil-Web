@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -6,6 +6,8 @@ import {
   Ban,
   Box,
   CalendarDays,
+  ChevronRight,
+  ClipboardList,
   CreditCard,
   FileText,
   Globe,
@@ -20,7 +22,6 @@ import {
   UserCircle,
   Zap,
 } from "lucide-react";
-import PageHeader from "../CommenComponents/PageHeader";
 import PageContainer from "./PageContainer";
 
 const sections = [
@@ -162,111 +163,157 @@ const sections = [
 ];
 
 const TermsAndConditions = () => {
+  const [activeSection, setActiveSection] = useState("01");
+
   return (
-    <>
-      <PageHeader title="Terms & Conditions" />
+    <main className="bg-[#fcfaff] pb-8">
+      <PageContainer className="pt-4 sm:pt-5">
+        <section
+          className="relative flex min-h-[132px] items-center overflow-hidden rounded-2xl bg-[#4b0d8c] bg-cover bg-center px-6 py-5 text-white shadow-sm sm:min-h-[142px] sm:px-10"
+          style={{
+            backgroundImage:
+              "linear-gradient(90deg, rgba(62, 9, 112, 0.96) 0%, rgba(116, 20, 190, 0.82) 48%, rgba(116, 20, 190, 0.05) 100%), url('/images/pageheader.png')",
+          }}
+        >
+          <div className="relative z-10 max-w-xl">
+            <div className="mb-2 flex items-center gap-2 text-[11px] font-medium text-white/85">
+              <Link to="/" className="transition hover:text-white">Home</Link>
+              <ChevronRight size={12} aria-hidden="true" />
+              <span>Terms &amp; Conditions</span>
+            </div>
+            <h1 className="text-2xl font-extrabold leading-tight sm:text-3xl lg:text-4xl">
+              Terms &amp; Conditions
+            </h1>
+            <p className="mt-1 max-w-lg text-xs leading-5 text-white/90 sm:text-sm">
+              Please read our terms carefully before using Our Tech. These guidelines explain your rights, responsibilities and our policies.
+            </p>
+          </div>
+        </section>
 
-      <main className="bg-[#f5f0fc] py-8 sm:py-12">
-        <PageContainer>
-          <div className="space-y-4">
-
-            {/* ── Hero Intro Card ── */}
-            <div className="relative flex flex-col gap-4 overflow-hidden rounded-2xl bg-[#ede4fb] px-6 py-6 sm:flex-row sm:items-center sm:gap-6 sm:px-8 sm:py-7">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white shadow-sm text-primary">
-                <Scale size={26} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-xl font-extrabold text-[#17122b] sm:text-2xl">
-                  Welcome to Our Tech
-                </h1>
-                <p className="mt-1 text-sm leading-6 text-[#525b70]">
-                  Welcome to Our Tech. By accessing, browsing, or using this website, you agree to comply with the
-                  following Terms &amp; Conditions. These terms apply to all visitors, customers, and users of our
-                  website and services.
-                </p>
-              </div>
-              <div className="flex shrink-0 self-start sm:self-auto">
-                <div className="flex items-center gap-2 rounded-xl border border-[#d5c2f5] bg-white px-4 py-2.5 text-xs shadow-sm">
-                  <CalendarDays size={15} className="text-primary" />
-                  <div>
-                    <p className="text-[11px] font-semibold text-[#525b70]">Last Updated</p>
-                    <p className="font-extrabold text-[#17122b]">12 Oct 2026</p>
-                  </div>
-                </div>
+        <div className="mt-4 grid items-start gap-3 lg:grid-cols-[246px_minmax(0,1fr)]">
+          <aside className="rounded-2xl border border-[#eadcfb] bg-white p-2 shadow-[0_3px_12px_rgba(87,31,145,0.06)] lg:sticky lg:top-5">
+            <div className="flex items-center gap-3 rounded-xl bg-[#faf6ff] px-3 py-2.5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f0e2ff] text-primary">
+                <ClipboardList size={23} aria-hidden="true" />
+              </span>
+              <div>
+                <h2 className="text-sm font-extrabold text-[#17122b]">Quick Navigation</h2>
+                <p className="text-[11px] text-[#626078]">Browse policy sections</p>
               </div>
             </div>
 
-            {/* ── Section Cards ── */}
-            {sections.map(({ num, icon: Icon, title, bullets }) => (
-              <div
-                key={num}
-                className="grid rounded-2xl border border-[#e4d8f8] bg-white px-5 py-5 shadow-sm sm:px-7 sm:py-6"
-                style={{ gridTemplateColumns: "auto 1fr", gridTemplateRows: "auto 1fr", gap: "8px 20px" }}
-              >
-                {/* Row 1 Col 1 — dark purple number badge */}
-                <div className="flex items-center">
-                  <span className="flex h-8 w-12 items-center justify-center rounded-lg bg-[#17122b] text-xs font-extrabold tracking-widest text-white">
-                    {num}
-                  </span>
-                </div>
+            <nav aria-label="Terms and conditions sections" className="mt-2 grid max-h-56 grid-cols-2 gap-x-2 overflow-y-auto sm:grid-cols-3 lg:max-h-none lg:grid-cols-1">
+              {sections.map(({ num, title }) => (
+                <a
+                  key={num}
+                  href={`#terms-${num}`}
+                  onClick={() => setActiveSection(num)}
+                  aria-current={activeSection === num ? "location" : undefined}
+                  className={`flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] transition sm:text-xs lg:text-[11px] ${
+                    activeSection === num
+                      ? "bg-[#f0ddff] font-bold text-primary"
+                      : "text-[#29243c] hover:bg-[#faf6ff] hover:text-primary"
+                  }`}
+                >
+                  <span className="shrink-0 font-semibold">{num}</span>
+                  <span className="truncate">{title}</span>
+                  {activeSection === num && <ChevronRight size={14} className="ml-auto shrink-0" aria-hidden="true" />}
+                </a>
+              ))}
+            </nav>
 
-                {/* Row 1 Col 2 — title */}
-                <div className="flex items-center">
-                  <h2 className="text-base font-extrabold text-[#17122b] sm:text-lg">{title}</h2>
-                </div>
-
-                {/* Row 2 Col 1 — icon */}
-                <div className="flex items-start justify-center pt-1">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#ede4fb] text-primary">
-                    <Icon size={22} />
-                  </div>
-                </div>
-
-                {/* Row 2 Col 2 — bullets */}
-                <div className="flex-1 min-w-0">
-                  <ul className="space-y-2">
-                    {bullets.map((b, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-sm leading-6 text-[#525b70]">
-                        <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ))}
-
-            {/* ── Still Have Questions CTA ── */}
-            <div className="relative flex flex-col items-start justify-between gap-6 overflow-hidden rounded-2xl bg-gradient-to-r from-[#4B00C8] via-[#7b00d4] to-[#B000D8] px-7 py-7 sm:flex-row sm:items-center sm:px-10 sm:py-8">
-              <div className="flex items-start gap-4 z-10">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20">
-                  <Headphones size={24} className="text-white" />
-                </div>
+            <div className="mt-3 rounded-xl bg-[#f5eaff] p-3">
+              <div className="flex items-start gap-2.5">
+                <Headphones size={26} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
                 <div>
-                  <h3 className="text-xl font-extrabold text-white sm:text-2xl">
-                    Still Have Questions?
-                  </h3>
-                  <p className="mt-1 max-w-md text-sm leading-6 text-white/80">
-                    If you need clarification about our terms and conditions, feel free to get in touch
-                    with our customer support team.
+                  <h3 className="text-xs font-extrabold text-[#17122b]">Need Assistance?</h3>
+                  <p className="mt-0.5 text-[10px] leading-4 text-[#55516b]">
+                    Have questions about our policies? Our support team is here to help.
                   </p>
                 </div>
               </div>
               <Link
                 to="/contact"
-                className="z-10 inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-7 py-3 text-sm font-extrabold text-primary shadow transition hover:bg-[#f0e7ff]"
+                className="mt-2 flex items-center justify-center gap-2 rounded-full border border-primary bg-white px-3 py-2 text-[11px] font-bold text-primary transition hover:bg-primary hover:text-white"
               >
-                Contact Us
-                <ArrowRight size={16} />
+                Contact Support <ArrowRight size={14} aria-hidden="true" />
               </Link>
-              <div className="pointer-events-none absolute -right-12 -top-12 h-52 w-52 rounded-full bg-white/5" />
-              <div className="pointer-events-none absolute -bottom-10 right-32 h-36 w-36 rounded-full bg-white/5" />
             </div>
+          </aside>
 
+          <div className="min-w-0 space-y-3">
+            <section className="flex flex-col gap-3 rounded-2xl border border-[#e6d3fc] bg-white p-4 shadow-[0_3px_12px_rgba(87,31,145,0.06)] sm:flex-row sm:items-center sm:px-5 sm:py-3.5">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#f1e4ff] text-primary sm:h-[58px] sm:w-[58px]">
+                <Scale size={28} aria-hidden="true" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <h2 className="text-lg font-extrabold leading-tight text-[#17122b] sm:text-xl">Welcome to Our Tech</h2>
+                <p className="mt-0.5 text-xs leading-[1.4] text-[#39364b] sm:text-[13px]">
+                  Welcome to Our Tech. By accessing, browsing, or using this website, you agree to comply with the following Terms &amp; Conditions. These terms apply to all visitors, customers, and users of our website and services.
+                </p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2 border-t border-[#cbb1e7] pt-2 text-xs sm:ml-2 sm:border-l sm:border-t-0 sm:py-1 sm:pl-5 sm:pr-1">
+                <CalendarDays size={23} className="text-primary" aria-hidden="true" />
+                <div>
+                  <p className="font-bold text-[#17122b]">Last Updated</p>
+                  <p className="text-[#55516b]">12 Oct 2026</p>
+                </div>
+              </div>
+            </section>
+
+            {sections.map(({ num, icon: Icon, title, bullets }) => (
+              <section
+                id={`terms-${num}`}
+                key={num}
+                className="scroll-mt-24 grid grid-cols-[62px_minmax(0,1fr)] gap-x-3 gap-y-1.5 rounded-2xl border border-[#eadcfb] bg-white px-3.5 py-3 shadow-[0_3px_12px_rgba(87,31,145,0.06)] sm:grid-cols-[68px_minmax(0,1fr)] sm:gap-x-4 sm:px-5 sm:py-3"
+              >
+                <div className="row-span-2 flex flex-col items-center gap-1.5 border-r border-[#cbb1e7] pr-3">
+                  <span className="flex h-7 w-11 items-center justify-center rounded-lg bg-gradient-to-r from-[#8500c9] to-[#b000dc] text-xs font-extrabold text-white">
+                    {num}
+                  </span>
+                  <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#f5eaff] text-primary">
+                    <Icon size={23} aria-hidden="true" />
+                  </span>
+                </div>
+                <h2 className="self-center text-sm font-extrabold leading-5 text-[#17122b] sm:text-base">{title}</h2>
+                <ul className="min-w-0 space-y-1">
+                  {bullets.map((bullet, i) => (
+                    <li key={i} className="flex items-start gap-2 text-[11px] leading-[1.45] text-[#29263d] sm:text-xs">
+                      <span className="mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full bg-[#9400cf]" aria-hidden="true" />
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+
+            <section className="relative flex min-h-[100px] flex-col justify-center gap-4 overflow-hidden rounded-2xl bg-gradient-to-r from-[#4b0d8c] via-[#8f16cf] to-[#b532dc] px-5 py-4 text-white shadow-sm sm:min-h-[112px] sm:flex-row sm:items-center sm:justify-between sm:px-6">
+              <div className="relative z-10 flex items-start gap-3">
+                <Headphones size={40} className="shrink-0 text-white" aria-hidden="true" />
+                <div className="max-w-md">
+                  <h2 className="text-lg font-extrabold leading-tight sm:text-xl">Still Have Questions?</h2>
+                  <p className="mt-1 text-[11px] leading-4 text-white/90 sm:text-xs">
+                    If you need clarification about our terms and conditions, feel free to get in touch with our customer support team.
+                  </p>
+                </div>
+              </div>
+              <Link
+                to="/contact"
+                className="relative z-10 inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-full bg-white px-5 py-2.5 text-xs font-extrabold text-primary shadow transition hover:bg-[#f0e7ff] sm:self-center"
+              >
+                Contact Us <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+              <img
+                src="/images/loginimage.png"
+                alt=""
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-0 right-[18%] hidden h-28 w-64 object-contain opacity-90 lg:block"
+              />
+            </section>
           </div>
-        </PageContainer>
-      </main>
-    </>
+        </div>
+      </PageContainer>
+    </main>
   );
 };
 

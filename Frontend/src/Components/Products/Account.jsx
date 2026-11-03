@@ -11,6 +11,8 @@ import {
   MapPin,
   Package,
   Phone,
+  Eye,
+  EyeOff,
   Save,
   Search,
   ShoppingBag,
@@ -278,11 +280,40 @@ function MyOrders({ user }) {
   );
 }
 
+function PasswordField({ label, name, value, onChange, placeholder, show, onToggle }) {
+  return (
+    <Field label={label} required>
+      <div className="flex items-center gap-2.5 rounded-xl border border-[#e2d3f5] bg-white px-3.5 py-2.5 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/10">
+        <Lock size={16} className="shrink-0 text-primary/60" />
+        <input
+          name={name}
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          className="min-w-0 flex-1 bg-transparent text-sm text-gray-800 outline-none placeholder:text-gray-400"
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          className="shrink-0 text-gray-400 transition hover:text-primary"
+          tabIndex={-1}
+          aria-label={show ? "Hide password" : "Show password"}
+        >
+          {show ? <EyeOff size={16} /> : <Eye size={16} />}
+        </button>
+      </div>
+    </Field>
+  );
+}
+
 function ChangePassword() {
   const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [show, setShow] = useState({ currentPassword: false, newPassword: false, confirmPassword: false });
   const [saving, setSaving] = useState(false);
   const change = function(e) { setForm(function(p){ return { ...p, [e.target.name]: e.target.value }; }); };
-  const reset  = function() { setForm({ currentPassword: "", newPassword: "", confirmPassword: "" }); };
+  const toggle = function(field) { setShow(function(p){ return { ...p, [field]: !p[field] }; }); };
+  const reset  = function() { setForm({ currentPassword: "", newPassword: "", confirmPassword: "" }); setShow({ currentPassword: false, newPassword: false, confirmPassword: false }); };
   const save   = async function(e) {
     e.preventDefault();
     if (!form.currentPassword)       return toast.error("Current password is required.");
@@ -303,9 +334,9 @@ function ChangePassword() {
         <div><h2 className="text-lg font-extrabold text-[#1a0745]">Change Password</h2><p className="text-xs text-gray-500">Update your account password.</p></div>
       </div>
       <form onSubmit={save} className="mt-6 max-w-md space-y-5">
-        <Field label="Current Password" required><InputBox icon={Lock} name="currentPassword" type="password" value={form.currentPassword} onChange={change} placeholder="Enter current password" /></Field>
-        <Field label="New Password" required><InputBox icon={Lock} name="newPassword" type="password" value={form.newPassword} onChange={change} placeholder="Min. 8 characters" /></Field>
-        <Field label="Confirm New Password" required><InputBox icon={Lock} name="confirmPassword" type="password" value={form.confirmPassword} onChange={change} placeholder="Repeat new password" /></Field>
+        <PasswordField label="Current Password" name="currentPassword" value={form.currentPassword} onChange={change} placeholder="Enter current password" show={show.currentPassword} onToggle={function(){ toggle("currentPassword"); }} />
+        <PasswordField label="New Password" name="newPassword" value={form.newPassword} onChange={change} placeholder="Min. 8 characters" show={show.newPassword} onToggle={function(){ toggle("newPassword"); }} />
+        <PasswordField label="Confirm New Password" name="confirmPassword" value={form.confirmPassword} onChange={change} placeholder="Repeat new password" show={show.confirmPassword} onToggle={function(){ toggle("confirmPassword"); }} />
         <div className="flex justify-end gap-3 pt-2">
           <button type="button" onClick={reset} className="flex items-center gap-2 rounded-xl border border-[#d4c5f0] px-5 py-2.5 text-sm font-bold text-gray-600 transition hover:bg-[#faf7ff]"><X size={15} /> Cancel</button>
           <button type="submit" disabled={saving} className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-gradient-middle px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:brightness-110 disabled:opacity-60"><Save size={15} /> {saving ? "Saving..." : "Update Password"}</button>
