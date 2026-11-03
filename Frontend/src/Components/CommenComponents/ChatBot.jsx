@@ -392,7 +392,7 @@ const ChatBot = ({ isOpen, onClose }) => {
         break;
 
       case "cart":
-        addMessage({ from: "bot", type: "text", text: "🛒 Taking you to your cart!", action: { label: "Open Cart", href: "/checkout" } });
+        addMessage({ from: "bot", type: "text", text: "🛒 Taking you to your cart!", action: { label: "Open Cart", href: "/cart" } });
         break;
 
       case "wishlist":

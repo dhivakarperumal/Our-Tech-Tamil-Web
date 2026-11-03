@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { Package, ShoppingCart, Zap } from "lucide-react";
+import { StoreContext } from "../../PrivateRouter/StoreContext";
 
 function getFirstImage(images) {
   if (!images) return "";
@@ -43,6 +44,7 @@ function getProductImage(product) {
 
 function ProductCard({ product }) {
   const [imageFailed, setImageFailed] = useState(false);
+  const { addToCart } = useContext(StoreContext);
   const image = getProductImage(product);
   const productDetailsPath = `/product/${product.id}`;
   const mrp = Number(product.mrp) || 0;
@@ -98,7 +100,9 @@ function ProductCard({ product }) {
         <div className="mt-3 grid grid-cols-2 gap-2">
           <button
             type="button"
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary px-2 py-2 text-[11px] font-bold text-primary transition hover:bg-primary/5 sm:text-xs"
+            onClick={() => addToCart(product)}
+            disabled={Number(product.total_stock) < 1}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-primary px-2 py-2 text-[11px] font-bold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50 sm:text-xs"
           >
             <ShoppingCart size={14} aria-hidden="true" />
             Add to Cart

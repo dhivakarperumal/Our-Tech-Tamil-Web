@@ -243,6 +243,29 @@ async function initializeDatabase(pool) {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS cart_items (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL,
+      product_id BIGINT UNSIGNED NOT NULL,
+      product_name VARCHAR(255) NOT NULL,
+      product_image TEXT NULL,
+      product_code VARCHAR(100) NOT NULL,
+      mrp DECIMAL(10, 2) NOT NULL,
+      offer_price DECIMAL(10, 2) NOT NULL,
+      quantity INT UNSIGNED NOT NULL DEFAULT 1,
+      subtotal DECIMAL(10, 2) NOT NULL DEFAULT 0,
+      total DECIMAL(10, 2) NOT NULL DEFAULT 0,
+      variant_color VARCHAR(100) NOT NULL DEFAULT '',
+      variant_size VARCHAR(100) NOT NULL DEFAULT '',
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY cart_items_user_product_variant_unique (user_id, product_id, variant_color, variant_size),
+      KEY cart_items_user_id_idx (user_id),
+      KEY cart_items_product_id_idx (product_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS addresses (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       user_id VARCHAR(255) NULL,

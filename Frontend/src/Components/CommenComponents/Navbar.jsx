@@ -21,6 +21,7 @@ const Navbar = () => {
 
   const { user, logout } = useContext(AuthContext);
   const { cart, wishlist } = useContext(StoreContext);
+  const cartItemCount = cart.reduce((total, item) => total + Number(item.quantity || 0), 0);
   const [mobilePages, setMobilePages] = useState(false);
   const navigate = useNavigate();
 
@@ -262,9 +263,9 @@ const Navbar = () => {
               className="relative text-primary hover:text-primary-light hover:scale-110 transition"
             >
               <ShoppingCart size={22} />
-              {cart.length > 0 && (
+              {cartItemCount > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
-                  {cart.length > 9 ? '9+' : cart.length}
+                  {cartItemCount > 9 ? '9+' : cartItemCount}
                 </span>
               )}
             </button>

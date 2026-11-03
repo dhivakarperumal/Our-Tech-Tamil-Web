@@ -18,6 +18,7 @@ const createCategoriesRouter = require("./routers/categoriesRouter");
 const createProductsRouter = require("./routers/productsRouter");
 const createReviewsRouter = require("./routers/reviewsRouter");
 const createOrdersRouter = require("./routers/ordersRouter");
+const createCartRouter = require("./routers/cartRouter");
 
 const port = Number(process.env.PORT || 5000);
 
@@ -55,6 +56,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/products", createProductsRouter(pool));
 app.use("/api/reviews", createReviewsRouter(pool));
 app.use("/api/orders", createOrdersRouter(pool));
+app.use("/api/cart", createCartRouter(pool));
 
 app.use((error, request, response, next) => {
   console.error("Backend request failed:", error);

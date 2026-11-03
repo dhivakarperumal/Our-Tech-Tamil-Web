@@ -39,13 +39,18 @@ export const StoreProvider = ({ children }) => {
         if (!user?.user_id) { setCart([]); return; }
         try {
             setLoadingCart(true);
-            const res = await api.get(`/cart/${user.user_id}`);
-            setCart((Array.isArray(res.data) ? res.data : []).map(item => ({
+            const res = await api.get("/cart");
+            const items = Array.isArray(res.data) ? res.data : res.data?.items;
+            setCart((Array.isArray(items) ? items : []).map(item => ({
                 ...item,
-                image: resolveStoredImage(item.image),
+                name: item.product_name || item.name,
+                image: resolveStoredImage(item.product_image || item.image),
+                price: Number(item.offer_price ?? item.price ?? 0),
+                total_price: Number(item.subtotal ?? item.total_price ?? 0),
             })));
         } catch (err) {
             console.error("Fetch cart error:", err);
+            toast.error(err.response?.data?.message || "Failed to load your cart");
         } finally {
             setLoadingCart(false);
         }
@@ -88,36 +93,32 @@ export const StoreProvider = ({ children }) => {
 
         const selectedVariant = variant || product.variants?.[0] || null;
         const selectedSize = size || selectedVariant?.selectedSizes?.[0] || "Free Size";
+        const quantity = Number(qty);
+        if (!Number.isSafeInteger(quantity) || quantity < 1) {
+            toast.error("Enter a valid quantity");
+            return;
+        }
+
         const availableStock = getProductStock(product, selectedVariant, selectedSize);
         if (availableStock < 1) {
             toast.error("This product is out of stock");
             return;
         }
-        if (qty > availableStock) {
+        if (quantity > availableStock) {
             toast.error(`Only ${availableStock} item${availableStock === 1 ? "" : "s"} available`);
             return;
         }
         const variantColor = selectedVariant?.colorName || selectedVariant?.color || "Default";
-        
-        // Correctly parse images if they are stored as JSON strings
-        const variantImage = getFirstStoredImage(selectedVariant?.images) || getFirstStoredImage(product.images);
-        
-        const price = parseFloat(product.offer_price || product.price || 0);
 
         try {
             await api.post("/cart", {
-                user_id: user.user_id,
                 product_id: Number(productId),
                 variant_color: variantColor,
                 variant_size: selectedSize,
-                image: variantImage,
-                email: user.email || "",
-                price: price,
-                total_price: price * qty, 
-                quantity: qty,
+                quantity,
             });
-            toast.success("Added to cart!");
-            await fetchCart(); // Refresh from backend to get image + full details
+            toast.success("Product added to cart successfully");
+            await fetchCart();
         } catch (err) {
             console.error("Add to cart error:", err);
             toast.error(err.response?.data?.message || "Failed to add to cart");
@@ -127,7 +128,7 @@ export const StoreProvider = ({ children }) => {
     const removeFromCart = async (cartItemId) => {
         try {
             await api.delete(`/cart/${cartItemId}`);
-            toast.error("Removed from cart");
+            toast.success("Product removed from cart");
             await fetchCart();
         } catch (err) {
             console.error("Remove cart error:", err);
@@ -141,30 +142,23 @@ export const StoreProvider = ({ children }) => {
         if (!targetItem) return;
 
         try {
-            await api.put(`/cart/${cartItemId}`, {
-                quantity: qty,
-                price: targetItem.price
-            });
-            setCart(prev => prev.map(item =>
-                item.id === cartItemId ? {
-                    ...item,
-                    quantity: qty,
-                    total_price: item.price * qty
-                } : item
-            ));
+            await api.put(`/cart/${cartItemId}`, { quantity: qty });
+            await fetchCart();
         } catch (err) {
             console.error("Update qty error:", err);
-            toast.error("Failed to update quantity");
+            toast.error(err.response?.data?.message || "Failed to update quantity");
         }
     };
 
     const clearCart = async () => {
         if (!user?.user_id) { setCart([]); return; }
         try {
-            await api.delete(`/cart/clear/${user.user_id}`);
+            await api.delete("/cart/clear");
             setCart([]);
+            toast.success("Cart cleared");
         } catch (err) {
             console.error("Clear cart error:", err);
+            toast.error(err.response?.data?.message || "Failed to clear cart");
         }
     };
 
