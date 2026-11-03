@@ -384,7 +384,7 @@ const Navbar = () => {
     <>
       <nav className="sticky top-0 z-50 bg-white shadow-[0_5px_18px_rgba(38,13,66,0.12)]">
       <PageContainer>
-        <div className="flex min-h-[68px] items-center justify-between gap-3 py-2 lg:min-h-[72px]">
+        <div className="flex min-h-[78px] items-center justify-between gap-3 py-2 lg:min-h-[82px]">
           <Link to="/" className="flex shrink-0 items-center" aria-label="Our Tech home">
             <img
               src="/images/logo.jpeg"
