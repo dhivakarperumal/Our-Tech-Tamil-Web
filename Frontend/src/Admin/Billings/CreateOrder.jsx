@@ -190,7 +190,7 @@ const CreateOrder = () => {
             setTimeout(() => navigate("/admin/orders/all"), 1500);
         } catch (error) {
             console.error("Order Creation Error:", error);
-            toast.error("Failed to create order");
+            toast.error(error.response?.data?.message || "Failed to create order");
         } finally {
             setLoading(false);
         }

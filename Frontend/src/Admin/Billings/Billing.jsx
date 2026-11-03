@@ -207,9 +207,6 @@ const Billing = () => {
                         <table className="w-full text-left text-sm">
                         <thead>
                             <tr className="admin-table-header">
-                                <th className="px-6 py-5 w-12 rounded-tl-[2rem]">
-                                    <input type="checkbox" aria-label="Select all orders" className="h-4 w-4 accent-[#FCD34D]" />
-                                </th>
                                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-wider">Order ID</th>
                                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-wider">Customer</th>
                                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-wider">Amount</th>
@@ -222,9 +219,6 @@ const Billing = () => {
                         <tbody className="divide-y divide-gray-50">
                             {paginatedInvoices.map((inv) => (
                                 <tr key={inv.id} className="hover:bg-blue-50/20 transition-colors group">
-                                    <td className="px-6 py-6">
-                                        <input type="checkbox" aria-label={`Select ${inv.id}`} className="h-4 w-4 accent-[#4b0b78]" />
-                                    </td>
                                     <td className="px-6 py-6 text-xs font-bold text-slate-800">{inv.id}</td>
                                     <td className="px-6 py-6 text-xs font-bold text-slate-700">{inv.customer}</td>
                                     <td className="px-6 py-6 text-xs font-bold text-slate-800">₹{inv.amount.toFixed(2)}</td>
@@ -251,7 +245,7 @@ const Billing = () => {
                             ))}
                             {filteredInvoices.length === 0 && (
                                 <tr>
-                                    <td colSpan="8" className="px-8 py-12 text-center text-sm text-gray-400">
+                                    <td colSpan="7" className="px-8 py-12 text-center text-sm text-gray-400">
                                         No Shop orders found.
                                     </td>
                                 </tr>
@@ -269,7 +263,6 @@ const Billing = () => {
                                         <h3 className="text-lg font-black text-slate-800 mt-1">{inv.id}</h3>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                        <input type="checkbox" aria-label={`Select ${inv.id}`} className="h-4 w-4 accent-[#4b0b78]" />
                                         <span className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap ${getStatusStyle(inv.status)}`}>
                                             {inv.status}
                                         </span>

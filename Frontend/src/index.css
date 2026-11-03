@@ -83,11 +83,7 @@
 }
 
 .admin-table-header {
-  background: linear-gradient(
-    90deg,
-    #5b21b6,
-    #a21caf
-  );
+  background: linear-gradient(90deg, #2e1065 0%, #4c1d95 55%, #86198f 100%);
   color: #FCD34D;
 }
 

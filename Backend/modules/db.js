@@ -243,6 +243,224 @@ async function initializeDatabase(pool) {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS addresses (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      user_id VARCHAR(255) NULL,
+      recipient_name VARCHAR(160) NOT NULL,
+      phone VARCHAR(32) NOT NULL,
+      street_address VARCHAR(512) NOT NULL,
+      city VARCHAR(120) NOT NULL,
+      district VARCHAR(120) NULL,
+      state VARCHAR(120) NOT NULL,
+      country VARCHAR(120) NOT NULL DEFAULT 'India',
+      zip_code VARCHAR(24) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      KEY addresses_user_id_idx (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS orders (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      order_id VARCHAR(32) NULL UNIQUE,
+      user_id VARCHAR(255) NULL,
+      address_id BIGINT UNSIGNED NULL,
+      customer_email VARCHAR(191) NULL,
+      order_type VARCHAR(32) NOT NULL DEFAULT 'Shop',
+      payment_method VARCHAR(64) NOT NULL DEFAULT 'Cash',
+      payment_status VARCHAR(32) NOT NULL DEFAULT 'Pending',
+      status VARCHAR(32) NOT NULL DEFAULT 'Order Placed',
+      total_amount DECIMAL(12, 2) NOT NULL DEFAULT 0,
+      tracking_number VARCHAR(160) NULL,
+      courier_name VARCHAR(160) NULL,
+      shipped_at DATETIME NULL,
+      cancellation_reason TEXT NULL,
+      cancelled_at DATETIME NULL,
+      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      KEY orders_user_id_idx (user_id),
+      KEY orders_status_created_idx (status, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS order_items (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      order_id BIGINT UNSIGNED NOT NULL,
+      product_id BIGINT UNSIGNED NULL,
+      product_name VARCHAR(191) NOT NULL,
+      price DECIMAL(12, 2) NOT NULL DEFAULT 0,
+      quantity INT UNSIGNED NOT NULL DEFAULT 1,
+      total DECIMAL(12, 2) NOT NULL DEFAULT 0,
+      variant_color VARCHAR(100) NULL,
+      variant_size VARCHAR(100) NULL,
+      image VARCHAR(2048) NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      KEY order_items_order_id_idx (order_id),
+      CONSTRAINT order_items_order_fk FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  const [orderColumns] = await pool.execute(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders'`,
+  );
+  const existingOrderColumns = new Set(orderColumns.map((column) => column.COLUMN_NAME));
+  if (!existingOrderColumns.has("address_id")) {
+    await pool.query("ALTER TABLE orders ADD COLUMN address_id BIGINT UNSIGNED NULL AFTER user_id");
+  }
+
+  if (existingOrderColumns.has("items")) {
+    const [ordersWithLegacyItems] = await pool.execute(
+      "SELECT id, items FROM orders",
+    );
+    if (ordersWithLegacyItems.length) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        for (const order of ordersWithLegacyItems) {
+          let items = order.items;
+          if (typeof items === "string") {
+            try {
+              items = JSON.parse(items);
+            } catch {
+              throw new Error(`Cannot migrate order ${order.id}: its items JSON is invalid.`);
+            }
+          }
+          if (!Array.isArray(items)) {
+            throw new Error(`Cannot migrate order ${order.id}: its items value is not a list.`);
+          }
+
+          const [existingItems] = await connection.execute(
+            "SELECT id FROM order_items WHERE order_id = ? LIMIT 1",
+            [order.id],
+          );
+          if (existingItems.length || items.length === 0) continue;
+
+          for (const item of items) {
+            if (!item || typeof item !== "object" || Array.isArray(item)) {
+              throw new Error(`Cannot migrate order ${order.id}: an item is invalid.`);
+            }
+            const price = Number(item.price ?? 0);
+            const quantity = Number(item.quantity ?? 1);
+            const total = Number(item.total ?? price * quantity);
+            if (!Number.isFinite(price) || price < 0 ||
+                !Number.isInteger(quantity) || quantity < 1 ||
+                !Number.isFinite(total) || total < 0) {
+              throw new Error(`Cannot migrate order ${order.id}: an item has invalid price or quantity.`);
+            }
+            const rawProductId = Number(item.product_id);
+            const productId = Number.isSafeInteger(rawProductId) && rawProductId > 0 ? rawProductId : null;
+            const productName = String(item.product_name || item.name || "Order item").slice(0, 191);
+            await connection.execute(
+              `INSERT INTO order_items
+                (order_id, product_id, product_name, price, quantity, total, variant_color, variant_size, image)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              [
+                order.id,
+                productId,
+                productName,
+                price,
+                quantity,
+                total,
+                item.variant_color ? String(item.variant_color).slice(0, 100) : null,
+                item.variant_size ? String(item.variant_size).slice(0, 100) : null,
+                item.image ? String(item.image).slice(0, 2048) : null,
+              ],
+            );
+          }
+        }
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    }
+
+    await pool.query("ALTER TABLE orders DROP COLUMN items");
+  }
+
+  const legacyAddressColumns = [
+    "street_address",
+    "city",
+    "district",
+    "state",
+    "country",
+    "zip_code",
+  ];
+  const availableLegacyAddressColumns = legacyAddressColumns.filter((column) =>
+    existingOrderColumns.has(column),
+  );
+  const hasLegacyCustomerName = existingOrderColumns.has("customer_name");
+  const hasLegacyCustomerPhone = existingOrderColumns.has("customer_phone");
+  if (availableLegacyAddressColumns.length || hasLegacyCustomerName || hasLegacyCustomerPhone) {
+    const selectColumns = [
+      "id",
+      "user_id",
+      ...(hasLegacyCustomerName ? ["customer_name"] : []),
+      ...(hasLegacyCustomerPhone ? ["customer_phone"] : []),
+      ...availableLegacyAddressColumns,
+    ];
+    const addressValueConditions = [
+      ...(hasLegacyCustomerName ? ["COALESCE(customer_name, '') <> ''"] : []),
+      ...(hasLegacyCustomerPhone ? ["COALESCE(customer_phone, '') <> ''"] : []),
+      ...availableLegacyAddressColumns.map((column) => `COALESCE(${column}, '') <> ''`),
+    ];
+    const [ordersToMigrate] = await pool.execute(`
+      SELECT ${selectColumns.join(", ")}
+      FROM orders
+      WHERE address_id IS NULL
+        AND (${addressValueConditions.join(" OR ")})
+    `);
+
+    if (ordersToMigrate.length) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        for (const order of ordersToMigrate) {
+          const [addressResult] = await connection.execute(
+            `INSERT INTO addresses
+              (user_id, recipient_name, phone, street_address, city, district, state, country, zip_code)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              order.user_id,
+              order.customer_name || "Guest Customer",
+              order.customer_phone || "",
+              order.street_address || "",
+              order.city || "",
+              order.district || null,
+              order.state || "",
+              order.country || "India",
+              order.zip_code || "",
+            ],
+          );
+          await connection.execute(
+            "UPDATE orders SET address_id = ? WHERE id = ? AND address_id IS NULL",
+            [addressResult.insertId, order.id],
+          );
+        }
+        await connection.commit();
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    }
+
+  }
+
+  for (const column of [...legacyAddressColumns, "customer_name", "customer_phone"]) {
+    if (existingOrderColumns.has(column)) {
+      await pool.query(`ALTER TABLE orders DROP COLUMN ${column}`);
+    }
+  }
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS admin_services (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       service_id VARCHAR(40) NOT NULL,
