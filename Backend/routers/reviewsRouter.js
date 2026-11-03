@@ -76,6 +76,7 @@ function createReviewsRouter(pool) {
     }
     return response.status(201).json({ url: `/uploads/reviews/${request.file.filename}` });
   });
+  router.put("/admin/:id", controller.updateReview);
   router.put("/admin/:id/status", controller.updateReviewStatus);
   router.put("/admin/:id/reply", controller.updateReviewReply);
   router.delete("/admin/:id", controller.deleteReview);

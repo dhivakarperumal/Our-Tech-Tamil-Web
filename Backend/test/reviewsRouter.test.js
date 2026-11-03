@@ -14,6 +14,11 @@ function authHeaders(userId) {
   return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 }
 
+function adminHeaders() {
+  const token = jwt.sign({ user_id: "admin-one", role: "admin" }, process.env.JWT_SECRET);
+  return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+}
+
 async function startTestServer(t, pool) {
   const app = express();
   app.use(express.json());
@@ -108,6 +113,43 @@ test("customer review history returns only the authenticated customer's reviews"
   assert.equal(result.reviews.length, 1);
   assert.equal(result.reviews[0].product_name, "Tamil phone");
   assert.match(query, /WHERE r\.user_id = \?/);
+});
+
+test("admin can edit review content and invalid edits are rejected", async (t) => {
+  let updateParams;
+  const url = await startTestServer(t, {
+    async execute(query, params = []) {
+      if (query.startsWith("UPDATE reviews SET user_name")) {
+        updateParams = params;
+        return [{ affectedRows: 1 }];
+      }
+      throw new Error(`Unexpected review query: ${query}`);
+    },
+  });
+  const update = await fetch(`${url}/admin/7`, {
+    method: "PUT",
+    headers: adminHeaders(),
+    body: JSON.stringify({
+      user_name: "Updated Customer",
+      user_email: "",
+      rating: 4,
+      comment: "Updated review text.",
+    }),
+  });
+  assert.equal(update.status, 200);
+  assert.deepEqual(updateParams, ["Updated Customer", null, 4, "Updated review text.", 7]);
+
+  const invalid = await fetch(`${url}/admin/7`, {
+    method: "PUT",
+    headers: adminHeaders(),
+    body: JSON.stringify({
+      user_name: "",
+      user_email: "",
+      rating: 8,
+      comment: "",
+    }),
+  });
+  assert.equal(invalid.status, 400);
 });
 
 test("customers can submit one review per product and see their review status", async (t) => {

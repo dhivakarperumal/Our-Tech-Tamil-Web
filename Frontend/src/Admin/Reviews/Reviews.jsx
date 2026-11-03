@@ -16,6 +16,8 @@ import {
   Reply,
   X,
   Plus,
+  Eye,
+  Pencil,
   Camera,
   Upload,
   LayoutGrid,
@@ -45,6 +47,10 @@ const Reviews = () => {
   const [loading, setLoading] = useState(!cachedData);
   const [replyText, setReplyText] = useState("");
   const [activeReplyId, setActiveReplyId] = useState(null);
+  const [viewingReview, setViewingReview] = useState(null);
+  const [editingReview, setEditingReview] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [editSubmitting, setEditSubmitting] = useState(false);
 
   // Add Review State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -141,6 +147,34 @@ const Reviews = () => {
     } catch (error) {
       console.error("Failed to add review reply:", error);
       toast.error(error.response?.data?.message || "Failed to add review reply.");
+    }
+  };
+
+  const openEditReview = (review) => {
+    setEditingReview(review);
+    setEditForm({
+      user_name: review.user_name || "",
+      user_email: review.user_email || "",
+      rating: Number(review.rating) || 5,
+      comment: review.comment || "",
+    });
+  };
+
+  const handleUpdateReview = async (event) => {
+    event.preventDefault();
+    if (!editingReview || !editForm) return;
+    try {
+      setEditSubmitting(true);
+      await api.put(`/reviews/admin/${editingReview.id}`, editForm);
+      toast.success("Review updated successfully");
+      setEditingReview(null);
+      setEditForm(null);
+      fetchReviews();
+    } catch (error) {
+      console.error("Failed to update review:", error);
+      toast.error(error.response?.data?.message || "Failed to update review");
+    } finally {
+      setEditSubmitting(false);
     }
   };
 
@@ -329,7 +363,41 @@ const Reviews = () => {
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-x-auto">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead><tr className="admin-table-header text-[11px] font-black uppercase tracking-wider"><th className="px-4 py-4 text-center">S No</th><th className="px-6 py-4">Reviewer</th><th className="px-6 py-4">Product</th><th className="px-6 py-4">Rating</th><th className="px-6 py-4">Status</th><th className="px-6 py-4 text-right">Actions</th></tr></thead>
-              <tbody>{reviews.map((item, index) => <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/60"><td className="px-4 py-4 text-center text-sm font-bold text-slate-400">{index + 1}</td><td className="px-6 py-4"><p className="font-bold text-slate-800">{item.user_name}</p><p className="text-xs text-slate-400">{new Date(item.created_at).toLocaleDateString()}</p></td><td className="px-6 py-4 text-sm font-semibold text-slate-600">{item.product_name || "Product Deleted"}</td><td className="px-6 py-4"><span className="inline-flex items-center gap-1 font-bold text-amber-500">{item.rating}<Star className="w-3.5 h-3.5 fill-current" /></span></td><td className="px-6 py-4"><span className={`px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase ${getStatusColor(item.status)}`}>{item.status}</span></td><td className="px-6 py-4"><div className="flex justify-end gap-2"><button onClick={() => handleStatusUpdate(item.id, "Published")} className="px-3 py-2 rounded-lg bg-[#4b0b78] text-white text-xs font-bold hover:bg-[#260642]">Approve</button><button onClick={() => setActiveReplyId(item.id)} className="px-3 py-2 rounded-lg bg-[#4b0b78] text-white text-xs font-bold hover:bg-[#260642]">Reply</button><button onClick={() => handleDelete(item.id)} className="p-2 rounded-lg bg-[#4b0b78] text-white hover:bg-[#260642]" aria-label="Delete review"><Trash2 className="w-4 h-4" /></button></div></td></tr>)}</tbody>
+              <tbody>
+                {reviews.map((item, index) => (
+                  <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50/60">
+                    <td className="px-4 py-4 text-center text-sm font-bold text-slate-400">{index + 1}</td>
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-slate-800">{item.user_name}</p>
+                      <p className="text-xs text-slate-400">{new Date(item.created_at).toLocaleDateString()}</p>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-semibold text-slate-600">{item.product_name || "Product Deleted"}</td>
+                    <td className="px-6 py-4">
+                      <span className="inline-flex items-center gap-1 font-bold text-amber-500">
+                        {item.rating}<Star className="w-3.5 h-3.5 fill-current" />
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2.5 py-1 rounded-lg border text-[10px] font-black uppercase ${getStatusColor(item.status)}`}>{item.status}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex justify-end gap-2">
+                        <button type="button" onClick={() => setViewingReview(item)} title="View review" aria-label={`View review by ${item.user_name}`} className="p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200">
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <button type="button" onClick={() => openEditReview(item)} title="Edit review" aria-label={`Edit review by ${item.user_name}`} className="p-2 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button type="button" onClick={() => handleStatusUpdate(item.id, "Published")} className="px-3 py-2 rounded-lg bg-[#4b0b78] text-white text-xs font-bold hover:bg-[#260642]">Approve</button>
+                        <button type="button" onClick={() => setActiveReplyId(item.id)} className="px-3 py-2 rounded-lg bg-[#4b0b78] text-white text-xs font-bold hover:bg-[#260642]">Reply</button>
+                        <button type="button" onClick={() => handleDelete(item.id)} className="p-2 rounded-lg bg-[#4b0b78] text-white hover:bg-[#260642]" aria-label="Delete review">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         ) : (
@@ -420,6 +488,12 @@ const Reviews = () => {
               {/* Footer: Actions */}
               <div className="p-4 mt-5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between">
                 <div className="flex items-center gap-1">
+                  <button type="button" onClick={() => setViewingReview(item)} title="View" aria-label={`View review by ${item.user_name}`} className="p-2.5 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-[#4b0b78]">
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  <button type="button" onClick={() => openEditReview(item)} title="Edit" aria-label={`Edit review by ${item.user_name}`} className="p-2.5 rounded-xl border border-slate-200 bg-white text-blue-700 hover:bg-blue-50">
+                    <Pencil className="w-4 h-4" />
+                  </button>
                   {item.status !== "Published" && (
                     <button
                       onClick={() => handleStatusUpdate(item.id, "Published")}

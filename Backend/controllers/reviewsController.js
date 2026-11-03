@@ -254,6 +254,44 @@ function createReviewsController(pool) {
       }
     },
 
+    async updateReview(request, response, next) {
+      const reviewId = Number(request.params.id);
+      const body = request.body || {};
+      const userName = typeof body.user_name === "string" ? body.user_name.trim() : "";
+      const userEmail = typeof body.user_email === "string" ? body.user_email.trim() : "";
+      const comment = typeof body.comment === "string" ? body.comment.trim() : "";
+      const rating = Number(body.rating);
+
+      if (!Number.isSafeInteger(reviewId) || reviewId < 1) {
+        return response.status(400).json({ message: "Invalid review ID." });
+      }
+      if (!userName || userName.length > 160) {
+        return response.status(400).json({ message: "Customer name is required and must be 160 characters or fewer." });
+      }
+      if (userEmail.length > 191 || (userEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userEmail))) {
+        return response.status(400).json({ message: "Enter a valid customer email address." });
+      }
+      if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+        return response.status(400).json({ message: "Rating must be between 1 and 5." });
+      }
+      if (!comment || comment.length > 5000) {
+        return response.status(400).json({ message: "Review comment is required and must be 5,000 characters or fewer." });
+      }
+
+      try {
+        const [result] = await pool.execute(
+          "UPDATE reviews SET user_name = ?, user_email = ?, rating = ?, comment = ? WHERE id = ?",
+          [userName, userEmail || null, rating, comment, reviewId],
+        );
+        if (!result.affectedRows) {
+          return response.status(404).json({ message: "Review not found." });
+        }
+        return response.json({ message: "Review updated successfully." });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
     async updateReviewReply(request, response, next) {
       const reply = typeof request.body?.admin_reply === "string" ? request.body.admin_reply.trim() : "";
       if (!reply || reply.length > 5000) {
