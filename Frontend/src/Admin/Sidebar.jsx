@@ -39,7 +39,12 @@ const navItems = [
     children: [
 
       { path: "/admin/orders/new", label: "New Orders", icon: List },
-      { path: "/admin/orders/all", label: "All Orders", icon: Archive },
+      {
+        path: "/admin/orders/all",
+        label: "All Orders",
+        icon: Archive,
+        activePathPatterns: [/^\/admin\/orders\/(?!all$|new$|delivery$|cancelled$|billing$|shop-create$)[^/]+$/i],
+      },
       { path: "/admin/orders/delivery", label: "Delivery Orders", icon: Truck },
       { path: "/admin/orders/cancelled", label: "Cancelled Orders", icon: XCircle },
 
@@ -50,10 +55,20 @@ const navItems = [
     label: "Inventory",
     icon: Package,
     children: [
-      { path: "/admin/products/all", label: "All Products", icon: List },
+      {
+        path: "/admin/products/all",
+        label: "All Products",
+        icon: List,
+        activePathPatterns: [/^\/admin\/products\/(?:edit\/[^/]+|\d+)$/i],
+      },
       { path: "/admin/products/add", label: "Add Product", icon: PlusCircle },
       { path: "/admin/products/category", label: "Categories", icon: Layers },
-      { path: "/admin/products/stock", label: "Stock Details", icon: Archive },
+      {
+        path: "/admin/products/stock",
+        label: "Stock Details",
+        icon: Archive,
+        activePaths: ["/admin/products/stock/add"],
+      },
     ],
   },
   
@@ -62,7 +77,12 @@ const navItems = [
   { path: "/admin/youtube-videos", label: "Youtube Video", icon: Video },
   
 
-  { path: "/admin/orders/billing", label: "Billing", icon: CreditCard },
+  {
+    path: "/admin/orders/billing",
+    label: "Billing",
+    icon: CreditCard,
+    activePaths: ["/admin/orders/shop-create"],
+  },
   
   // {
   //   label: "Dealers",
@@ -92,6 +112,11 @@ const isPathActive = (currentPath, path) => {
   return normalizedCurrentPath === normalizedPath
     || normalizedCurrentPath.startsWith(`${normalizedPath}/`);
 };
+
+const isEntryActive = (currentPath, entry) =>
+  isPathActive(currentPath, entry.path)
+  || (entry.activePaths || []).some((path) => isPathActive(currentPath, path))
+  || (entry.activePathPatterns || []).some((pattern) => pattern.test(currentPath));
 
 /* ================= SIDEBAR ================= */
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
@@ -138,10 +163,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     }
 
     if (item.children) {
-      return item.children.some(child => isPathActive(location.pathname, child.path));
+      return item.children.some(child => isEntryActive(location.pathname, child));
     }
 
-    return item.path ? isPathActive(location.pathname, item.path) : false;
+    return item.path ? isEntryActive(location.pathname, item) : false;
   };
 
   const [openMenu, setOpenMenu] = useState(() => {
@@ -151,7 +176,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
   useEffect(() => {
     const activeItem = navItems.find(item =>
-      item.children?.some(child => isPathActive(location.pathname, child.path))
+      item.children?.some(child => isEntryActive(location.pathname, child))
     );
     setOpenMenu(activeItem ? activeItem.label : null);
   }, [location.pathname]);
@@ -275,7 +300,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                     >
                       {item.children.map((sub) => {
                         const SubIcon = sub.icon;
-                        const isActive = isPathActive(location.pathname, sub.path);
+                        const isActive = isEntryActive(location.pathname, sub);
 
                         // Get count badge for this item
                         let badgeCount = 0;
