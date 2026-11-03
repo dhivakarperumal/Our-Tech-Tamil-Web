@@ -191,6 +191,9 @@ function Shop() {
       const rating = Number(product.rating) || 0;
       const available = Number(product.total_stock) > 0
         || String(product.stock_status || "").toLowerCase() === "in stock";
+      const productCategoryValues = [category, product.category, product.subcategory]
+        .filter(Boolean)
+        .map((value) => String(value).trim().toLowerCase());
       const matchesSearch = !effectiveSearchQuery
         || [
           product.name,
@@ -206,7 +209,8 @@ function Shop() {
           .some((value) => String(value).toLowerCase().includes(effectiveSearchQuery));
 
       return matchesSearch
-        && (!selectedCategories.length || selectedCategories.includes(category))
+        && (!selectedCategories.length || selectedCategories.some((selectedCategory) =>
+          productCategoryValues.includes(String(selectedCategory).trim().toLowerCase())))
         && (!urlSubcategory || product.subcategory === urlSubcategory)
         && (!selectedBrands.length || selectedBrands.includes(product.brand))
         && price >= minPrice

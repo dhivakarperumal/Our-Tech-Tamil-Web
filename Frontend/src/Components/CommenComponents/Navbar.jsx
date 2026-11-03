@@ -22,6 +22,7 @@ import {
 import { AuthContext } from "../../PrivateRouter/AuthContext";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import api from "../../api";
+import { fetchAllPublicProducts } from "../Products/publicProducts";
 import PageContainer from "./PageContainer";
 import CartDrawer from "./CartDrawer";
 import WishlistDrawer from "./WishlistDrawer";
@@ -35,6 +36,7 @@ const Navbar = () => {
   const [userMenu, setUserMenu] = useState(false);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [publicProducts, setPublicProducts] = useState([]);
   const [categoryMenu, setCategoryMenu] = useState(false);
   const [activeCategoryType, setActiveCategoryType] = useState("");
   const [activeCategoryId, setActiveCategoryId] = useState("");
@@ -63,12 +65,23 @@ const Navbar = () => {
   const searchInputRef = useRef(null);
   const suggestionQuery = search.trim();
   const currentSuggestions = suggestions.query === suggestionQuery ? suggestions : null;
-  const categoryTypes = [...new Set(categories.map((category) => category.categoryType || category.category_type || "General"))];
-  const visibleTypeCategories = categories.filter(
+  const normalizeCategoryValue = (value) => String(value || "").trim().toLowerCase();
+  const categoriesWithProducts = categories.filter((category) => publicProducts.some((product) => {
+    const categoryName = normalizeCategoryValue(category.name);
+    const categoryMatches = [product.category, product.subcategory]
+      .some((value) => normalizeCategoryValue(value) === categoryName);
+    const productType = product.cat_type || product.category_type || category.categoryType || category.category_type;
+    const typeMatches = !productType
+      || normalizeCategoryValue(productType) === normalizeCategoryValue(category.categoryType || category.category_type);
+    return categoryMatches && typeMatches;
+  }));
+  const categoryTypes = [...new Set(categoriesWithProducts.map((category) => category.categoryType || category.category_type || "General"))];
+  const visibleTypeCategories = categoriesWithProducts.filter(
     (category) => (category.categoryType || category.category_type || "General") === (activeCategoryType || categoryTypes[0]),
   );
   const activeCategory = visibleTypeCategories.find((category) => String(category.id) === String(activeCategoryId))
     || visibleTypeCategories[0];
+  const activeCategorySubcategories = activeCategory?.subcategory || [];
 
   const confirmLogout = () => {
     logout();
@@ -135,12 +148,15 @@ const Navbar = () => {
   useEffect(() => {
     let active = true;
 
-    api.get("/categories")
-      .then((response) => {
-        if (active) setCategories(Array.isArray(response.data) ? response.data : []);
+    Promise.all([api.get("/categories"), fetchAllPublicProducts()])
+      .then(([response, products]) => {
+        if (active) {
+          setCategories(Array.isArray(response.data) ? response.data : []);
+          setPublicProducts(products);
+        }
       })
       .catch((error) => {
-        console.error("Failed to fetch navigation categories:", error);
+        console.error("Failed to fetch navigation categories and products:", error);
       });
 
     return () => {
@@ -309,7 +325,7 @@ const Navbar = () => {
                   ))}
                 </div>
                 <div className="max-h-80 overflow-y-auto p-2">
-                  {activeCategory?.subcategory?.length ? activeCategory.subcategory.map((subcategory) => (
+                  {activeCategorySubcategories.length ? activeCategorySubcategories.map((subcategory) => (
                     <NavLink
                       key={subcategory}
                       to={`/shop?category=${encodeURIComponent(activeCategory.name)}&subcategory=${encodeURIComponent(subcategory)}`}
@@ -552,7 +568,7 @@ const Navbar = () => {
             <div className="p-4">
               <button type="button" onClick={() => setMobileCategory(false)} className="mb-3 flex items-center gap-2 px-2 py-2 text-sm font-semibold text-primary"><ChevronRight size={17} className="rotate-180" />Back to menu</button>
               <div className="space-y-2">
-                {categories.map((category) => (
+                {categoriesWithProducts.map((category) => (
                   <NavLink
                     key={category.id}
                     to={`/shop?category=${encodeURIComponent(category.name)}`}
@@ -562,7 +578,7 @@ const Navbar = () => {
                     <span className="flex items-center gap-3"><Grid2X2 size={17} />{category.name}</span><ChevronRight size={16} />
                   </NavLink>
                 ))}
-                {!categories.length && <p className="px-3 py-5 text-center text-sm text-gray-500">No categories available</p>}
+                {!categoriesWithProducts.length && <p className="px-3 py-5 text-center text-sm text-gray-500">No categories with available products</p>}
               </div>
             </div>
           ) : (
