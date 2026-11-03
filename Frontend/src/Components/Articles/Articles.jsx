@@ -4,11 +4,14 @@ import {
   Bell,
   BookOpenText,
   ChevronDown,
+  ExternalLink,
   Search,
   ShieldCheck,
   Sparkles,
   Star,
+  X,
 } from "lucide-react";
+import { createPortal } from "react-dom";
 import api from "../../api";
 import PageContainer from "../CommenComponents/PageContainer";
 import PageHeader from "../CommenComponents/PageHeader";
@@ -68,6 +71,7 @@ function Articles() {
   const [error, setError] = useState("");
   const [tab, setTab] = useState("all");
   const [search, setSearch] = useState("");
+  const [selectedContent, setSelectedContent] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -92,6 +96,22 @@ function Articles() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!selectedContent) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setSelectedContent(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selectedContent]);
 
   const filteredContent = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -262,6 +282,8 @@ function Articles() {
 
                       <button
                         type="button"
+                        onClick={() => setSelectedContent(item)}
+                        aria-haspopup="dialog"
                         className={`mt-5 inline-flex items-center justify-center gap-2 rounded-[14px] border px-4 py-3 text-sm font-bold transition ${itemType === "product_review"
                             ? "border-[#6d2ad5] bg-[#6d2ad5] text-white hover:bg-[#5d1fc0]"
                             : "border-[#7d4ae4] bg-white text-[#6d2ad5] hover:bg-[#f4ebff]"
@@ -294,6 +316,107 @@ function Articles() {
           )}
         </section>
       </PageContainer>
+      {selectedContent && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/70 p-3 backdrop-blur-sm sm:p-5"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setSelectedContent(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="article-details-title"
+            className="my-auto flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+          >
+            <header className="flex items-start justify-between gap-4 bg-violet-800 px-5 py-4 text-white sm:px-7">
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-wider text-violet-200">
+                  {selectedContent.content_type === "product_review" ? "Product Review" : "Article"}
+                </p>
+                <h2 id="article-details-title" className="mt-1 text-lg font-bold sm:text-xl">
+                  {selectedContent.content_type === "product_review"
+                    ? selectedContent.product_name || selectedContent.title
+                    : selectedContent.title}
+                </h2>
+                <p className="mt-1 text-xs text-violet-100">{formatDate(selectedContent.created_at)}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedContent(null)}
+                aria-label="Close article details"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/20 text-white/80 transition hover:bg-white/10 hover:text-white"
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
+            </header>
+
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <img
+                src={getImageUrl(selectedContent.image_url)}
+                alt=""
+                className="max-h-64 w-full bg-[#f0e7ff] object-cover"
+              />
+              <div className="space-y-5 p-5 sm:p-7">
+                {selectedContent.content_type === "product_review" && selectedContent.rating != null && (
+                  <StarRating value={selectedContent.rating} />
+                )}
+                {selectedContent.description && (
+                  <p className="whitespace-pre-wrap text-sm leading-7 text-[#454052]">
+                    {selectedContent.description}
+                  </p>
+                )}
+                {selectedContent.more_details && (
+                  <section>
+                    <h3 className="mb-2 text-sm font-bold text-slate-900">More details</h3>
+                    <p className="whitespace-pre-wrap text-sm leading-7 text-[#454052]">
+                      {selectedContent.more_details}
+                    </p>
+                  </section>
+                )}
+                {selectedContent.product_features?.length > 0 && (
+                  <section>
+                    <h3 className="mb-3 text-sm font-bold text-slate-900">Product features</h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {selectedContent.product_features.map((feature, index) => (
+                        <div
+                          key={`${feature.name || "feature"}-${index}`}
+                          className="rounded-xl bg-[#f7f2ff] px-4 py-3"
+                        >
+                          <p className="text-xs font-bold uppercase tracking-wide text-[#716b83]">
+                            {feature.name || "Feature"}
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-[#1f1a2d]">{feature.value || "-"}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+                {selectedContent.buy_links?.length > 0 && (
+                  <section>
+                    <h3 className="mb-3 text-sm font-bold text-slate-900">Useful links</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedContent.buy_links.map((link, index) => (
+                        <a
+                          key={`${link.url}-${index}`}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-700 transition hover:bg-violet-100"
+                        >
+                          {link.name || "View link"}
+                          <ExternalLink size={14} aria-hidden="true" />
+                        </a>
+                      ))}
+                    </div>
+                  </section>
+                )}
+              </div>
+            </div>
+          </section>
+        </div>,
+        document.body,
+      )}
     </main>
   );
 }
