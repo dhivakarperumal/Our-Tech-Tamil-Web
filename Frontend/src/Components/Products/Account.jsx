@@ -320,7 +320,7 @@ function MyOrders({ user }) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="order-dialog-title"
-            className="flex max-h-[94dvh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-[#e9d8ff] bg-white shadow-[0_30px_100px_rgba(27,4,53,0.35)]"
+            className="flex max-h-[94dvh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-[#e9d8ff] bg-white shadow-[0_30px_100px_rgba(27,4,53,0.35)]"
           >
             <header className="relative flex items-center justify-between gap-4 overflow-hidden bg-gradient-to-r from-[#5b08b5] via-[#8509c9] to-[#4b078f] px-5 py-4 text-white sm:px-8 sm:py-5">
               <span className="pointer-events-none absolute -right-8 -top-20 h-48 w-72 rotate-[-18deg] rounded-full border-[24px] border-white/5" />
