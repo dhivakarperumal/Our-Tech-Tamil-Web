@@ -134,6 +134,16 @@ function ProductDetails() {
   const reviews = reviewsMatchProduct ? reviewState.reviews : [];
   const reviewsLoading = !reviewsMatchProduct || reviewState.loading;
   const reviewsFailed = reviewsMatchProduct && reviewState.failed;
+  const reviewRatings = reviews
+    .map((review) => Number(review.rating))
+    .filter((rating) => Number.isInteger(rating) && rating >= 1 && rating <= 5);
+  const reviewAverage = reviewRatings.length
+    ? reviewRatings.reduce((total, rating) => total + rating, 0) / reviewRatings.length
+    : 0;
+  const ratingBreakdown = [5, 4, 3, 2, 1].map((rating) => ({
+    rating,
+    count: reviewRatings.filter((value) => value === rating).length,
+  }));
   const ownReviewMatchesUser = ownReviewState.productId === id && ownReviewState.userId === user?.user_id;
   const ownReview = ownReviewMatchesUser ? ownReviewState.review : null;
   const ownReviewLoading = Boolean(user?.user_id) && (!ownReviewMatchesUser || ownReviewState.loading);
@@ -656,6 +666,46 @@ function ProductDetails() {
             </div>
           )}
         </div>
+
+        {!reviewsLoading && !reviewsFailed && (
+          <div className="mb-6 grid gap-5 rounded-xl border border-border bg-white p-4 sm:grid-cols-[minmax(160px,0.7fr)_1.3fr] sm:items-center sm:p-5">
+            <div className="text-center sm:border-r sm:border-border sm:pr-5">
+              <p className="text-4xl font-extrabold text-text-primary">
+                {reviewRatings.length ? reviewAverage.toFixed(1) : "—"}
+                <span className="ml-1 text-base font-semibold text-text-secondary">/ 5</span>
+              </p>
+              <div className="mt-1 flex justify-center text-amber-500" aria-label={`${reviewAverage.toFixed(1)} out of 5 stars`}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star key={star} size={17} fill={star <= Math.round(reviewAverage) ? "currentColor" : "none"} />
+                ))}
+              </div>
+              <p className="mt-1 text-sm text-text-secondary">
+                {reviewRatings.length} {reviewRatings.length === 1 ? "rating" : "ratings"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              {ratingBreakdown.map(({ rating, count }) => (
+                <div key={rating} className="grid grid-cols-[2.5rem_1fr_2rem] items-center gap-2 text-xs text-text-secondary">
+                  <span>{rating} star{rating === 1 ? "" : "s"}</span>
+                  <div
+                    className="h-2 overflow-hidden rounded-full bg-gray-100"
+                    role="progressbar"
+                    aria-label={`${rating} star ratings`}
+                    aria-valuemin={0}
+                    aria-valuemax={reviewRatings.length}
+                    aria-valuenow={count}
+                  >
+                    <div
+                      className="h-full rounded-full bg-amber-400"
+                      style={{ width: `${reviewRatings.length ? (count / reviewRatings.length) * 100 : 0}%` }}
+                    />
+                  </div>
+                  <span className="text-right">{count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {ownReviewLoading ? (
           <p className="mb-6 text-sm text-text-secondary">Checking your review...</p>
