@@ -72,7 +72,7 @@ function ProductCard({ product }) {
   const CategoryIcon = getCategoryIcon(categoryLabel);
 
   return (
-    <article className="group w-full max-w-[240px] rounded-[28px] border border-[#e2d3f5] bg-[#f7f0fb] p-3 shadow-[0_12px_28px_rgba(75,0,200,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(75,0,200,0.12)]">
+    <article className="group w-full min-w-0 rounded-[28px] border border-[#e2d3f5] bg-[#f7f0fb] p-3 shadow-[0_12px_28px_rgba(75,0,200,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(75,0,200,0.12)]">
       <div className="relative">
         {discount > 0 && (
           <span className="absolute left-3 top-3 z-10 rounded-full bg-[#4B00C8] px-2.5 py-1 text-[10px] font-extrabold tracking-tight text-white shadow-sm">
