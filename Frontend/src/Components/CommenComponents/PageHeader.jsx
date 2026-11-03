@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const PageHeader = ({ title, background, align = "center" }) => {
-  const bgImage = background || "/images/loginbanner.png";
+  const bgImage = background || "/images/pageheader.png";
   const contentAlignment = align === "left"
     ? "w-full max-w-[1700px] mx-auto px-[6%] sm:px-[5%] lg:px-[3%] text-left"
     : "relative text-center px-4";
