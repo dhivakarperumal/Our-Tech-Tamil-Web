@@ -410,15 +410,16 @@ const YoutubeVideos = () => {
             aria-labelledby="youtube-form-title"
             className="my-0 flex h-[calc(100dvh-1.5rem)] max-h-[calc(100dvh-1.5rem)] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25 sm:my-auto sm:h-[min(90dvh,52rem)] sm:max-h-[calc(100dvh-2.5rem)]"
           >
-            <div className="z-10 flex shrink-0 items-center justify-between border-b border-slate-100 bg-gradient-to-r from-white via-white to-violet-50/70 px-5 py-4 sm:px-7">
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-100 text-violet-700 shadow-sm shadow-violet-900/10">
+            <div className="relative z-10 flex shrink-0 items-center justify-between overflow-hidden border-b border-violet-100 bg-gradient-to-r from-violet-950 via-violet-900 to-fuchsia-800 px-5 py-4 sm:px-7">
+              <div className="pointer-events-none absolute -right-8 -top-14 h-40 w-40 rounded-full border-[24px] border-white/[0.06]" />
+              <div className="relative flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-violet-100 shadow-inner">
                   <Video className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Video management</p>
-                  <h2 id="youtube-form-title" className="mt-0.5 font-bold text-slate-900">{editingVideoId ? "Edit YouTube video" : "Add a YouTube video"}</h2>
-                  <p className="text-xs text-slate-500">{editingVideoId ? "Update the video and its supporting details." : "Add a video, application links, and supporting details."}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-200">Video management</p>
+                  <h2 id="youtube-form-title" className="mt-0.5 font-bold text-white">{editingVideoId ? "Edit YouTube video" : "Add a YouTube video"}</h2>
+                  <p className="text-xs text-violet-100/80">{editingVideoId ? "Update the video and its supporting details." : "Add a video, application links, and supporting details."}</p>
                 </div>
               </div>
               <button
@@ -426,7 +427,7 @@ const YoutubeVideos = () => {
                 onClick={() => setIsAddModalOpen(false)}
                 disabled={saving || uploadingThumbnail || uploadingDocuments}
                 aria-label="Close YouTube video form"
-                className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-white hover:text-slate-900 hover:shadow-sm disabled:opacity-50"
+                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-white/75 transition hover:bg-white/20 hover:text-white disabled:opacity-50"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -684,17 +685,18 @@ const YoutubeVideos = () => {
             aria-labelledby="youtube-view-title"
             className="my-auto max-h-[calc(100dvh-2rem)] w-full max-w-2xl overflow-y-auto rounded-3xl border border-white/70 bg-white shadow-2xl shadow-slate-950/25"
           >
-            <header className="flex items-start justify-between gap-4 border-b border-slate-100 bg-gradient-to-r from-white to-violet-50/70 px-5 py-4 sm:px-7">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-700">Video details</p>
-                <h2 id="youtube-view-title" className="mt-1 text-lg font-bold text-slate-900">{viewVideo.title}</h2>
-                <p className="mt-1 text-xs font-medium text-violet-700">{viewVideo.video_code || `YT-${String(viewVideo.id).padStart(5, "0")}`}</p>
+            <header className="relative flex items-start justify-between gap-4 overflow-hidden border-b border-violet-100 bg-gradient-to-r from-violet-950 via-violet-900 to-fuchsia-800 px-5 py-4 sm:px-7">
+              <div className="pointer-events-none absolute -right-8 -top-14 h-40 w-40 rounded-full border-[24px] border-white/[0.06]" />
+              <div className="relative min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-200">Video details</p>
+                <h2 id="youtube-view-title" className="mt-1 truncate text-lg font-bold text-white">{viewVideo.title}</h2>
+                <p className="mt-1 text-xs font-medium text-violet-100/80">{viewVideo.video_code || `YT-${String(viewVideo.id).padStart(5, "0")}`}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setViewVideo(null)}
                 aria-label="Close video details"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white hover:text-slate-900"
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/75 transition hover:bg-white/20 hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>

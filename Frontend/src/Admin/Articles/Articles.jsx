@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowUpRight,
+  Eye,
   FilePlus2,
   Hash,
   FileText,
@@ -57,6 +58,7 @@ const Articles = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [contentTypeFilter, setContentTypeFilter] = useState("all");
   const [viewMode, setViewMode] = useState("table");
+  const [viewingContent, setViewingContent] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -113,6 +115,15 @@ const Articles = () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [isFormOpen, saving, uploadingImage]);
+
+  useEffect(() => {
+    if (!viewingContent) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setViewingContent(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [viewingContent]);
 
   const updateForm = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -710,6 +721,92 @@ const Articles = () => {
         document.body,
       )}
 
+      {viewingContent && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setViewingContent(null);
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="content-preview-title"
+            className="my-auto max-h-[90dvh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white shadow-2xl"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-7">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-violet-700">
+                  {viewingContent.content_type === "article" ? "Article" : "Product review"}
+                </p>
+                <h2 id="content-preview-title" className="mt-1 text-lg font-bold text-slate-900">
+                  {viewingContent.content_type === "article" ? viewingContent.title : viewingContent.product_name}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setViewingContent(null)}
+                aria-label="Close preview"
+                className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="space-y-5 p-5 sm:p-7">
+              <img
+                src={getImageUrl(viewingContent.image_url)}
+                alt={viewingContent.content_type === "article" ? viewingContent.title : viewingContent.product_name}
+                className="max-h-80 w-full rounded-2xl bg-slate-100 object-contain"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+                <span className="font-semibold text-violet-700">{viewingContent.content_id}</span>
+                {viewingContent.content_type === "product_review" && (
+                  <span className="inline-flex items-center gap-1 font-semibold text-amber-600">
+                    <Star className="h-4 w-4 fill-current" /> {Number(viewingContent.rating).toFixed(1)}
+                  </span>
+                )}
+              </div>
+              <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">{viewingContent.description}</p>
+              {viewingContent.product_features?.length > 0 && (
+                <div>
+                  <h3 className="mb-2 font-bold text-slate-900">Product features</h3>
+                  <dl className="divide-y divide-slate-100 rounded-xl border border-slate-100 px-4">
+                    {viewingContent.product_features.map((feature, index) => (
+                      <div key={`${feature.name}-${index}`} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
+                        <dt className="font-semibold text-slate-700">{feature.name}</dt>
+                        <dd className="text-slate-600">{feature.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              )}
+              {viewingContent.more_details && (
+                <div>
+                  <h3 className="mb-2 font-bold text-slate-900">More details</h3>
+                  <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">{viewingContent.more_details}</p>
+                </div>
+              )}
+              {viewingContent.buy_links?.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {viewingContent.buy_links.map((link, index) => (
+                    <a
+                      key={`${link.url}-${index}`}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl bg-violet-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-900"
+                    >
+                      {link.name || "Open link"} <ArrowUpRight className="h-4 w-4" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        </div>,
+        document.body,
+      )}
+
       <section className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
         {loading ? (
           <div className="flex min-h-40 items-center justify-center gap-2 text-sm text-slate-500">
@@ -760,6 +857,9 @@ const Articles = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
+                          <button type="button" onClick={() => setViewingContent(item)} aria-label={`View ${name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-emerald-50 hover:text-emerald-700">
+                            <Eye className="h-4 w-4" />
+                          </button>
                           <button type="button" onClick={() => editArticle(item)} aria-label={`Edit ${name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-violet-50 hover:text-violet-700">
                             <Pencil className="h-4 w-4" />
                           </button>
@@ -804,6 +904,9 @@ const Articles = () => {
                       ) : null}
                     </div>
                     <div className="flex justify-end gap-1">
+                      <button type="button" onClick={() => setViewingContent(item)} aria-label={`View ${name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-emerald-50 hover:text-emerald-700">
+                        <Eye className="h-4 w-4" />
+                      </button>
                       <button type="button" onClick={() => editArticle(item)} aria-label={`Edit ${name}`} className="rounded-lg p-2 text-slate-400 transition hover:bg-violet-50 hover:text-violet-700">
                         <Pencil className="h-4 w-4" />
                       </button>
