@@ -79,7 +79,7 @@ function ProductDetails() {
   if (loading) {
     return (
       <>
-        <PageHeader title={product.name} />
+        <PageHeader title="Product Details" />
         <PageContainer className="py-12">
           <div className="mx-auto h-80 max-w-5xl animate-pulse rounded-2xl bg-[#faf8ff]" />
         </PageContainer>
@@ -116,7 +116,7 @@ function ProductDetails() {
 
   return (
     <>
-      <PageHeader title="Product Details" />
+      <PageHeader title={product.name || "Product Details"} />
       <PageContainer className="py-6 sm:py-10">
         <Link to="/shop" className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-text-secondary transition hover:text-primary">
           <ArrowLeft size={17} /> Back to shop
