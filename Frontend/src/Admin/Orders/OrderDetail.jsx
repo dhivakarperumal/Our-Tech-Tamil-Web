@@ -4,15 +4,11 @@ import {
     FiArrowLeft,
     FiPackage,
     FiTruck,
-    FiCheckCircle,
     FiClock,
-    FiUser,
     FiMail,
     FiPhone,
     FiMapPin,
     FiPrinter,
-    FiDownload,
-    FiMoreVertical,
     FiCreditCard,
     FiXCircle
 } from "react-icons/fi";
@@ -347,46 +343,48 @@ const OrderDetail = () => {
         </div>
     );
 
-    if (!order) return <div className="p-20 text-center font-bold text-gray-400">Order not found</div>;
+    if (!order) return (
+        <div className="rounded-3xl border border-slate-200 bg-white px-6 py-20 text-center shadow-sm">
+            <FiPackage className="mx-auto mb-4 text-slate-300" size={36} />
+            <p className="text-lg font-bold text-slate-700">Order not found</p>
+            <Link to="/admin/orders/all" className="mt-4 inline-flex text-sm font-bold text-violet-700 hover:text-fuchsia-700">
+                Back to orders
+            </Link>
+        </div>
+    );
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Toaster position="top-right" />
 
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 no-print">
-                <div className="flex items-center gap-4">
-                    <Link to="/admin/orders/all" className="p-2 bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-primary transition-all shadow-sm">
-                        <FiArrowLeft size={20} />
-                    </Link>
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-black text-slate-800 tracking-tight">Order {formatOrderId(order)}</h1>
-                            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusStyle(order.status)}`}>
-                                {order.status}
-                            </span>
+            <div className="no-print overflow-hidden rounded-3xl bg-gradient-to-r from-[#2e1065] via-[#4c1d95] to-[#86198f] text-white shadow-lg shadow-violet-950/10">
+                <div className="flex flex-col gap-5 p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex min-w-0 items-center gap-4">
+                        <Link to="/admin/orders/all" aria-label="Back to orders" className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/20">
+                            <FiArrowLeft size={20} />
+                        </Link>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-200">Order details</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-3">
+                                <h1 className="truncate text-2xl font-black tracking-tight sm:text-3xl">{formatOrderId(order)}</h1>
+                                <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${getStatusStyle(order.status)}`}>
+                                    {order.status}
+                                </span>
+                            </div>
+                            <p className="mt-1 text-xs text-violet-100/80">
+                                Placed {order.created_at ? new Date(order.created_at).toLocaleString() : "—"}
+                            </p>
                         </div>
-                        <p className="text-sm text-gray-500 font-medium mt-1 uppercase tracking-widest text-[10px] italic">Placed on {new Date(order.created_at).toLocaleString()}</p>
                     </div>
-                </div>
-
-                {/* Logistics Badges */}
-                <div className="flex flex-wrap gap-2">
-                    {order.status === 'Shipping' && order.tracking_number && (
-                        <div className="px-4 py-2 bg-amber-50 border border-amber-100 rounded-xl flex flex-col items-end">
-                            <span className="text-[10px] font-black text-amber-600 uppercase tracking-widest">{order.courier_name || 'Shipping'}</span>
-                            <span className="text-xs font-bold text-amber-500 italic">{order.tracking_number}</span>
-                        </div>
-                    )}
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <button onClick={handlePrint} className="p-3 bg-white border border-gray-200 rounded-xl text-gray-400 hover:text-primary transition-all shadow-sm">
-                        <FiPrinter />
-                    </button>
-                    <button className="flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-light text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95">
-                        <FiDownload size={14} /> Export Invoice
-                    </button>
+                    <div className="flex shrink-0 gap-2">
+                        <button onClick={handlePrint} className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold transition hover:bg-white/20">
+                            <FiPrinter size={16} /> Print
+                        </button>
+                        <button onClick={handlePrint} className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-4 py-3 text-sm font-black text-violet-950 transition hover:bg-amber-200">
+                            <FiCreditCard size={16} /> Invoice
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -404,75 +402,80 @@ const OrderDetail = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 print-container print:block">
-                <div className="lg:col-span-2 space-y-6 sm:space-y-8">
-                    {/* Items */}
-                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                            <h3 className="text-xl font-black text-slate-800 tracking-tight">Manifest Items</h3>
-                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-3 py-1 rounded-lg">{order.items?.length || 0} Products</span>
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.65fr)_minmax(320px,1fr)] print-container print:block">
+                <div className="space-y-6">
+                    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div className="flex items-center justify-between gap-4 border-b border-slate-100 px-5 py-4 sm:px-6">
+                            <div className="flex items-center gap-3">
+                                <span className="grid h-10 w-10 place-items-center rounded-xl bg-violet-50 text-violet-700">
+                                    <FiPackage size={19} />
+                                </span>
+                                <div>
+                                    <h2 className="text-base font-extrabold text-slate-800">Order items</h2>
+                                    <p className="mt-0.5 text-xs text-slate-500">Products included in this order</p>
+                                </div>
+                            </div>
+                            <span className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-bold text-violet-800">
+                                {order.items?.length || 0} items
+                            </span>
                         </div>
-                        <div className="divide-y divide-gray-50">
-                            {order.items?.map((item) => (
-                                <div key={item.id} className="p-8 flex flex-col sm:flex-row items-start sm:items-center gap-6 group hover:bg-blue-50/20 transition-all">
-                                    <div className="w-16 h-16 rounded-xl bg-gray-50 overflow-hidden border border-gray-200 shrink-0 shadow-sm animate-in zoom-in-90 duration-300">
-                                        <img
-                                            src={getProductImage(item)}
-                                            alt={item.product_name}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                            onError={(e) => {
-                                                if (!e.target.src.includes('ui-avatars')) {
-                                                    e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.product_name)}&background=random`;
-                                                }
-                                            }}
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h4 className="font-black text-slate-800 text-md tracking-tight">{item.product_name}</h4>
-
-                                        <p className="text-xs font-bold text-gray-400 mt-2 italic uppercase tracking-wider">Unit Price: ₹{parseFloat(item.price).toLocaleString()}</p>
-                                    </div>
-                                    <div className="flex items-center gap-3 mt-1.5">
-                                        {item.variant_color && (
-                                            <span className="flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                                <div className="w-2 h-2 rounded-full border border-gray-200" style={{ backgroundColor: item.variant_color.startsWith('#') ? item.variant_color : 'transparent' }}></div>
-                                                {item.variant_color}
+                        <div className="divide-y divide-slate-100">
+                            {order.items?.length ? order.items.map((item, index) => {
+                                const unitPrice = Number(item.price) || 0;
+                                const quantity = Number(item.quantity) || 1;
+                                return (
+                                    <div key={item.id || `${order.id}-${index}`} className="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center sm:px-6">
+                                        <div className="flex min-w-0 flex-1 items-center gap-4">
+                                            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                                                <img
+                                                    src={getProductImage(item)}
+                                                    alt={item.product_name || item.name || "Order product"}
+                                                    className="h-full w-full object-cover"
+                                                    onError={(event) => {
+                                                        if (!event.currentTarget.src.includes("ui-avatars")) {
+                                                            event.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(item.product_name || item.name || "Product")}&background=ede9fe&color=4c1d95`;
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h3 className="truncate text-sm font-bold text-slate-800">{item.product_name || item.name || "Product"}</h3>
+                                                <p className="mt-1 text-xs text-slate-500">₹{unitPrice.toLocaleString("en-IN")} each</p>
+                                                <div className="mt-2 flex flex-wrap gap-2">
+                                                    {item.variant_color && (
+                                                        <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-semibold text-slate-600">Color: {item.variant_color}</span>
+                                                    )}
+                                                    {item.variant_size && (
+                                                        <span className="rounded-md bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">Size: {item.variant_size}</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-5 border-t border-slate-100 pt-3 sm:border-0 sm:pt-0 sm:text-right">
+                                            <span className="text-xs font-medium text-slate-500">Qty {quantity}</span>
+                                            <span className="min-w-24 text-base font-extrabold text-violet-900">
+                                                ₹{(unitPrice * quantity).toLocaleString("en-IN")}
                                             </span>
-                                        )}
-                                        {item.variant_size && (
-                                            <span className="px-2.5 py-1 bg-primary/5 border border-primary/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-primary">
-                                                Size: {item.variant_size}
-                                            </span>
-                                        )}
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-1">Quantity: {item.quantity}</p>
-                                        <p className="font-black text-primary text-xl tracking-tight">₹{(item.price * item.quantity).toLocaleString()}</p>
-                                    </div>
+                                );
+                            }) : (
+                                <div className="px-6 py-12 text-center">
+                                    <FiPackage className="mx-auto mb-2 text-slate-300" size={28} />
+                                    <p className="text-sm font-semibold text-slate-500">No item details found for this order.</p>
                                 </div>
-                            ))}
+                            )}
                         </div>
-                        <div className="bg-gray-50 border-t border-gray-100 p-6 text-gray-900">
-                            <div className="w-full max-w-xs ml-auto space-y-4 text-gray-900">
-
-                                <div className="flex justify-between text-md font-bold  opacity-40">
-                                    <span>Subtotal</span>
-                                    <span>₹{parseFloat(order.subtotal || order.total_amount).toLocaleString()}</span>
+                        <div className="border-t border-slate-100 bg-slate-50/80 px-5 py-5 sm:px-6">
+                            <div className="ml-auto flex max-w-sm items-center justify-between gap-4">
+                                <div>
+                                    <p className="text-xs font-semibold text-slate-500">Order total</p>
+                                    <p className="mt-1 text-[11px] text-slate-400">{order.payment_method || "Payment method not set"}</p>
                                 </div>
-
-                                <div className="pt-2 border-t border-white/10 flex justify-between items-end">
-                                    <span className=" font-bold  opacity-40">
-                                        Total Settlement
-                                    </span>
-
-                                    <span className="text-xl font-bold italic">
-                                        ₹{parseFloat(order.total_amount).toLocaleString()}
-                                    </span>
-                                </div>
-
+                                <p className="text-2xl font-black text-violet-900">₹{(Number(order.total_amount) || 0).toLocaleString("en-IN")}</p>
                             </div>
                         </div>
-                    </div>
+                    </section>
 
                     {/* Payment */}
                     {/* <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-8 items-center group">
@@ -533,66 +536,95 @@ const OrderDetail = () => {
                     )} */}
                 </div>
 
-                {/* Right Column */}
-                <div className="space-y-8">
-                    {/* Customer */}
-                    <div className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm space-y-8">
-                        <div className="flex items-center justify-between">
-                            <h3 className="font-black text-slate-800 uppercase tracking-widest text-[10px] italic">Manifest Destination</h3>
+                <div className="space-y-6">
+                    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
+                            <h2 className="text-base font-extrabold text-slate-800">Customer & delivery</h2>
+                            <p className="mt-0.5 text-xs text-slate-500">Contact and shipping destination</p>
                         </div>
-                        <div className="flex flex-col items-center text-center space-y-4">
-                            <div className="w-24 h-24 rounded-3xl bg-slate-900 border-4 border-white shadow-2xl flex items-center justify-center text-white text-3xl font-black">
-                                {order.customer_name?.charAt(0)}
-                            </div>
-                            <div>
-                                <h4 className="text-2xl font-black text-slate-800 tracking-tight">{order.customer_name}</h4>
-                                <div className="flex flex-col items-center gap-1 mt-2 justify-center">
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-                                        <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest">{order.user_id ? 'Registered' : 'Guest'} Customer</p>
-                                    </div>
-                                    {order.user_id && (
-                                        <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">ID: {order.user_id}</p>
-                                    )}
+                        <div className="space-y-5 p-5 sm:p-6">
+                            <div className="flex items-center gap-3">
+                                <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-violet-100 text-lg font-black text-violet-800">
+                                    {(order.customer_name || "Guest").charAt(0).toUpperCase()}
+                                </span>
+                                <div className="min-w-0">
+                                    <h3 className="truncate text-sm font-bold text-slate-800">{order.customer_name || "Guest Customer"}</h3>
+                                    <p className="mt-1 text-[11px] font-semibold text-slate-500">{order.user_id ? "Registered customer" : "Guest customer"}</p>
                                 </div>
                             </div>
-                        </div>
-                        <div className="space-y-6 pt-8 border-t border-gray-50">
-                            <div className="flex items-center gap-4 group">
-                                <div className="w-12 h-12 bg-gray-50 text-gray-400 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm"><FiPhone size={18} /></div>
-                                <div>
-                                    <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-1">Contact Link</p>
-                                    <p className="text-sm font-black text-slate-600">{order.customer_phone}</p>
-                                </div>
-                            </div>
-                            {order.customer_email && (
-                                <div className="flex items-center gap-4 group">
-                                    <div className="w-12 h-12 bg-gray-50 text-gray-400 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm"><FiMail size={18} /></div>
-                                    <div>
-                                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-1">Email Feed</p>
-                                        <p className="text-sm font-black text-slate-600 truncate">{order.customer_email}</p>
+                            {order.customer_phone && (
+                                <div className="flex items-start gap-3">
+                                    <FiPhone className="mt-0.5 shrink-0 text-violet-600" size={16} />
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Phone</p>
+                                        <p className="mt-1 break-all text-sm font-semibold text-slate-700">{order.customer_phone}</p>
                                     </div>
                                 </div>
                             )}
-                            <div className="flex items-start gap-4 group">
-                                <div className="w-12 h-12 bg-gray-50 text-gray-400 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm"><FiMapPin size={18} /></div>
-                                <div>
-                                    <p className="text-[9px] font-black text-gray-300 uppercase tracking-[0.2em] mb-1">Shipping Vault</p>
-                                    <div className="text-sm font-black text-slate-600 leading-relaxed italic">
-                                        {order.street_address && <p>{order.street_address}</p>}
-                                        {(order.city || order.district) && (
-                                            <p>{[order.city, order.district].filter(Boolean).join(', ')}</p>
-                                        )}
-                                        {(order.state || order.zip_code) && (
-                                            <p>{[order.state, order.zip_code].filter(Boolean).join(' - ')}</p>
-                                        )}
-                                        {order.country && <p>{order.country}</p>}
-                                        {!order.street_address && order.address && <p>{order.address}</p>}
+                            {order.customer_email && (
+                                <div className="flex items-start gap-3">
+                                    <FiMail className="mt-0.5 shrink-0 text-violet-600" size={16} />
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Email</p>
+                                        <p className="mt-1 break-all text-sm font-semibold text-slate-700">{order.customer_email}</p>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="border-t border-slate-100 pt-4">
+                                <div className="flex items-start gap-3">
+                                    <FiMapPin className="mt-0.5 shrink-0 text-violet-600" size={17} />
+                                    <div className="min-w-0">
+                                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Shipping address</p>
+                                        <div className="mt-2 space-y-1 text-sm leading-relaxed text-slate-700">
+                                            {order.street_address && <p className="font-semibold">{order.street_address}</p>}
+                                            {(order.city || order.district) && <p>{[order.city, order.district].filter(Boolean).join(", ")}</p>}
+                                            {(order.state || order.zip_code) && <p>{[order.state, order.zip_code].filter(Boolean).join(" - ")}</p>}
+                                            {order.country && <p>{order.country}</p>}
+                                            {!order.street_address && order.address && <p>{order.address}</p>}
+                                            {!order.street_address && !order.address && <p className="text-slate-400">No address provided</p>}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </section>
+
+                    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
+                            <h2 className="text-base font-extrabold text-slate-800">Order summary</h2>
+                            <p className="mt-0.5 text-xs text-slate-500">Payment and fulfilment details</p>
+                        </div>
+                        <div className="space-y-4 p-5 sm:p-6">
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="flex items-center gap-2 text-sm text-slate-500"><FiCreditCard className="text-violet-600" /> Payment method</span>
+                                <span className="text-right text-sm font-bold text-slate-800">{order.payment_method || "—"}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="text-sm text-slate-500">Payment status</span>
+                                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${order.payment_status === "Paid" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                                    {order.payment_status || "Pending"}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-3">
+                                <span className="flex items-center gap-2 text-sm text-slate-500"><FiClock className="text-violet-600" /> Order date</span>
+                                <span className="text-right text-xs font-semibold text-slate-700">{order.created_at ? new Date(order.created_at).toLocaleString() : "—"}</span>
+                            </div>
+                            {order.tracking_number && (
+                                <div className="rounded-xl bg-violet-50 p-4">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-violet-800"><FiTruck /> Shipping details</div>
+                                    <p className="mt-2 text-sm font-semibold text-slate-700">{order.courier_name || "Courier"} · {order.tracking_number}</p>
+                                    {order.shipped_at && <p className="mt-1 text-xs text-slate-500">Shipped {new Date(order.shipped_at).toLocaleString()}</p>}
+                                </div>
+                            )}
+                            {order.cancellation_reason && (
+                                <div className="rounded-xl bg-red-50 p-4">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-red-700"><FiXCircle /> Cancellation</div>
+                                    <p className="mt-2 text-sm text-red-800">{order.cancellation_reason}</p>
+                                    {order.cancelled_at && <p className="mt-1 text-xs text-red-600">{new Date(order.cancelled_at).toLocaleString()}</p>}
+                                </div>
+                            )}
+                        </div>
+                    </section>
 
                     {/* Status Update Control */}
                     {/* <div className="bg-slate-900 p-8 rounded-[2.5rem] text-white shadow-2xl space-y-6 no-print">
@@ -703,7 +735,7 @@ const OrderDetail = () => {
             </button>
         </div>
                     </div > */}
-                </div >
+                </div>
             </div >
         </div >
     );
