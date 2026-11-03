@@ -43,6 +43,97 @@ function optionalText(value, field, maxLength) {
   return value.trim() || null;
 }
 
+function parseAddress(body) {
+  return {
+    recipient_name: requiredText(body.recipient_name, "Full name", 160),
+    phone: requiredText(body.phone, "Phone number", 32),
+    street_address: requiredText(body.street_address, "Street address", 512),
+    city: requiredText(body.city, "City", 120),
+    district: optionalText(body.district, "District", 120),
+    state: requiredText(body.state, "State", 120),
+    country: optionalText(body.country, "Country", 120) || "India",
+    zip_code: requiredText(body.zip_code, "Postal code", 24),
+  };
+}
+
+function addressValues(userId, address) {
+  return [
+    userId,
+    address.recipient_name,
+    address.phone,
+    address.street_address,
+    address.city,
+    address.district,
+    address.state,
+    address.country,
+    address.zip_code,
+  ];
+}
+
+async function findMatchingAddress(executor, userId, address, excludeId = null) {
+  const fields = [
+    "recipient_name",
+    "phone",
+    "street_address",
+    "city",
+    "district",
+    "state",
+    "country",
+    "zip_code",
+  ];
+  const conditions = fields.map((field) => `LOWER(TRIM(COALESCE(${field}, ''))) = ?`);
+  const values = fields.map((field) => String(address[field] || "").trim().toLowerCase());
+  const [rows] = await executor.execute(
+    `SELECT id FROM addresses
+     WHERE user_id = ? AND is_active = TRUE AND ${conditions.join(" AND ")}
+     ${excludeId !== null ? "AND id <> ?" : ""}
+     ORDER BY id LIMIT 1 FOR UPDATE`,
+    [userId, ...values, ...(excludeId !== null ? [excludeId] : [])],
+  );
+  return rows[0] || null;
+}
+
+async function lockActiveUser(connection, userId) {
+  const [users] = await connection.execute(
+    "SELECT user_id FROM users WHERE user_id = ? AND status = 'active' LIMIT 1 FOR UPDATE",
+    [userId],
+  );
+  if (!users.length) throw httpError(401, "Your account is unavailable. Please sign in again.");
+}
+
+function toAddressValues(address) {
+  return {
+    recipient_name: address.recipient_name,
+    phone: address.phone,
+    street_address: address.street_address,
+    city: address.city,
+    district: address.district,
+    state: address.state,
+    country: address.country,
+    zip_code: address.zip_code,
+  };
+}
+
+function uniqueAddresses(addresses) {
+  const seen = new Set();
+  return addresses.filter((address) => {
+    const keyValues = [
+      address.recipient_name,
+      address.phone,
+      address.street_address,
+      address.city,
+      address.district,
+      address.state,
+      address.country,
+      address.zip_code,
+    ].map((value) => String(value || "").trim().toLowerCase());
+    const key = JSON.stringify(keyValues);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function priceInCents(value, field) {
   const price = Number(value);
   if (!Number.isFinite(price) || price < 0) {
@@ -318,13 +409,115 @@ function createCheckoutRouter(pool) {
         `SELECT id, recipient_name, phone, street_address, city, district,
                 state, country, zip_code
          FROM addresses
-         WHERE user_id = ?
+         WHERE user_id = ? AND is_active = TRUE
          ORDER BY updated_at DESC, id DESC`,
         [request.user.user_id],
       );
-      return response.json(addresses);
+      return response.json(uniqueAddresses(addresses));
     } catch (error) {
       return next(error);
+    }
+  });
+
+  router.post("/addresses", async (request, response, next) => {
+    let connection;
+    try {
+      const address = parseAddress(request.body || {});
+      connection = await pool.getConnection();
+      await connection.beginTransaction();
+      const userId = request.user.user_id;
+      await lockActiveUser(connection, userId);
+      if (await findMatchingAddress(connection, userId, address)) {
+        throw httpError(409, "This address is already saved.");
+      }
+      const [result] = await connection.execute(
+        `INSERT INTO addresses
+          (user_id, recipient_name, phone, street_address, city, district, state, country, zip_code)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        addressValues(userId, address),
+      );
+      await connection.commit();
+      return response.status(201).json({ id: result.insertId, ...toAddressValues(address) });
+    } catch (error) {
+      if (connection) await connection.rollback();
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    } finally {
+      connection?.release();
+    }
+  });
+
+  router.put("/addresses/:id", async (request, response, next) => {
+    let connection;
+    try {
+      if (!/^[1-9]\d*$/.test(request.params.id)) {
+        throw httpError(400, "Address ID is invalid.");
+      }
+      const address = parseAddress(request.body || {});
+      connection = await pool.getConnection();
+      await connection.beginTransaction();
+      const userId = request.user.user_id;
+      await lockActiveUser(connection, userId);
+      const [existing] = await connection.execute(
+        "SELECT id FROM addresses WHERE id = ? AND user_id = ? AND is_active = TRUE LIMIT 1 FOR UPDATE",
+        [request.params.id, userId],
+      );
+      if (!existing.length) throw httpError(404, "Address not found.");
+      if (await findMatchingAddress(connection, userId, address, request.params.id)) {
+        throw httpError(409, "This address is already saved.");
+      }
+      await connection.execute(
+        `UPDATE addresses
+         SET recipient_name = ?, phone = ?, street_address = ?, city = ?, district = ?,
+             state = ?, country = ?, zip_code = ?
+         WHERE id = ? AND user_id = ? AND is_active = TRUE`,
+        [
+          address.recipient_name,
+          address.phone,
+          address.street_address,
+          address.city,
+          address.district,
+          address.state,
+          address.country,
+          address.zip_code,
+          request.params.id,
+          userId,
+        ],
+      );
+      await connection.commit();
+      return response.json({ id: existing[0].id, ...toAddressValues(address) });
+    } catch (error) {
+      if (connection) await connection.rollback();
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    } finally {
+      connection?.release();
+    }
+  });
+
+  router.delete("/addresses/:id", async (request, response, next) => {
+    let connection;
+    try {
+      if (!/^[1-9]\d*$/.test(request.params.id)) {
+        throw httpError(400, "Address ID is invalid.");
+      }
+      connection = await pool.getConnection();
+      await connection.beginTransaction();
+      const userId = request.user.user_id;
+      await lockActiveUser(connection, userId);
+      const [result] = await connection.execute(
+        "UPDATE addresses SET is_active = FALSE WHERE id = ? AND user_id = ? AND is_active = TRUE",
+        [request.params.id, userId],
+      );
+      if (!result.affectedRows) throw httpError(404, "Address not found.");
+      await connection.commit();
+      return response.json({ message: "Address deleted successfully." });
+    } catch (error) {
+      if (connection) await connection.rollback();
+      if (error.status) return response.status(error.status).json({ message: error.message });
+      return next(error);
+    } finally {
+      connection?.release();
     }
   });
 
@@ -454,13 +647,7 @@ function createCheckoutRouter(pool) {
     let connection;
     try {
       const body = request.body || {};
-      const recipientName = requiredText(body.recipient_name, "Full name", 160);
-      const phone = requiredText(body.phone, "Phone number", 32);
-      const streetAddress = requiredText(body.street_address, "Street address", 512);
-      const city = requiredText(body.city, "City", 120);
-      const district = optionalText(body.district, "District", 120);
-      const state = requiredText(body.state, "State", 120);
-      const zipCode = requiredText(body.zip_code, "Postal code", 24);
+      const address = parseAddress(body);
       const customerEmail = optionalText(body.customer_email, "Email", 191);
       if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
         throw httpError(400, "Enter a valid email address.");
@@ -469,11 +656,7 @@ function createCheckoutRouter(pool) {
       connection = await pool.getConnection();
       await connection.beginTransaction();
       const userId = request.user.user_id;
-      const [users] = await connection.execute(
-        "SELECT user_id FROM users WHERE user_id = ? AND status = 'active' LIMIT 1 FOR UPDATE",
-        [userId],
-      );
-      if (!users.length) throw httpError(401, "Your account is unavailable. Please sign in again.");
+      await lockActiveUser(connection, userId);
       if (payment) {
         const [existingOrders] = await connection.execute(
           `SELECT id, order_id, address_id, total_amount, payment_method, payment_status, status
@@ -579,35 +762,14 @@ function createCheckoutRouter(pool) {
       }
       if (coupon) totalCents = coupon.totalCents;
 
-      const addressValues = [
-        userId,
-        recipientName,
-        phone,
-        streetAddress,
-        city,
-        district,
-        state,
-        "India",
-        zipCode,
-      ];
-      const [existingAddresses] = await connection.execute(
-        `SELECT id
-         FROM addresses
-         WHERE user_id = ? AND recipient_name = ? AND phone = ?
-           AND street_address = ? AND city = ? AND district <=> ?
-           AND state = ? AND country = ? AND zip_code = ?
-         ORDER BY id
-         LIMIT 1
-         FOR UPDATE`,
-        addressValues,
-      );
-      let addressId = existingAddresses[0]?.id;
+      const duplicateAddress = await findMatchingAddress(connection, userId, address);
+      let addressId = duplicateAddress?.id;
       if (!addressId) {
         const [addressResult] = await connection.execute(
           `INSERT INTO addresses
             (user_id, recipient_name, phone, street_address, city, district, state, country, zip_code)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          addressValues,
+          addressValues(userId, address),
         );
         addressId = addressResult.insertId;
       }

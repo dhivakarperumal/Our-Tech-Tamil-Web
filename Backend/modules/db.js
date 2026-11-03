@@ -452,6 +452,16 @@ async function initializeDatabase(pool) {
       KEY addresses_user_id_idx (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  const [addressColumns] = await pool.execute(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'addresses'`,
+  );
+  if (!new Set(addressColumns.map((column) => column.COLUMN_NAME)).has("is_active")) {
+    await pool.query(
+      "ALTER TABLE addresses ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT TRUE AFTER zip_code",
+    );
+  }
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS orders (
