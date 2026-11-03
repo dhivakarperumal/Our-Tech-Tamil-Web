@@ -255,7 +255,7 @@ const Navbar = () => {
             type="button"
             onClick={() => setCategoryMenu((open) => !open)}
             aria-expanded={categoryMenu}
-            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
+            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
           >
             <Grid2X2 size={18} aria-hidden="true" />
             Categories
@@ -302,7 +302,7 @@ const Navbar = () => {
             type="button"
             onClick={() => setPagesMenu((open) => !open)}
             aria-expanded={pagesMenu}
-            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
+            className="my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-5 py-1.5 text-sm font-semibold text-white transition hover:bg-white/10"
           >
             <FileText size={18} aria-hidden="true" />
             Pages
@@ -336,7 +336,7 @@ const Navbar = () => {
   );
 
   const navClass = ({ isActive }) =>
-    `my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition ${
+    `my-1 inline-flex items-center gap-2 whitespace-nowrap rounded-full px-6 py-1.5 text-sm font-semibold transition ${
       isActive ? "bg-gradient-to-r from-accent to-[#ffe98a] text-[#29104b] shadow-sm" : "text-white hover:bg-white/10"
     }`;
 
