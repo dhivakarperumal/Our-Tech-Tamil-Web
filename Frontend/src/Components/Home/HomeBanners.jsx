@@ -44,6 +44,17 @@ function HomeBanners() {
     [banners],
   );
   const [activeHeroIndex, setActiveHeroIndex] = useState(0);
+
+  useEffect(() => {
+    if (heroBanners.length < 2) return undefined;
+
+    const interval = window.setInterval(() => {
+      setActiveHeroIndex((currentIndex) => (currentIndex + 1) % heroBanners.length);
+    }, 5000);
+
+    return () => window.clearInterval(interval);
+  }, [heroBanners.length]);
+
   const heroBanner = heroBanners[activeHeroIndex] || heroBanners[0] || null;
 
   const heroImage = heroBanner?.desktop_image ? getImageUrl(heroBanner.desktop_image) : "";
