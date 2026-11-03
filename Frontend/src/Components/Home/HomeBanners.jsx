@@ -75,13 +75,13 @@ function HomeBanners() {
 
       <PageContainer className="relative flex flex-1 flex-col py-5 sm:py-7 lg:flex-row lg:items-center lg:py-6">
         <div className="grid w-full flex-1 items-center gap-1 sm:gap-3 lg:grid-cols-[0.98fr_1.02fr] xl:gap-0">
-          <div className="relative z-10 py-3 sm:py-4 lg:py-0">
+          <div className="order-2 relative z-10 py-3 sm:py-4 lg:order-1 lg:py-0">
             <a
               href="#shop-by-category"
               className="mb-5 inline-flex items-center gap-2 rounded-full bg-[#ead8ff] px-4 py-2 text-sm font-bold text-[#35116d] transition hover:bg-[#dfc5ff] sm:mb-7 sm:px-5 sm:py-2.5 sm:text-base"
             >
               <ShoppingBag className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span>Shop by Categories</span>
+              <span>Explore Our Collection</span>
             </a>
 
             <h1 className="max-w-[700px] text-[clamp(2rem,8vw,2.5rem)] font-black leading-[1.02] tracking-[-0.055em] text-[#24104f] sm:text-5xl xl:text-[3.75rem]">
@@ -125,7 +125,7 @@ function HomeBanners() {
             </a>
           </div>
 
-          <div className="relative z-10 flex h-[min(72vw,300px)] min-h-[210px] w-full items-center justify-center sm:h-[min(60vw,390px)] sm:min-h-[300px] lg:h-auto lg:min-h-0">
+          <div className="order-1 relative z-10 flex h-[min(72vw,300px)] min-h-[210px] w-full items-center justify-center sm:h-[min(60vw,390px)] sm:min-h-[300px] lg:order-2 lg:h-auto lg:min-h-0">
             {heroImage ? (
               <picture className="relative z-10 flex h-full w-full items-center justify-center">
                 {heroBanner?.mobile_image && (
@@ -146,23 +146,6 @@ function HomeBanners() {
           </div>
         </div>
 
-        <div className="relative z-10 mt-1 flex items-center justify-center gap-3 pb-1 lg:absolute lg:bottom-10 lg:left-[5%] lg:mt-0 lg:justify-start">
-          {heroBanners.length > 0 ? heroBanners.map((banner, index) => (
-            <button
-              key={banner.id}
-              type="button"
-              aria-label={`Show banner ${index + 1}: ${banner.title}`}
-              aria-current={index === activeHeroIndex ? "true" : undefined}
-              onClick={() => setActiveHeroIndex(index)}
-              className={`h-3.5 w-3.5 rounded-full transition ${index === activeHeroIndex ? "bg-[#7400df]" : "bg-violet-400/60 hover:bg-violet-500"}`}
-            />
-          )) : [0, 1, 2].map((dot) => (
-            <span
-              key={dot}
-              className={`h-3.5 w-3.5 rounded-full ${dot === 0 ? "bg-[#7400df]" : "bg-violet-400/60"}`}
-            />
-          ))}
-        </div>
       </PageContainer>
     </section>
   );
