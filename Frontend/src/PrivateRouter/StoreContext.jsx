@@ -249,13 +249,32 @@ export const StoreProvider = ({ children }) => {
         }
     };
 
+    const removeFromWishlist = async (item) => {
+        const wishlistItemId = Number(item?.id);
+        if (!Number.isSafeInteger(wishlistItemId) || wishlistItemId < 1) {
+            toast.error("Unable to identify this saved item.");
+            return false;
+        }
+
+        try {
+            await api.delete(`/wishlist/item/${wishlistItemId}`);
+            setWishlist((current) => current.filter((entry) => Number(entry.id) !== wishlistItemId));
+            toast.success("Removed from favorites");
+            return true;
+        } catch (err) {
+            console.error("Remove wishlist item error:", err);
+            toast.error(err.response?.data?.message || "Failed to remove favorite");
+            return false;
+        }
+    };
+
     const visibleCart = cartOwnerId === user?.user_id ? cart : [];
 
     return (
         <StoreContext.Provider value={{
             cart: visibleCart, wishlist,
             addToCart, removeFromCart, updateCartQuantity, clearCart,
-            toggleWishlist,
+            toggleWishlist, removeFromWishlist,
             loadingCart, loadingWishlist,
             fetchCart, fetchWishlist,
             productsCache, setProductsCache,

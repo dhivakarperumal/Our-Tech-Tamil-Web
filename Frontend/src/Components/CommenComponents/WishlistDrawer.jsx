@@ -10,7 +10,7 @@ const resolveImageUrl = (image) => {
 };
 
 const WishlistDrawer = ({ isOpen, onClose }) => {
-  const { wishlist, loadingWishlist, toggleWishlist, addToCart } = useContext(StoreContext);
+  const { wishlist, loadingWishlist, removeFromWishlist, addToCart } = useContext(StoreContext);
   const navigate = useNavigate();
   const [quantities, setQuantities] = useState({});
 
@@ -105,7 +105,7 @@ const WishlistDrawer = ({ isOpen, onClose }) => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <h3 className="truncate text-sm font-semibold text-gray-800">{item.name || "Product"}</h3>
-                      <button type="button" onClick={() => toggleWishlist(item)} aria-label={`Remove ${item.name || "item"}`} className="shrink-0 rounded p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-500">
+                      <button type="button" onClick={() => removeFromWishlist(item)} aria-label={`Remove ${item.name || "item"}`} className="shrink-0 rounded p-1 text-gray-400 transition hover:bg-red-50 hover:text-red-500">
                         <FiTrash2 size={16} />
                       </button>
                     </div>

@@ -46,9 +46,21 @@ function createPool() {
         return [{ affectedRows: 1 }];
       }
       if (query.includes("DELETE FROM wishlist_items")) {
-        const [userId, productId, color, size] = params;
-        const key = `${userId}:${productId}:${color}:${size}`;
-        const deleted = saved.delete(key);
+        let deleted = false;
+        if (query.includes("AND id = ?")) {
+          const [userId, itemId] = params;
+          const entry = [...saved].find(([, item]) =>
+            item.userId === userId && item.id === itemId,
+          );
+          if (entry) {
+            saved.delete(entry[0]);
+            deleted = true;
+          }
+        } else {
+          const [userId, productId, color, size] = params;
+          const key = `${userId}:${productId}:${color}:${size}`;
+          deleted = saved.delete(key);
+        }
         return [{ affectedRows: deleted ? 1 : 0 }];
       }
       if (query.includes("FROM wishlist_items wi")) {
@@ -143,6 +155,30 @@ test("wishlist routes reject missing authentication and invalid product IDs", as
     body: JSON.stringify({ product_id: "bad" }),
   });
   assert.equal(invalid.status, 400);
+});
+
+test("wishlist item removal uses its row ID and remains scoped to its owner", async (t) => {
+  const { pool, url } = await startServer(t);
+  const addResponse = await fetch(url, {
+    method: "POST",
+    headers: { ...headers("customer-one"), "Content-Type": "application/json" },
+    body: JSON.stringify({ product_id: 8, variant_color: "Blue", variant_size: "M" }),
+  });
+  assert.equal(addResponse.status, 201);
+
+  const otherCustomerResponse = await fetch(`${url}/item/1`, {
+    method: "DELETE",
+    headers: headers("customer-two"),
+  });
+  assert.equal(otherCustomerResponse.status, 404);
+  assert.equal(pool.saved.size, 1);
+
+  const ownerResponse = await fetch(`${url}/item/1`, {
+    method: "DELETE",
+    headers: headers("customer-one"),
+  });
+  assert.equal(ownerResponse.status, 200);
+  assert.equal(pool.saved.size, 0);
 });
 
 test("wishlist validates selected color and size against the product", async (t) => {
