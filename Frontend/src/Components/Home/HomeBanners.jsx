@@ -74,7 +74,12 @@ function HomeBanners() {
       <div className="pointer-events-none absolute -bottom-[50%] -right-[12%] h-[72%] w-[70%] rotate-[-8deg] rounded-[50%] bg-violet-400/30" />
 
       <PageContainer className="relative flex flex-1 flex-col py-5 sm:py-7 lg:flex-row lg:items-center lg:py-6">
-        <div className="grid w-full flex-1 items-center gap-1 sm:gap-3 lg:grid-cols-[0.98fr_1.02fr] xl:gap-0">
+        <div
+          key={heroBanner?.id ?? activeHeroIndex}
+          className={`grid w-full flex-1 items-center gap-1 sm:gap-3 lg:grid-cols-[0.98fr_1.02fr] xl:gap-0 ${
+            heroBanners.length > 1 ? "home-hero-slide" : ""
+          }`}
+        >
           <div className="order-2 relative z-10 py-3 sm:py-4 lg:order-1 lg:py-0">
             <a
               href="#shop-by-category"

@@ -97,6 +97,22 @@ input[type="radio"]:not(:disabled) {
   animation: offer-marquee-single 8s linear infinite;
 }
 
+@keyframes home-hero-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.home-hero-slide {
+  animation: home-hero-slide-in 600ms ease-out both;
+}
+
 @keyframes offer-marquee-single {
   from {
     transform: translateX(100vw);
@@ -111,6 +127,10 @@ input[type="radio"]:not(:disabled) {
   .offer-marquee__track {
     animation: none;
     transform: none;
+  }
+
+  .home-hero-slide {
+    animation: none;
   }
 }
 
