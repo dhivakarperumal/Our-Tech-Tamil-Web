@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageContainer from "./PageContainer";
+import PageHeader from "./PageHeader";
 
 const supportTopics = [
   { label: "Customer Support", detail: "Help with your orders and products", Icon: Headphones, href: "#contact-form" },
@@ -79,30 +80,7 @@ function ContactUs() {
 
   return (
     <main className="bg-[#fcfaff] pb-10">
-      <section
-        className="relative isolate overflow-hidden bg-[#18062f] text-white"
-        style={{
-          backgroundImage: "url('/images/pageheader.png')",
-          backgroundPosition: "center",
-          backgroundSize: "cover",
-        }}
-      >
-        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#12051f]/95 via-[#21063a]/70 to-transparent" aria-hidden="true" />
-        <PageContainer className="!px-5 sm:!px-8 lg:!px-[5%]">
-          <div className="flex min-h-[205px] flex-col justify-center py-7 sm:min-h-[235px] sm:py-9">
-            <nav aria-label="Breadcrumb" className="mb-3 flex items-center gap-2 text-xs text-white/75">
-              <Link to="/" className="transition hover:text-white">Home</Link>
-              <span aria-hidden="true">›</span>
-              <span aria-current="page" className="text-white">Contact Us</span>
-            </nav>
-            <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl lg:text-5xl">Contact Us</h1>
-            <p className="mt-2 max-w-md text-sm leading-6 text-white/85 sm:text-base">
-              We&apos;d love to hear from you! Reach out to our team for orders, products, support or any other queries.
-            </p>
-            <span className="mt-4 h-1 w-12 rounded-full bg-fuchsia-500" aria-hidden="true" />
-          </div>
-        </PageContainer>
-      </section>
+      <PageHeader title="Contact Us" />
 
       <PageContainer className="!px-4 sm:!px-6 lg:!px-[3%]">
         <nav aria-label="Contact topics" className="relative z-10 -mt-4 mb-7 grid overflow-hidden rounded-2xl border border-[#eee2f9] bg-white shadow-[0_8px_24px_rgba(54,22,93,0.12)] sm:grid-cols-2 lg:-mt-5 lg:grid-cols-5">
