@@ -23,11 +23,18 @@ function ScrollAnimations() {
       : null;
 
     const observePageContent = () => {
-      root.querySelectorAll("main").forEach((main) => {
-        const content = main.querySelectorAll(
+      root.querySelectorAll("main, .route-page-content").forEach((page) => {
+        if (
+          page.classList.contains("route-page-content") &&
+          page.querySelector("main")
+        ) {
+          return;
+        }
+
+        const content = page.querySelectorAll(
           "section, article, form, [data-aos]",
         );
-        const targets = content.length ? content : main.children;
+        const targets = content.length ? content : page.children;
 
         targets.forEach((element) => {
           if (observedElements.has(element)) return;

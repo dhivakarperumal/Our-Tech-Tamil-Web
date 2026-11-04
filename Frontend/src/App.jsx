@@ -22,11 +22,12 @@ function App() {
       <Navbar />
       <ScrollToTop/>
       <ScrollNavigator/>
-      <Outlet />
+      <div className="route-page-content">
+        <Outlet />
+      </div>
       <Footer />
     </section>
   );
 }
 
 export default App;
-
