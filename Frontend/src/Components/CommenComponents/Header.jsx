@@ -73,7 +73,7 @@ const Header = () => {
           )}
 
           <div className="hidden items-center gap-4 lg:flex">
-            <Link to="/ordersmain" className="inline-flex items-center gap-1.5 whitespace-nowrap hover:text-accent">
+            <Link to="/account?tab=tracking" className="inline-flex items-center gap-1.5 whitespace-nowrap hover:text-accent">
               <MapPin size={13} aria-hidden="true" />
               Track Order
             </Link>

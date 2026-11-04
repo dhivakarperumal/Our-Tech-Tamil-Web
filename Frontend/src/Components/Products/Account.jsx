@@ -1,5 +1,5 @@
 ﻿import { useContext, useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Camera,
   CalendarDays,
@@ -979,7 +979,11 @@ const TABS = [
 function Account() {
   const { user, setUser, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("personal");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const activeTab = TABS.some(function({ id }) { return id === requestedTab; })
+    ? requestedTab
+    : "personal";
   const [showLogout, setShowLogout] = useState(false);
 
   const handleLogout = function() { logout(); navigate("/login"); };
@@ -1018,7 +1022,7 @@ function Account() {
                 <nav className="mt-4 space-y-1">
                   {TABS.map(function({ id, label, Icon }) {
                     return (
-                      <button key={id} type="button" onClick={function(){ setActiveTab(id); }}
+                      <button key={id} type="button" onClick={function(){ setSearchParams({ tab: id }); }}
                         className={"flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition " + (activeTab === id ? "border-l-4 border-primary bg-[#f3eaff] text-primary" : "text-gray-700 hover:bg-[#faf7ff] hover:text-primary")}>
                         <Icon size={18} />{label}
                       </button>
@@ -1032,7 +1036,7 @@ function Account() {
 
             <div data-aos="fade-up" className="min-w-0 flex-1 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
               {activeTab === "personal" && <PersonalDetails user={user} setUser={setUser} />}
-              {activeTab === "orders"   && <MyOrders user={user} onTrackOrder={function(){ setActiveTab("tracking"); }} />}
+              {activeTab === "orders"   && <MyOrders user={user} onTrackOrder={function(){ setSearchParams({ tab: "tracking" }); }} />}
               {activeTab === "tracking" && <MyOrders user={user} trackingMode />}
               {activeTab === "address"  && <MyAddresses key={user.user_id} user={user} />}
               {activeTab === "password" && <ChangePassword />}
