@@ -584,7 +584,7 @@ const Navbar = () => {
                 ) : <Link to="/login" onClick={() => setMobileMenu(false)} className="flex min-h-11 w-full items-center gap-3 rounded-xl px-1 text-sm font-semibold text-primary transition hover:bg-[#faf7ff]"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100"><UserRound size={18} /></span>Sign in</Link>}
               </div>
               {user && (
-                <button type="button" onClick={() => setLogoutConfirm(true)} className="mx-auto mt-2 inline-flex min-h-10 w-full max-w-[180px] items-center justify-center gap-2 rounded-xl border border-rose-100 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:border-rose-200 hover:bg-rose-100 sm:hidden">
+                <button type="button" onClick={() => setLogoutConfirm(true)} className="mt-2 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-xl border border-rose-100 bg-rose-50 px-4 py-2 text-sm font-bold text-rose-600 transition hover:border-rose-200 hover:bg-rose-100 sm:hidden">
                   <LogOut size={16} aria-hidden="true" />Logout
                 </button>
               )}
