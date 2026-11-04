@@ -39,8 +39,8 @@ const Header = () => {
 
           {headerOffers.length ? (
             <div className="offer-marquee mx-auto min-w-0 max-w-[75vw] flex-1 sm:max-w-[55vw] lg:max-w-[48vw]" aria-label="Current offers">
-              <div className="offer-marquee__track">
-                {[0, 1].map((copy) => (
+              <div className={`offer-marquee__track ${headerOffers.length === 1 ? "offer-marquee__track--single" : ""}`}>
+                {(headerOffers.length === 1 ? [0] : [0, 1]).map((copy) => (
                   <div key={copy} className="offer-marquee__group" aria-hidden={copy === 1}>
                     {headerOffers.map((offer) => (
                       <Link

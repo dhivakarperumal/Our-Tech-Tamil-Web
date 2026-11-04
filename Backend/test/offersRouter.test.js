@@ -32,8 +32,6 @@ const validOffer = {
   icon: "Tag",
   status: "active",
   show_in_header: true,
-  start_date: "2026-11-01",
-  end_date: "2026-12-01",
 };
 
 test("offer endpoints require admin authentication", async (t) => {
@@ -70,7 +68,6 @@ test("admin can create and list offers", async (t) => {
   assert.equal(inserted[0], validOffer.title);
   assert.equal(inserted[1], 10);
   assert.equal(inserted[5], true);
-  assert.equal(inserted[6], validOffer.start_date);
 
   const listed = await fetch(url, { headers: headers() });
   const listedBody = await listed.json();
@@ -80,11 +77,10 @@ test("admin can create and list offers", async (t) => {
   assert.equal(listedBody.offers[0].show_in_header, true);
 });
 
-test("public website header lists only selected active offers within their dates", async (t) => {
+test("public website header lists selected active offers", async (t) => {
   const url = await startTestServer(t, {
     async execute(query) {
       assert.match(query, /status = 'active' AND show_in_header = TRUE/);
-      assert.match(query, /start_date <= CURDATE\(\) AND end_date >= CURDATE\(\)/);
       return [[{ id: 42, title: validOffer.title, offer_percentage: validOffer.offer_percentage }]];
     },
   });
@@ -117,7 +113,7 @@ test("admin can independently toggle an offer in the website header", async (t) 
   assert.equal(result.show_in_header, true);
 });
 
-test("offer creation rejects invalid percentage, icon, status, and dates", async (t) => {
+test("offer creation rejects invalid percentage, icon, status, and header selection", async (t) => {
   const url = await startTestServer(t, {
     async execute() {
       throw new Error("Invalid offers must not access the database.");
@@ -129,8 +125,6 @@ test("offer creation rejects invalid percentage, icon, status, and dates", async
     { ...validOffer, icon: "NotAnIcon" },
     { ...validOffer, status: "pending" },
     { ...validOffer, show_in_header: "true" },
-    { ...validOffer, start_date: "2026-02-30" },
-    { ...validOffer, end_date: "2026-10-31" },
   ]) {
     const response = await fetch(url, {
       method: "POST",

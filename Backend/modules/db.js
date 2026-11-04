@@ -161,11 +161,9 @@ async function initializeDatabase(pool) {
       icon VARCHAR(32) NOT NULL DEFAULT 'Tag',
       status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
       show_in_header BOOLEAN NOT NULL DEFAULT FALSE,
-      start_date DATE NOT NULL,
-      end_date DATE NOT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      KEY offers_status_dates_idx (status, start_date, end_date),
+      KEY offers_status_header_idx (status, show_in_header),
       KEY offers_created_at_idx (created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
@@ -179,6 +177,19 @@ async function initializeDatabase(pool) {
     await pool.query(
       "ALTER TABLE offers ADD COLUMN show_in_header BOOLEAN NOT NULL DEFAULT FALSE AFTER status",
     );
+  }
+  const [offerIndexRows] = await pool.execute(
+    `SELECT DISTINCT INDEX_NAME
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'offers' AND INDEX_NAME = 'offers_status_dates_idx'`,
+  );
+  if (offerIndexRows.length) {
+    await pool.query("ALTER TABLE offers DROP INDEX offers_status_dates_idx");
+  }
+  for (const dateColumn of ["start_date", "end_date"]) {
+    if (offerColumns.has(dateColumn)) {
+      await pool.query(`ALTER TABLE offers DROP COLUMN ${dateColumn}`);
+    }
   }
 
   await pool.query(`

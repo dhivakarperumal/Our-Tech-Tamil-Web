@@ -45,45 +45,15 @@ const EMPTY_FORM = {
   icon: "Tag",
   status: "active",
   show_in_header: false,
-  start_date: "",
-  end_date: "",
 };
 
-const dateValue = (value) => {
-  if (!value) return "";
-  if (typeof value === "string") return value.slice(0, 10);
-  const date = new Date(value);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-};
-
-const todayValue = () => {
-  const today = new Date();
-  return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-};
-
-const formatDate = (value) => {
-  const date = dateValue(value);
-  if (!date) return "—";
-  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
-
-const getEffectiveStatus = (offer) => {
-  if (offer.status !== "active") return "Inactive";
-  const today = todayValue();
-  if (dateValue(offer.end_date) < today) return "Expired";
-  if (dateValue(offer.start_date) > today) return "Upcoming";
-  return "Active";
+const getOfferStatus = (offer) => {
+  return offer.status === "active" ? "Active" : "Inactive";
 };
 
 const statusStyles = {
   Active: "bg-emerald-50 text-emerald-700 ring-emerald-600/15",
   Inactive: "bg-slate-100 text-slate-600 ring-slate-500/15",
-  Expired: "bg-rose-50 text-rose-700 ring-rose-600/15",
-  Upcoming: "bg-amber-50 text-amber-700 ring-amber-600/15",
 };
 
 const Offers = () => {
@@ -140,8 +110,6 @@ const Offers = () => {
       icon: offer.icon || "Tag",
       status: offer.status || "active",
       show_in_header: Boolean(offer.show_in_header),
-      start_date: dateValue(offer.start_date),
-      end_date: dateValue(offer.end_date),
     } : { ...EMPTY_FORM });
   };
 
@@ -175,11 +143,6 @@ const Offers = () => {
       toast.error("Offer percentage must be between 0 and 100.");
       return;
     }
-    if (form.end_date < form.start_date) {
-      toast.error("End date must be on or after the start date.");
-      return;
-    }
-
     try {
       setSaving(true);
       if (dialog.mode === "edit") {
@@ -211,14 +174,14 @@ const Offers = () => {
 
   if (offers === null) return <Loader />;
 
-  const activeCount = offers.filter((offer) => getEffectiveStatus(offer) === "Active").length;
-  const scheduledCount = offers.filter((offer) => getEffectiveStatus(offer) === "Upcoming").length;
-  const expiredCount = offers.filter((offer) => getEffectiveStatus(offer) === "Expired").length;
+  const activeCount = offers.filter((offer) => getOfferStatus(offer) === "Active").length;
+  const inactiveCount = offers.length - activeCount;
+  const headerOfferCount = offers.filter((offer) => offer.status === "active" && offer.show_in_header).length;
   const offerStats = [
     { label: "Total offers", value: offers.length, sub: "All promotions", icon: Tag, gradient: "from-violet-800 to-fuchsia-700" },
     { label: "Live now", value: activeCount, sub: "Currently active", icon: Check, gradient: "from-emerald-400 to-teal-500" },
-    { label: "Scheduled", value: scheduledCount, sub: "Starting soon", icon: ShoppingBag, gradient: "from-orange-400 to-amber-500" },
-    { label: "Expired", value: expiredCount, sub: "Past end date", icon: CircleAlert, gradient: "from-rose-400 to-pink-500" },
+    { label: "Inactive", value: inactiveCount, sub: "Not currently active", icon: CircleAlert, gradient: "from-orange-400 to-amber-500" },
+    { label: "Header offers", value: headerOfferCount, sub: "Selected for website", icon: ShoppingBag, gradient: "from-rose-400 to-pink-500" },
   ];
 
   return (
@@ -313,7 +276,7 @@ const Offers = () => {
               <table className="w-full min-w-[860px] text-left">
                 <thead className="admin-table-header text-xs uppercase tracking-wide text-yellow-300">
                   <tr>
-                    {["S No.", "Offer", "Discount", "Validity", "Status", "Show in Header", "Actions"].map((heading) => (
+                    {["S No.", "Offer", "Discount", "Status", "Show in Header", "Actions"].map((heading) => (
                       <th key={heading} className="px-5 py-4 font-bold">{heading}</th>
                     ))}
                   </tr>
@@ -321,7 +284,7 @@ const Offers = () => {
                 <tbody className="divide-y divide-slate-100">
                   {filteredOffers.map((offer, index) => {
                     const Icon = OFFER_ICONS[offer.icon] || Tag;
-                    const status = getEffectiveStatus(offer);
+                    const status = getOfferStatus(offer);
                     return (
                       <tr key={offer.id} className="transition hover:bg-violet-50/30">
                         <td className="px-5 py-4 text-sm font-semibold text-slate-500">{index + 1}</td>
@@ -335,9 +298,6 @@ const Offers = () => {
                           </div>
                         </td>
                         <td className="px-5 py-4"><span className="inline-flex rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-extrabold text-amber-800">{Number(offer.offer_percentage)}% OFF</span></td>
-                        <td className="px-5 py-4 text-xs leading-5 text-slate-600">
-                          <div>{formatDate(offer.start_date)}</div><div className="text-slate-400">to {formatDate(offer.end_date)}</div>
-                        </td>
                         <td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${statusStyles[status]}`}>{status}</span></td>
                         <td className="px-5 py-4">
                           <label className="inline-flex min-h-8 min-w-8 cursor-pointer items-center justify-center" title={offer.show_in_header ? "Shown in website header" : "Hidden from website header"}>
@@ -369,7 +329,7 @@ const Offers = () => {
             <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
               {filteredOffers.map((offer) => {
                 const Icon = OFFER_ICONS[offer.icon] || Tag;
-                const status = getEffectiveStatus(offer);
+                const status = getOfferStatus(offer);
                 return (
                   <article key={offer.id} className="rounded-2xl border border-slate-100 p-5 shadow-sm transition hover:shadow-md">
                     <div className="flex items-start gap-3">
@@ -383,7 +343,6 @@ const Offers = () => {
                     </div>
                     <div className="mt-4 flex items-center justify-between gap-3">
                       <span className="rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-extrabold text-amber-800">{Number(offer.offer_percentage)}% OFF</span>
-                      <span className="text-right text-xs leading-5 text-slate-500">{formatDate(offer.start_date)} – {formatDate(offer.end_date)}</span>
                     </div>
                     <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600">
                       <input
@@ -420,7 +379,7 @@ const Offers = () => {
               <div className="pointer-events-none absolute -right-4 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
               <div className="relative">
                 <h2 id="offer-dialog-title" className="text-xl font-black uppercase tracking-tight sm:text-2xl">{dialog.mode === "view" ? dialog.offer.title : dialog.mode === "edit" ? "Edit Offer" : "Create New Offer"}</h2>
-                <p className="mt-1 text-[10px] font-black uppercase tracking-widest opacity-80">{dialog.mode === "view" ? "Offer details and validity" : "Manage offer details and promotion dates"}</p>
+                <p className="mt-1 text-[10px] font-black uppercase tracking-widest opacity-80">{dialog.mode === "view" ? "Offer details and visibility" : "Manage offer details and visibility"}</p>
               </div>
               <button type="button" onClick={closeDialog} className="relative rounded-2xl bg-white/15 p-3 text-xl font-bold transition-all hover:bg-white/25" aria-label="Close dialog"><X size={20} /></button>
             </div>
@@ -432,8 +391,8 @@ const Offers = () => {
                   <div><p className="text-2xl font-black text-violet-950">{Number(dialog.offer.offer_percentage)}% OFF</p><p className="mt-1 text-sm text-slate-500">Offer ID #{dialog.offer.id}</p></div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-xl border border-slate-100 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Status</p><p className="mt-2 font-bold text-slate-800">{getEffectiveStatus(dialog.offer)}</p></div>
-                  <div className="rounded-xl border border-slate-100 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Validity</p><p className="mt-2 text-sm font-semibold text-slate-800">{formatDate(dialog.offer.start_date)} – {formatDate(dialog.offer.end_date)}</p></div>
+                  <div className="rounded-xl border border-slate-100 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Status</p><p className="mt-2 font-bold text-slate-800">{getOfferStatus(dialog.offer)}</p></div>
+                <div className="rounded-xl border border-slate-100 p-4"><p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Website header</p><p className="mt-2 font-bold text-slate-800">{dialog.offer.show_in_header ? "Shown when active" : "Hidden"}</p></div>
                 </div>
                 <div><p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Description</p><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">{dialog.offer.description || "No description provided."}</p></div>
                 <div className="flex justify-end"><button type="button" onClick={() => openForm(dialog.offer)} className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-violet-800"><Pencil size={16} /> Edit offer</button></div>
@@ -475,14 +434,6 @@ const Offers = () => {
                       {Object.keys(OFFER_ICONS).map((icon) => <option key={icon} value={icon}>{icon}</option>)}
                     </select>
                     <span className="mt-2 inline-flex items-center gap-2 text-xs text-slate-500">{(() => { const Icon = OFFER_ICONS[form.icon]; return <Icon size={15} className="text-violet-600" />; })()} Preview</span>
-                  </label>
-                  <label>
-                    <span className="mb-1.5 block text-sm font-semibold text-slate-700">Start date <span className="text-rose-500">*</span></span>
-                    <input required type="date" value={form.start_date} onChange={(event) => setForm({ ...form, start_date: event.target.value })} className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100" />
-                  </label>
-                  <label>
-                    <span className="mb-1.5 block text-sm font-semibold text-slate-700">End date <span className="text-rose-500">*</span></span>
-                    <input required type="date" min={form.start_date || undefined} value={form.end_date} onChange={(event) => setForm({ ...form, end_date: event.target.value })} className="w-full rounded-xl border border-slate-200 px-3.5 py-3 text-sm outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100" />
                   </label>
                   <label className="sm:col-span-2">
                     <span className="mb-1.5 block text-sm font-semibold text-slate-700">Description</span>

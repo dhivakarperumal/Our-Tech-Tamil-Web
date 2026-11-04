@@ -78,7 +78,11 @@ input[type="radio"]:not(:disabled) {
 .offer-marquee__track {
   display: flex;
   width: max-content;
-  animation: offer-marquee-scroll 24s linear infinite;
+  animation: offer-marquee-scroll 18s linear infinite;
+}
+
+.offer-marquee__track--single {
+  animation: offer-marquee-single 11s linear infinite;
 }
 
 .offer-marquee__group {
@@ -101,6 +105,16 @@ input[type="radio"]:not(:disabled) {
 
   to {
     transform: translateX(-50%);
+  }
+}
+
+@keyframes offer-marquee-single {
+  from {
+    transform: translateX(100vw);
+  }
+
+  to {
+    transform: translateX(-100%);
   }
 }
 

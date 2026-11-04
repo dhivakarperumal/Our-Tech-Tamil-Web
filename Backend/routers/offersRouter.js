@@ -28,18 +28,6 @@ function requiredText(value, field, maxLength) {
   return text;
 }
 
-function parseDate(value, field) {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    throw httpError(400, `${field} is required and must be a valid date.`);
-  }
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  if (date.getUTCFullYear() !== year || date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) {
-    throw httpError(400, `${field} is required and must be a valid date.`);
-  }
-  return value;
-}
-
 function normalizeOffer(body = {}) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     throw httpError(400, "Offer details must be provided as an object.");
@@ -66,10 +54,6 @@ function normalizeOffer(body = {}) {
     throw httpError(400, "Show in header must be true or false.");
   }
 
-  const startDate = parseDate(body.start_date, "Start date");
-  const endDate = parseDate(body.end_date, "End date");
-  if (endDate < startDate) throw httpError(400, "End date must be on or after the start date.");
-
   return {
     title,
     offer_percentage: percentage,
@@ -77,13 +61,11 @@ function normalizeOffer(body = {}) {
     icon,
     status,
     show_in_header: body.show_in_header === true,
-    start_date: startDate,
-    end_date: endDate,
   };
 }
 
 const OFFER_COLUMNS = `
-  id, title, offer_percentage, description, icon, status, show_in_header, start_date, end_date,
+  id, title, offer_percentage, description, icon, status, show_in_header,
   created_at, updated_at
 `;
 
@@ -96,7 +78,6 @@ function createOffersRouter(pool) {
         `SELECT id, title, offer_percentage
          FROM offers
          WHERE status = 'active' AND show_in_header = TRUE
-           AND start_date <= CURDATE() AND end_date >= CURDATE()
          ORDER BY created_at DESC, id DESC`,
       );
       return response.json({ success: true, offers });
@@ -138,9 +119,9 @@ function createOffersRouter(pool) {
     try {
       const offer = normalizeOffer(request.body);
       const [result] = await pool.execute(
-        `INSERT INTO offers (title, offer_percentage, description, icon, status, show_in_header, start_date, end_date)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [offer.title, offer.offer_percentage, offer.description, offer.icon, offer.status, offer.show_in_header, offer.start_date, offer.end_date],
+        `INSERT INTO offers (title, offer_percentage, description, icon, status, show_in_header)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [offer.title, offer.offer_percentage, offer.description, offer.icon, offer.status, offer.show_in_header],
       );
       return response.status(201).json({ success: true, offer: { id: result.insertId, ...offer } });
     } catch (error) {
@@ -156,10 +137,9 @@ function createOffersRouter(pool) {
       const offer = normalizeOffer(request.body);
       const [result] = await pool.execute(
         `UPDATE offers SET
-          title = ?, offer_percentage = ?, description = ?, icon = ?, status = ?, show_in_header = ?,
-          start_date = ?, end_date = ?
+          title = ?, offer_percentage = ?, description = ?, icon = ?, status = ?, show_in_header = ?
          WHERE id = ?`,
-        [offer.title, offer.offer_percentage, offer.description, offer.icon, offer.status, offer.show_in_header, offer.start_date, offer.end_date, Number(request.params.id)],
+        [offer.title, offer.offer_percentage, offer.description, offer.icon, offer.status, offer.show_in_header, Number(request.params.id)],
       );
       if (!result.affectedRows) {
         const [rows] = await pool.execute("SELECT id FROM offers WHERE id = ? LIMIT 1", [Number(request.params.id)]);
