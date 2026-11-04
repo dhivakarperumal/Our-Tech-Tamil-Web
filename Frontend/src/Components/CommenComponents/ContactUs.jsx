@@ -200,8 +200,8 @@ function ContactUs() {
             aria-label="Visit Our Tech in Tirupathur"
             className="group relative isolate flex min-h-64 overflow-hidden rounded-2xl bg-[#230747] shadow-[0_7px_22px_rgba(54,22,93,0.12)]"
           >
-            <img src="/images/loginbanner.png" alt="" className="absolute inset-0 -z-20 h-full w-full object-cover object-[62%_center] transition duration-500 group-hover:scale-105" />
-            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#1a0635]/95 via-[#230747]/30 to-[#1a0635]/10" aria-hidden="true" />
+            <img src="/images/about1.png" alt="" className="absolute inset-0 -z-20 h-full w-full object-contain object-[62%_center] transition duration-500 group-hover:scale-105" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#1a0635]/10 via-[#230747]/10 to-[#1a0635]/10" aria-hidden="true" />
             <div className="mt-auto w-full p-5 text-white">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-sm font-semibold backdrop-blur-sm"><Store size={15} aria-hidden="true" /> OUR EXPERIENCE STORE</span>
               <h2 className="mt-2 text-xl font-extrabold">Visit Our Store</h2>
