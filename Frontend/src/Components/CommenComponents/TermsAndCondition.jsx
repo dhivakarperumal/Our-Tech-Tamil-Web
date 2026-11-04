@@ -215,7 +215,7 @@ const TermsAndConditions = () => {
                 </div>
               </div>
               <Link
-                to="/contact"
+                to="/contactus"
                 className="mt-2 flex items-center justify-center gap-2 rounded-full border border-primary bg-white px-3 py-2 text-[11px] font-bold text-primary transition hover:bg-primary hover:text-white"
               >
                 Contact Support <ArrowRight size={14} aria-hidden="true" />
