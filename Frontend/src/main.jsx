@@ -10,6 +10,7 @@ import PrivateRoute from "./PrivateRouter/PrivateRouter.jsx";
 import { AdminProvider } from "./PrivateRouter/AdminContext.jsx";
 import { Toaster } from "react-hot-toast";
 import Loader from "./Components/CommenComponents/Loader.jsx";
+import ScrollAnimations from "./Components/CommenComponents/ScrollAnimations.jsx";
 
 // Lazy Load Main Components
 const Home = React.lazy(() => import("./Components/Home/Home.jsx"));
@@ -129,6 +130,7 @@ createRoot(document.getElementById("root")).render(
     <AuthProvider>
       <StoreProvider>
         <Toaster position="top-left" reverseOrder={false} />
+        <ScrollAnimations />
         <React.Suspense fallback={<Loader />}>
           <RouterProvider router={router} />
         </React.Suspense>

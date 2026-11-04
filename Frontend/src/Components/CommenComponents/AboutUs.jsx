@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import api from "../../api";
 import HomeReviews from "../Home/HomeReviews";
+import CountUp from "./CountUp";
 import PageContainer from "./PageContainer";
 import PageHeader from "./PageHeader";
 
@@ -160,7 +161,7 @@ function AboutUs() {
               </span>
               <span>
                 <span className="block text-sm font-semibold text-[#514a61]">Trusted by</span>
-                <span className="block text-sm font-black leading-tight text-primary sm:text-base">50,000+</span>
+                <span className="block text-sm font-black leading-tight text-primary sm:text-base"><CountUp value={50000} suffix="+" /></span>
                 <span className="block text-sm text-[#615a70]">Happy Customers</span>
               </span>
             </div>
@@ -244,14 +245,19 @@ function AboutUs() {
 
         <section aria-label="OurTech at a glance" className="mt-12 grid grid-cols-2 divide-x divide-y divide-[#d9c7ee] overflow-hidden rounded-2xl border border-[#eee2f9] bg-[#f4efff] sm:mt-16 sm:grid-cols-4 sm:divide-y-0">
           {[
-            { value: "50,000+", label: "Happy Customers", Icon: UsersRound },
-            { value: "10,000+", label: "Products", Icon: Box },
-            { value: "100+", label: "Top Brands", Icon: BadgeCheck },
-            { value: averageRating ? `${averageRating.toFixed(1)} / 5` : "—", label: "Customer Rating", Icon: Star },
-          ].map(({ value, label, Icon }) => (
+            { value: 50000, suffix: "+", label: "Happy Customers", Icon: UsersRound },
+            { value: 10000, suffix: "+", label: "Products", Icon: Box },
+            { value: 100, suffix: "+", label: "Top Brands", Icon: BadgeCheck },
+            { value: averageRating, suffix: " / 5", decimals: 1, label: "Customer Rating", Icon: Star },
+          ].map(({ value, suffix, decimals = 0, label, Icon }) => (
             <div key={label} className="flex items-center justify-center gap-3 px-2 py-5 sm:py-6">
               <Icon size={25} strokeWidth={1.8} className="shrink-0 text-primary sm:h-7 sm:w-7" aria-hidden="true" />
-              <span><span className="block text-base font-black text-primary">{value}</span><span className="block text-sm text-[#615a70]">{label}</span></span>
+              <span>
+                <span className="block text-base font-black text-primary">
+                  {value === null ? "—" : <CountUp value={value} suffix={suffix} decimals={decimals} />}
+                </span>
+                <span className="block text-sm text-[#615a70]">{label}</span>
+              </span>
             </div>
           ))}
         </section>
