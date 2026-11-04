@@ -62,6 +62,9 @@ function normalizeOffer(body = {}) {
   if (!OFFER_ICONS.has(icon)) throw httpError(400, "Select a supported offer icon.");
   const status = requiredText(body.status, "Status", 16).toLowerCase();
   if (!OFFER_STATUSES.has(status)) throw httpError(400, "Status must be active or inactive.");
+  if (body.show_in_header !== undefined && typeof body.show_in_header !== "boolean") {
+    throw httpError(400, "Show in header must be true or false.");
+  }
 
   const startDate = parseDate(body.start_date, "Start date");
   const endDate = parseDate(body.end_date, "End date");
@@ -73,18 +76,35 @@ function normalizeOffer(body = {}) {
     description,
     icon,
     status,
+    show_in_header: body.show_in_header === true,
     start_date: startDate,
     end_date: endDate,
   };
 }
 
 const OFFER_COLUMNS = `
-  id, title, offer_percentage, description, icon, status, start_date, end_date,
+  id, title, offer_percentage, description, icon, status, show_in_header, start_date, end_date,
   created_at, updated_at
 `;
 
 function createOffersRouter(pool) {
   const router = express.Router();
+
+  router.get("/header", async (request, response, next) => {
+    try {
+      const [offers] = await pool.execute(
+        `SELECT id, title, offer_percentage
+         FROM offers
+         WHERE status = 'active' AND show_in_header = TRUE
+           AND start_date <= CURDATE() AND end_date >= CURDATE()
+         ORDER BY created_at DESC, id DESC`,
+      );
+      return response.json({ success: true, offers });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
   router.use(requireAdmin);
 
   router.get("/", async (request, response, next) => {
@@ -118,9 +138,9 @@ function createOffersRouter(pool) {
     try {
       const offer = normalizeOffer(request.body);
       const [result] = await pool.execute(
-        `INSERT INTO offers (title, offer_percentage, description, icon, status, start_date, end_date)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [offer.title, offer.offer_percentage, offer.description, offer.icon, offer.status, offer.start_date, offer.end_date],
+        `INSERT INTO offers (title, offer_percentage, description, icon, status, show_in_header, start_date, end_date)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [offer.title, offer.offer_percentage, offer.description, offer.icon, offer.status, offer.show_in_header, offer.start_date, offer.end_date],
       );
       return response.status(201).json({ success: true, offer: { id: result.insertId, ...offer } });
     } catch (error) {
@@ -136,16 +156,39 @@ function createOffersRouter(pool) {
       const offer = normalizeOffer(request.body);
       const [result] = await pool.execute(
         `UPDATE offers SET
-          title = ?, offer_percentage = ?, description = ?, icon = ?, status = ?,
+          title = ?, offer_percentage = ?, description = ?, icon = ?, status = ?, show_in_header = ?,
           start_date = ?, end_date = ?
          WHERE id = ?`,
-        [offer.title, offer.offer_percentage, offer.description, offer.icon, offer.status, offer.start_date, offer.end_date, Number(request.params.id)],
+        [offer.title, offer.offer_percentage, offer.description, offer.icon, offer.status, offer.show_in_header, offer.start_date, offer.end_date, Number(request.params.id)],
       );
       if (!result.affectedRows) {
         const [rows] = await pool.execute("SELECT id FROM offers WHERE id = ? LIMIT 1", [Number(request.params.id)]);
         if (!rows.length) return response.status(404).json({ message: "Offer not found." });
       }
       return response.json({ success: true, offer: { id: Number(request.params.id), ...offer } });
+    } catch (error) {
+      return next(error);
+    }
+  });
+
+  router.patch("/:id/header", async (request, response, next) => {
+    try {
+      if (!/^\d+$/.test(request.params.id) || Number(request.params.id) < 1) {
+        return response.status(400).json({ message: "Offer ID must be a positive integer." });
+      }
+      if (typeof request.body?.show_in_header !== "boolean") {
+        return response.status(400).json({ message: "Show in header must be true or false." });
+      }
+      const id = Number(request.params.id);
+      const [result] = await pool.execute(
+        "UPDATE offers SET show_in_header = ? WHERE id = ?",
+        [request.body.show_in_header, id],
+      );
+      if (!result.affectedRows) {
+        const [rows] = await pool.execute("SELECT id FROM offers WHERE id = ? LIMIT 1", [id]);
+        if (!rows.length) return response.status(404).json({ message: "Offer not found." });
+      }
+      return response.json({ success: true, id, show_in_header: request.body.show_in_header });
     } catch (error) {
       return next(error);
     }

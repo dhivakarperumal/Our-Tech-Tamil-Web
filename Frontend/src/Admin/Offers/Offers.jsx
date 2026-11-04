@@ -6,6 +6,7 @@ import {
   Gift,
   Heart,
   LayoutGrid,
+  LoaderCircle,
   List,
   Pencil,
   Plus,
@@ -43,6 +44,7 @@ const EMPTY_FORM = {
   description: "",
   icon: "Tag",
   status: "active",
+  show_in_header: false,
   start_date: "",
   end_date: "",
 };
@@ -90,9 +92,9 @@ const Offers = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState("table");
-  const [headerOnly, setHeaderOnly] = useState(false);
   const [dialog, setDialog] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [updatingHeaderIds, setUpdatingHeaderIds] = useState(() => new Set());
 
   const fetchOffers = async () => {
     try {
@@ -137,12 +139,34 @@ const Offers = () => {
       description: offer.description || "",
       icon: offer.icon || "Tag",
       status: offer.status || "active",
+      show_in_header: Boolean(offer.show_in_header),
       start_date: dateValue(offer.start_date),
       end_date: dateValue(offer.end_date),
     } : { ...EMPTY_FORM });
   };
 
   const closeDialog = () => setDialog(null);
+
+  const updateHeaderVisibility = async (offer, showInHeader) => {
+    setUpdatingHeaderIds((current) => new Set(current).add(offer.id));
+    setOffers((current) => current.map((item) => item.id === offer.id
+      ? { ...item, show_in_header: showInHeader }
+      : item));
+    try {
+      await api.patch(`/offers/${offer.id}/header`, { show_in_header: showInHeader });
+    } catch (error) {
+      setOffers((current) => current.map((item) => item.id === offer.id
+        ? { ...item, show_in_header: Boolean(offer.show_in_header) }
+        : item));
+      toast.error(error.response?.data?.message || `Could not update header visibility for "${offer.title}".`);
+    } finally {
+      setUpdatingHeaderIds((current) => {
+        const next = new Set(current);
+        next.delete(offer.id);
+        return next;
+      });
+    }
+  };
 
   const saveOffer = async (event) => {
     event.preventDefault();
@@ -200,17 +224,6 @@ const Offers = () => {
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-10 text-slate-900">
       <section aria-label="Offer summary">
-        <div className="mb-3 flex justify-end">
-          <label className="inline-flex cursor-pointer items-center gap-2.5 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-semibold text-violet-800 shadow-sm transition hover:border-violet-400 hover:bg-violet-50">
-            <input
-              type="checkbox"
-              checked={headerOnly}
-              onChange={(event) => setHeaderOnly(event.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 accent-violet-700 focus:ring-2 focus:ring-violet-500"
-            />
-            Show only the top header
-          </label>
-        </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {offerStats.map(({ label, value, sub, icon: Icon, gradient }) => (
             <div key={label} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:shadow-md">
@@ -227,7 +240,6 @@ const Offers = () => {
         </div>
       </section>
 
-      {!headerOnly && (
       <>
       <section aria-label="Search and filter offers" className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
         <label className="relative w-full min-w-[180px] flex-1 sm:max-w-md">
@@ -298,10 +310,10 @@ const Offers = () => {
           <>
             {viewMode === "table" ? (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left">
+              <table className="w-full min-w-[860px] text-left">
                 <thead className="admin-table-header text-xs uppercase tracking-wide text-yellow-300">
                   <tr>
-                    {["S No.", "Offer", "ID", "Discount", "Validity", "Status", "Actions"].map((heading) => (
+                    {["S No.", "Offer", "Discount", "Validity", "Status", "Show in Header", "Actions"].map((heading) => (
                       <th key={heading} className="px-5 py-4 font-bold">{heading}</th>
                     ))}
                   </tr>
@@ -322,12 +334,24 @@ const Offers = () => {
                             </div>
                           </div>
                         </td>
-                        <td className="px-5 py-4 text-sm font-semibold text-slate-600">#{offer.id}</td>
                         <td className="px-5 py-4"><span className="inline-flex rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-extrabold text-amber-800">{Number(offer.offer_percentage)}% OFF</span></td>
                         <td className="px-5 py-4 text-xs leading-5 text-slate-600">
                           <div>{formatDate(offer.start_date)}</div><div className="text-slate-400">to {formatDate(offer.end_date)}</div>
                         </td>
                         <td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset ${statusStyles[status]}`}>{status}</span></td>
+                        <td className="px-5 py-4">
+                          <label className="inline-flex min-h-8 min-w-8 cursor-pointer items-center justify-center" title={offer.show_in_header ? "Shown in website header" : "Hidden from website header"}>
+                            <input
+                              type="checkbox"
+                              checked={Boolean(offer.show_in_header)}
+                              disabled={updatingHeaderIds.has(offer.id)}
+                              onChange={(event) => updateHeaderVisibility(offer, event.target.checked)}
+                              aria-label={`Show ${offer.title} in website header`}
+                              className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-violet-700 disabled:cursor-wait disabled:opacity-50"
+                            />
+                            {updatingHeaderIds.has(offer.id) && <LoaderCircle size={13} className="ml-1 animate-spin text-violet-600" aria-label="Saving header visibility" />}
+                          </label>
+                        </td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-1">
                             <button type="button" onClick={() => setDialog({ mode: "view", offer })} title="View offer" className="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-violet-700"><Eye size={16} /></button>
@@ -361,6 +385,18 @@ const Offers = () => {
                       <span className="rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-extrabold text-amber-800">{Number(offer.offer_percentage)}% OFF</span>
                       <span className="text-right text-xs leading-5 text-slate-500">{formatDate(offer.start_date)} – {formatDate(offer.end_date)}</span>
                     </div>
+                    <label className="mt-3 inline-flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-600">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(offer.show_in_header)}
+                        disabled={updatingHeaderIds.has(offer.id)}
+                        onChange={(event) => updateHeaderVisibility(offer, event.target.checked)}
+                        aria-label={`Show ${offer.title} in website header`}
+                        className="h-4 w-4 cursor-pointer rounded border-slate-300 accent-violet-700 disabled:cursor-wait disabled:opacity-50"
+                      />
+                      Show in website header
+                      {updatingHeaderIds.has(offer.id) && <LoaderCircle size={13} className="animate-spin text-violet-600" aria-label="Saving header visibility" />}
+                    </label>
                     <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-slate-500">{offer.description || "No description provided."}</p>
                     <div className="mt-3 flex justify-end gap-1 border-t border-slate-100 pt-2">
                       <button type="button" onClick={() => setDialog({ mode: "view", offer })} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="View offer"><Eye size={16} /></button>
@@ -376,7 +412,6 @@ const Offers = () => {
         )}
       </section>
       </>
-      )}
 
       {dialog && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) closeDialog(); }}>
@@ -412,6 +447,15 @@ const Offers = () => {
                     value={dialog.mode === "edit" ? dialog.offer.id : "Generated automatically"}
                     className="w-full cursor-not-allowed rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm font-medium text-slate-500 outline-none"
                   />
+                </label>
+                <label className="inline-flex cursor-pointer items-center gap-2.5 rounded-xl border border-violet-100 bg-violet-50/60 px-4 py-3 text-sm font-semibold text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(form.show_in_header)}
+                    onChange={(event) => setForm({ ...form, show_in_header: event.target.checked })}
+                    className="h-4 w-4 rounded border-slate-300 accent-violet-700 focus:ring-2 focus:ring-violet-500"
+                  />
+                  Show on Website Header
                 </label>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <label className="sm:col-span-2">

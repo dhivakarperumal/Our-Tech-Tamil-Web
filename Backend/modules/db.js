@@ -160,6 +160,7 @@ async function initializeDatabase(pool) {
       description TEXT NULL,
       icon VARCHAR(32) NOT NULL DEFAULT 'Tag',
       status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+      show_in_header BOOLEAN NOT NULL DEFAULT FALSE,
       start_date DATE NOT NULL,
       end_date DATE NOT NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -168,6 +169,17 @@ async function initializeDatabase(pool) {
       KEY offers_created_at_idx (created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
+  const [offerColumnRows] = await pool.execute(
+    `SELECT COLUMN_NAME
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'offers'`,
+  );
+  const offerColumns = new Set(offerColumnRows.map((column) => column.COLUMN_NAME));
+  if (!offerColumns.has("show_in_header")) {
+    await pool.query(
+      "ALTER TABLE offers ADD COLUMN show_in_header BOOLEAN NOT NULL DEFAULT FALSE AFTER status",
+    );
+  }
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS combos (

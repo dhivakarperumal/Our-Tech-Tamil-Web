@@ -71,6 +71,45 @@ input[type="radio"]:not(:disabled) {
   );
 }
 
+.offer-marquee {
+  overflow: hidden;
+}
+
+.offer-marquee__track {
+  display: flex;
+  width: max-content;
+  animation: offer-marquee-scroll 24s linear infinite;
+}
+
+.offer-marquee__group {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.offer-marquee:hover .offer-marquee__track,
+.offer-marquee:focus-within .offer-marquee__track {
+  animation-play-state: paused;
+}
+
+@keyframes offer-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .offer-marquee__track {
+    animation: none;
+  }
+}
+
 .login-promo-content {
   padding-top: 10vh;
 }
