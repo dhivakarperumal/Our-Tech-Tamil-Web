@@ -17,7 +17,9 @@ import {
   UsersRound,
   Zap,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import emailjs from "@emailjs/browser";
+import { useState } from "react";
+import { toast } from "react-hot-toast";
 import PageContainer from "./PageContainer";
 import PageHeader from "./PageHeader";
 
@@ -63,19 +65,31 @@ const inputClass =
   "mt-1.5 w-full rounded-lg border border-[#e7dff0] bg-white px-3 py-2.5 text-base text-[#211936] outline-none transition placeholder:text-[#9b93a8] focus:border-primary focus:ring-2 focus:ring-primary/10";
 
 function ContactUs() {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const subject = `[Website Contact] ${formData.get("subject")}`;
-    const body = [
-      `Name: ${formData.get("name")}`,
-      `Email: ${formData.get("email")}`,
-      `Phone: ${formData.get("phone") || "Not provided"}`,
-      "",
-      formData.get("message"),
-    ].join("\n");
+  const [isSending, setIsSending] = useState(false);
 
-    window.location.href = `mailto:support@ourtechtamil.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID?.trim();
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID?.trim();
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY?.trim();
+
+    if (!serviceId || !templateId || !publicKey) {
+      toast.error("Email service is not configured. Please contact us by email.");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      await emailjs.sendForm(serviceId, templateId, form, { publicKey });
+      form.reset();
+      toast.success("Your message was sent successfully.");
+    } catch (error) {
+      console.error("Failed to send contact form:", error);
+      toast.error("Unable to send your message. Please try again or email us directly.");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -149,8 +163,8 @@ function ContactUs() {
                 <textarea className={`${inputClass} min-h-20 resize-y`} name="message" placeholder="Write your message here..." required maxLength={3000} />
               </label>
               <div className="sm:col-span-2">
-                <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-5 py-2.5 text-sm font-bold text-white shadow-[0_5px_14px_rgba(103,21,181,0.22)] transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                  Send Message <Send size={16} aria-hidden="true" />
+                <button type="submit" disabled={isSending} className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-5 py-2.5 text-sm font-bold text-white shadow-[0_5px_14px_rgba(103,21,181,0.22)] transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-not-allowed disabled:opacity-60">
+                  {isSending ? "Sending..." : "Send Message"} <Send size={16} aria-hidden="true" />
                 </button>
               </div>
             </form>
