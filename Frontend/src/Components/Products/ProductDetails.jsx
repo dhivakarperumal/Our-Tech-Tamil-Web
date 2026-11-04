@@ -718,7 +718,7 @@ function ProductDetails() {
               Related Products
             </h2>
           </div>
-          <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-5 lg:grid-cols-3 2xl:grid-cols-4">
+          <div className="grid grid-cols-2 items-stretch gap-3 sm:gap-5 lg:grid-cols-4 2xl:grid-cols-5">
             {relatedProducts.map((relatedProduct) => (
               <ProductCard key={relatedProduct.id} product={relatedProduct} compact dense />
             ))}
