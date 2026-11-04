@@ -222,7 +222,7 @@ function AboutUs() {
           <div className="flex flex-col justify-center py-1 lg:pr-2">
             <p className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-primary sm:text-xs"><span className="h-px w-5 bg-primary" aria-hidden="true" /> Our Core Values</p>
             <h2 id="values-heading" className="mt-1 text-2xl font-black leading-tight text-[#17123b] sm:text-3xl">What Drives Us</h2>
-            <p className="mt-2 max-w-sm text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
+            <p className="mt-2 max-w-sm text-justify text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
               Our values guide everything we do — from the products we select to the support we provide. They shape how we bring genuine technology to our customers, create a dependable shopping experience and offer helpful guidance at every step. We believe great technology should be accessible, reliable and useful in everyday life.
             </p>
             <Link to="/contactus" className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-4 py-2.5 text-xs font-bold text-white transition hover:shadow-md">
