@@ -108,7 +108,8 @@ test("public combo detail returns the active combo and included product details"
           product_code: "PAN-2",
           mrp: 300,
           offer_price: 250,
-          images: '["/uploads/pan.jpg"]',
+          images: "[]",
+          variants: '[{"images":["/uploads/pan-variant.jpg"]}]',
         }]];
       }
       throw new Error(`Unexpected query: ${query}`);
@@ -118,7 +119,7 @@ test("public combo detail returns the active combo and included product details"
   const result = await response.json();
   assert.equal(response.status, 200);
   assert.equal(result.combo.name, "Kitchen starter set");
-  assert.deepEqual(result.combo.products[0].images, ["/uploads/pan.jpg"]);
+  assert.deepEqual(result.combo.products[0].images, ["/uploads/pan-variant.jpg"]);
   assert.equal(result.combo.products[0].quantity, 3);
   assert.deepEqual(result.combo.specifications, [{ key: "Material", value: "Steel" }]);
 });

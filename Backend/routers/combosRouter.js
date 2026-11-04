@@ -245,7 +245,7 @@ function createCombosRouter(pool) {
       let productRows = [];
       if (productIds.length) {
         const [products] = await pool.execute(
-          `SELECT id, name, product_code, category, subcategory, mrp, offer_price, images
+          `SELECT id, name, product_code, category, subcategory, mrp, offer_price, images, variants
            FROM products WHERE status = 'Active' AND id IN (${productIds.map(() => "?").join(", ")})`,
           productIds,
         );
@@ -263,7 +263,11 @@ function createCombosRouter(pool) {
             const product = productById.get(Number(item.id));
             return product ? {
               ...product,
-              images: parseList(product.images, "Product images", 100),
+              images: [...new Set([
+                ...parseList(product.variants, "Product variants", 100)
+                  .flatMap((variant) => parseList(variant?.images, "Variant images", 100)),
+                ...parseList(product.images, "Product images", 100),
+              ])],
               quantity: Number(item.quantity) || 1,
             } : null;
           }).filter(Boolean),

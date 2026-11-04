@@ -146,7 +146,7 @@ function ComboProductDetail() {
           ) : (
             <>
               <section className="grid gap-6 rounded-2xl border border-border bg-white p-4 shadow-sm sm:p-6 lg:grid-cols-2 lg:gap-10 lg:p-8">
-                <div className="relative lg:z-20">
+                <div className="relative lg:sticky lg:top-24 lg:z-20 lg:self-start">
                   <button
                     type="button"
                     onClick={() => activeImage && !imageFailed && setIsImageZoomOpen(true)}
@@ -314,17 +314,6 @@ function ComboProductDetail() {
                       {combo.description || "No description available."}
                     </p>
                   </div>
-                  {specifications.length > 0 && (
-                    <dl className="mt-5 divide-y divide-border border-y border-border">
-                      {specifications.map((specification, index) => (
-                        <div key={`${specification.key}-${index}`} className="flex justify-between gap-4 py-2.5 text-sm">
-                          <dt className="font-semibold text-text-primary">{specification.key}</dt>
-                          <dd className="text-right text-text-secondary">{specification.value}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  )}
-
                   <div className="mt-5 grid grid-cols-2 gap-3">
                     <div className="rounded-xl bg-violet-50 p-3">
                       <p className="text-xs text-violet-600">Bundle contents</p>
@@ -374,6 +363,16 @@ function ComboProductDetail() {
                       <p className="mt-3 text-sm text-text-secondary">Product details are currently unavailable.</p>
                     )}
                   </section>
+                  {specifications.length > 0 && (
+                    <dl className="mt-5 divide-y divide-border border-y border-border">
+                      {specifications.map((specification, index) => (
+                        <div key={`${specification.key}-${index}`} className="flex justify-between gap-4 py-2.5 text-sm">
+                          <dt className="font-semibold text-text-primary">{specification.key}</dt>
+                          <dd className="text-right text-text-secondary">{specification.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  )}
                 </div>
               </section>
 
