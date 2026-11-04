@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from "react";
-import { Boxes, Heart, Minus, Package, Plus, ShieldCheck, ShoppingCart, X, Zap } from "lucide-react";
+import { Boxes, Heart, Minus, Package, Plus, ShieldCheck, ShoppingCart, Star, X, Zap } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import api from "../../api";
@@ -385,43 +385,107 @@ function ComboProductDetail() {
                     Related combos could not be loaded.
                   </p>
                 ) : relatedCombos.length ? (
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
+                  <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4 2xl:grid-cols-5">
                     {relatedCombos.map((relatedCombo) => {
                       const relatedImage = imageUrl(parseList(relatedCombo.gallery_images)[0]);
                       const relatedPrice = Number(relatedCombo.final_price ?? relatedCombo.offer_price ?? 0);
                       const relatedMrp = Number(relatedCombo.mrp ?? 0);
+                      const relatedCount = parseList(relatedCombo.products).length;
+                      const hasDiscount = relatedMrp > relatedPrice;
+                      const discount = hasDiscount
+                        ? Math.round(((relatedMrp - relatedPrice) / relatedMrp) * 100)
+                        : 0;
+                      const rating = Math.min(5, Math.max(0, Number(relatedCombo.rating) || 0));
+                      const relatedMinimumQuantity = Math.max(1, Number(relatedCombo.minimum_order_quantity) || 1);
+                      const relatedTracksInventory = Number(relatedCombo.track_inventory) === 1;
+                      const relatedAllowsBackorders = Number(relatedCombo.allow_backorders) === 1;
+                      const relatedAvailable = !relatedTracksInventory || relatedAllowsBackorders ||
+                        Number(relatedCombo.available_stock) >= relatedMinimumQuantity;
+                      const relatedIsFavorite = wishlist.some(
+                        (item) => Number(item.combo_id) === Number(relatedCombo.id),
+                      );
                       return (
-                        <Link
-                          key={relatedCombo.id}
-                          to={`/combos/${relatedCombo.id}`}
-                          className="group overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-                        >
-                          <div className="aspect-square overflow-hidden bg-violet-50">
-                            {relatedImage ? (
-                              <img
-                                src={relatedImage}
-                                alt={relatedCombo.name}
-                                loading="lazy"
-                                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                              />
-                            ) : (
-                              <div className="flex h-full items-center justify-center text-violet-300">
-                                <Boxes size={42} strokeWidth={1.5} aria-hidden="true" />
-                              </div>
+                        <article key={relatedCombo.id} className="group flex h-full min-w-0 flex-col rounded-[26px] border border-violet-200 bg-white p-2.5 shadow-[0_12px_28px_rgba(75,0,200,0.06)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(75,0,200,0.12)]">
+                          <div className="relative">
+                            {hasDiscount && (
+                              <span className="absolute left-3 top-3 z-10 rounded-full bg-[#4B00C8] px-2.5 py-1 text-[10px] font-extrabold tracking-tight text-white shadow-md">
+                                {discount}% OFF
+                              </span>
                             )}
-                          </div>
-                          <div className="p-3">
-                            <h3 className="line-clamp-2 min-h-10 text-sm font-bold text-slate-800 group-hover:text-primary">
-                              {relatedCombo.name}
-                            </h3>
-                            <div className="mt-2 flex flex-wrap items-baseline gap-2">
-                              <span className="text-sm font-extrabold text-primary">{currency(relatedPrice)}</span>
-                              {relatedMrp > relatedPrice && (
-                                <span className="text-xs text-slate-400 line-through">{currency(relatedMrp)}</span>
+                            <button
+                              type="button"
+                              onClick={() => toggleComboWishlist(relatedCombo)}
+                              aria-label={relatedIsFavorite ? `Remove ${relatedCombo.name} from favorites` : `Add ${relatedCombo.name} to favorites`}
+                              aria-pressed={relatedIsFavorite}
+                              className={`absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-[#e6d8f7] bg-white/90 shadow-sm transition hover:scale-105 hover:bg-white ${relatedIsFavorite ? "text-rose-600" : "text-[#4B00C8]"}`}
+                            >
+                              <Heart size={16} strokeWidth={2.2} fill={relatedIsFavorite ? "currentColor" : "none"} aria-hidden="true" />
+                            </button>
+                            <Link
+                              to={`/combos/${relatedCombo.id}`}
+                              aria-label={`View ${relatedCombo.name}`}
+                              className="block aspect-square overflow-hidden rounded-[20px] bg-[#f2ebf8]"
+                            >
+                              {relatedImage ? (
+                                <img src={relatedImage} alt={relatedCombo.name} loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                              ) : (
+                                <div className="flex h-full items-center justify-center text-[#4B00C8]/30"><Boxes size={56} strokeWidth={1.5} /></div>
                               )}
+                            </Link>
+                          </div>
+                          <div className="flex flex-1 flex-col px-1 pb-1 pt-3">
+                            <div className="flex min-w-0 items-center gap-2 text-[#4B00C8]">
+                              <Boxes size={14} strokeWidth={2.3} aria-hidden="true" />
+                              <span className="min-w-0 flex-1 truncate text-[9px] font-extrabold uppercase tracking-[0.14em]">
+                                {[relatedCombo.category_type, relatedCombo.category].filter(Boolean).join(" · ") || "Combo"}
+                              </span>
+                              <span className="shrink-0 rounded-lg bg-violet-50 px-2 py-1 text-[10px] font-semibold text-violet-700">
+                                {relatedCount} {relatedCount === 1 ? "item" : "items"}
+                              </span>
+                            </div>
+                            <h3 className="mt-1.5 min-h-[2rem] line-clamp-2 text-sm font-extrabold leading-[1.2] tracking-[-0.035em] text-[#111027]">
+                              <Link to={`/combos/${relatedCombo.id}`} className="transition hover:text-[#4B00C8]">{relatedCombo.name}</Link>
+                            </h3>
+                            <div className="mt-1.5 flex items-center gap-1 text-[10px]" role="img" aria-label={`Rating ${rating.toFixed(1)} out of 5`}>
+                              <span className="flex items-center gap-0.5 text-amber-500">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    size={11}
+                                    aria-hidden="true"
+                                    className={star <= Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-slate-300"}
+                                  />
+                                ))}
+                              </span>
+                              <span className="font-bold text-slate-700">{rating ? rating.toFixed(1) : "New"}</span>
+                              {rating > 0 && <span className="text-slate-400">/ 5</span>}
+                            </div>
+                            <div className="mt-2.5 flex items-end justify-between gap-2">
+                              <div className="flex min-w-0 items-baseline gap-2">
+                                <span className="shrink-0 text-base font-extrabold tracking-[-0.04em] text-[#4B00C8]">{currency(relatedPrice)}</span>
+                                {hasDiscount && <span className="truncate text-[10px] font-medium text-[#6B6478] line-through">{currency(relatedMrp)}</span>}
+                              </div>
+                              {hasDiscount && <span className="shrink-0 rounded-full bg-[#efe0ff] px-2 py-1 text-[8px] font-bold text-[#4B00C8]">Save {currency(relatedMrp - relatedPrice)}</span>}
+                            </div>
+                            {!relatedAvailable && <p className="mt-1 text-[10px] font-semibold text-rose-600">Out of stock</p>}
+                            <div className="mt-auto grid grid-cols-1 gap-2 pt-3 sm:grid-cols-2">
+                              <button
+                                type="button"
+                                disabled={!relatedAvailable}
+                                onClick={() => addComboToCart(relatedCombo, relatedMinimumQuantity)}
+                                className="inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-[12px] border border-[#4B00C8] bg-white px-2 py-2 text-[10px] font-extrabold text-[#4B00C8] shadow-sm transition hover:bg-[#f1ebff] disabled:cursor-not-allowed disabled:opacity-50"
+                              ><ShoppingCart className="shrink-0" size={14} aria-hidden="true" /><span className="whitespace-nowrap">Add to Cart</span></button>
+                              <button
+                                type="button"
+                                disabled={!relatedAvailable}
+                                onClick={async () => {
+                                  if (await addComboToCart(relatedCombo, relatedMinimumQuantity)) navigate("/checkout");
+                                }}
+                                className="inline-flex min-h-10 min-w-0 items-center justify-center gap-1.5 rounded-[12px] bg-[#4B00C8] px-2 py-2 text-[10px] font-extrabold text-white shadow-[0_8px_18px_rgba(75,0,200,0.25)] transition hover:bg-[#3d00a9] disabled:cursor-not-allowed disabled:opacity-50"
+                              ><Zap className="shrink-0" size={14} aria-hidden="true" /><span className="whitespace-nowrap">Buy Now</span></button>
                             </div>
                           </div>
-                        </Link>
+                        </article>
                       );
                     })}
                   </div>
