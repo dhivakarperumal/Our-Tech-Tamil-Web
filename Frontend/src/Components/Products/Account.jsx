@@ -986,25 +986,27 @@ function Account() {
 
   if (!user) {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center px-4 py-16">
-        <div className="w-full max-w-sm rounded-2xl border border-[#e9def5] bg-white p-8 text-center shadow-sm">
+      <main className="flex min-h-[60vh] items-center justify-center px-4 py-16">
+        <div data-aos="fade-up" className="w-full max-w-sm rounded-2xl border border-[#e9def5] bg-white p-8 text-center shadow-sm">
           <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary"><UserRound size={32} /></span>
           <h2 className="mt-5 text-xl font-extrabold text-[#1a0745]">Sign in to your account</h2>
           <p className="mt-2 text-sm text-gray-500">Access your profile, orders and more.</p>
           <Link to="/login" className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-gradient-middle py-3 text-sm font-bold text-white shadow-lg transition hover:brightness-110">Sign In</Link>
         </div>
-      </div>
+      </main>
     );
   }
 
   return (
-    <>
-      <PageHeader title="My Account" align="left" />
+    <main>
+      <div data-aos="fade-up">
+        <PageHeader title="My Account" align="left" />
+      </div>
 
       <div className="bg-[#faf9fc] py-8 sm:py-12">
         <PageContainer>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-            <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:w-64 lg:self-start">
+            <aside data-aos="fade-up" className="w-full shrink-0 lg:sticky lg:top-20 lg:w-64 lg:self-start">
               <div className="rounded-2xl border border-[#e9def5] bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-3 border-b border-[#f0e8ff] pb-4">
                   <Avatar name={user.username} size="lg" />
@@ -1028,7 +1030,7 @@ function Account() {
               </div>
             </aside>
 
-            <div className="min-w-0 flex-1 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
+            <div data-aos="fade-up" className="min-w-0 flex-1 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
               {activeTab === "personal" && <PersonalDetails user={user} setUser={setUser} />}
               {activeTab === "orders"   && <MyOrders user={user} onTrackOrder={function(){ setActiveTab("tracking"); }} />}
               {activeTab === "tracking" && <MyOrders user={user} trackingMode />}
@@ -1078,7 +1080,7 @@ function Account() {
           </section>
         </div>
       )}
-    </>
+    </main>
   );
 }
 
