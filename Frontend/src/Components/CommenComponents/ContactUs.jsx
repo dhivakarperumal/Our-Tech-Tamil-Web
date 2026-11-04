@@ -88,7 +88,7 @@ function ContactUs() {
             <a
               key={label}
               href={href}
-              className={`group flex items-center gap-3 px-4 py-3.5 transition hover:bg-[#fbf6ff] sm:px-5 ${index > 0 ? "border-t border-[#eee7f5] lg:border-l lg:border-t-0" : ""} ${index % 2 === 1 ? "sm:border-l" : ""} ${index === 1 ? "sm:border-t-0" : ""}`}
+              className={`group flex min-h-[96px] items-center gap-3 px-4 py-4 transition hover:bg-[#fbf6ff] sm:px-5 ${index > 0 ? "border-t border-[#eee7f5] lg:border-l lg:border-t-0" : ""} ${index % 2 === 1 ? "sm:border-l" : ""} ${index === 1 ? "sm:border-t-0" : ""}`}
             >
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f4eaff] text-primary transition group-hover:bg-primary group-hover:text-white">
                 <Icon size={20} aria-hidden="true" />
