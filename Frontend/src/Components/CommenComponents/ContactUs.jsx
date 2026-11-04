@@ -263,6 +263,28 @@ function ContactUs() {
           </div>
         </section>
 
+        <section aria-labelledby="support-cta-heading" className="mt-8 overflow-hidden rounded-2xl bg-gradient-to-r from-[#2b0752] via-[#5100a8] to-[#9415dc] p-5 text-white shadow-[0_10px_28px_rgba(54,22,93,0.18)] sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-7">
+          <div className="flex items-start gap-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/15">
+              <Headphones size={22} aria-hidden="true" />
+            </span>
+            <div>
+              <h2 id="support-cta-heading" className="text-lg font-extrabold sm:text-xl">We&apos;re here to help</h2>
+              <p className="mt-1 max-w-xl text-xs leading-5 text-white/85 sm:text-sm">
+                Need help choosing a product or resolving an order issue? Tell us what you need and our team will be happy to assist.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 flex shrink-0 flex-wrap gap-2 sm:mt-0">
+            <a href="#contact-form" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-xs font-bold text-[#5100a8] transition hover:bg-[#f4eaff]">
+              Send us a message <ArrowRight size={14} aria-hidden="true" />
+            </a>
+            <a href="mailto:support@ourtechtamil.com" className="inline-flex items-center gap-2 rounded-lg border border-white/35 bg-white/10 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-white/20">
+              <Mail size={14} aria-hidden="true" /> Email support
+            </a>
+          </div>
+        </section>
+
       </PageContainer>
     </main>
   );
