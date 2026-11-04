@@ -117,38 +117,44 @@ function AboutUs() {
             <p className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-primary">
               <span className="h-px w-5 bg-primary" aria-hidden="true" /> Our Story
             </p>
-            <h1 id="about-story-heading" className="text-2xl font-black leading-tight tracking-tight text-[#17123b] sm:text-3xl">
+            <h1 id="about-story-heading" className="text-2xl font-black leading-tight tracking-tight text-[#17123b] sm:text-[28px]">
               More Than Just a Store
             </h1>
             <p className="max-w-xl text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
-              OurTech started with a simple goal — to make the latest technology accessible to everyone. What began as a small passion project has grown into a trusted destination for quality gadgets and a better shopping experience.
+              OurTech started with a simple goal — to make the latest technology accessible to everyone. What began as a small passion project has now grown into a trusted online store for thousands of happy customers across India.
             </p>
             <p className="max-w-xl text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
-              We bring together genuine products, competitive prices and friendly support, so you can find the technology that fits your life — all in one place.
+              We bring together the best brands, genuine products, competitive prices and a seamless shopping experience — all in one place.
             </p>
             <Link to="/shop" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-4 py-2 text-[11px] font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg">
               Our Journey <ArrowRight size={14} aria-hidden="true" />
             </Link>
           </div>
           <div className="relative order-1 overflow-hidden rounded-2xl border border-[#eee2f9] bg-[#200745] shadow-[0_12px_30px_rgba(47,12,86,0.16)] lg:order-2">
-            <img src="/images/loginbanner.png" alt="A selection of laptops, phones, headphones and smart devices" className="aspect-[16/8] w-full object-cover object-[62%_center] sm:aspect-[16/7]" />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#210747]/80 via-transparent to-transparent" aria-hidden="true" />
-            <div className="absolute bottom-3 right-3 rounded-xl border border-white/60 bg-white/95 px-3 py-2 shadow-lg sm:bottom-4 sm:right-4">
-              <p className="text-[9px] font-bold text-[#5d536b]">Shopping made personal</p>
-              <p className="mt-0.5 text-xs font-extrabold text-primary">Technology for every day</p>
+            <img src="/images/loginbanner.png" alt="OurTech collection of laptops, phones, headphones and smart devices" className="aspect-[2.15/1] w-full object-cover object-[62%_center]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#210747]/35 via-transparent to-transparent" aria-hidden="true" />
+            <div className="absolute bottom-2.5 right-2.5 flex items-center gap-2 rounded-xl border border-white/80 bg-white/95 px-2.5 py-2 shadow-[0_8px_24px_rgba(38,8,76,0.16)] sm:bottom-3 sm:right-3 sm:gap-2.5 sm:px-3 sm:py-2.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f0e2ff] text-primary sm:h-9 sm:w-9">
+                <PackageCheck size={19} aria-hidden="true" />
+              </span>
+              <span>
+                <span className="block text-[9px] font-semibold text-[#514a61]">Trusted by</span>
+                <span className="block text-xs font-black leading-tight text-primary sm:text-sm">50,000+</span>
+                <span className="block text-[9px] text-[#615a70]">Happy Customers</span>
+              </span>
             </div>
           </div>
         </section>
 
-        <section aria-label="OurTech at a glance" className="mt-5 grid grid-cols-2 divide-x divide-y divide-[#d9c7ee] overflow-hidden rounded-2xl border border-[#eee2f9] bg-gradient-to-r from-[#f3eaff] via-[#fbf8ff] to-[#f3eaff] sm:grid-cols-4 sm:divide-y-0">
+        <section aria-label="OurTech at a glance" className="mt-5 grid grid-cols-2 divide-x divide-y divide-[#d9c7ee] overflow-hidden rounded-2xl border border-[#eee2f9] bg-[#f4efff] sm:grid-cols-4 sm:divide-y-0">
           {[
             { value: "50,000+", label: "Happy Customers", Icon: UsersRound },
             { value: "10,000+", label: "Products", Icon: Box },
-            { value: "24/7", label: "Customer Support", Icon: Headphones },
+            { value: "100+", label: "Top Brands", Icon: BadgeCheck },
             { value: averageRating ? `${averageRating.toFixed(1)} / 5` : "—", label: "Customer Rating", Icon: Star },
           ].map(({ value, label, Icon }) => (
-            <div key={label} className="flex items-center justify-center gap-3 px-3 py-3 sm:py-4">
-              <Icon size={22} className="shrink-0 text-primary" aria-hidden="true" />
+            <div key={label} className="flex items-center justify-center gap-3 px-2 py-3 sm:py-4">
+              <Icon size={25} strokeWidth={1.8} className="shrink-0 text-primary sm:h-7 sm:w-7" aria-hidden="true" />
               <span><span className="block text-sm font-black text-primary sm:text-base">{value}</span><span className="block text-[9px] text-[#615a70] sm:text-[10px]">{label}</span></span>
             </div>
           ))}
