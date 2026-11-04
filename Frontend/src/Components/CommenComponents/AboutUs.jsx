@@ -131,7 +131,7 @@ function AboutUs() {
             </Link>
           </div>
           <div className="relative order-1 lg:order-2">
-            <div className="relative overflow-hidden rounded-2xl border border-[#eee2f9] bg-[#200745] shadow-[0_16px_30px_rgba(47,12,86,0.19)] lg:rounded-l-none lg:rounded-r-2xl lg:border-l-0 lg:[clip-path:polygon(5%_0,100%_0,100%_96%,98%_100%,0_100%)] lg:[filter:drop-shadow(0_10px_12px_rgba(54,22,93,0.19))]">
+            <div className="relative overflow-hidden rounded-2xl border border-[#eee2f9] bg-[#200745] shadow-[12px_10px_22px_rgba(47,12,86,0.22)] lg:rounded-l-none lg:rounded-r-2xl lg:border-l-0 lg:[clip-path:polygon(5%_0,100%_0,100%_96%,98%_100%,0_100%)] lg:[filter:drop-shadow(12px_8px_12px_rgba(54,22,93,0.3))]">
               <img src="/images/loginbanner.png" alt="OurTech collection of laptops, phones, headphones and smart devices" className="aspect-[2.15/1] w-full object-cover object-[62%_center]" />
               <div className="absolute inset-0 bg-gradient-to-r from-[#210747]/35 via-transparent to-transparent" aria-hidden="true" />
             </div>
