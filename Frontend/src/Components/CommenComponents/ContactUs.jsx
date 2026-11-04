@@ -269,18 +269,18 @@ function ContactUs() {
               <Headphones size={22} aria-hidden="true" />
             </span>
             <div>
-              <h2 id="support-cta-heading" className="text-lg font-extrabold sm:text-xl">We&apos;re here to help</h2>
-              <p className="mt-1 max-w-xl text-xs leading-5 text-white/85 sm:text-sm">
+              <h2 id="support-cta-heading" className="text-xl font-extrabold sm:text-2xl">We&apos;re here to help</h2>
+              <p className="mt-1 max-w-xl text-sm leading-7 text-white/85">
                 Need help choosing a product or resolving an order issue? Tell us what you need and our team will be happy to assist.
               </p>
             </div>
           </div>
           <div className="mt-4 flex shrink-0 flex-wrap gap-2 sm:mt-0">
-            <a href="#contact-form" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-xs font-bold text-[#5100a8] transition hover:bg-[#f4eaff]">
-              Send us a message <ArrowRight size={14} aria-hidden="true" />
+            <a href="#contact-form" className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2.5 text-sm font-bold text-[#5100a8] transition hover:bg-[#f4eaff]">
+              Send us a message <ArrowRight size={16} aria-hidden="true" />
             </a>
-            <a href="mailto:support@ourtechtamil.com" className="inline-flex items-center gap-2 rounded-lg border border-white/35 bg-white/10 px-4 py-2.5 text-xs font-bold text-white transition hover:bg-white/20">
-              <Mail size={14} aria-hidden="true" /> Email support
+            <a href="mailto:support@ourtechtamil.com" className="inline-flex items-center gap-2 rounded-lg border border-white/35 bg-white/10 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/20">
+              <Mail size={16} aria-hidden="true" /> Email support
             </a>
           </div>
         </section>
