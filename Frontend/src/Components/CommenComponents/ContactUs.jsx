@@ -60,7 +60,7 @@ const questions = [
 ];
 
 const inputClass =
-  "mt-1.5 w-full rounded-lg border border-[#e7dff0] bg-white px-3 py-2.5 text-sm text-[#211936] outline-none transition placeholder:text-[#9b93a8] focus:border-primary focus:ring-2 focus:ring-primary/10";
+  "mt-1.5 w-full rounded-lg border border-[#e7dff0] bg-white px-3 py-2.5 text-base text-[#211936] outline-none transition placeholder:text-[#9b93a8] focus:border-primary focus:ring-2 focus:ring-primary/10";
 
 function ContactUs() {
   const handleSubmit = (event) => {
@@ -94,8 +94,8 @@ function ContactUs() {
                 <Icon size={20} aria-hidden="true" />
               </span>
               <span className="min-w-0">
-                <span className="block text-xs font-extrabold text-[#171326]">{label}</span>
-                <span className="mt-0.5 block text-[10px] leading-4 text-[#646074]">{detail}</span>
+                <span className="block text-sm font-extrabold text-[#171326]">{label}</span>
+                <span className="mt-0.5 block text-sm leading-5 text-[#646074]">{detail}</span>
               </span>
             </a>
           ))}
@@ -108,33 +108,33 @@ function ContactUs() {
                 <Mail size={21} aria-hidden="true" />
               </span>
               <div>
-                <h2 id="send-message-heading" className="text-lg font-extrabold leading-6 text-[#171326]">Send Us a Message</h2>
-                <p className="mt-1 text-xs leading-5 text-[#5e596b]">Have a question or need assistance? Fill in the details below and we&apos;ll get back to you shortly.</p>
+                <h2 id="send-message-heading" className="text-xl font-extrabold leading-7 text-[#171326]">Send Us a Message</h2>
+                <p className="mt-1 text-sm leading-6 text-[#5e596b]">Have a question or need assistance? Fill in the details below and we&apos;ll get back to you shortly.</p>
               </div>
             </div>
             <form onSubmit={handleSubmit} className="grid gap-x-3 gap-y-2.5 p-4 pt-2 sm:grid-cols-2 sm:px-5 sm:pb-5">
-              <label className="text-xs font-semibold text-[#302b3d]">
+              <label className="text-sm font-semibold text-[#302b3d]">
                 Your Name <span className="text-rose-600">*</span>
                 <span className="relative block">
                   <UserRound size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#756d84]" aria-hidden="true" />
                   <input className={`${inputClass} pl-9`} name="name" placeholder="Enter your name" autoComplete="name" required maxLength={120} />
                 </span>
               </label>
-              <label className="text-xs font-semibold text-[#302b3d]">
+              <label className="text-sm font-semibold text-[#302b3d]">
                 Email Address <span className="text-rose-600">*</span>
                 <span className="relative block">
                   <Mail size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#756d84]" aria-hidden="true" />
                   <input className={`${inputClass} pl-9`} name="email" type="email" placeholder="Enter your email" autoComplete="email" required maxLength={254} />
                 </span>
               </label>
-              <label className="text-xs font-semibold text-[#302b3d]">
+              <label className="text-sm font-semibold text-[#302b3d]">
                 Mobile Number
                 <span className="relative block">
                   <Phone size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#756d84]" aria-hidden="true" />
                   <input className={`${inputClass} pl-9`} name="phone" type="tel" placeholder="Enter your number" autoComplete="tel" maxLength={30} />
                 </span>
               </label>
-              <label className="text-xs font-semibold text-[#302b3d]">
+              <label className="text-sm font-semibold text-[#302b3d]">
                 Select Subject <span className="text-rose-600">*</span>
                 <select className={inputClass} name="subject" defaultValue="" required>
                   <option value="" disabled>Select a subject</option>
@@ -144,37 +144,37 @@ function ContactUs() {
                   <option value="Other">Other</option>
                 </select>
               </label>
-              <label className="text-xs font-semibold text-[#302b3d] sm:col-span-2">
+              <label className="text-sm font-semibold text-[#302b3d] sm:col-span-2">
                 Your Message <span className="text-rose-600">*</span>
                 <textarea className={`${inputClass} min-h-20 resize-y`} name="message" placeholder="Write your message here..." required maxLength={3000} />
               </label>
               <div className="sm:col-span-2">
-                <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-5 py-2.5 text-xs font-bold text-white shadow-[0_5px_14px_rgba(103,21,181,0.22)] transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                  Send Message <Send size={14} aria-hidden="true" />
+                <button type="submit" className="inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-5 py-2.5 text-sm font-bold text-white shadow-[0_5px_14px_rgba(103,21,181,0.22)] transition hover:-translate-y-0.5 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                  Send Message <Send size={16} aria-hidden="true" />
                 </button>
               </div>
             </form>
           </section>
 
           <section aria-labelledby="get-in-touch-heading" className="rounded-2xl border border-[#eee4f7] bg-white p-4 shadow-[0_7px_22px_rgba(54,22,93,0.05)] sm:p-5">
-            <h2 id="get-in-touch-heading" className="text-lg font-extrabold text-[#171326]">Get in <span className="text-primary">Touch</span></h2>
+            <h2 id="get-in-touch-heading" className="text-xl font-extrabold text-[#171326]">Get in <span className="text-primary">Touch</span></h2>
             <span className="mt-1 block h-0.5 w-9 rounded-full bg-fuchsia-600" aria-hidden="true" />
             <div className="mt-3 space-y-3">
               <a href="tel:+919876543210" className="group flex items-center gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f4eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><Phone size={19} aria-hidden="true" /></span>
-                <span><span className="block text-xs font-extrabold text-[#201b2d]">Call Us</span><span className="mt-0.5 block text-xs text-[#3d3749]">+91 98765 43210</span></span>
+                <span><span className="block text-sm font-extrabold text-[#201b2d]">Call Us</span><span className="mt-0.5 block text-sm text-[#3d3749]">+91 98765 43210</span></span>
               </a>
               <a href="mailto:support@ourtechtamil.com" className="group flex items-center gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f4eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><Mail size={19} aria-hidden="true" /></span>
-                <span className="min-w-0"><span className="block text-xs font-extrabold text-[#201b2d]">Email Us</span><span className="mt-0.5 block break-all text-xs text-[#3d3749]">support@ourtechtamil.com</span></span>
+                <span className="min-w-0"><span className="block text-sm font-extrabold text-[#201b2d]">Email Us</span><span className="mt-0.5 block break-all text-sm text-[#3d3749]">support@ourtechtamil.com</span></span>
               </a>
               <a href="https://www.google.com/maps/search/?api=1&query=122%2C+Tirupathur%2C+Tamil+Nadu+635601%2C+India" target="_blank" rel="noreferrer" className="group flex items-center gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f4eaff] text-primary transition group-hover:bg-primary group-hover:text-white"><MapPin size={19} aria-hidden="true" /></span>
-                <span><span className="block text-xs font-extrabold text-[#201b2d]">Visit Our Store</span><span className="mt-0.5 block text-xs leading-4 text-[#3d3749]">122, Tirupathur<br />Tamil Nadu – 635601, India</span></span>
+                <span><span className="block text-sm font-extrabold text-[#201b2d]">Visit Our Store</span><span className="mt-0.5 block text-sm leading-5 text-[#3d3749]">122, Tirupathur<br />Tamil Nadu – 635601, India</span></span>
               </a>
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f4eaff] text-primary"><Clock3 size={19} aria-hidden="true" /></span>
-                <span><span className="block text-xs font-extrabold text-[#201b2d]">Working Hours</span><span className="mt-0.5 block text-xs leading-4 text-[#3d3749]">Mon–Sat: 9:00 AM – 7:00 PM</span></span>
+                <span><span className="block text-sm font-extrabold text-[#201b2d]">Working Hours</span><span className="mt-0.5 block text-sm leading-5 text-[#3d3749]">Mon–Sat: 9:00 AM – 7:00 PM</span></span>
               </div>
             </div>
           </section>
@@ -189,24 +189,24 @@ function ContactUs() {
             <img src="/images/loginbanner.png" alt="" className="absolute inset-0 -z-20 h-full w-full object-cover object-[62%_center] transition duration-500 group-hover:scale-105" />
             <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#1a0635]/95 via-[#230747]/30 to-[#1a0635]/10" aria-hidden="true" />
             <div className="mt-auto w-full p-5 text-white">
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[10px] font-semibold backdrop-blur-sm"><Store size={13} aria-hidden="true" /> OUR EXPERIENCE STORE</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-sm font-semibold backdrop-blur-sm"><Store size={15} aria-hidden="true" /> OUR EXPERIENCE STORE</span>
               <h2 className="mt-2 text-xl font-extrabold">Visit Our Store</h2>
-              <p className="mt-1 text-xs leading-5 text-white/85">Discover your next favourite gadget in person.</p>
-              <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-white">Get directions <ArrowUpRight size={14} aria-hidden="true" /></span>
+              <p className="mt-1 text-sm leading-6 text-white/85">Discover your next favourite gadget in person.</p>
+              <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-white">Get directions <ArrowUpRight size={16} aria-hidden="true" /></span>
             </div>
           </a>
         </section>
 
         <section aria-labelledby="why-contact-heading" className="mt-7">
           <div className="mb-4 text-center">
-            <h2 id="why-contact-heading" className="text-xl font-extrabold tracking-tight text-[#171326] sm:text-2xl">Why Contact <span className="text-primary">OurTech?</span></h2>
+            <h2 id="why-contact-heading" className="text-2xl font-extrabold tracking-tight text-[#171326] sm:text-3xl">Why Contact <span className="text-primary">OurTech?</span></h2>
             <span className="mx-auto mt-2 block h-0.5 w-10 rounded-full bg-fuchsia-600" aria-hidden="true" />
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {reasons.map(({ title, detail, Icon }) => (
               <div key={title} className="flex items-center gap-3 rounded-xl border border-[#f0e8f7] bg-gradient-to-r from-[#f7f0ff] to-[#fbf8ff] p-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#efe0ff] text-primary"><Icon size={22} aria-hidden="true" /></span>
-                <span><span className="block text-xs font-extrabold text-[#201b2d]">{title}</span><span className="mt-1 block text-[11px] leading-4 text-[#5e596b]">{detail}</span></span>
+                <span><span className="block text-sm font-extrabold text-[#201b2d]">{title}</span><span className="mt-1 block text-sm leading-5 text-[#5e596b]">{detail}</span></span>
               </div>
             ))}
           </div>
@@ -215,28 +215,28 @@ function ContactUs() {
         <section className="mt-8 grid gap-6 lg:grid-cols-2 lg:gap-8">
           <div aria-labelledby="faq-heading">
             <div className="mb-3">
-              <h2 id="faq-heading" className="text-lg font-extrabold text-[#171326]">Frequently Asked Questions</h2>
+              <h2 id="faq-heading" className="text-xl font-extrabold text-[#171326]">Frequently Asked Questions</h2>
               <span className="mt-1 block h-0.5 w-9 rounded-full bg-fuchsia-600" aria-hidden="true" />
             </div>
             <div className="space-y-1.5">
               {questions.map(({ question, answer }, index) => (
                 <details key={question} className="group overflow-hidden rounded-lg border border-[#f0e8f7] bg-white" open={index === 0}>
-                  <summary className="flex list-none items-center justify-between gap-3 bg-[#f7f1fc] px-3.5 py-2.5 text-xs font-bold text-[#211936] transition hover:bg-[#efe2fa] [&::-webkit-details-marker]:hidden">
+                  <summary className="flex list-none items-center justify-between gap-3 bg-[#f7f1fc] px-3.5 py-3 text-sm font-bold text-[#211936] transition hover:bg-[#efe2fa] [&::-webkit-details-marker]:hidden">
                     {question}
                     <ChevronDown size={15} className="shrink-0 text-primary transition-transform group-open:rotate-180" aria-hidden="true" />
                   </summary>
-                  <p className="px-3.5 py-2.5 text-xs leading-5 text-[#514b5d]">{answer}</p>
+                  <p className="px-3.5 py-3 text-sm leading-6 text-[#514b5d]">{answer}</p>
                 </details>
               ))}
             </div>
-            <a href="mailto:support@ourtechtamil.com?subject=Support%20question" className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-primary underline decoration-primary/30 underline-offset-4 transition hover:decoration-primary">
-              Still need help? Contact our team <ArrowRight size={14} aria-hidden="true" />
+            <a href="mailto:support@ourtechtamil.com?subject=Support%20question" className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-primary underline decoration-primary/30 underline-offset-4 transition hover:decoration-primary">
+              Still need help? Contact our team <ArrowRight size={16} aria-hidden="true" />
             </a>
           </div>
 
           <div id="find-our-store" aria-labelledby="store-heading" className="scroll-mt-28">
             <div className="mb-3">
-              <h2 id="store-heading" className="text-lg font-extrabold text-[#171326]">Find Our Store</h2>
+              <h2 id="store-heading" className="text-xl font-extrabold text-[#171326]">Find Our Store</h2>
               <span className="mt-1 block h-0.5 w-9 rounded-full bg-fuchsia-600" aria-hidden="true" />
             </div>
             <div className="relative overflow-hidden rounded-2xl border border-[#eae5ef] bg-[#eeeaf3]">
@@ -249,15 +249,15 @@ function ContactUs() {
               />
               <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2 rounded-xl border border-white/70 bg-white/95 px-3 py-2 shadow-lg">
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f3e7ff] text-primary"><MapPin size={18} aria-hidden="true" /></span>
-                <span><span className="block text-[11px] font-extrabold text-[#201b2d]">OurTech Experience Store</span><span className="block text-[10px] leading-4 text-[#5e596b]">Tirupathur – 635601, Tamil Nadu</span></span>
+                <span><span className="block text-sm font-extrabold text-[#201b2d]">OurTech Experience Store</span><span className="block text-sm leading-5 text-[#5e596b]">Tirupathur – 635601, Tamil Nadu</span></span>
               </div>
             </div>
             <div className="mt-3 flex flex-wrap justify-center gap-2">
-              <a href="https://www.google.com/maps/dir/?api=1&destination=122%2C+Tirupathur%2C+Tamil+Nadu+635601%2C+India" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-5 py-2.5 text-xs font-bold text-white transition hover:shadow-md">
-                Get Directions <Send size={13} aria-hidden="true" />
+              <a href="https://www.google.com/maps/dir/?api=1&destination=122%2C+Tirupathur%2C+Tamil+Nadu+635601%2C+India" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-5 py-2.5 text-sm font-bold text-white transition hover:shadow-md">
+                Get Directions <Send size={16} aria-hidden="true" />
               </a>
-              <a href="https://www.google.com/maps/search/?api=1&query=122%2C+Tirupathur%2C+Tamil+Nadu+635601%2C+India" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-[#ded2eb] bg-white px-4 py-2.5 text-xs font-bold text-[#28223a] transition hover:border-primary hover:text-primary">
-                <MapPin size={14} aria-hidden="true" /> View on Google Maps
+              <a href="https://www.google.com/maps/search/?api=1&query=122%2C+Tirupathur%2C+Tamil+Nadu+635601%2C+India" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-[#ded2eb] bg-white px-4 py-2.5 text-sm font-bold text-[#28223a] transition hover:border-primary hover:text-primary">
+                <MapPin size={16} aria-hidden="true" /> View on Google Maps
               </a>
             </div>
           </div>
