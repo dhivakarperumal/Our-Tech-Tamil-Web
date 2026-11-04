@@ -49,11 +49,12 @@ function Combos() {
   }, []);
 
   return (
-    <>
-      <PageHeader title="Combo Offers" />
-      <main className="min-h-[60vh] bg-[#faf8fc]">
-        <PageContainer className="!max-w-[1700px] px-3 py-5 sm:px-5 sm:py-7 lg:px-6">
-          <section>
+    <main className="min-h-[60vh] bg-[#faf8fc]">
+      <div data-aos="fade-up">
+        <PageHeader title="Combo Offers" />
+      </div>
+      <PageContainer className="!max-w-[1700px] px-3 py-5 sm:px-5 sm:py-7 lg:px-6">
+        <section>
           <div className="mb-5 flex flex-col items-center justify-center gap-2 text-center">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-700">Shop our bundles</p>
@@ -191,9 +192,8 @@ function Combos() {
             </div>
           )}
           </section>
-        </PageContainer>
-      </main>
-    </>
+      </PageContainer>
+    </main>
   );
 }
 
