@@ -265,3 +265,75 @@ test("customers can submit one review per product and see their review status", 
   assert.equal(differentProductReview.status, 201);
   assert.equal(savedReviews.size, 3);
 });
+
+test("customers can submit one review per combo and see published combo reviews", async (t) => {
+  const savedReviews = new Map();
+  let listQuery = "";
+  const pool = {
+    async execute(query, params = []) {
+      if (query.includes("SELECT id FROM combos")) return [[{ id: params[0] }]];
+      if (query.includes("SELECT username, email FROM users")) {
+        return [[{ username: params[0], email: `${params[0]}@example.com` }]];
+      }
+      if (query.includes("INSERT INTO reviews")) {
+        assert.match(query, /INSERT INTO reviews \(combo_id,/);
+        const key = `${params[0]}:${params[1]}`;
+        if (savedReviews.has(key)) {
+          const error = new Error("Duplicate review");
+          error.code = "ER_DUP_ENTRY";
+          throw error;
+        }
+        const review = {
+          id: savedReviews.size + 1,
+          combo_id: params[0],
+          user_id: params[1],
+          user_name: params[2],
+          rating: params[4],
+          comment: params[5],
+          review_image: params[6],
+          status: "Pending",
+        };
+        savedReviews.set(key, review);
+        return [{ insertId: review.id }];
+      }
+      if (query.includes("WHERE combo_id = ? AND user_id = ?")) {
+        const review = savedReviews.get(`${params[0]}:${params[1]}`);
+        return [[review || undefined].filter(Boolean)];
+      }
+      if (query.includes("WHERE combo_id = ? AND status = 'Published'")) {
+        listQuery = query;
+        return [[{ id: 8, combo_id: params[0], user_name: "Customer", rating: 5, comment: "Great bundle." }]];
+      }
+      throw new Error(`Unexpected review query: ${query}`);
+    },
+  };
+  const url = await startTestServer(t, pool);
+  const formData = new FormData();
+  formData.append("user_name", "Customer One");
+  formData.append("rating", "5");
+  formData.append("comment", "Great combo.");
+
+  const submission = await fetch(`${url}/combo/12`, {
+    method: "POST",
+    headers: { Authorization: authHeaders("customer-one").Authorization },
+    body: formData,
+  });
+  assert.equal(submission.status, 201);
+  assert.equal((await submission.json()).review.combo_id, 12);
+
+  const duplicate = await fetch(`${url}/combo/12`, {
+    method: "POST",
+    headers: authHeaders("customer-one"),
+    body: JSON.stringify({ user_name: "Customer One", rating: 5, comment: "Another review." }),
+  });
+  assert.equal(duplicate.status, 409);
+
+  const mine = await fetch(`${url}/combo/12/mine`, { headers: authHeaders("customer-one") });
+  assert.equal((await mine.json()).review.status, "Pending");
+
+  const listing = await fetch(`${url}/combo/12`);
+  const result = await listing.json();
+  assert.equal(listing.status, 200);
+  assert.equal(result.reviews[0].combo_id, 12);
+  assert.match(listQuery, /WHERE combo_id = \? AND status = 'Published'/);
+});

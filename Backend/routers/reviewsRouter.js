@@ -65,6 +65,14 @@ function createReviewsRouter(pool) {
     uploadReviewImage.single("image"),
     controller.createCustomerProductReview,
   );
+  router.get("/combo/:comboId", controller.listComboReviews);
+  router.get("/combo/:comboId/mine", authenticateCustomer, controller.getCustomerComboReview);
+  router.post(
+    "/combo/:comboId",
+    authenticateCustomer,
+    uploadReviewImage.single("image"),
+    controller.createCustomerComboReview,
+  );
   router.get("/public", controller.listPublicReviews);
   router.use(requireAdmin);
 

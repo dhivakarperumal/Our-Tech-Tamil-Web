@@ -208,7 +208,8 @@ async function initializeDatabase(pool) {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS reviews (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-      product_id BIGINT UNSIGNED NOT NULL,
+      product_id BIGINT UNSIGNED NULL,
+      combo_id BIGINT UNSIGNED NULL,
       user_id VARCHAR(255) NULL,
       user_name VARCHAR(160) NOT NULL,
       user_email VARCHAR(191) NULL,
@@ -220,9 +221,11 @@ async function initializeDatabase(pool) {
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       KEY reviews_product_idx (product_id),
+      KEY reviews_combo_idx (combo_id),
       KEY reviews_status_idx (status),
       KEY reviews_created_at_idx (created_at),
-      UNIQUE KEY reviews_product_user_unique (product_id, user_id)
+      UNIQUE KEY reviews_product_user_unique (product_id, user_id),
+      UNIQUE KEY reviews_combo_user_unique (combo_id, user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
   `);
 
@@ -235,6 +238,20 @@ async function initializeDatabase(pool) {
   if (!reviewColumns.has("user_id")) {
     await pool.query("ALTER TABLE reviews ADD COLUMN user_id VARCHAR(255) NULL AFTER product_id");
   }
+  if (!reviewColumns.has("combo_id")) {
+    await pool.query("ALTER TABLE reviews ADD COLUMN combo_id BIGINT UNSIGNED NULL AFTER product_id");
+  }
+  const productReviewColumn = reviewColumnRows.find((column) => column.COLUMN_NAME === "product_id");
+  if (productReviewColumn) {
+    const [reviewProductColumnDetails] = await pool.execute(
+      `SELECT IS_NULLABLE
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'reviews' AND COLUMN_NAME = 'product_id'`,
+    );
+    if (reviewProductColumnDetails[0]?.IS_NULLABLE === "NO") {
+      await pool.query("ALTER TABLE reviews MODIFY product_id BIGINT UNSIGNED NULL");
+    }
+  }
   const [reviewIndexRows] = await pool.execute(
     `SELECT INDEX_NAME
      FROM INFORMATION_SCHEMA.STATISTICS
@@ -244,6 +261,9 @@ async function initializeDatabase(pool) {
     await pool.query(
       "ALTER TABLE reviews ADD UNIQUE KEY reviews_product_user_unique (product_id, user_id)",
     );
+  }
+  if (!reviewIndexRows.some((index) => index.INDEX_NAME === "reviews_combo_user_unique")) {
+    await pool.query("ALTER TABLE reviews ADD UNIQUE KEY reviews_combo_user_unique (combo_id, user_id)");
   }
 
   const [productColumnRows] = await pool.execute(
