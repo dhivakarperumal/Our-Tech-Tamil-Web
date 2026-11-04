@@ -62,10 +62,17 @@ function formatReviewDate(value) {
     : new Intl.DateTimeFormat(undefined, { year: "numeric", month: "short", day: "numeric" }).format(date);
 }
 
-function HomeReviews() {
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [fetchFailed, setFetchFailed] = useState(false);
+function HomeReviews({
+  reviews: providedReviews,
+  loading: providedLoading,
+  fetchFailed: providedFetchFailed,
+} = {}) {
+  const [fetchedReviews, setFetchedReviews] = useState([]);
+  const [fetchedLoading, setFetchedLoading] = useState(true);
+  const [fetchedFailed, setFetchedFailed] = useState(false);
+  const reviews = providedReviews ?? fetchedReviews;
+  const loading = providedReviews === undefined ? fetchedLoading : providedLoading;
+  const fetchFailed = providedReviews === undefined ? fetchedFailed : providedFetchFailed;
   const swiperRef = useRef(null);
   const averageRating = reviews.length
     ? reviews.reduce((sum, review) => sum + (Number(review.rating) || 0), 0) / reviews.length
@@ -73,24 +80,26 @@ function HomeReviews() {
   const reviewedProducts = new Set(reviews.map((review) => review.product_id).filter(Boolean)).size;
 
   useEffect(() => {
+    if (providedReviews !== undefined) return undefined;
+
     let active = true;
 
     api.get("/reviews/public")
       .then((response) => {
-        if (active) setReviews(Array.isArray(response.data?.reviews) ? response.data.reviews : []);
+        if (active) setFetchedReviews(Array.isArray(response.data?.reviews) ? response.data.reviews : []);
       })
       .catch((error) => {
         console.error("Failed to fetch published reviews:", error);
-        if (active) setFetchFailed(true);
+        if (active) setFetchedFailed(true);
       })
       .finally(() => {
-        if (active) setLoading(false);
+        if (active) setFetchedLoading(false);
       });
 
     return () => {
       active = false;
     };
-  }, []);
+  }, [providedReviews]);
 
   return (
     <PageContainer className="py-5 sm:py-8">

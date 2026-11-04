@@ -6,7 +6,6 @@ import {
   BadgeCheck,
   Box,
   CalendarDays,
-  ChevronDown,
   Eye,
   Flag,
   Headphones,
@@ -25,6 +24,7 @@ import {
   Zap,
 } from "lucide-react";
 import api from "../../api";
+import HomeReviews from "../Home/HomeReviews";
 import PageContainer from "./PageContainer";
 import PageHeader from "./PageHeader";
 
@@ -67,7 +67,6 @@ function getCategoryImage(images) {
 function AboutUs() {
   const [categories, setCategories] = useState([]);
   const [reviews, setReviews] = useState([]);
-  const [openReview, setOpenReview] = useState(null);
   const [categoryFailed, setCategoryFailed] = useState(false);
   const [reviewsFailed, setReviewsFailed] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -324,44 +323,11 @@ function AboutUs() {
           </aside>
         </section>
 
-        <section aria-labelledby="customer-stories-heading" className="mt-7">
-          <div className="mb-3 text-center">
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-primary">— Our Customers&apos; Stories —</p>
-            <h2 id="customer-stories-heading" className="mt-1 text-xl font-black text-[#17123b]">What Our Customers Say</h2>
-          </div>
-          {loadingReviews ? (
-            <div className="grid gap-3 sm:grid-cols-3" aria-label="Loading customer stories">
-              {Array.from({ length: 3 }, (_, index) => <div key={index} className="h-28 animate-pulse rounded-xl bg-[#f3eaff]" />)}
-            </div>
-          ) : reviewsFailed ? (
-            <p className="rounded-xl border border-[#eee3f8] bg-white px-4 py-5 text-center text-xs text-[#625b70]">Customer stories could not be loaded. Please try again later.</p>
-          ) : reviews.length ? (
-            <div className="grid gap-3 sm:grid-cols-3">
-              {reviews.slice(0, 3).map((review) => {
-                const isOpen = openReview === review.id;
-                return (
-                  <article key={review.id} className="rounded-xl border border-[#e8d8f6] bg-white p-3 shadow-sm sm:p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-[10px] font-extrabold text-[#211936]">{review.user_name || "OurTech Customer"} <BadgeCheck size={12} className="inline text-primary" aria-label="Published review" /></p>
-                      <div className="flex shrink-0 items-center gap-0.5 text-amber-500" aria-label={`${review.rating} out of 5 stars`}>
-                        {Array.from({ length: 5 }, (_, index) => <Star key={index} size={11} className={index < Math.round(Number(review.rating) || 0) ? "fill-amber-400 text-amber-400" : "text-amber-200"} aria-hidden="true" />)}
-                      </div>
-                    </div>
-                    {review.product_name && <p className="mt-1 text-[9px] font-semibold text-primary">{review.product_name}</p>}
-                    <p className={`mt-2 whitespace-pre-line text-[10px] leading-4 text-[#514b5d] ${isOpen ? "" : "line-clamp-3"}`}>{review.comment}</p>
-                    {(review.comment || "").length > 120 && (
-                      <button type="button" onClick={() => setOpenReview(isOpen ? null : review.id)} className="mt-1 inline-flex items-center gap-1 text-[9px] font-bold text-primary">
-                        {isOpen ? "Show less" : "Read more"} <ChevronDown size={11} className={isOpen ? "rotate-180" : ""} aria-hidden="true" />
-                      </button>
-                    )}
-                  </article>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="rounded-xl border border-[#eee3f8] bg-white px-4 py-5 text-center text-xs text-[#625b70]">Customer stories will appear here as reviews are published.</p>
-          )}
-        </section>
+        <HomeReviews
+          reviews={reviews}
+          loading={loadingReviews}
+          fetchFailed={reviewsFailed}
+        />
 
         <section aria-label="Shop with OurTech" className="relative isolate mt-6 flex min-h-36 items-center overflow-hidden rounded-2xl bg-[#1d0645] px-5 py-6 text-white sm:min-h-40 sm:px-8">
           <img src="/images/pageheader.png" alt="" className="absolute inset-0 -z-20 h-full w-full object-cover object-[70%_center]" />
