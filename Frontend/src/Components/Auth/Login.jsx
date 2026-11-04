@@ -102,7 +102,7 @@ function Login() {
         className="pointer-events-none absolute -right-52 bottom-[12%] hidden h-[500px] w-[700px] rounded-full border-2 border-secondary-light/40 bg-gradient-to-br from-gradient-middle/50 via-primary/30 to-secondary-dark/20 lg:block"
       />
       <section className="relative z-10 flex h-full min-h-0 items-center justify-center px-4 py-3 sm:px-8 sm:py-4 lg:justify-start lg:px-0 lg:py-0">
-        <div className="max-h-[calc(100dvh-24px)] w-full max-w-[460px] overflow-y-auto rounded-[30px] border border-surface/80 bg-surface/95 px-6 py-5 shadow-[0_24px_80px_rgba(40,0,120,0.2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-10 sm:py-7 lg:ml-[5.7vw] lg:h-[min(680px,calc(100dvh-24px))] lg:px-9 lg:py-6">
+        <div data-aos="fade-up" className="max-h-[calc(100dvh-24px)] w-full max-w-[460px] overflow-y-auto rounded-[30px] border border-surface/80 bg-surface/95 px-6 py-5 shadow-[0_24px_80px_rgba(40,0,120,0.2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-10 sm:py-7 lg:ml-[5.7vw] lg:h-[min(680px,calc(100dvh-24px))] lg:px-9 lg:py-6">
           <div className="mb-5 text-center lg:mb-6">
             <img
               src="/images/logo.jpeg"
