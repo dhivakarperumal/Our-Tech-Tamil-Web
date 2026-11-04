@@ -8,7 +8,14 @@ const createCheckoutRouter = require("../routers/checkoutRouter");
 
 process.env.JWT_SECRET = "checkout-router-test-secret";
 
-function createPool({ stock = 5, quantity = 2, coupon = null, combo = false } = {}) {
+function createPool({
+  stock = 5,
+  quantity = 2,
+  coupon = null,
+  combo = false,
+  variantSize = "",
+  productVariant = null,
+} = {}) {
   const statements = [];
   const addresses = [];
   const orders = [];
@@ -42,7 +49,7 @@ function createPool({ stock = 5, quantity = 2, coupon = null, combo = false } = 
     product_code: "HEAD-009",
     quantity,
     variant_color: "Black",
-    variant_size: "",
+    variant_size: variantSize,
     name: "Headphones",
     current_product_code: "HEAD-009",
     mrp: "200.00",
@@ -50,7 +57,11 @@ function createPool({ stock = 5, quantity = 2, coupon = null, combo = false } = 
     total_stock: stock,
     status: "Active",
     images: '["/uploads/headphones.png"]',
-    variants: JSON.stringify([{ colorName: "Black", quantity: stock, images: ["/uploads/black.png"] }]),
+    variants: JSON.stringify([productVariant || {
+      colorName: "Black",
+      quantity: stock,
+      images: ["/uploads/black.png"],
+    }]),
   }];
   const execute = async (query, params = []) => {
     statements.push({ query, params });
@@ -581,6 +592,43 @@ test("Razorpay order and payment verification use server-calculated totals", asy
   assert.equal(retryResponse.status, 200);
   assert.equal(retryOrder.order_id, "ORD00045");
   assert.equal(pool.orders.length, 1);
+});
+
+test("Razorpay accepts non-sized product variants with a placeholder cart size", async (t) => {
+  const previousKeyId = process.env.RAZORPAY_KEY_ID;
+  const previousKeySecret = process.env.RAZORPAY_KEY_SECRET;
+  const previousFetch = global.fetch;
+  process.env.RAZORPAY_KEY_ID = "rzp_test_public";
+  process.env.RAZORPAY_KEY_SECRET = "test_secret";
+  global.fetch = async (url, options) => {
+    if (!String(url).startsWith("https://api.razorpay.com/")) {
+      return previousFetch(url, options);
+    }
+    assert.equal(url, "https://api.razorpay.com/v1/orders");
+    assert.equal(options.method, "POST");
+    return Response.json({ id: "order_test123", amount: 30000, currency: "INR" });
+  };
+  t.after(() => {
+    if (previousKeyId === undefined) delete process.env.RAZORPAY_KEY_ID;
+    else process.env.RAZORPAY_KEY_ID = previousKeyId;
+    if (previousKeySecret === undefined) delete process.env.RAZORPAY_KEY_SECRET;
+    else process.env.RAZORPAY_KEY_SECRET = previousKeySecret;
+    global.fetch = previousFetch;
+  });
+
+  const pool = createPool({
+    variantSize: "Free Size",
+    productVariant: { colorName: "Black", quantity: 5, sizesStock: {} },
+  });
+  const url = await startServer(t, pool);
+  const response = await fetch(`${url}/razorpay/order`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  const result = await response.json();
+
+  assert.equal(response.status, 201, JSON.stringify(result));
+  assert.equal(result.order_id, "order_test123");
 });
 
 test("Razorpay rejects invalid signatures and unavailable credentials", async (t) => {

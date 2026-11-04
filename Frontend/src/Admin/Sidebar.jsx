@@ -23,7 +23,8 @@ import {
   Video,
   Image,
   FilePlus2,
-  TicketPercent
+  TicketPercent,
+  Tag
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -103,6 +104,7 @@ const navItems = [
       { path: "/admin/banners", label: "Promotion Banners", icon: Image },
       { path: "/admin/reviews", label: "Customer Reviews", icon: MessageSquare },
       { path: "/admin/coupons", label: "Coupons", icon: TicketPercent },
+      { path: "/admin/offers", label: "Offers", icon: Tag },
     
     ],
   },

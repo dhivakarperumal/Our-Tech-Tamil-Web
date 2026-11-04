@@ -25,6 +25,7 @@ const createWishlistRouter = require("./routers/wishlistRouter");
 const createCheckoutRouter = require("./routers/checkoutRouter");
 const createCouponsRouter = require("./routers/couponsRouter");
 const createCombosRouter = require("./routers/combosRouter");
+const createOffersRouter = require("./routers/offersRouter");
 
 const port = Number(process.env.PORT || 5000);
 
@@ -68,6 +69,7 @@ app.use("/api/cart", createCartRouter(pool));
 app.use("/api/wishlist", createWishlistRouter(pool));
 app.use("/api/checkout", createCheckoutRouter(pool));
 app.use("/api/coupons", createCouponsRouter(pool));
+app.use("/api/offers", createOffersRouter(pool));
 app.use("/api/combos", createCombosRouter(pool));
 
 app.use((error, request, response, next) => {

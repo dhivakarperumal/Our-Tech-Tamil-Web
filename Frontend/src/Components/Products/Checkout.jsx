@@ -1,6 +1,22 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiCheckCircle, FiLoader, FiLock, FiMapPin, FiSearch } from "react-icons/fi";
+import {
+  FiCheck,
+  FiCheckCircle,
+  FiCreditCard,
+  FiHeadphones,
+  FiInfo,
+  FiLoader,
+  FiLock,
+  FiMapPin,
+  FiRefreshCw,
+  FiSearch,
+  FiShield,
+  FiShoppingBag,
+  FiShoppingCart,
+  FiTag,
+  FiTruck,
+} from "react-icons/fi";
 import toast from "react-hot-toast";
 import api from "../../api";
 import { AuthContext } from "../../PrivateRouter/AuthContext";
@@ -352,18 +368,71 @@ function Checkout() {
 
   return (
     <>
-      <PageHeader title="Checkout" align="left" />
-      <PageContainer className="py-8 sm:py-12">
+      <main className="min-h-[60vh] bg-gradient-to-br from-violet-50 via-white to-purple-50">
+      <PageContainer className="!max-w-[1600px] !px-3 py-5 sm:!px-5 sm:py-8 lg:!px-6">
       {loadingCart ? (
         <div className="mt-6 rounded-xl border border-border bg-white p-8 text-center text-sm text-text-secondary">Loading your cart...</div>
       ) : (
-        <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.8fr)]">
-          <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-border bg-white p-5 sm:p-7">
+        <>
+        <header className="relative mb-5 flex flex-wrap items-center justify-between gap-5 overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-r from-violet-100 via-white to-purple-50 p-4 shadow-sm sm:px-6 sm:py-5">
+          <div className="flex items-center gap-3">
+            <Link to="/cart" aria-label="Back to cart" className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-primary transition hover:bg-violet-100">
+              <FiShoppingCart size={19} />
+            </Link>
+            <div>
+              <h1 className="text-xl font-extrabold text-text-primary sm:text-2xl">Checkout</h1>
+              <p className="text-xs text-text-secondary sm:text-sm">Complete your order securely</p>
+            </div>
+          </div>
+          <ol aria-label="Checkout progress" className="flex w-full items-center justify-between gap-1 sm:w-auto sm:min-w-[440px] sm:gap-3">
+            <li className="flex flex-col items-center gap-1 text-[11px] font-semibold text-emerald-700 sm:text-sm">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-primary shadow-sm ring-1 ring-violet-100"><FiShoppingCart size={15} /></span>
+              <span className="flex items-center gap-1">Cart <FiCheckCircle size={13} /></span>
+            </li>
+            <li aria-hidden="true" className="mb-5 h-px flex-1 bg-primary/40 sm:w-9 sm:flex-none" />
+            <li aria-current="step" className="flex flex-col items-center gap-1 text-[11px] font-bold text-primary sm:text-sm">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-md shadow-violet-200"><FiMapPin size={16} /></span>
+              Address
+            </li>
+            <li aria-hidden="true" className="mb-5 h-px flex-1 bg-violet-200 sm:w-9 sm:flex-none" />
+            <li className="flex flex-col items-center gap-1 text-[11px] text-text-secondary sm:text-sm">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-200 bg-white"><FiCreditCard size={15} /></span>
+              Payment
+            </li>
+            <li aria-hidden="true" className="mb-5 h-px flex-1 bg-violet-200 sm:w-9 sm:flex-none" />
+            <li className="flex flex-col items-center gap-1 text-[11px] text-text-secondary sm:text-sm">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border border-violet-200 bg-white"><FiCheck size={15} /></span>
+              Complete
+            </li>
+          </ol>
+        </header>
+
+        <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1.65fr)_minmax(320px,0.95fr)]">
+          <form id="checkout-form" onSubmit={handleSubmit} className="overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-violet-100 bg-gradient-to-r from-violet-50 to-white px-5 py-4 sm:px-7">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white shadow-sm shadow-violet-200"><FiMapPin size={21} /></span>
+                <div>
+                  <h2 className="text-lg font-extrabold text-text-primary">Delivery address</h2>
+                  <p className="text-xs text-text-secondary sm:text-sm">Add or choose your delivery address</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleUseCurrentLocation}
+                disabled={isLocating || isSubmitting}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-primary px-3 py-2.5 text-sm font-bold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isLocating ? <FiLoader className="animate-spin" size={16} /> : <FiMapPin size={16} />}
+                <span>{isLocating ? "Finding..." : "Fetch live location"}</span>
+              </button>
+            </div>
+            <div className="space-y-5 p-4 sm:p-6 lg:p-7">
             <section>
               <div className="mb-5">
-                <h2 className="text-sm font-bold text-text-primary">Search saved addresses</h2>
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <div className="relative min-w-0 flex-[0_1_60%]">
+                <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary"><FiMapPin className="text-primary" size={17} /> Saved addresses</h3>
+                <div className="mt-2">
+                  <div className="relative min-w-0 flex-1">
                     <FiSearch className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     <input
                       type="search"
@@ -374,51 +443,52 @@ function Checkout() {
                       className={`${inputClass} mt-0 pl-9`}
                     />
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleUseCurrentLocation}
-                    disabled={isLocating || isSubmitting}
-                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-primary px-3 py-3 text-sm font-bold text-primary transition hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isLocating ? <FiLoader className="animate-spin" size={16} /> : <FiMapPin size={16} />}
-                    <span>{isLocating ? "Finding..." : "Fetch live location"}</span>
-                  </button>
                 </div>
                 {isLoadingAddresses ? (
                   <p className="mt-3 text-sm text-text-secondary">Loading saved addresses...</p>
                 ) : savedAddresses.length === 0 ? (
                   <p className="mt-3 text-sm text-text-secondary">No saved addresses yet. Enter a new address below.</p>
-                ) : !addressSearch.trim() ? null : filteredAddresses.length === 0 ? (
+                ) : addressSearch.trim() && filteredAddresses.length === 0 ? (
                   <p className="mt-3 text-sm text-text-secondary">No saved addresses match your search.</p>
-                ) : (
-                  <div className="mt-3 grid gap-2">
+                ) : filteredAddresses.length > 0 ? (
+                  <div className="mt-3 grid max-h-56 gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
                     {filteredAddresses.map((address) => (
                       <button
                         key={address.id}
                         type="button"
                         onClick={() => handleSelectAddress(address)}
                         aria-pressed={selectedAddressId === address.id}
-                        className={`flex w-full flex-wrap items-center gap-x-3 gap-y-0.5 rounded-xl border px-3 py-2 text-left transition ${
+                        className={`flex w-full items-start gap-3 rounded-xl border p-3 text-left transition ${
                           selectedAddressId === address.id
                             ? "border-primary bg-primary/5 ring-2 ring-primary/15"
                             : "border-border bg-white hover:border-primary/50 hover:bg-gray-50"
                         }`}
                       >
-                        <span className="text-sm font-bold text-text-primary">{address.recipient_name}</span>
-                        <span className="text-xs text-text-secondary">{address.phone}</span>
-                        <span className="w-full text-xs leading-snug text-text-secondary">
-                          {[address.street_address, address.city, address.district, address.state, address.zip_code]
-                            .filter(Boolean)
-                            .join(", ")}
+                        <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${selectedAddressId === address.id ? "border-primary bg-primary text-white" : "border-slate-300 text-transparent"}`}>
+                          <FiCheck size={12} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span className="text-sm font-bold text-text-primary">{address.recipient_name}</span>
+                            {selectedAddressId === address.id && <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold text-primary">Selected</span>}
+                          </span>
+                          <span className="mt-1 block text-xs text-text-secondary">{address.phone}</span>
+                          <span className="mt-1 block text-xs leading-snug text-text-secondary">
+                            {[address.street_address, address.city, address.district, address.state, address.zip_code]
+                              .filter(Boolean)
+                              .join(", ")}
+                          </span>
                         </span>
                       </button>
                     ))}
                   </div>
-                )}
+                ) : null}
               </div>
-              <h2 className="text-lg font-bold text-text-primary">Delivery address</h2>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <label className="text-sm font-semibold text-text-primary sm:col-span-2">
+              <h3 className="flex items-center gap-2 border-t border-border pt-5 text-base font-bold text-text-primary">
+                <FiMapPin className="text-primary" size={17} /> Enter new address
+              </h3>
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <label className="text-sm font-semibold text-text-primary sm:col-span-2 lg:col-span-1">
                   Full name *
                   <input className={inputClass} name="recipient_name" value={form.recipient_name} onChange={handleChange} maxLength={160} autoComplete="name" required />
                 </label>
@@ -430,7 +500,7 @@ function Checkout() {
                   Email
                   <input className={inputClass} name="customer_email" type="email" value={form.customer_email} onChange={handleChange} maxLength={191} autoComplete="email" />
                 </label>
-                <label className="text-sm font-semibold text-text-primary sm:col-span-2">
+                <label className="text-sm font-semibold text-text-primary sm:col-span-2 lg:col-span-3">
                   Street address *
                   <textarea className={`${inputClass} min-h-24 resize-y`} name="street_address" value={form.street_address} onChange={handleChange} maxLength={512} autoComplete="street-address" required />
                 </label>
@@ -460,91 +530,135 @@ function Checkout() {
                 </label>
               </div>
             </section>
-
-            <section className="rounded-xl bg-gray-50 p-4">
-              <h2 className="text-sm font-bold text-text-primary">Payment method</h2>
-              <label className="mt-3 flex items-center gap-2 rounded-lg border border-primary bg-white p-3 text-sm font-semibold text-primary">
-                <input type="radio" name="payment_method" value="razorpay" checked readOnly />
-                Pay Online with Razorpay
-              </label>
-            </section>
-
-            <button type="submit" disabled={isSubmitting || !cart.length} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3.5 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60">
-              <FiLock size={16} />
-              {isSubmitting ? "Opening secure payment..." : `Pay securely · ₹${formatPrice(checkoutTotal)}`}
-            </button>
+            </div>
           </form>
 
-          <aside className="rounded-2xl border border-border bg-white p-5 sm:p-6">
-            <h2 className="text-lg font-bold text-text-primary">Order summary</h2>
-            <div className="mt-4 max-h-80 space-y-3 overflow-y-auto">
-              {cart.map((item) => (
-                <div key={item.id} className="flex items-start justify-between gap-3 border-b border-border pb-3 last:border-0">
-                  <div className="flex min-w-0 gap-3">
-                    <img src={item.image || "https://ui-avatars.com/api/?name=Product&background=f3f4f6&color=240046"} alt="" className="h-14 w-12 shrink-0 rounded-lg bg-gray-50 object-contain" />
-                    <div className="min-w-0">
-                      <p className="line-clamp-2 text-sm font-semibold text-text-primary">{item.name}</p>
-                      <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
-                        item.item_type === "combo" || item.combo_id
-                          ? "bg-violet-50 text-violet-700"
-                          : "bg-slate-100 text-slate-600"
-                      }`}>
-                        {item.item_type === "combo" || item.combo_id ? "Combo" : "Normal"}
-                      </span>
-                      <p className="mt-1 text-xs text-text-secondary">Qty: {item.quantity}{item.colorName ? ` · ${item.colorName}` : ""}{item.size ? ` · ${item.size}` : ""}</p>
+          <aside className="space-y-4 lg:sticky lg:top-5">
+            <section className="overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-sm">
+              <div className="flex items-center gap-3 border-b border-violet-100 bg-gradient-to-r from-violet-100 via-violet-50 to-white px-4 py-3.5 sm:px-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-md shadow-violet-200">
+                  <FiShoppingBag size={20} />
+                </span>
+                <div>
+                  <h2 className="text-base font-extrabold text-text-primary sm:text-lg">Order Summary</h2>
+                  <p className="text-xs text-text-secondary">Review your items and total</p>
+                </div>
+              </div>
+              <div className="p-4 sm:p-5">
+                <div className="max-h-64 space-y-3 overflow-y-auto">
+                  {cart.map((item) => (
+                    <div key={item.id} className="flex items-start justify-between gap-3 border-b border-violet-100 pb-3 last:border-0">
+                      <div className="flex min-w-0 gap-3">
+                        <img src={item.image || "https://ui-avatars.com/api/?name=Product&background=f3f4f6&color=240046"} alt="" className="h-14 w-14 shrink-0 rounded-lg border border-slate-100 bg-gray-50 p-1 object-contain" />
+                        <div className="min-w-0">
+                          <p className="line-clamp-2 text-sm font-bold text-text-primary">{item.name}</p>
+                          <span className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${
+                            item.item_type === "combo" || item.combo_id
+                              ? "bg-violet-100 text-violet-700"
+                              : "bg-slate-100 text-slate-600"
+                          }`}>
+                            {item.item_type === "combo" || item.combo_id ? "Combo" : "Normal"}
+                          </span>
+                          <p className="mt-1 text-xs text-text-secondary">Qty: {item.quantity}{item.colorName ? ` · ${item.colorName}` : ""}{item.size ? ` · ${item.size}` : ""}</p>
+                        </div>
+                      </div>
+                      <span className="shrink-0 text-sm font-extrabold text-text-primary">₹{formatPrice(item.subtotal ?? item.total_price)}</span>
                     </div>
+                  ))}
+                </div>
+
+                <div className="mt-3 border-t border-violet-100 pt-3">
+                  <label htmlFor="checkout-coupon" className="flex items-center gap-2 text-sm font-extrabold text-text-primary">
+                    <FiTag className="text-primary" size={17} /> Coupon Code
+                  </label>
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      id="checkout-coupon"
+                      value={couponCode}
+                      onChange={(event) => {
+                        setCouponCode(event.target.value);
+                        setAppliedCoupon(null);
+                      }}
+                      placeholder="Enter coupon code"
+                      maxLength={64}
+                      className="min-w-0 flex-1 rounded-lg border border-border px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
+                      disabled={isApplyingCoupon || isSubmitting}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyCoupon}
+                      disabled={isApplyingCoupon || isSubmitting}
+                      className="rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isApplyingCoupon ? "Applying..." : "Apply"}
+                    </button>
                   </div>
-                  <span className="shrink-0 text-sm font-bold text-text-primary">₹{formatPrice(item.subtotal ?? item.total_price)}</span>
+                  {appliedCoupon && (
+                    <p className="mt-2 text-xs font-semibold text-emerald-700">
+                      {appliedCoupon.coupon.name} applied · You save ₹{formatPrice(appliedCoupon.discount)}
+                    </p>
+                  )}
                 </div>
-              ))}
-            </div>
-              <div className="mt-4 border-t border-border pt-4">
-                <label htmlFor="checkout-coupon" className="text-sm font-bold text-text-primary">Coupon code</label>
-                <div className="mt-2 flex gap-2">
-                  <input
-                    id="checkout-coupon"
-                    value={couponCode}
-                    onChange={(event) => {
-                      setCouponCode(event.target.value);
-                      setAppliedCoupon(null);
-                    }}
-                    placeholder="Enter coupon code"
-                    maxLength={64}
-                    className="min-w-0 flex-1 rounded-lg border border-border px-3 py-2.5 text-sm text-text-primary outline-none focus:border-primary focus:ring-2 focus:ring-primary/10"
-                    disabled={isApplyingCoupon || isSubmitting}
-                  />
-                  <button
-                    type="button"
-                    onClick={handleApplyCoupon}
-                    disabled={isApplyingCoupon || isSubmitting}
-                    className="rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {isApplyingCoupon ? "Applying..." : "Apply"}
-                  </button>
-                </div>
-                {appliedCoupon && (
-                  <p className="mt-2 text-sm font-semibold text-emerald-700">
-                    {appliedCoupon.coupon.name} applied · You save ₹{formatPrice(appliedCoupon.discount)}
-                  </p>
-                )}
-              </div>
-              <div className="mt-4 space-y-2 border-t border-border pt-4 text-sm">
-                <div className="flex justify-between text-text-secondary">
-                  <span>Subtotal</span><span>₹{formatPrice(orderTotal)}</span>
-                </div>
-                {appliedCoupon && (
-                  <div className="flex justify-between font-semibold text-emerald-700">
-                    <span>Coupon discount</span><span>−₹{formatPrice(appliedCoupon.discount)}</span>
+
+                <div className="mt-3 space-y-2 border-t border-violet-100 pt-3 text-sm">
+                  <div className="flex justify-between text-text-secondary">
+                    <span>Subtotal</span><span className="font-semibold text-text-primary">₹{formatPrice(orderTotal)}</span>
                   </div>
-                )}
-                <div className="flex justify-between pt-1 text-base font-extrabold text-text-primary">
-                  <span>Total</span><span>₹{formatPrice(checkoutTotal)}</span>
+                  <div className="flex justify-between text-text-secondary">
+                    <span className="flex items-center gap-1.5">Delivery Charges <FiInfo className="text-slate-400" size={14} /></span>
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-700">Free</span>
+                  </div>
+                  {appliedCoupon && (
+                    <div className="flex justify-between font-semibold text-emerald-700">
+                      <span>Coupon discount</span><span>−₹{formatPrice(appliedCoupon.discount)}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between rounded-xl bg-gradient-to-r from-violet-100 to-purple-100 px-3 py-2.5 font-extrabold text-text-primary">
+                    <span>Total Amount</span><span className="text-lg sm:text-xl">₹{formatPrice(checkoutTotal)}</span>
+                  </div>
                 </div>
               </div>
+            </section>
+            <section className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm sm:p-5">
+              <h3 className="text-sm font-bold text-text-primary">Payment method</h3>
+              <label className="mt-3 flex items-center gap-2 rounded-lg border border-primary bg-white p-3 text-sm font-semibold text-primary">
+                <input type="radio" name="payment_method" value="razorpay" checked readOnly />
+                Pay online with Razorpay
+              </label>
+              <button
+                type="submit"
+                form="checkout-form"
+                disabled={isSubmitting || !cart.length}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-sm font-bold text-white shadow-md shadow-violet-200 transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <FiLock size={16} />
+                {isSubmitting ? "Opening secure payment..." : `Pay securely · ₹${formatPrice(checkoutTotal)}`}
+              </button>
+              <p className="mt-2 flex items-center justify-center gap-1.5 text-center text-xs text-text-secondary"><FiLock size={12} /> You’ll complete payment securely with Razorpay.</p>
+            </section>
+            <section className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
+              <h3 className="flex items-center gap-2 text-sm font-bold text-text-primary"><FiShield className="text-primary" size={18} /> Why shop with us?</h3>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-xs text-text-secondary">
+                <p className="flex items-center gap-2 rounded-xl bg-violet-50 p-3"><FiShield className="shrink-0 text-primary" size={18} /><span><span className="block font-bold text-text-primary">Secure payment</span>Protected checkout</span></p>
+                <p className="flex items-center gap-2 rounded-xl bg-violet-50 p-3"><FiTruck className="shrink-0 text-primary" size={18} /><span><span className="block font-bold text-text-primary">Delivery support</span>Help with your order</span></p>
+                <p className="flex items-center gap-2 rounded-xl bg-violet-50 p-3"><FiRefreshCw className="shrink-0 text-primary" size={18} /><span><span className="block font-bold text-text-primary">Returns information</span>Clear policy details</span></p>
+                <p className="flex items-center gap-2 rounded-xl bg-violet-50 p-3"><FiHeadphones className="shrink-0 text-primary" size={18} /><span><span className="block font-bold text-text-primary">Support</span>We’re here to help</span></p>
+              </div>
+            </section>
+            <section className="rounded-2xl border border-violet-100 bg-white p-4 shadow-sm">
+              <p className="flex items-center gap-2 text-sm font-bold text-text-primary"><FiShield className="text-emerald-600" size={18} /> Secure payment options</p>
+              <div className="mt-3 grid grid-cols-4 gap-2 text-center text-xs font-extrabold text-slate-600">
+                {["Razorpay", "Cards", "UPI", "Netbanking"].map((method) => (
+                  <span key={method} className="rounded-lg border border-violet-100 bg-violet-50/50 px-2 py-2">{method}</span>
+                ))}
+              </div>
+            </section>
           </aside>
         </div>
+        </>
       )}
       </PageContainer>
+      </main>
     </>
   );
 }

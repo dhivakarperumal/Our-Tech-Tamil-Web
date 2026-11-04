@@ -49,6 +49,7 @@ const AdminArticles = React.lazy(() => import("./Admin/Articles/Articles.jsx"));
 const AdminYoutubeVideos = React.lazy(() => import("./Admin/YoutubeVideos/YoutubeVideos.jsx"));
 const AdminReviews = React.lazy(() => import("./Admin/Reviews/Reviews.jsx"));
 const AdminCoupons = React.lazy(() => import("./Admin/Coupens/Coupons.jsx"));
+const AdminOffers = React.lazy(() => import("./Admin/Offers/Offers.jsx"));
 const AdminBilling = React.lazy(() => import("./Admin/Billings/Billing.jsx"));
 const CreateShopOrder = React.lazy(() => import("./Admin/Billings/CreateOrder.jsx"));
 const AdminOrders = React.lazy(() => import("./Admin/Orders/Orders.jsx"));
@@ -111,6 +112,7 @@ const router = createBrowserRouter([
       { path: "youtube-videos", element: <AdminYoutubeVideos /> },
       { path: "reviews", element: <AdminReviews /> },
       { path: "coupons", element: <AdminCoupons /> },
+      { path: "offers", element: <AdminOffers /> },
       { path: "orders/all", element: <AdminOrders statusFilter="All" /> },
       { path: "orders/new", element: <AdminOrders statusFilter="Order Placed" /> },
       { path: "orders/delivery", element: <AdminOrders statusFilter="Delivered" /> },

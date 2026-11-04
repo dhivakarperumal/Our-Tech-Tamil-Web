@@ -280,9 +280,10 @@ function validateVariant(product, color, size) {
     throw httpError(400, `The selected color for ${product.name} is no longer available.`);
   }
   const variant = variants.find((item) => (item.colorName || item.color || "") === color);
+  const sizeStock = variant?.sizesStock;
+  const hasSizeStock = sizeStock && typeof sizeStock === "object" && Object.keys(sizeStock).length > 0;
   if (size) {
-    const sizeStock = variant?.sizesStock;
-    if (sizeStock && typeof sizeStock === "object" && !Object.hasOwn(sizeStock, size)) {
+    if (hasSizeStock && !Object.hasOwn(sizeStock, size)) {
       throw httpError(400, `The selected size for ${product.name} is no longer available.`);
     }
     const selectedSizes = Array.isArray(variant?.selectedSizes) ? variant.selectedSizes : [];
@@ -290,8 +291,8 @@ function validateVariant(product, color, size) {
       throw httpError(400, `The selected size for ${product.name} is no longer available.`);
     }
   }
-  if (variant?.sizesStock && typeof variant.sizesStock === "object" && size) {
-    const available = Number(variant.sizesStock[size]);
+  if (hasSizeStock && size) {
+    const available = Number(sizeStock[size]);
     if (!Number.isSafeInteger(available) || available < 0) {
       throw httpError(400, `The selected size stock for ${product.name} is invalid.`);
     }
