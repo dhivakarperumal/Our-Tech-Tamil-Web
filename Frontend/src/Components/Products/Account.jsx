@@ -239,36 +239,50 @@ function MyOrders({ user, trackingMode = false }) {
       </div>
 
       {trackingMode ? (
-        <div className="mt-6">
-          <form onSubmit={trackOrder} className="flex flex-col gap-3 sm:flex-row">
-            <label htmlFor="track-order-id" className="sr-only">Order ID</label>
-            <InputBox
-              icon={Search}
-              id="track-order-id"
-              type="text"
-              value={trackingOrderId}
-              onChange={function(event) {
-                setTrackingOrderId(event.target.value);
-                setTrackingMessage("");
-              }}
-              placeholder="Enter your order ID"
-              autoComplete="off"
-              required
-            />
-            <button
-              type="submit"
-              disabled={loading || failed}
-              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-gradient-middle px-6 py-2.5 text-sm font-bold text-white shadow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <Search size={16} aria-hidden="true" />Search
-            </button>
-          </form>
-          {loading && <p className="mt-3 text-sm text-gray-500">Loading your orders...</p>}
-          {failed && <p className="mt-3 text-sm text-rose-600">Could not load your orders. Please refresh the page and try again.</p>}
-          {!loading && !failed && orders.length === 0 && (
-            <p className="mt-3 text-sm text-gray-500">No orders are available to track yet.</p>
-          )}
-          {trackingMessage && <p className="mt-3 text-sm text-rose-600" role="status">{trackingMessage}</p>}
+        <div className="mt-6 rounded-2xl border border-[#eee2fc] bg-gradient-to-br from-[#fcf9ff] via-white to-[#f8f2ff] p-5 sm:p-8">
+          <div className="mx-auto max-w-xl">
+            <div className="mb-6 text-center">
+              <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-gradient-middle text-white shadow-lg shadow-primary/20">
+                <Truck size={26} aria-hidden="true" />
+              </span>
+              <h3 className="mt-4 text-xl font-extrabold tracking-tight text-[#1a0745] sm:text-2xl">Where is your order?</h3>
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-500">
+                Enter the order ID from your confirmation to see its latest delivery progress.
+              </p>
+            </div>
+            <form onSubmit={trackOrder} className="rounded-2xl border border-[#eee4f8] bg-white p-3 shadow-[0_8px_24px_rgba(54,22,82,0.07)] sm:flex sm:items-center sm:gap-3 sm:p-2">
+              <label htmlFor="track-order-id" className="sr-only">Order ID</label>
+              <div className="flex min-w-0 flex-1 items-center gap-3 px-2 sm:px-3">
+                <Search size={19} className="shrink-0 text-[#9b77b5]" aria-hidden="true" />
+                <input
+                  id="track-order-id"
+                  type="text"
+                  value={trackingOrderId}
+                  onChange={function(event) {
+                    setTrackingOrderId(event.target.value);
+                    setTrackingMessage("");
+                  }}
+                  placeholder="e.g. ORD-123456"
+                  autoComplete="off"
+                  required
+                  className="h-12 min-w-0 flex-1 bg-transparent text-sm font-medium text-[#211044] outline-none placeholder:font-normal placeholder:text-gray-400"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={loading || failed}
+                className="mt-2 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-gradient-middle px-6 text-sm font-bold text-white shadow-md shadow-primary/20 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60 sm:mt-0 sm:w-auto"
+              >
+                <Search size={16} aria-hidden="true" />Track Order
+              </button>
+            </form>
+            {loading && <p className="mt-4 text-center text-sm text-gray-500">Preparing your order search...</p>}
+            {failed && <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-center text-sm text-rose-600" role="alert">Could not load your orders. Please refresh the page and try again.</p>}
+            {!loading && !failed && orders.length === 0 && (
+              <p className="mt-4 text-center text-sm text-gray-500">No orders are available to track yet.</p>
+            )}
+            {trackingMessage && <p className="mt-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-center text-sm text-rose-600" role="status">{trackingMessage}</p>}
+          </div>
         </div>
       ) : loading ? (
         <div className="mt-6 space-y-3">{[1,2,3].map(function(i){ return <div key={i} className="h-20 animate-pulse rounded-xl bg-[#f3eaff]/60" />; })}</div>
