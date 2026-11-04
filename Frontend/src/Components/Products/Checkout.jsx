@@ -309,10 +309,12 @@ function Checkout() {
 
   if (!user) {
     return (
-      <>
-        <PageHeader title="Checkout" align="left" />
+      <main>
+        <div data-aos="fade-up">
+          <PageHeader title="Checkout" align="left" />
+        </div>
         <PageContainer className="py-12">
-          <div className="mx-auto max-w-xl rounded-2xl border border-border bg-white p-8 text-center">
+          <div data-aos="fade-up" className="mx-auto max-w-xl rounded-2xl border border-border bg-white p-8 text-center">
             <h1 className="text-xl font-bold text-text-primary">Sign in to checkout</h1>
             <p className="mt-2 text-sm text-text-secondary">Please sign in to place your order.</p>
             <Link to="/login" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white">
@@ -320,16 +322,18 @@ function Checkout() {
             </Link>
           </div>
         </PageContainer>
-      </>
+      </main>
     );
   }
 
   if (placedOrder) {
     return (
-      <>
-        <PageHeader title="Order placed" align="left" />
+      <main>
+        <div data-aos="fade-up">
+          <PageHeader title="Order placed" align="left" />
+        </div>
         <PageContainer className="py-12 sm:py-16">
-          <div className="mx-auto max-w-xl rounded-2xl border border-emerald-100 bg-white p-8 text-center shadow-sm">
+          <div data-aos="fade-up" className="mx-auto max-w-xl rounded-2xl border border-emerald-100 bg-white p-8 text-center shadow-sm">
             <FiCheckCircle className="mx-auto text-emerald-600" size={52} />
             <h1 className="mt-4 text-2xl font-extrabold text-text-primary">Order placed!</h1>
             <p className="mt-2 text-sm text-text-secondary">Your order number is <strong>{placedOrder.order_id}</strong>.</p>
@@ -343,16 +347,18 @@ function Checkout() {
             </Link>
           </div>
         </PageContainer>
-      </>
+      </main>
     );
   }
 
   if (!loadingCart && cart.length === 0) {
     return (
-      <>
-        <PageHeader title="Checkout" align="left" />
+      <main>
+        <div data-aos="fade-up">
+          <PageHeader title="Checkout" align="left" />
+        </div>
         <PageContainer className="py-12">
-          <div className="mx-auto max-w-xl rounded-2xl border border-border bg-white p-8 text-center">
+          <div data-aos="fade-up" className="mx-auto max-w-xl rounded-2xl border border-border bg-white p-8 text-center">
             <h1 className="text-xl font-bold text-text-primary">Your cart is empty</h1>
             <p className="mt-2 text-sm text-text-secondary">Add products before continuing to checkout.</p>
             <Link to="/shop" className="mt-6 inline-flex rounded-lg bg-primary px-5 py-3 text-sm font-bold text-white">
@@ -360,22 +366,23 @@ function Checkout() {
             </Link>
           </div>
         </PageContainer>
-      </>
+      </main>
     );
   }
 
   const inputClass = "mt-1.5 w-full rounded-lg border border-border bg-white px-3.5 py-3 text-sm text-text-primary outline-none transition placeholder:text-gray-400 focus:border-primary focus:ring-2 focus:ring-primary/10";
 
   return (
-    <>
-      <PageHeader title="Checkout" align="left" />
-      <main className="min-h-[60vh] bg-gradient-to-br from-violet-50 via-white to-purple-50">
+    <main className="min-h-[60vh] bg-gradient-to-br from-violet-50 via-white to-purple-50">
+      <div data-aos="fade-up">
+        <PageHeader title="Checkout" align="left" />
+      </div>
       <PageContainer className="py-5 sm:py-8">
       {loadingCart ? (
         <div className="mt-6 rounded-xl border border-border bg-white p-8 text-center text-sm text-text-secondary">Loading your cart...</div>
       ) : (
         <>
-        <header className="relative mb-5 flex flex-wrap items-center justify-between gap-5 overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-r from-violet-100 via-white to-purple-50 p-4 shadow-sm sm:px-6 sm:py-5">
+        <header data-aos="fade-up" className="relative mb-5 flex flex-wrap items-center justify-between gap-5 overflow-hidden rounded-2xl border border-violet-100 bg-gradient-to-r from-violet-100 via-white to-purple-50 p-4 shadow-sm sm:px-6 sm:py-5">
           <div className="flex items-center gap-3">
             <Link to="/cart" aria-label="Back to cart" className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-50 text-primary transition hover:bg-violet-100">
               <FiShoppingCart size={19} />
@@ -659,8 +666,7 @@ function Checkout() {
         </>
       )}
       </PageContainer>
-      </main>
-    </>
+    </main>
   );
 }
 
