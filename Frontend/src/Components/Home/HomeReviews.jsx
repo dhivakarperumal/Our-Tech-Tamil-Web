@@ -260,12 +260,12 @@ function HomeReviews() {
                       </div>
                     </div>
 
-                    {review.product_name && (
+                    {(review.product_name || review.combo_name) && (
                       <Link
                         to={review.product_id ? `/product/${review.product_id}` : "/shop"}
                         className="mt-4 inline-flex max-w-full items-center gap-2 self-start rounded-full border border-violet-100 bg-violet-50 px-3.5 py-2 text-xs font-extrabold text-violet-800 transition hover:border-violet-200 hover:bg-violet-100"
                       >
-                        <span className="truncate">{review.product_name}</span>
+                        <span className="truncate">{review.product_name || review.combo_name}</span>
                         <ArrowUpRight size={13} className="shrink-0" aria-hidden="true" />
                       </Link>
                     )}

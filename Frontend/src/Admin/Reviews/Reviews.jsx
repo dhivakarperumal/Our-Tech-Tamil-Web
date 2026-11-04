@@ -371,7 +371,7 @@ const Reviews = () => {
                       <p className="font-bold text-slate-800">{item.user_name}</p>
                       <p className="text-xs text-slate-400">{new Date(item.created_at).toLocaleDateString()}</p>
                     </td>
-                    <td className="px-6 py-4 text-sm font-semibold text-slate-600">{item.product_name || "Product Deleted"}</td>
+                    <td className="px-6 py-4 text-sm font-semibold text-slate-600">{item.product_name || item.combo_name || "Product Deleted"}</td>
                     <td className="px-6 py-4">
                       <span className="inline-flex items-center gap-1 font-bold text-amber-500">
                         {item.rating}<Star className="w-3.5 h-3.5 fill-current" />
@@ -451,7 +451,7 @@ const Reviews = () => {
                     <div className="flex items-center gap-2 min-w-0">
                       <Package className="w-3.5 h-3.5 text-[#4b0b78]" />
                       <p className="text-[10px] font-black text-slate-700 truncate">
-                        {item.product_name || "Product Deleted"}
+                        {item.product_name || item.combo_name || "Product Deleted"}
                       </p>
                     </div>
                     {item.product_id && (
@@ -583,7 +583,7 @@ const Reviews = () => {
               </span>
               <span className={`rounded-lg border px-2.5 py-1 text-[10px] font-black uppercase ${getStatusColor(viewingReview.status)}`}>{viewingReview.status}</span>
             </div>
-            <p className="mt-4 text-sm font-semibold text-slate-600">{viewingReview.product_name || "Product Deleted"}</p>
+            <p className="mt-4 text-sm font-semibold text-slate-600">{viewingReview.product_name || viewingReview.combo_name || "Product Deleted"}</p>
             {viewingReview.user_email && <p className="mt-1 text-sm text-slate-500">{viewingReview.user_email}</p>}
             <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">{viewingReview.comment}</p>
             {viewingReview.review_image && (

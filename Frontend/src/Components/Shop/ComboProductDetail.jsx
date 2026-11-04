@@ -6,6 +6,7 @@ import api from "../../api";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
 import PageContainer from "../CommenComponents/PageContainer";
 import PageHeader from "../CommenComponents/PageHeader";
+import ComboReviews from "./ComboReviews";
 
 const parseList = (value) => {
   if (Array.isArray(value)) return value;
@@ -438,6 +439,7 @@ function ComboProductDetail() {
                   {combo.delivery_information && <article className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm"><h2 className="font-bold text-slate-800">Delivery information</h2><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">{combo.delivery_information}</p></article>}
                 </section>
               )}
+              <ComboReviews comboId={id} comboName={combo.name} />
             </>
           )}
         </PageContainer>
