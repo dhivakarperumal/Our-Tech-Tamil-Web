@@ -1,6 +1,7 @@
 import {
   ArrowRight,
   ArrowUpRight,
+  BadgeCheck,
   Clock3,
   ChevronDown,
   ClipboardList,
@@ -13,11 +14,11 @@ import {
   Settings2,
   ShieldCheck,
   Store,
+  Truck,
   UserRound,
   UsersRound,
   Zap,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import PageContainer from "./PageContainer";
 import PageHeader from "./PageHeader";
 
@@ -27,6 +28,13 @@ const supportTopics = [
   { label: "Product Enquiry", detail: "Ask about specifications and more", Icon: Settings2, href: "#contact-form" },
   { label: "Warranty & Returns", detail: "Get support for returns and warranty", Icon: ShieldCheck, href: "#contact-form" },
   { label: "Store Visit", detail: "Find our store and opening hours", Icon: Store, href: "#find-our-store" },
+];
+
+const storeBenefits = [
+  { title: "Fast & Safe Delivery", detail: "Across India", Icon: Truck },
+  { title: "100% Genuine Products", detail: "Brand Warranty", Icon: BadgeCheck },
+  { title: "Easy Returns", detail: "Hassle-free process", Icon: RefreshCw },
+  { title: "Dedicated Support", detail: "We’re always here for you", Icon: Headphones },
 ];
 
 const reasons = [
@@ -74,6 +82,16 @@ function ContactUs() {
       "",
       formData.get("message"),
     ].join("\n");
+
+    window.location.href = `mailto:support@ourtechtamil.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
+  const handleNewsletterSubmit = (event) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("newsletter-email");
+    const subject = "Newsletter subscription request";
+    const body = `Please add ${email} to the OurTech newsletter.`;
 
     window.location.href = `mailto:support@ourtechtamil.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
@@ -234,32 +252,65 @@ function ContactUs() {
             </a>
           </div>
 
-          <div id="find-our-store" aria-labelledby="store-heading" className="scroll-mt-28">
-            <div className="mb-3">
+          <div id="find-our-store" aria-labelledby="store-heading" className="scroll-mt-28 overflow-hidden rounded-2xl border border-[#eee4f7] bg-white p-3 shadow-[0_7px_22px_rgba(54,22,93,0.06)] sm:p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
               <h2 id="store-heading" className="text-lg font-extrabold text-[#171326]">Find Our Store</h2>
               <span className="mt-1 block h-0.5 w-9 rounded-full bg-fuchsia-600" aria-hidden="true" />
+              </div>
+              <span className="hidden items-center gap-1.5 rounded-full bg-[#f4eaff] px-3 py-1.5 text-[10px] font-bold text-primary sm:inline-flex"><Clock3 size={13} aria-hidden="true" /> Open Mon–Sat</span>
             </div>
-            <div className="relative overflow-hidden rounded-2xl border border-[#eae5ef] bg-[#eeeaf3]">
+            <div className="relative overflow-hidden rounded-xl border border-[#eae5ef] bg-[#eeeaf3]">
               <iframe
                 title="Our Tech store in Tirupathur"
                 src="https://maps.google.com/maps?q=122%2C%20Tirupathur%2C%20Tamil%20Nadu%20635601%2C%20India&t=&z=13&ie=UTF8&iwloc=&output=embed"
-                className="h-52 w-full border-0 sm:h-56"
+                className="h-64 w-full border-0 sm:h-72"
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
               />
-              <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-2 rounded-xl border border-white/70 bg-white/95 px-3 py-2 shadow-lg">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#f3e7ff] text-primary"><MapPin size={18} aria-hidden="true" /></span>
-                <span><span className="block text-[11px] font-extrabold text-[#201b2d]">OurTech Experience Store</span><span className="block text-[10px] leading-4 text-[#5e596b]">Tirupathur – 635601, Tamil Nadu</span></span>
-              </div>
             </div>
-            <div className="mt-3 flex flex-wrap justify-center gap-2">
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f3e7ff] text-primary"><MapPin size={18} aria-hidden="true" /></span>
+                <span><span className="block text-xs font-extrabold text-[#201b2d]">OurTech Experience Store</span><span className="mt-0.5 block text-[11px] leading-4 text-[#5e596b]">122, Tirupathur, Tamil Nadu – 635601</span></span>
+              </div>
+              <div className="flex flex-wrap gap-2 sm:justify-end">
               <a href="https://www.google.com/maps/dir/?api=1&destination=122%2C+Tirupathur%2C+Tamil+Nadu+635601%2C+India" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-5 py-2.5 text-xs font-bold text-white transition hover:shadow-md">
                 Get Directions <Send size={13} aria-hidden="true" />
               </a>
               <a href="https://www.google.com/maps/search/?api=1&query=122%2C+Tirupathur%2C+Tamil+Nadu+635601%2C+India" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-[#ded2eb] bg-white px-4 py-2.5 text-xs font-bold text-[#28223a] transition hover:border-primary hover:text-primary">
                 <MapPin size={14} aria-hidden="true" /> View on Google Maps
               </a>
+              </div>
             </div>
+          </div>
+        </section>
+
+        <section aria-label="OurTech newsletter and benefits" className="mt-7 overflow-hidden rounded-2xl border border-[#eee2f9] bg-white shadow-[0_8px_24px_rgba(54,22,93,0.08)]">
+          <div className="grid items-center gap-4 bg-gradient-to-r from-[#461080] via-[#7021b5] to-[#9816d3] px-5 py-5 text-white sm:px-7 lg:grid-cols-[1fr_auto] lg:gap-8">
+            <div className="flex items-center gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/15"><Mail size={22} aria-hidden="true" /></span>
+              <span>
+                <span className="block text-sm font-extrabold sm:text-base">Stay Updated with OurTech</span>
+                <span className="mt-0.5 block text-[11px] leading-4 text-white/85 sm:text-xs">Get the latest offers, new arrivals, and exclusive deals straight to your inbox.</span>
+              </span>
+            </div>
+            <form onSubmit={handleNewsletterSubmit} className="flex min-w-0 rounded-xl bg-white p-1 shadow-md sm:max-w-md sm:justify-self-start lg:w-[360px] lg:justify-self-end">
+              <label htmlFor="newsletter-email" className="sr-only">Email address for newsletter</label>
+              <span className="flex min-w-0 flex-1 items-center gap-2 px-2.5 text-[#756d84]">
+                <Mail size={16} aria-hidden="true" />
+                <input id="newsletter-email" name="newsletter-email" type="email" autoComplete="email" required maxLength={254} placeholder="Enter your email address" className="min-w-0 flex-1 bg-transparent py-2 text-[11px] text-[#211936] outline-none placeholder:text-[#8e8799]" />
+              </span>
+              <button type="submit" className="shrink-0 rounded-lg bg-gradient-to-r from-[#9415dc] to-[#5100a8] px-4 py-2 text-[11px] font-bold text-white transition hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">Subscribe</button>
+            </form>
+          </div>
+          <div className="grid divide-y divide-[#eee7f5] sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4">
+            {storeBenefits.map(({ title, detail, Icon }, index) => (
+              <div key={title} className={`flex items-center gap-3 px-5 py-4 sm:px-6 ${index > 0 ? "sm:border-l sm:border-[#eee7f5]" : ""}`}>
+                <Icon size={25} className="shrink-0 text-primary" aria-hidden="true" />
+                <span><span className="block text-[11px] font-extrabold text-[#201b2d]">{title}</span><span className="mt-0.5 block text-[10px] text-[#5e596b]">{detail}</span></span>
+              </div>
+            ))}
           </div>
         </section>
 
