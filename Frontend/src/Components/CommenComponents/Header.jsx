@@ -6,12 +6,16 @@ import PageContainer from "./PageContainer";
 
 const Header = () => {
   const [headerOffers, setHeaderOffers] = useState([]);
+  const [activeOfferIndex, setActiveOfferIndex] = useState(0);
 
   useEffect(() => {
     let active = true;
     api.get("/offers/header")
       .then(({ data }) => {
-        if (active) setHeaderOffers(Array.isArray(data.offers) ? data.offers : []);
+        if (active) {
+          setHeaderOffers(Array.isArray(data.offers) ? data.offers.slice(0, 3) : []);
+          setActiveOfferIndex(0);
+        }
       })
       .catch((error) => {
         console.error("Could not load website header offers:", error);
@@ -20,6 +24,14 @@ const Header = () => {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (headerOffers.length < 2) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveOfferIndex((index) => (index + 1) % headerOffers.length);
+    }, 8000);
+    return () => window.clearInterval(timer);
+  }, [headerOffers.length]);
 
   return (
     <div className="site-footer text-[10px] font-medium text-white sm:text-xs">
@@ -39,23 +51,18 @@ const Header = () => {
 
           {headerOffers.length ? (
             <div className="offer-marquee mx-auto min-w-0 max-w-[75vw] flex-1 sm:max-w-[55vw] lg:max-w-[48vw]" aria-label="Current offers">
-              <div className={`offer-marquee__track ${headerOffers.length === 1 ? "offer-marquee__track--single" : ""}`}>
-                {(headerOffers.length === 1 ? [0] : [0, 1]).map((copy) => (
-                  <div key={copy} className="offer-marquee__group" aria-hidden={copy === 1}>
-                    {headerOffers.map((offer) => (
-                      <Link
-                        key={`${copy}-${offer.id}`}
-                        to="/shop"
-                        title={offer.title}
-                        tabIndex={copy === 1 ? -1 : undefined}
-                        className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 font-semibold transition hover:bg-white/10"
-                      >
-                        <Tag size={13} className="text-accent" aria-hidden="true" />
-                        <span>{Number(offer.offer_percentage)}% OFF · {offer.title}</span>
-                      </Link>
-                    ))}
-                  </div>
-                ))}
+              <div
+                key={headerOffers[activeOfferIndex]?.id}
+                className="offer-marquee__track"
+              >
+                <Link
+                  to="/shop"
+                  title={headerOffers[activeOfferIndex]?.title}
+                  className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 font-semibold transition hover:bg-white/10"
+                >
+                  <Tag size={13} className="text-accent" aria-hidden="true" />
+                  <span>{Number(headerOffers[activeOfferIndex]?.offer_percentage)}% OFF · {headerOffers[activeOfferIndex]?.title}</span>
+                </Link>
               </div>
             </div>
           ) : (
