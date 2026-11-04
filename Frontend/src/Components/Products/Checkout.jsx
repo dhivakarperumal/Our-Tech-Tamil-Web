@@ -368,8 +368,9 @@ function Checkout() {
 
   return (
     <>
+      <PageHeader title="Checkout" align="left" />
       <main className="min-h-[60vh] bg-gradient-to-br from-violet-50 via-white to-purple-50">
-      <PageContainer className="!max-w-[1600px] !px-3 py-5 sm:!px-5 sm:py-8 lg:!px-6">
+      <PageContainer className="py-5 sm:py-8">
       {loadingCart ? (
         <div className="mt-6 rounded-xl border border-border bg-white p-8 text-center text-sm text-text-secondary">Loading your cart...</div>
       ) : (

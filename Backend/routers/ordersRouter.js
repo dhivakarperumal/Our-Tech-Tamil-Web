@@ -53,14 +53,20 @@ function parseItems(value) {
     if (!item || typeof item !== "object" || Array.isArray(item)) {
       throw httpError(400, "Each order item must be a product.");
     }
-    const productId = Number(item.product_id);
+    const hasProductId = item.product_id !== undefined && item.product_id !== null && item.product_id !== "";
+    const hasComboId = item.combo_id !== undefined && item.combo_id !== null && item.combo_id !== "";
+    const productId = hasProductId ? Number(item.product_id) : null;
+    const comboId = hasComboId ? Number(item.combo_id) : null;
     const quantity = Number(item.quantity);
-    if (!Number.isSafeInteger(productId) || productId < 1 ||
+    if (hasProductId === hasComboId ||
+        (hasProductId && (!Number.isSafeInteger(productId) || productId < 1)) ||
+        (hasComboId && (!Number.isSafeInteger(comboId) || comboId < 1)) ||
         !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 10000) {
-      throw httpError(400, "Each order item must have a valid product and quantity.");
+      throw httpError(400, "Each order item must have a valid product or combo and quantity.");
     }
     return {
       productId,
+      comboId,
       quantity,
       variantColor: optionalText(item.variant_color, "Variant color", 100),
       variantSize: optionalText(item.variant_size, "Variant size", 100),
@@ -274,6 +280,61 @@ function createOrdersRouter(pool) {
       let totalCents = 0;
       const savedItems = [];
       for (const item of itemsToSave) {
+        if (item.comboId) {
+          const [combos] = await connection.execute(
+            `SELECT id, name, final_price, offer_price, mrp, thumbnail, gallery_images,
+                    status, available_stock, track_inventory, allow_backorders,
+                    minimum_order_quantity, maximum_order_quantity
+             FROM combos WHERE id = ? AND status = 'Active' LIMIT 1 FOR UPDATE`,
+            [item.comboId],
+          );
+          const combo = combos[0];
+          if (!combo) throw httpError(400, "A selected combo is no longer available.");
+
+          const minimumQuantity = Number(combo.minimum_order_quantity) || 1;
+          const maximumQuantity = Number(combo.maximum_order_quantity) || 0;
+          if (item.quantity < minimumQuantity ||
+              (maximumQuantity && item.quantity > maximumQuantity)) {
+            throw httpError(400, `The quantity for ${combo.name} must be between ${minimumQuantity} and ${maximumQuantity || "the allowed limit"}.`);
+          }
+          const tracksInventory = Number(combo.track_inventory) === 1;
+          const allowsBackorders = Number(combo.allow_backorders) === 1;
+          const availableStock = Number(combo.available_stock) || 0;
+          if (tracksInventory && !allowsBackorders && availableStock < item.quantity) {
+            throw httpError(400, `${combo.name} does not have enough stock.`);
+          }
+
+          const price = Number(combo.final_price ?? combo.offer_price ?? combo.mrp);
+          if (!Number.isFinite(price) || price < 0) {
+            throw httpError(400, "A selected combo has an invalid price.");
+          }
+          const priceCents = Math.round(price * 100);
+          totalCents += priceCents * item.quantity;
+          const galleryImages = parseImageList(combo.gallery_images);
+          savedItems.push({
+            product_id: null,
+            combo_id: combo.id,
+            item_type: "combo",
+            product_name: combo.name,
+            name: combo.name,
+            price: Number((priceCents / 100).toFixed(2)),
+            quantity: item.quantity,
+            total: Number(((priceCents * item.quantity) / 100).toFixed(2)),
+            variant_color: null,
+            variant_size: null,
+            image: combo.thumbnail || galleryImages[0] || "",
+          });
+          if (tracksInventory && !allowsBackorders) {
+            const remainingStock = availableStock - item.quantity;
+            const stockStatus = remainingStock === 0 ? "Out of Stock" : remainingStock <= 10 ? "Low Stock" : "In Stock";
+            await connection.execute(
+              "UPDATE combos SET available_stock = ?, stock_status = ? WHERE id = ?",
+              [remainingStock, stockStatus, combo.id],
+            );
+          }
+          continue;
+        }
+
         const [products] = await connection.execute(
           "SELECT id, name, offer_price, images FROM products WHERE id = ? AND status = 'Active' LIMIT 1",
           [item.productId],
@@ -310,14 +371,17 @@ function createOrdersRouter(pool) {
 
       const [orderResult] = await connection.execute(
         `INSERT INTO orders
-          (user_id, address_id, customer_email, order_type,
+          (user_id, address_id, customer_email, order_type, items_type,
            payment_method, payment_status, status, total_amount, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?, CURRENT_TIMESTAMP))`,
         [
           userId,
           addressId,
           customerEmail,
           orderType,
+          savedItems.some((item) => item.combo_id)
+            ? savedItems.some((item) => !item.combo_id) ? "Mixed" : "Combo"
+            : "Single",
           paymentMethod,
           paymentStatus,
           status,
@@ -330,11 +394,12 @@ function createOrdersRouter(pool) {
       for (const item of savedItems) {
         await connection.execute(
           `INSERT INTO order_items
-            (order_id, product_id, product_name, price, quantity, total, variant_color, variant_size, image)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            (order_id, product_id, combo_id, product_name, price, quantity, total, variant_color, variant_size, image)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             orderResult.insertId,
             item.product_id,
+            item.combo_id || null,
             item.product_name,
             item.price,
             item.quantity,

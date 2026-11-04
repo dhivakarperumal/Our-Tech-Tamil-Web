@@ -168,6 +168,8 @@ const CreateOrder = () => {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [categories, setCategories] = useState([]);
+    const [combos, setCombos] = useState([]);
+    const [selectedCombo, setSelectedCombo] = useState(null);
     const [selectedCategoryType, setSelectedCategoryType] = useState("");
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [products, setProducts] = useState([]);
@@ -202,10 +204,11 @@ const CreateOrder = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [prodRes, userRes, catRes] = await Promise.all([
+                const [prodRes, userRes, catRes, comboRes] = await Promise.all([
                     api.get("/products", { params: { limit: 100 } }),
                     api.get("/auth/users"),
-                    api.get("/categories")
+                    api.get("/categories"),
+                    api.get("/combos")
                 ]);
                 setProducts(Array.isArray(prodRes.data)
                     ? prodRes.data
@@ -214,6 +217,8 @@ const CreateOrder = () => {
                         : []);
                 setUsers(Array.isArray(userRes.data) ? userRes.data : []);
                 setCategories(Array.isArray(catRes.data) ? catRes.data : []);
+                setCombos((Array.isArray(comboRes.data?.combos) ? comboRes.data.combos : [])
+                    .filter((combo) => combo.status === "Active"));
             } catch (error) {
                 console.error("Error fetching data:", error);
                 toast.error("Failed to load initial data");
@@ -326,6 +331,44 @@ const CreateOrder = () => {
         setProductSearchTerm("");
     };
 
+    const handleAddCombo = () => {
+        if (!selectedCombo) {
+            toast.error("Please select a combo first");
+            return;
+        }
+
+        const price = parseFloat(selectedCombo.final_price || selectedCombo.offer_price || selectedCombo.mrp || 0);
+        const image = selectedCombo.thumbnail || getFirstImage(selectedCombo.gallery_images);
+        const existingItemIndex = formData.items.findIndex(
+            (item) => Number(item.combo_id) === Number(selectedCombo.id)
+        );
+        const updatedItems = [...formData.items];
+
+        if (existingItemIndex > -1) {
+            updatedItems[existingItemIndex].quantity += 1;
+            updatedItems[existingItemIndex].total =
+                updatedItems[existingItemIndex].price * updatedItems[existingItemIndex].quantity;
+        } else {
+            updatedItems.push({
+                product_id: null,
+                combo_id: Number(selectedCombo.id),
+                item_type: "combo",
+                name: selectedCombo.name,
+                price,
+                quantity: 1,
+                total: price,
+                variant_color: "",
+                variant_size: "",
+                image,
+                minimum_order_quantity: Number(selectedCombo.minimum_order_quantity) || 1,
+                maximum_order_quantity: Number(selectedCombo.maximum_order_quantity) || 0,
+            });
+        }
+
+        updateTotal(updatedItems);
+        setSelectedCombo(null);
+    };
+
     const handleRemoveItem = (index) => {
         const updatedItems = formData.items.filter((_, i) => i !== index);
         updateTotal(updatedItems);
@@ -333,8 +376,12 @@ const CreateOrder = () => {
 
     const handleQuantityChange = (index, qty) => {
         const updatedItems = [...formData.items];
-        updatedItems[index].quantity = parseInt(qty) || 1;
-        updatedItems[index].total = updatedItems[index].price * updatedItems[index].quantity;
+        const item = updatedItems[index];
+        const minimum = item.item_type === "combo" ? item.minimum_order_quantity || 1 : 1;
+        const maximum = item.item_type === "combo" ? item.maximum_order_quantity : 0;
+        const quantity = Math.max(minimum, parseInt(qty, 10) || minimum);
+        item.quantity = maximum ? Math.min(quantity, maximum) : quantity;
+        item.total = item.price * item.quantity;
         updateTotal(updatedItems);
     };
 
@@ -382,6 +429,13 @@ const CreateOrder = () => {
         const matchesCategory = !selectedCategory || p.category === selectedCategory.name;
         return matchesSearch && matchesCategoryType && matchesCategory;
     });
+    const comboOptions = combos.map((combo) => ({
+        value: combo.id,
+        label: combo.name,
+        meta: `₹${parseFloat(combo.final_price || combo.offer_price || combo.mrp || 0).toLocaleString("en-IN")}`,
+        detail: `${combo.code || "Combo"} · ${combo.category || combo.category_type || ""}`,
+        image: resolveImageUrl(combo.thumbnail || getFirstImage(combo.gallery_images)),
+    }));
 
     const filteredUsers = users.filter(u =>
         u.name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
@@ -413,26 +467,41 @@ const CreateOrder = () => {
             <Toaster position="top-right" />
 
             {/* Header */}
-            <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/80 p-4 shadow-sm sm:p-5">
-                <button
-                    onClick={() => navigate(-1)}
-                    aria-label="Go back"
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-violet-200 hover:text-[#4b0b78] active:scale-95"
-                >
-                    <FiArrowLeft size={20} />
-                </button>
-                <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4b0b78]">Order Management</p>
-                    <h1 className="mt-1 text-xl font-black tracking-tight text-slate-800 sm:text-2xl">Create New Shop Order</h1>
-                    <p className="mt-1 text-sm font-medium text-slate-500">Create a showroom order for an in-store customer.</p>
-                </div>
-                <div className="hidden items-center gap-2 sm:flex">
-                    {[{ number: 1, title: "Products" }, { number: 2, title: "Customer details" }].map(({ number, title }) => (
-                        <div key={number} className={`flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold ${step === number ? "bg-violet-100 text-violet-800" : step > number ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px]">{number}</span>
-                            {title}
+            <div className="overflow-hidden rounded-3xl bg-gradient-to-r from-[#2e1065] via-[#4c1d95] to-[#86198f] text-white shadow-lg shadow-violet-950/10">
+                <div className="flex flex-col gap-5 p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex min-w-0 items-center gap-4">
+                        <button
+                            onClick={() => navigate(-1)}
+                            aria-label="Go back"
+                            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/20 active:scale-95"
+                        >
+                            <FiArrowLeft size={20} />
+                        </button>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-200">Order management</p>
+                            <h1 className="mt-1 text-xl font-black tracking-tight sm:text-2xl">Create New Shop Order</h1>
+                            <p className="mt-1 text-sm text-violet-100/80">Create a showroom order for an in-store customer.</p>
                         </div>
-                    ))}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                        {[{ number: 1, title: "Products" }, { number: 2, title: "Customer details" }].map(({ number, title }) => (
+                            <div
+                                key={number}
+                                className={`flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold ${
+                                    step === number
+                                        ? "bg-white text-violet-800"
+                                        : step > number
+                                            ? "bg-emerald-400/20 text-emerald-100"
+                                            : "bg-white/10 text-violet-200"
+                                }`}
+                            >
+                                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
+                                    step === number ? "bg-violet-100 text-violet-800" : "bg-white/15 text-white"
+                                }`}>{number}</span>
+                                {title}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -492,6 +561,32 @@ const CreateOrder = () => {
                                         else setSelectedProductForVariant(null);
                                     }}
                                 />
+                            </div>
+
+                            <div className="grid grid-cols-1 items-end gap-3 rounded-2xl border border-violet-100 bg-violet-50/50 p-4 sm:grid-cols-[minmax(0,1fr)_auto]">
+                                <SearchableDropdown
+                                    label="Add a Combo"
+                                    value={selectedCombo?.id || ""}
+                                    options={comboOptions}
+                                    placeholder={combos.length ? "Choose a combo..." : "No active combos available"}
+                                    searchPlaceholder="Search combos..."
+                                    onChange={(value) => {
+                                        setSelectedCombo(combos.find((combo) => String(combo.id) === String(value)) || null);
+                                    }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddCombo}
+                                    disabled={!selectedCombo || (
+                                        Number(selectedCombo.track_inventory) === 1 &&
+                                        Number(selectedCombo.allow_backorders) !== 1 &&
+                                        Number(selectedCombo.available_stock) <= 0
+                                    )}
+                                    className="flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                                >
+                                    <FiPlus />
+                                    Add Combo
+                                </button>
                             </div>
 
                             {/* Variant Selection UI */}
@@ -608,7 +703,7 @@ const CreateOrder = () => {
                                                                 <div>
                                                                     <p className="text-sm font-bold text-slate-800 leading-tight">{item.name}</p>
                                                                     <p className="text-[9px] font-black text-blue-500 uppercase tracking-wider mt-0.5">
-                                                                        {item.variant_color} • {item.variant_size}
+                                                                        {item.item_type === "combo" ? "Combo" : `${item.variant_color} • ${item.variant_size}`}
                                                                     </p>
                                                                 </div>
                                                             </div>
@@ -619,7 +714,8 @@ const CreateOrder = () => {
                                                         <td className="px-6 py-4">
                                                             <input
                                                                 type="number"
-                                                                min="1"
+                                                                max={item.item_type === "combo" && item.maximum_order_quantity ? item.maximum_order_quantity : undefined}
+                                                                min={item.item_type === "combo" ? item.minimum_order_quantity || 1 : 1}
                                                                 value={item.quantity}
                                                                 onChange={(e) => handleQuantityChange(index, e.target.value)}
                                                                 className="w-16 px-3 py-1 bg-gray-100 rounded-lg font-bold text-sm"
@@ -866,7 +962,7 @@ const CreateOrder = () => {
                         {formData.items.length > 0 && (
                             <div className="mb-6 max-h-56 space-y-3 overflow-y-auto pr-1">
                                 {formData.items.map((item, index) => (
-                                    <div key={`${item.product_id}-${item.variant_color}-${item.variant_size}-${index}`} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.07] p-2.5">
+                                    <div key={`${item.combo_id || item.product_id}-${item.variant_color}-${item.variant_size}-${index}`} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.07] p-2.5">
                                         <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-white/10">
                                             {item.image ? (
                                                 <img src={resolveImageUrl(item.image)} alt={item.name} className="h-full w-full object-cover" onError={(event) => { event.currentTarget.style.display = "none"; }} />
@@ -874,7 +970,7 @@ const CreateOrder = () => {
                                         </div>
                                         <div className="min-w-0 flex-1">
                                             <p className="truncate text-xs font-bold">{item.name}</p>
-                                            <p className="mt-0.5 truncate text-[10px] text-violet-200">{item.variant_color} · {item.variant_size} · Qty {item.quantity}</p>
+                                            <p className="mt-0.5 truncate text-[10px] text-violet-200">{item.item_type === "combo" ? "Combo" : `${item.variant_color} · ${item.variant_size}`} · Qty {item.quantity}</p>
                                         </div>
                                         <p className="shrink-0 text-xs font-bold">₹{item.total.toLocaleString("en-IN")}</p>
                                     </div>

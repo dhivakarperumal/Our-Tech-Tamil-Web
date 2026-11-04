@@ -7,7 +7,7 @@ const createOrdersRouter = require("../routers/ordersRouter");
 
 process.env.JWT_SECRET = "orders-router-test-secret";
 
-function createPool({ orderItems } = {}) {
+function createPool({ orderItems, combo } = {}) {
   const statements = [];
   const savedOrderItems = orderItems || [{
     order_id: 42,
@@ -28,6 +28,9 @@ function createPool({ orderItems } = {}) {
     async execute(query, params = []) {
       statements.push({ query, params });
       if (query.includes("FROM users")) return [[{ user_id: params[0] }]];
+      if (query.includes("FROM combos WHERE id = ?")) {
+        return combo ? [[combo]] : [[]];
+      }
       if (query.includes("FROM products")) {
         return [[{
           id: 8,
@@ -132,7 +135,70 @@ test("admin order creation stores the address against the selected user ID", asy
   const itemInsert = pool.statements.find(({ query }) => query.includes("INSERT INTO order_items"));
   assert.equal(itemInsert.params[0], 42);
   assert.equal(itemInsert.params[1], 8);
-  assert.equal(itemInsert.params[2], "Test product");
+  assert.equal(itemInsert.params[2], null);
+  assert.equal(itemInsert.params[3], "Test product");
+});
+
+test("admin shop order creation bills active combos at their current price and records combo stock", async (t) => {
+  const pool = createPool({
+    combo: {
+      id: 5,
+      name: "Kitchen combo",
+      final_price: "450.00",
+      offer_price: "475.00",
+      mrp: "500.00",
+      thumbnail: "/uploads/combos/kitchen.png",
+      gallery_images: "[]",
+      status: "Active",
+      available_stock: 4,
+      track_inventory: 1,
+      allow_backorders: 0,
+      minimum_order_quantity: 1,
+      maximum_order_quantity: 3,
+    },
+  });
+  const app = express();
+  app.use(express.json());
+  app.use("/api/orders", createOrdersRouter(pool));
+  const server = app.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => server.close());
+
+  const token = jwt.sign({ id: 1, user_id: "admin-uuid", role: "admin" }, process.env.JWT_SECRET);
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/orders`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      customer_name: "Walk-in Customer",
+      customer_phone: "9876543210",
+      street_address: "12 Test Street",
+      city: "Chennai",
+      state: "Tamil Nadu",
+      zip_code: "600001",
+      items: [{ combo_id: 5, quantity: 2 }],
+    }),
+  });
+
+  const result = await response.json();
+  assert.equal(response.status, 201, JSON.stringify(result));
+  assert.equal(result.total_amount, 900);
+  assert.equal(result.items[0].combo_id, 5);
+  assert.equal(result.items[0].item_type, "combo");
+  assert.equal(result.items[0].price, 450);
+  assert.equal(result.items[0].image, "/uploads/combos/kitchen.png");
+
+  const orderInsert = pool.statements.find(({ query }) => query.includes("INSERT INTO orders"));
+  assert.equal(orderInsert.params[4], "Combo");
+  const itemInsert = pool.statements.find(({ query }) => query.includes("INSERT INTO order_items"));
+  assert.equal(itemInsert.params[1], null);
+  assert.equal(itemInsert.params[2], 5);
+  assert.equal(itemInsert.params[3], "Kitchen combo");
+  assert.ok(pool.statements.some(({ query, params }) =>
+    query.includes("UPDATE combos SET available_stock") && params[0] === 2,
+  ));
 });
 
 test("admin order creation uses the logged-in user ID when no customer is selected", async (t) => {
