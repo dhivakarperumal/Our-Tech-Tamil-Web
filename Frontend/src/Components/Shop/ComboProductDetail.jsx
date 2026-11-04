@@ -307,25 +307,21 @@ function ComboProductDetail() {
                     Order quantity: {minimumQuantity}{maximumQuantity < 10000 ? `–${maximumQuantity}` : "+"}
                   </p>
 
+                  <div className="mt-7 border-t border-border pt-5">
+                    <h2 className="text-base font-bold text-text-primary">Combo details</h2>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-text-secondary">
+                      {combo.description || "No description available."}
+                    </p>
+                  </div>
                   {specifications.length > 0 && (
-                    <section className="mt-6 border-t border-border pt-5">
-                      <h2 className="text-lg font-black text-slate-900">Combo specifications</h2>
-                      <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                        {specifications.map((specification, index) => (
-                          <div key={`${specification.key}-${index}`} className="rounded-xl bg-slate-50 p-3">
-                            <dt className="text-xs font-bold text-slate-500">{specification.key}</dt>
-                            <dd className="mt-1 text-sm text-slate-800">{specification.value}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </section>
-                  )}
-
-                  {combo.description && (
-                    <div className="mt-7 border-t border-border pt-5">
-                      <h2 className="text-base font-bold text-text-primary">Combo details</h2>
-                      <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-text-secondary">{combo.description}</p>
-                    </div>
+                    <dl className="mt-5 divide-y divide-border border-y border-border">
+                      {specifications.map((specification, index) => (
+                        <div key={`${specification.key}-${index}`} className="flex justify-between gap-4 py-2.5 text-sm">
+                          <dt className="font-semibold text-text-primary">{specification.key}</dt>
+                          <dd className="text-right text-text-secondary">{specification.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
                   )}
 
                   <div className="mt-5 grid grid-cols-2 gap-3">
