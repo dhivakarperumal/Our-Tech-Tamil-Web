@@ -144,7 +144,7 @@ function AboutUs() {
                   d="M52 2 H968 Q998 2 998 32 V433 Q998 463 968 463 H2 Z"
                   fill="none"
                   stroke="#cdb6e8"
-                  strokeWidth="4"
+                  strokeWidth="8"
                   vectorEffect="non-scaling-stroke"
                 />
               </svg>
