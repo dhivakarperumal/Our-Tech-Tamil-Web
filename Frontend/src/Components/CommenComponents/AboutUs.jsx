@@ -134,6 +134,20 @@ function AboutUs() {
             <div className="relative overflow-hidden rounded-2xl border-2 border-[#cdb6e8] bg-[#200745] [filter:drop-shadow(0_0_2px_rgba(255,255,255,0.95))_drop-shadow(0_3px_9px_rgba(54,22,93,0.2))] lg:rounded-l-none lg:rounded-r-2xl lg:[clip-path:polygon(5%_0,100%_0,100%_96%,98%_100%,0_100%)]">
               <img src="/images/loginbanner.png" alt="OurTech collection of laptops, phones, headphones and smart devices" className="aspect-[2.15/1] w-full object-cover object-[62%_center]" />
               <div className="absolute inset-0 bg-gradient-to-r from-[#210747]/35 via-transparent to-transparent" aria-hidden="true" />
+              <svg
+                viewBox="0 0 1000 465"
+                preserveAspectRatio="none"
+                className="pointer-events-none absolute inset-0 h-full w-full"
+                aria-hidden="true"
+              >
+                <path
+                  d="M52 2 H968 Q998 2 998 32 V433 Q998 463 968 463 H2 Z"
+                  fill="none"
+                  stroke="#cdb6e8"
+                  strokeWidth="4"
+                  vectorEffect="non-scaling-stroke"
+                />
+              </svg>
             </div>
             <div className="absolute -bottom-2 right-2.5 z-10 flex items-center gap-2 rounded-xl border border-white/90 bg-white px-2.5 py-2 shadow-[0_10px_24px_rgba(54,22,93,0.24)] sm:-bottom-2.5 sm:right-3 sm:gap-2.5 sm:px-3 sm:py-2.5">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f0e2ff] text-primary sm:h-9 sm:w-9">
