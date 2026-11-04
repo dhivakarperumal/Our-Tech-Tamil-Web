@@ -178,8 +178,8 @@ function AboutUs() {
           ))}
         </section>
 
-        <section aria-label="Our mission and vision" className="relative mt-4 overflow-hidden rounded-2xl border border-[#e6d9f4] bg-gradient-to-br from-[#f5edff] via-white to-[#f7f1ff] shadow-sm md:grid md:min-h-[270px] md:grid-cols-2">
-          <article className="relative isolate z-10 flex items-start gap-4 overflow-hidden bg-gradient-to-br from-[#21064b] via-[#3c0871] to-[#170333] px-5 py-6 text-white sm:px-7 md:col-start-1 md:row-start-1 md:min-h-[270px] md:w-[112%] md:gap-4 md:py-8 md:pr-[19%] md:[clip-path:polygon(0_0,78%_0,100%_100%,0_100%)]">
+        <section aria-label="Our mission and vision" className="relative mt-4 overflow-hidden rounded-2xl border border-[#e6d9f4] bg-gradient-to-br from-[#f5edff] via-white to-[#f7f1ff] shadow-sm md:grid md:min-h-[320px] md:grid-cols-2">
+          <article className="relative isolate z-10 flex min-h-[260px] items-start gap-4 overflow-hidden bg-gradient-to-br from-[#21064b] via-[#3c0871] to-[#170333] px-5 py-6 text-white sm:px-7 md:col-start-1 md:row-start-1 md:min-h-[320px] md:w-[112%] md:gap-4 md:py-8 md:pr-[19%] md:[clip-path:polygon(0_0,78%_0,100%_100%,0_100%)]">
             <div className="absolute -left-12 -bottom-16 -z-10 h-44 w-44 rounded-full border-[25px] border-white/5" aria-hidden="true" />
             <span className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 text-fuchsia-200 ring-1 ring-white/10 sm:h-14 sm:w-14">
               <Target size={29} aria-hidden="true" />
@@ -195,7 +195,7 @@ function AboutUs() {
               </Link>
             </div>
           </article>
-          <article className="relative isolate min-h-[210px] overflow-hidden px-5 py-6 sm:px-7 md:col-start-2 md:row-start-1 md:-ml-[12%] md:min-h-[270px] md:pl-[18%] md:pr-5 md:py-8">
+          <article className="relative isolate min-h-[260px] overflow-hidden px-5 py-6 sm:px-7 md:col-start-2 md:row-start-1 md:-ml-[12%] md:min-h-[320px] md:pl-[18%] md:pr-5 md:py-8">
             <div className="absolute inset-0 -z-20 bg-gradient-to-br from-[#f2e7ff] via-white to-[#f7f0ff]" aria-hidden="true" />
             <div className="absolute -right-10 -top-10 -z-10 h-44 w-44 rounded-full bg-fuchsia-100/70 blur-3xl" aria-hidden="true" />
             <img src="/images/loginimage.png" alt="" className="pointer-events-none absolute bottom-0 right-0 z-0 h-[88%] w-[47%] object-contain object-bottom opacity-90" />
