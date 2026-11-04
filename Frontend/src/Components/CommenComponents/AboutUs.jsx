@@ -1,378 +1,317 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
-  ChevronDown,
-  Users,
-  ShoppingBag,
-  Headphones,
-  Shield,
-  Truck,
-  Star,
-  Rocket,
-  ShoppingCart,
-  Trophy,
-  Target,
-  Eye,
+  ArrowRight,
   BadgeCheck,
-  Tag,
-  Play,
-  MessageCircleQuestion,
+  Box,
+  ChevronDown,
+  Eye,
+  Headphones,
+  HeartHandshake,
+  Laptop,
+  Leaf,
+  PackageCheck,
+  Rocket,
+  ShieldCheck,
+  ShoppingBag,
+  Smartphone,
+  Star,
+  Target,
+  UsersRound,
+  Watch,
+  Zap,
 } from "lucide-react";
+import api from "../../api";
 import PageContainer from "./PageContainer";
-import PageHeader from "./PageHeader";
 
-/* ─── Stat Card ─────────────────────────────────────────── */
-const StatCard = ({ icon: Icon, value, label }) => (
-  <div className="flex flex-col items-center gap-1 rounded-2xl border border-[#e9def5] bg-white px-6 py-4 text-center shadow-sm">
-    <Icon size={28} className="text-primary" />
-    <span className="text-xl font-extrabold text-[#1a0745]">{value}</span>
-    <span className="text-xs font-semibold text-gray-500">{label}</span>
-  </div>
-);
+const milestones = [
+  { year: "2020", title: "The Beginning", detail: "Launched with a vision to make great technology more accessible.", Icon: Rocket },
+  { year: "2021", title: "Expanded Catalog", detail: "Added a wider range of gadgets and accessories.", Icon: Box },
+  { year: "2022", title: "Experience Store", detail: "Opened our first experience store.", Icon: Star },
+  { year: "2023", title: "Growing Community", detail: "Welcomed more customers into the OurTech community.", Icon: UsersRound },
+  { year: "2025", title: "Bigger & Better", detail: "Continuing to expand with more products and better service.", Icon: BadgeCheck },
+];
 
-/* ─── Value Card ─────────────────────────────────────────── */
-const ValueCard = ({ icon: Icon, title, desc }) => (
-  <div className="flex items-start gap-3 rounded-2xl bg-[#f8f4ff] px-5 py-4">
-    <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-gradient-middle text-white shadow">
-      <Icon size={19} />
-    </span>
-    <div>
-      <p className="font-bold text-[#1a0745]">{title}</p>
-      <p className="mt-0.5 text-xs text-gray-500 leading-relaxed">{desc}</p>
-    </div>
-  </div>
-);
+const values = [
+  { title: "Innovation", detail: "Bringing the latest tech to you.", Icon: Zap },
+  { title: "Trust", detail: "Genuine products with reliable service.", Icon: ShieldCheck },
+  { title: "Customer First", detail: "Your satisfaction is our priority.", Icon: HeartHandshake },
+  { title: "Sustainability", detail: "Promoting thoughtful choices.", Icon: Leaf },
+  { title: "Integrity", detail: "Honest, fair and long-term relationships.", Icon: BadgeCheck },
+];
 
-/* ─── Timeline Step ──────────────────────────────────────── */
-const TimelineStep = ({ icon: Icon, year, title, desc, isLast }) => (
-  <div className="relative flex flex-col items-center text-center px-3">
-    {/* connector line */}
-    {!isLast && (
-      <div className="absolute top-5 left-1/2 h-px w-full bg-gradient-to-r from-primary/60 to-gradient-middle/60" />
-    )}
-    <span className="relative z-10 mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary to-gradient-middle text-white shadow-md">
-      <Icon size={18} />
-    </span>
-    <span className="text-base font-extrabold text-primary">{year}</span>
-    <span className="mt-0.5 text-sm font-bold text-[#1a0745]">{title}</span>
-    <span className="mt-0.5 text-xs text-gray-500 leading-relaxed">{desc}</span>
-  </div>
-);
+const categoryIcons = [Smartphone, Laptop, Headphones, ShoppingBag, Watch];
 
-/* ─── Main Component ─────────────────────────────────────── */
-const AboutUs = () => {
-  const [openFaq, setOpenFaq] = useState(null);
-  const faqs = [
-    {
-      question: "What kind of products can I shop for at Our Tech?",
-      answer:
-        "We offer a selection of electronics and gadgets, including mobile phones, laptops, and tech accessories. Please check each product page for its specifications and included items.",
-    },
-    {
-      question: "How long does delivery take?",
-      answer:
-        "Orders are usually processed within 1–2 business days. Domestic delivery typically takes 3–7 business days, depending on your location and courier service.",
-    },
-    {
-      question: "Can I cancel an order after placing it?",
-      answer:
-        "You may request cancellation before your order has shipped. Once it has been dispatched, cancellation may no longer be possible.",
-    },
-    {
-      question: "What should I do if my order arrives damaged or incorrect?",
-      answer:
-        "Contact our support team within 48 hours of delivery and provide clear photos of the issue. Returned items must be unused and in their original packaging.",
-    },
-    {
-      question: "How can I check my order status?",
-      answer:
-        "Create an account to view and track your purchases. Shipping tracking details are provided after your order has been dispatched.",
-    },
-  ];
+function getCategoryImage(images) {
+  let parsed = images;
+  if (typeof images === "string") {
+    try {
+      parsed = JSON.parse(images);
+    } catch {
+      parsed = images;
+    }
+  }
+  const image = Array.isArray(parsed) ? parsed[0] : parsed;
+  if (typeof image !== "string" || !image) return "";
+  if (/^(https?:|data:|blob:)/i.test(image)) return image;
+
+  const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
+  return `${backendUrl}${image.startsWith("/") ? image : `/${image}`}`;
+}
+
+function AboutUs() {
+  const [categories, setCategories] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [openReview, setOpenReview] = useState(null);
+  const [categoryFailed, setCategoryFailed] = useState(false);
+  const [reviewsFailed, setReviewsFailed] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    api.get("/categories")
+      .then(({ data }) => {
+        if (active) {
+          setCategories(
+            (Array.isArray(data) ? data : [])
+              .filter((category) => (category.status || "Active") === "Active")
+              .slice(0, 5),
+          );
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to fetch About page categories:", error);
+        if (active) setCategoryFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoadingCategories(false);
+      });
+
+    api.get("/reviews/public")
+      .then(({ data }) => {
+        if (active) setReviews(Array.isArray(data?.reviews) ? data.reviews : []);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch About page reviews:", error);
+        if (active) setReviewsFailed(true);
+      })
+      .finally(() => {
+        if (active) setLoadingReviews(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const averageRating = reviews.length
+    ? reviews.reduce((sum, review) => sum + (Number(review.rating) || 0), 0) / reviews.length
+    : null;
 
   return (
-    <div className="bg-[#faf9fc] pb-0">
-
-     <PageHeader title="About Us" />
-
-      {/* ── WHO WE ARE ───────────────────────────────────────── */}
-      <section className="py-10 sm:py-14">
-        <PageContainer>
-          <div className="grid items-center gap-7 lg:grid-cols-2 lg:gap-10">
-            <div className="relative overflow-hidden rounded-2xl bg-[#23094c] shadow-[0_12px_30px_rgba(47,12,86,0.2)]">
-              <img
-                src="/images/loginbanner.png"
-                alt="Our Tech collection of gadgets and electronics"
-                className="aspect-[16/9] h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1b063f]/45 via-transparent to-transparent" aria-hidden="true" />
-              <div className="absolute inset-0 flex items-center justify-center" aria-hidden="true">
-                <span className="flex h-14 w-14 items-center justify-center rounded-full border border-white/60 bg-primary/90 text-white shadow-[0_0_0_8px_rgba(255,255,255,0.18)] sm:h-16 sm:w-16">
-                  <Play size={24} className="ml-1 fill-current" />
-                </span>
-              </div>
+    <main className="overflow-hidden bg-[#fbf9ff] pb-10">
+      <PageContainer className="!px-4 sm:!px-6 lg:!px-[3%]">
+        <section aria-labelledby="about-story-heading" className="grid items-center gap-5 pt-5 sm:pt-7 lg:grid-cols-[0.8fr_1.2fr] lg:gap-8">
+          <div className="order-2 space-y-3 lg:order-1">
+            <p className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-primary">
+              <span className="h-px w-5 bg-primary" aria-hidden="true" /> Our Story
+            </p>
+            <h1 id="about-story-heading" className="text-2xl font-black leading-tight tracking-tight text-[#17123b] sm:text-3xl">
+              More Than Just a Store
+            </h1>
+            <p className="max-w-xl text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
+              OurTech started with a simple goal — to make the latest technology accessible to everyone. What began as a small passion project has grown into a trusted destination for quality gadgets and a better shopping experience.
+            </p>
+            <p className="max-w-xl text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
+              We bring together genuine products, competitive prices and friendly support, so you can find the technology that fits your life — all in one place.
+            </p>
+            <Link to="/shop" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-4 py-2 text-[11px] font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg">
+              Our Journey <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="relative order-1 overflow-hidden rounded-2xl border border-[#eee2f9] bg-[#200745] shadow-[0_12px_30px_rgba(47,12,86,0.16)] lg:order-2">
+            <img src="/images/loginbanner.png" alt="A selection of laptops, phones, headphones and smart devices" className="aspect-[16/8] w-full object-cover object-[62%_center] sm:aspect-[16/7]" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#210747]/80 via-transparent to-transparent" aria-hidden="true" />
+            <div className="absolute bottom-3 right-3 rounded-xl border border-white/60 bg-white/95 px-3 py-2 shadow-lg sm:bottom-4 sm:right-4">
+              <p className="text-[9px] font-bold text-[#5d536b]">Shopping made personal</p>
+              <p className="mt-0.5 text-xs font-extrabold text-primary">Technology for every day</p>
             </div>
+          </div>
+        </section>
 
-            <div className="space-y-3">
-              <span className="inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.2em] text-primary sm:text-xs">
-                <span className="h-px w-7 bg-gradient-to-r from-primary to-gradient-middle" aria-hidden="true" />
-                Who We Are
-                <span className="h-px w-7 bg-gradient-to-r from-primary to-gradient-middle" aria-hidden="true" />
-              </span>
-              <h2 className="text-2xl font-extrabold leading-tight text-[#1a0745] sm:text-3xl">
-                Our Tech Gadgets Store
-              </h2>
-              <p className="text-sm leading-6 text-gray-600">
-                We are a technology retail platform dedicated to bringing you a wide range of genuine electronics and accessories at the best prices. From laptops and mobile phones to smart accessories, we make it easy to shop for quality tech with confidence.
-              </p>
+        <section aria-label="OurTech at a glance" className="mt-5 grid grid-cols-2 divide-x divide-y divide-[#d9c7ee] overflow-hidden rounded-2xl border border-[#eee2f9] bg-gradient-to-r from-[#f3eaff] via-[#fbf8ff] to-[#f3eaff] sm:grid-cols-4 sm:divide-y-0">
+          {[
+            { value: "50,000+", label: "Happy Customers", Icon: UsersRound },
+            { value: "10,000+", label: "Products", Icon: Box },
+            { value: "24/7", label: "Customer Support", Icon: Headphones },
+            { value: averageRating ? `${averageRating.toFixed(1)} / 5` : "—", label: "Customer Rating", Icon: Star },
+          ].map(({ value, label, Icon }) => (
+            <div key={label} className="flex items-center justify-center gap-3 px-3 py-3 sm:py-4">
+              <Icon size={22} className="shrink-0 text-primary" aria-hidden="true" />
+              <span><span className="block text-sm font-black text-primary sm:text-base">{value}</span><span className="block text-[9px] text-[#615a70] sm:text-[10px]">{label}</span></span>
+            </div>
+          ))}
+        </section>
 
-              <div className="grid grid-cols-3 gap-2 pt-1">
-                {[
-                  { icon: Shield, label: "Genuine Products" },
-                  { icon: Truck, label: "Fast & Safe Delivery" },
-                  { icon: Headphones, label: "Dedicated Support" },
-                ].map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex min-w-0 items-center gap-2 text-[10px] font-bold leading-4 text-[#33284a] sm:text-xs">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f1e6fc] text-primary">
-                      <Icon size={16} aria-hidden="true" />
+        <section aria-label="Our mission and vision" className="mt-4 grid overflow-hidden rounded-2xl border border-[#eee2f9] shadow-sm md:grid-cols-2">
+          <article className="relative isolate overflow-hidden bg-gradient-to-br from-[#21064b] via-[#3c0871] to-[#170333] p-5 text-white sm:p-7">
+            <div className="absolute -right-8 -top-10 -z-10 h-40 w-40 rounded-full border-[24px] border-white/5" aria-hidden="true" />
+            <Target size={27} className="mb-3 text-fuchsia-300" aria-hidden="true" />
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-fuchsia-200">Driven by purpose</p>
+            <h2 className="mt-1 text-lg font-extrabold">Our Mission</h2>
+            <p className="mt-2 max-w-md text-xs leading-5 text-white/80">
+              To make the latest technology easily accessible by bringing together genuine products, thoughtful recommendations and dependable customer service.
+            </p>
+            <Link to="/shop" className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 px-3.5 py-2 text-[10px] font-bold text-white transition hover:brightness-110">
+              Explore Our Products <ArrowRight size={13} aria-hidden="true" />
+            </Link>
+          </article>
+          <article className="relative isolate overflow-hidden bg-gradient-to-br from-[#f2e7ff] via-[#fff] to-[#f7f0ff] p-5 sm:p-7">
+            <div className="absolute -bottom-12 -right-8 -z-10 h-40 w-40 rounded-full bg-fuchsia-100/70 blur-2xl" aria-hidden="true" />
+            <Eye size={27} className="mb-3 text-primary" aria-hidden="true" />
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-primary">A brighter tomorrow</p>
+            <h2 className="mt-1 text-lg font-extrabold text-[#17123b]">Our Vision</h2>
+            <p className="mt-2 max-w-md text-xs leading-5 text-[#5b566b]">
+              To be a trusted technology destination, helping more people discover useful innovation and enjoy a confident, seamless shopping experience.
+            </p>
+          </article>
+        </section>
+
+        <section aria-labelledby="values-heading" className="mt-6 grid items-stretch gap-4 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="flex flex-col justify-center py-1">
+            <p className="flex items-center gap-2 text-[9px] font-extrabold uppercase tracking-[0.16em] text-primary"><span className="h-px w-5 bg-primary" aria-hidden="true" /> Our Core Values</p>
+            <h2 id="values-heading" className="mt-1 text-xl font-black text-[#17123b]">What Drives Us</h2>
+            <p className="mt-2 max-w-sm text-xs leading-5 text-[#5b566b]">Our values guide everything we do — from the products we select to the support we provide.</p>
+            <Link to="/contactus" className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-4 py-2 text-[10px] font-bold text-white transition hover:shadow-md">
+              Learn More <ArrowRight size={13} aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {values.map(({ title, detail, Icon }) => (
+              <article key={title} className="flex items-start gap-2.5 rounded-xl border border-[#eee6f6] bg-white p-3 shadow-sm">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f2e8ff] text-primary"><Icon size={17} aria-hidden="true" /></span>
+                <span><h3 className="text-[11px] font-extrabold text-[#211936]">{title}</h3><p className="mt-0.5 text-[9px] leading-4 text-[#625b70]">{detail}</p></span>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section aria-labelledby="journey-heading" className="relative mt-7 overflow-hidden rounded-2xl border border-[#eee3f8] bg-gradient-to-r from-[#faf6ff] via-white to-[#f3eaff] px-4 py-5 sm:px-6 sm:py-6">
+          <div className="absolute -right-10 top-0 h-40 w-40 rounded-full bg-violet-100/60 blur-3xl" aria-hidden="true" />
+          <div className="relative mb-5 text-center">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-primary">— Our Journey —</p>
+            <h2 id="journey-heading" className="mt-1 text-lg font-black text-[#17123b] sm:text-xl">A Journey of Growth &amp; Innovation</h2>
+            <p className="mt-1 text-[10px] text-[#625b70]">A quick look at how OurTech has grown over the years.</p>
+          </div>
+          <div className="relative grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-5 sm:gap-3">
+            <div className="absolute left-[10%] right-[10%] top-5 hidden h-px bg-gradient-to-r from-fuchsia-400 via-primary to-fuchsia-400 sm:block" aria-hidden="true" />
+            {milestones.map(({ year, title, detail, Icon }) => (
+              <article key={year} className="relative flex flex-col items-center text-center">
+                <span className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white text-primary shadow-[0_2px_12px_rgba(75,0,200,0.15)] ring-1 ring-[#eaddf7]"><Icon size={18} aria-hidden="true" /></span>
+                <p className="mt-1.5 text-xs font-black text-primary">{year}</p>
+                <h3 className="mt-0.5 text-[10px] font-extrabold text-[#211936]">{title}</h3>
+                <p className="mt-1 max-w-[150px] text-[9px] leading-4 text-[#625b70]">{detail}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section aria-label="Shop categories and our promise" className="mt-5 grid gap-3 lg:grid-cols-[2.4fr_1fr]">
+          <div className="grid overflow-hidden rounded-2xl border border-[#eee3f8] bg-[#f4eaff] sm:grid-cols-[0.9fr_2.6fr]">
+            <div className="flex flex-col justify-center p-4 sm:p-5">
+              <h2 className="text-base font-black leading-tight text-[#211936]">Explore Our Top Categories</h2>
+              <p className="mt-1.5 text-[10px] leading-4 text-[#625b70]">Discover the latest in tech, from everyday essentials to your next big upgrade.</p>
+              <Link to="/shop" className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-3.5 py-2 text-[10px] font-bold text-white">
+                Shop Now <ArrowRight size={13} aria-hidden="true" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3 lg:grid-cols-5">
+              {loadingCategories ? (
+                Array.from({ length: 5 }, (_, index) => <div key={index} className="h-24 animate-pulse rounded-xl bg-white/70" />)
+              ) : categoryFailed ? (
+                <p className="col-span-full self-center text-center text-xs text-[#625b70]">Categories could not be loaded. Please try again later.</p>
+              ) : categories.length ? categories.map((category, index) => {
+                const Icon = categoryIcons[index % categoryIcons.length];
+                const image = getCategoryImage(category.images);
+                return (
+                  <Link key={category.catId || category.id || category.name} to={`/shop?category=${encodeURIComponent(category.name)}`} className="group flex min-h-24 flex-col items-center justify-center gap-2 rounded-xl border border-[#eee6f6] bg-white px-2 py-2 text-center transition hover:-translate-y-0.5 hover:shadow-md">
+                    <span className="flex h-12 w-full items-center justify-center">
+                      {image ? <img src={image} alt="" loading="lazy" className="h-full max-w-full object-contain" /> : <Icon size={31} className="text-primary" aria-hidden="true" />}
                     </span>
-                    <span>{label}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-3 gap-2 pt-2 sm:gap-3">
-                <StatCard icon={Users} value="50K+" label="Happy Customers" />
-                <StatCard icon={ShoppingBag} value="10K+" label="Products" />
-                <StatCard icon={Headphones} value="24/7" label="Support" />
-              </div>
+                    <span className="max-w-full truncate text-[10px] font-bold text-[#211936] group-hover:text-primary">{category.name}</span>
+                  </Link>
+                );
+              }) : (
+                <p className="col-span-full self-center text-center text-xs text-[#625b70]">No categories are available right now.</p>
+              )}
             </div>
           </div>
-        </PageContainer>
-      </section>
+          <aside className="relative isolate flex min-h-40 flex-col justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#200644] via-[#5100a8] to-[#9300cf] p-5 text-white">
+            <div className="absolute -bottom-8 -right-5 -z-10 text-white/10"><ShieldCheck size={128} strokeWidth={1} aria-hidden="true" /></div>
+            <h2 className="text-base font-extrabold">Why Shop with OurTech?</h2>
+            <ul className="mt-3 space-y-2 text-[10px] font-medium text-white/90">
+              <li className="flex items-center gap-2"><PackageCheck size={14} className="text-fuchsia-200" aria-hidden="true" /> Fast &amp; secure delivery</li>
+              <li className="flex items-center gap-2"><BadgeCheck size={14} className="text-fuchsia-200" aria-hidden="true" /> Genuine products</li>
+              <li className="flex items-center gap-2"><ArrowRight size={14} className="text-fuchsia-200" aria-hidden="true" /> Easy returns</li>
+              <li className="flex items-center gap-2"><Headphones size={14} className="text-fuchsia-200" aria-hidden="true" /> Dedicated support</li>
+            </ul>
+          </aside>
+        </section>
 
-      {/* ── MISSION, VISION, FAQ, VALUES & WHY CHOOSE US ────── */}
-      <section className="py-10 sm:py-14">
-        <PageContainer>
-          <div className="grid gap-4 md:grid-cols-2">
-            <article className="flex items-start gap-4 rounded-2xl border border-[#eadcf6] bg-white p-5 shadow-[0_8px_24px_rgba(74,27,120,0.08)] sm:p-6">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0e2ff] text-primary">
-                <Target size={23} aria-hidden="true" />
-              </span>
-              <div>
-                <h2 className="text-base font-extrabold text-[#1a0745]">Our Mission</h2>
-                <p className="mt-1 text-sm leading-6 text-gray-600">
-                  To deliver high-quality gadgets and a seamless shopping experience with trust, value, and great customer support.
-                </p>
-              </div>
-            </article>
-
-            <article className="flex items-start gap-4 rounded-2xl border border-[#eadcf6] bg-white p-5 shadow-[0_8px_24px_rgba(74,27,120,0.08)] sm:p-6">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#f0e2ff] text-primary">
-                <Eye size={23} aria-hidden="true" />
-              </span>
-              <div>
-                <h2 className="text-base font-extrabold text-[#1a0745]">Our Vision</h2>
-                <p className="mt-1 text-sm leading-6 text-gray-600">
-                  To be a leading and trusted tech store, bringing the latest technology to everyone for a smarter lifestyle.
-                </p>
-              </div>
-            </article>
+        <section aria-labelledby="customer-stories-heading" className="mt-7">
+          <div className="mb-3 text-center">
+            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-primary">— Our Customers&apos; Stories —</p>
+            <h2 id="customer-stories-heading" className="mt-1 text-xl font-black text-[#17123b]">What Our Customers Say</h2>
           </div>
-
-          <div className="my-8 rounded-3xl bg-white py-8 sm:my-10 sm:py-10">
-            <div className="grid items-start gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:gap-10">
-              <div>
-                <div className="mb-6">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-[#f3eaff] px-4 py-1 text-xs font-semibold text-primary">
-                    <MessageCircleQuestion size={15} aria-hidden="true" />
-                    FAQ
-                  </span>
-                  <h2 className="mt-3 text-2xl font-extrabold text-[#1a0745] sm:text-3xl">
-                    Frequently Asked Questions
-                  </h2>
-                  <p className="mt-2 text-sm text-gray-500">
-                    Find quick answers to common questions about shopping with us.
-                  </p>
-                </div>
-
-                <div className="space-y-3">
-                  {faqs.map(({ question, answer }, index) => {
-                    const isOpen = openFaq === index;
-                    const answerId = `about-faq-answer-${index}`;
-
-                    return (
-                      <article
-                        key={question}
-                        className="overflow-hidden rounded-2xl border border-[#eadcf6] bg-white shadow-[0_4px_16px_rgba(74,27,120,0.06)]"
-                      >
-                        <h3>
-                          <button
-                            type="button"
-                            aria-expanded={isOpen}
-                            aria-controls={answerId}
-                            onClick={() => setOpenFaq(isOpen ? null : index)}
-                            className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left text-sm font-bold text-[#1a0745] transition hover:bg-[#fcf9ff] sm:px-5"
-                          >
-                            {question}
-                            <ChevronDown
-                              size={18}
-                              className={`shrink-0 text-primary transition-transform ${isOpen ? "rotate-180" : ""}`}
-                              aria-hidden="true"
-                            />
-                          </button>
-                        </h3>
-                        {isOpen && (
-                          <div id={answerId} className="border-t border-[#f0e8f8] px-4 py-4 text-sm leading-6 text-gray-600 sm:px-5">
-                            {answer}
-                          </div>
-                        )}
-                      </article>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <div className="mb-6">
-                  <span className="inline-block rounded-full border border-primary/25 bg-[#f3eaff] px-4 py-1 text-xs font-semibold text-primary">
-                    Our Values
-                  </span>
-                  <h2 className="mt-3 text-2xl font-extrabold text-[#1a0745] sm:text-3xl">
-                    What We Stand For
-                  </h2>
-                  <p className="mt-2 text-sm text-gray-500">
-                    The principles behind every order and customer experience.
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  <ValueCard
-                    icon={Star}
-                    title="Quality First"
-                    desc="Premium products with trusted brands you can rely on."
-                  />
-                  <ValueCard
-                    icon={Shield}
-                    title="Secure Shopping"
-                    desc="Your data and payments are always safe with us."
-                  />
-                  <ValueCard
-                    icon={Truck}
-                    title="Fast Delivery"
-                    desc="Quick, reliable and on-time delivery to your door."
-                  />
-                  <ValueCard
-                    icon={Headphones}
-                    title="Customer Care"
-                    desc="We're here to help you, always — 24/7 support."
-                  />
-                </div>
-              </div>
+          {loadingReviews ? (
+            <div className="grid gap-3 sm:grid-cols-3" aria-label="Loading customer stories">
+              {Array.from({ length: 3 }, (_, index) => <div key={index} className="h-28 animate-pulse rounded-xl bg-[#f3eaff]" />)}
             </div>
+          ) : reviewsFailed ? (
+            <p className="rounded-xl border border-[#eee3f8] bg-white px-4 py-5 text-center text-xs text-[#625b70]">Customer stories could not be loaded. Please try again later.</p>
+          ) : reviews.length ? (
+            <div className="grid gap-3 sm:grid-cols-3">
+              {reviews.slice(0, 3).map((review) => {
+                const isOpen = openReview === review.id;
+                return (
+                  <article key={review.id} className="rounded-xl border border-[#e8d8f6] bg-white p-3 shadow-sm sm:p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[10px] font-extrabold text-[#211936]">{review.user_name || "OurTech Customer"} <BadgeCheck size={12} className="inline text-primary" aria-label="Published review" /></p>
+                      <div className="flex shrink-0 items-center gap-0.5 text-amber-500" aria-label={`${review.rating} out of 5 stars`}>
+                        {Array.from({ length: 5 }, (_, index) => <Star key={index} size={11} className={index < Math.round(Number(review.rating) || 0) ? "fill-amber-400 text-amber-400" : "text-amber-200"} aria-hidden="true" />)}
+                      </div>
+                    </div>
+                    {review.product_name && <p className="mt-1 text-[9px] font-semibold text-primary">{review.product_name}</p>}
+                    <p className={`mt-2 whitespace-pre-line text-[10px] leading-4 text-[#514b5d] ${isOpen ? "" : "line-clamp-3"}`}>{review.comment}</p>
+                    {(review.comment || "").length > 120 && (
+                      <button type="button" onClick={() => setOpenReview(isOpen ? null : review.id)} className="mt-1 inline-flex items-center gap-1 text-[9px] font-bold text-primary">
+                        {isOpen ? "Show less" : "Read more"} <ChevronDown size={11} className={isOpen ? "rotate-180" : ""} aria-hidden="true" />
+                      </button>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="rounded-xl border border-[#eee3f8] bg-white px-4 py-5 text-center text-xs text-[#625b70]">Customer stories will appear here as reviews are published.</p>
+          )}
+        </section>
+
+        <section aria-label="Shop with OurTech" className="relative isolate mt-6 flex min-h-36 items-center overflow-hidden rounded-2xl bg-[#1d0645] px-5 py-6 text-white sm:min-h-40 sm:px-8">
+          <img src="/images/pageheader.png" alt="" className="absolute inset-0 -z-20 h-full w-full object-cover object-[70%_center]" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#220747]/95 via-[#360575]/90 to-[#360575]/35" aria-hidden="true" />
+          <div className="max-w-lg">
+            <h2 className="text-xl font-black sm:text-2xl">Be a Part of <span className="text-fuchsia-300">OurTech Family</span></h2>
+            <p className="mt-1.5 max-w-md text-[10px] leading-5 text-white/85 sm:text-xs">Explore the latest gadgets, discover helpful technology and find what fits your everyday life.</p>
           </div>
-
-          <div className="mt-5 rounded-3xl border border-[#eadcf6] bg-gradient-to-br from-[#fbf7ff] via-[#f5edff] to-[#fdf9ff] p-5 shadow-[0_12px_30px_rgba(74,27,120,0.08)] sm:mt-6 sm:p-8">
-            <div className="mb-5 flex items-center gap-3 sm:mb-6">
-              <span className="h-px flex-1 bg-gradient-to-r from-transparent via-[#c89af1] to-[#a855f7]" />
-              <h2 className="shrink-0 text-center text-lg font-extrabold text-[#1a0745] sm:text-xl">
-                Why Choose Us?
-              </h2>
-              <span className="h-px flex-1 bg-gradient-to-l from-transparent via-[#c89af1] to-[#a855f7]" />
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                {
-                  icon: BadgeCheck,
-                  title: "Trusted Store",
-                  description: "Carefully selected products from reliable brands.",
-                },
-                {
-                  icon: Tag,
-                  title: "Best Prices",
-                  description: "Great value on quality tech and accessories.",
-                },
-                {
-                  icon: Truck,
-                  title: "Quick Delivery",
-                  description: "Fast, dependable delivery across India.",
-                },
-                {
-                  icon: Headphones,
-                  title: "Customer Support",
-                  description: "Friendly help whenever you need us.",
-                },
-              ].map(({ icon: Icon, title, description }) => (
-                <article
-                  key={title}
-                  className="flex items-center gap-3 rounded-xl border border-[#eadcf6] bg-white/80 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#f3eaff] text-primary">
-                    <Icon size={20} aria-hidden="true" />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-extrabold text-[#1a0745]">{title}</h3>
-                    <p className="mt-0.5 text-xs leading-5 text-gray-500">{description}</p>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </div>
-        </PageContainer>
-      </section>
-
-      {/* ── OUR JOURNEY ──────────────────────────────────────── */}
-      <section className="py-16">
-        <PageContainer>
-          <div className="grid items-start gap-10 lg:grid-cols-[1fr_2fr]">
-            {/* Left text */}
-            <div className="space-y-4">
-              <span className="inline-block rounded-full border border-primary/25 bg-[#f3eaff] px-4 py-1 text-xs font-semibold text-primary">
-                Our Journey
-              </span>
-              <h2 className="text-3xl font-extrabold text-[#1a0745] sm:text-4xl">
-                Growing With You
-              </h2>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                From a simple idea to a trusted online store, our journey has
-                been about one goal — making tech shopping smarter, easier, and
-                more enjoyable for everyone.
-              </p>
-            </div>
-
-            {/* Timeline */}
-            <div className="relative grid grid-cols-2 gap-6 sm:grid-cols-4">
-              <TimelineStep
-                icon={Rocket}
-                year="2020"
-                title="The Beginning"
-                desc="Launched with a simple vision for better tech shopping."
-              />
-              <TimelineStep
-                icon={ShoppingCart}
-                year="2022"
-                title="Expanding"
-                desc="Added new product categories and partnerships."
-              />
-              <TimelineStep
-                icon={Users}
-                year="2024"
-                title="Growing Community"
-                desc="Reached 50K+ happy customers milestone."
-              />
-              <TimelineStep
-                icon={Trophy}
-                year="2025"
-                title="And Beyond"
-                desc="Continuing to deliver a better shopping experience."
-                isLast
-              />
-            </div>
-          </div>
-        </PageContainer>
-      </section>
-
-    </div>
+          <Link to="/shop" className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-[10px] font-extrabold text-primary shadow-lg transition hover:-translate-y-0.5 sm:px-5">
+            Shop Now <ArrowRight size={13} aria-hidden="true" />
+          </Link>
+        </section>
+      </PageContainer>
+    </main>
   );
-};
+}
 
 export default AboutUs;
