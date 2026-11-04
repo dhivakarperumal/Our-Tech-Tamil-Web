@@ -39,8 +39,8 @@ function YoutubeVideoCard({ video }) {
   };
 
   return (
-    <article className="flex flex-col overflow-hidden rounded-2xl border border-violet-100 bg-white shadow-[0_8px_24px_rgba(75,0,200,0.07)]">
-      <div className="relative aspect-video bg-slate-950">
+    <article className="group flex h-full flex-col overflow-hidden rounded-[24px] border border-violet-100 bg-white shadow-[0_12px_30px_rgba(75,0,200,0.08)] transition duration-200 hover:-translate-y-1 hover:shadow-[0_18px_38px_rgba(75,0,200,0.15)]">
+      <div className="relative aspect-video overflow-hidden bg-slate-950">
         {playing ? (
           <iframe
             src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(video.video_id)}?autoplay=1`}
@@ -56,7 +56,7 @@ function YoutubeVideoCard({ video }) {
             type="button"
             onClick={() => setPlaying(true)}
             aria-label={`Play ${video.title}`}
-            className="group absolute inset-0 flex h-full w-full items-center justify-center"
+            className="absolute inset-0 flex h-full w-full items-center justify-center"
           >
             {!thumbnailFailed && (
               <img
@@ -64,52 +64,56 @@ function YoutubeVideoCard({ video }) {
                 alt=""
                 loading="lazy"
                 onError={handleThumbnailError}
-                className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
               />
             )}
-            <span className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#4B00C8] text-white shadow-lg transition group-hover:scale-110">
-              <Play size={24} fill="currentColor" aria-hidden="true" />
+            <span className="relative flex h-14 w-14 items-center justify-center rounded-full border border-white/60 bg-violet-700/90 text-white shadow-[0_0_30px_rgba(124,58,237,0.65)] transition group-hover:scale-110">
+              <Play size={23} fill="currentColor" className="ml-0.5" aria-hidden="true" />
             </span>
+            <span className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950/60 to-transparent" aria-hidden="true" />
           </button>
         )}
       </div>
       <div className="flex flex-1 flex-col p-4 sm:p-5">
-        <h3 className="line-clamp-2 font-bold leading-snug text-slate-900">{video.title}</h3>
+        <span className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-violet-100 px-3 py-1 text-[11px] font-bold text-violet-800">
+          <Video size={13} aria-hidden="true" />
+          Product video
+        </span>
+        <h3 className="line-clamp-2 min-h-[3.25rem] text-lg font-extrabold leading-tight tracking-[-0.03em] text-slate-950">{video.title}</h3>
         {video.description && (
-          <p className="mt-2 line-clamp-3 flex-1 text-sm leading-6 text-slate-600">{video.description}</p>
+          <p className="mt-2 line-clamp-3 min-h-[4.5rem] flex-1 text-sm leading-6 text-slate-600">{video.description}</p>
         )}
-        <div className="mt-3">
-          <a
-            href={video.video_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-700 transition hover:text-violet-900"
-          >
-            <Video size={16} aria-hidden="true" />
-            Watch on YouTube
-            <ExternalLink size={14} aria-hidden="true" />
-          </a>
-        </div>
-        <div className="mt-auto flex flex-wrap items-center gap-2 pt-3" aria-label="Video actions">
-          {video.application_links?.map((link, index) => (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {video.application_links?.slice(0, 1).map((link, index) => (
             <a
               key={`${link.url}-${index}`}
               href={link.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 transition hover:bg-violet-100"
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-bold text-violet-800 transition hover:bg-violet-100"
             >
               {link.title}
-              <ExternalLink size={13} aria-hidden="true" />
+              <ExternalLink size={14} aria-hidden="true" />
             </a>
           ))}
+          <a
+            href={video.video_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-700 to-fuchsia-600 px-3 py-2 text-sm font-bold text-white shadow-[0_8px_18px_rgba(124,58,237,0.22)] transition hover:brightness-110"
+          >
+            <Video size={16} aria-hidden="true" />
+            Watch on YouTube
+            <ExternalLink size={13} aria-hidden="true" />
+          </a>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2" aria-label="Video actions">
           <button
             type="button"
             onClick={() => setDetailsOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-violet-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-violet-800 focus:outline-none focus:ring-4 focus:ring-violet-200"
+            className="text-xs font-semibold text-violet-700 underline decoration-violet-200 underline-offset-4 transition hover:text-violet-900"
           >
-            More
-            <ExternalLink size={14} aria-hidden="true" />
+            Video details
           </button>
         </div>
       </div>
