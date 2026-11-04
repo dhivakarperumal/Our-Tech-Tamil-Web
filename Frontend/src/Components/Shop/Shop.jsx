@@ -458,8 +458,10 @@ function Shop() {
   };
 
   return (
-    <>
-      <PageHeader title="Shop" />
+    <main>
+      <div data-aos="fade-up">
+        <PageHeader title="Shop" />
+      </div>
       <PageContainer className="!max-w-[1700px] px-3 py-5 sm:px-5 sm:py-7 lg:px-6">
         <section aria-labelledby="shop-heading" className="text-[#211936]">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -792,7 +794,7 @@ function Shop() {
         </div>
         </section>
       </PageContainer>
-    </>
+    </main>
   );
 }
 
