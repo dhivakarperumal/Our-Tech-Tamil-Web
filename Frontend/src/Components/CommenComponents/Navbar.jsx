@@ -572,13 +572,13 @@ const Navbar = () => {
               <button type="button" onClick={() => setMobilePages(true)} className={`flex min-h-14 w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition hover:border-violet-200 hover:bg-violet-50 ${isPagesRoute ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800"}`}>
                 <span className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><FileText size={18} /></span>Pages</span><ChevronRight size={18} className="text-violet-500" />
               </button>
-              <div className="mt-1 flex min-h-14 items-center justify-between rounded-2xl border border-[#eee7f5] bg-white px-4 py-3 sm:hidden">
+              <div className="mt-1 flex flex-col items-center gap-2 rounded-2xl border border-[#eee7f5] bg-white px-4 py-3 sm:hidden">
                 {user ? (
                   <>
-                    <Link to="/account" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 text-sm font-semibold text-gray-700"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><UserRound size={18} /></span>My Account</Link>
-                    <button type="button" onClick={() => setLogoutConfirm(true)} className="rounded-full bg-rose-50 px-3 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-100">Logout</button>
+                    <Link to="/account" onClick={() => setMobileMenu(false)} className="flex min-h-10 w-full items-center gap-3 text-sm font-semibold text-gray-700"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><UserRound size={18} /></span>My Account</Link>
+                    <button type="button" onClick={() => setLogoutConfirm(true)} className="rounded-full bg-rose-50 px-4 py-2 text-xs font-bold text-rose-600 transition hover:bg-rose-100">Logout</button>
                   </>
-                ) : <Link to="/login" onClick={() => setMobileMenu(false)} className="flex items-center gap-3 text-sm font-semibold text-primary"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100"><UserRound size={18} /></span>Sign in</Link>}
+                ) : <Link to="/login" onClick={() => setMobileMenu(false)} className="flex min-h-10 w-full items-center gap-3 text-sm font-semibold text-primary"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100"><UserRound size={18} /></span>Sign in</Link>}
               </div>
             </div>
           ) : mobileCategory ? (
