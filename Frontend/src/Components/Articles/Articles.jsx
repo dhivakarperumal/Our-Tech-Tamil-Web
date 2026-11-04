@@ -77,7 +77,7 @@ function Articles() {
     let active = true;
 
     api
-      .get("/admin/content/articles")
+      .get("/articles/content")
       .then(({ data }) => {
         if (!active) return;
         setArticles(Array.isArray(data.articles) ? data.articles : []);

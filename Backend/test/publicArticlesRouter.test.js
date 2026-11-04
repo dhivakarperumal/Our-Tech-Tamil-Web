@@ -42,3 +42,49 @@ test("public articles endpoint returns all article entries and their links", asy
     { name: "Read Guide", url: "https://example.com/guide" },
   ]);
 });
+
+test("public content endpoint returns articles and product reviews without authentication", async (t) => {
+  let query = "";
+  const pool = {
+    async query(statement) {
+      query = statement;
+      return [[
+        {
+          id: 12,
+          content_id: "ART-00012",
+          content_type: "article",
+          title: "Choosing a wireless speaker",
+          description: "What to consider before buying a speaker.",
+          buy_link: null,
+          buy_links: null,
+          product_features: null,
+        },
+        {
+          id: 13,
+          content_id: "REV-00013",
+          content_type: "product_review",
+          product_name: "Tamil phone",
+          description: "A useful product review.",
+          rating: 4.5,
+          buy_link: "https://example.com/phone",
+          buy_links: null,
+          product_features: JSON.stringify([{ name: "Battery", value: "5000 mAh" }]),
+        },
+      ]];
+    },
+  };
+  const app = express();
+  app.use("/api/articles", createPublicArticlesRouter(createAdminContentController(pool)));
+  const server = app.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  t.after(() => server.close());
+
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/articles/content`);
+  const result = await response.json();
+
+  assert.equal(response.status, 200);
+  assert.doesNotMatch(query, /WHERE\s+content_type/i);
+  assert.deepEqual(result.articles.map((article) => article.content_type), ["article", "product_review"]);
+  assert.deepEqual(result.articles[1].product_features, [{ name: "Battery", value: "5000 mAh" }]);
+  assert.deepEqual(result.articles[1].buy_links, [{ name: "Buy", url: "https://example.com/phone" }]);
+});

@@ -323,6 +323,17 @@ function createAdminContentController(pool) {
       }
     },
 
+    async listPublicContent(request, response, next) {
+      try {
+        const [articles] = await pool.query(
+          "SELECT id, content_id, content_type, title, product_name, description, product_features, image_url, rating, buy_link, buy_links, more_details, created_at FROM admin_articles ORDER BY created_at DESC",
+        );
+        return response.json({ articles: articles.map(normalizeArticle) });
+      } catch (error) {
+        return next(error);
+      }
+    },
+
     async getNextArticleId(request, response, next) {
       const contentType = request.query.type;
       if (!["article", "product_review"].includes(contentType)) {
