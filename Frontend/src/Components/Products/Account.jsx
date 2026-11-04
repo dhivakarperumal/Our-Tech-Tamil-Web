@@ -5,7 +5,6 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
-  ChevronRight,
   CreditCard,
   FileText,
   KeyRound,
@@ -371,10 +370,10 @@ function MyOrders({ user, trackingMode = false }) {
                     <button
                       type="button"
                       onClick={function(){ setSelectedOrder(order); }}
-                      aria-label={"View details for order " + (order.order_id || order.id)}
+                      aria-label={"Track order " + (order.order_id || order.id)}
                       className="col-start-2 row-start-2 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-[#7900bd] bg-gradient-to-r from-[#8c12c6] to-[#6500a9] px-3 py-2 text-[10px] font-extrabold text-white transition hover:bg-none hover:from-white hover:to-white hover:text-[#7900bd] sm:col-auto sm:row-auto sm:min-w-[98px]"
                     >
-                      View Details <ChevronRight size={13} />
+                      <Truck size={13} />Track Order
                     </button>
                   </article>
                 );
