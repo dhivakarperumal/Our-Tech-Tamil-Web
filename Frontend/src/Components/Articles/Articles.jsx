@@ -352,11 +352,15 @@ function Articles() {
             </header>
 
             <div className="min-h-0 flex-1 overflow-y-auto">
-              <img
-                src={getImageUrl(selectedContent.image_url)}
-                alt=""
-                className="max-h-64 w-full bg-[#f0e7ff] object-cover"
-              />
+              <div className="flex max-h-[65vh] items-center justify-center bg-[#f0e7ff]">
+                <img
+                  src={getImageUrl(selectedContent.image_url)}
+                  alt={selectedContent.content_type === "product_review"
+                    ? selectedContent.product_name || selectedContent.title || "Product review"
+                    : selectedContent.title || "Article"}
+                  className="block max-h-[65vh] max-w-full object-contain"
+                />
+              </div>
               <div className="space-y-5 p-5 sm:p-7">
                 {selectedContent.content_type === "product_review" && selectedContent.rating != null && (
                   <StarRating value={selectedContent.rating} />
