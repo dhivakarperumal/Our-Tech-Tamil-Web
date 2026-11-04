@@ -59,6 +59,7 @@ const Navbar = () => {
     : "";
   const isCategoryRoute = location.pathname === "/shop"
     && new URLSearchParams(location.search).has("category");
+  const isProductDetailsRoute = location.pathname.startsWith("/product/");
   const isPagesRoute = ["/articles", "/youtube-videos", "/about", "/contactus", "/termsandconditions"]
     .some((route) => location.pathname === route || location.pathname.startsWith(`${route}/`));
   const currentRoute = `${location.pathname}${location.search}`;
@@ -252,7 +253,9 @@ const Navbar = () => {
         <NavLink to="/" end className={navClass}><House size={18} aria-hidden="true" />Home</NavLink>
         <NavLink
           to="/shop"
-          className={({ isActive }) => navClass({ isActive: isActive && !isCategoryRoute })}
+          className={({ isActive }) => navClass({
+            isActive: (isActive && !isCategoryRoute) || isProductDetailsRoute,
+          })}
         >
           <ShoppingBag size={18} aria-hidden="true" />Shop
         </NavLink>
@@ -561,7 +564,7 @@ const Navbar = () => {
           {!mobileCategory && !mobilePages ? (
             <div className="space-y-2.5 p-4">
               <NavLink to="/" end onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><House size={18} /></span>Home</NavLink>
-              <NavLink to="/shop" onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><ShoppingBag size={18} /></span>Shop</NavLink>
+              <NavLink to="/shop" onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${(isActive || isProductDetailsRoute) ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><ShoppingBag size={18} /></span>Shop</NavLink>
               <NavLink to="/combos" onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><Boxes size={18} /></span>Combo Offers</NavLink>
               <button type="button" onClick={() => setMobileCategory(true)} className={`flex min-h-14 w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition hover:border-violet-200 hover:bg-violet-50 ${isCategoryRoute ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800"}`}>
                 <span className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><Grid2X2 size={18} /></span>Categories</span><ChevronRight size={18} className="text-violet-500" />
