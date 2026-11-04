@@ -144,7 +144,7 @@ function PersonalDetails({ user, setUser }) {
   );
 }
 
-function MyOrders({ user }) {
+function MyOrders({ user, trackingMode = false }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -209,8 +209,10 @@ function MyOrders({ user }) {
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f2e3ff] text-[#8509c9]"><Package size={20} /></span>
         <div className="flex items-center gap-3">
           <div>
-            <h2 className="text-lg font-extrabold text-[#1a0745]">My Orders</h2>
-            <p className="text-xs text-gray-500">Track, manage and view all your orders in one place.</p>
+            <h2 className="text-lg font-extrabold text-[#1a0745]">{trackingMode ? "Track Order" : "My Orders"}</h2>
+            <p className="text-xs text-gray-500">
+              {trackingMode ? "Select an order ID to view its delivery progress." : "Track, manage and view all your orders in one place."}
+            </p>
           </div>
         </div>
       </div>
@@ -280,7 +282,12 @@ function MyOrders({ user }) {
                       </span>
                       <div className="min-w-0">
                         <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500">Order ID</p>
-                        <p className="truncate text-xs font-extrabold text-[#211044]">#{order.order_id || order.id}</p>
+                        <button
+                          type="button"
+                          onClick={function(){ setSelectedOrder(order); }}
+                          aria-label={"Track order " + (order.order_id || order.id)}
+                          className="block max-w-full truncate text-left text-xs font-extrabold text-[#211044] transition hover:text-primary hover:underline"
+                        >#{order.order_id || order.id}</button>
                         <p className="mt-0.5 flex items-center gap-1 text-[9px] font-medium text-slate-500"><CalendarDays size={10} /> {formatDate(order.created_at)}</p>
                       </div>
                     </div>
@@ -888,6 +895,7 @@ function MyAddresses({ user }) {
 const TABS = [
   { id: "personal", label: "Personal Details", Icon: User },
   { id: "orders",   label: "My Orders",        Icon: Package },
+  { id: "tracking", label: "Track Order",       Icon: Truck },
   { id: "address",  label: "My Addresses",     Icon: MapPin },
   { id: "password", label: "Change Password",  Icon: Lock },
 ];
@@ -947,6 +955,7 @@ function Account() {
             <div className="min-w-0 flex-1 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
               {activeTab === "personal" && <PersonalDetails user={user} setUser={setUser} />}
               {activeTab === "orders"   && <MyOrders user={user} />}
+              {activeTab === "tracking" && <MyOrders user={user} trackingMode />}
               {activeTab === "address"  && <MyAddresses key={user.user_id} user={user} />}
               {activeTab === "password" && <ChangePassword />}
             </div>
