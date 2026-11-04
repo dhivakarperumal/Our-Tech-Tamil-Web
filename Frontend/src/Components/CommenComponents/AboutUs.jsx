@@ -119,19 +119,19 @@ function AboutUs() {
       <PageContainer className="!px-4 sm:!px-6 lg:!px-[3%]">
         <section aria-labelledby="about-story-heading" className="grid items-center gap-5 pt-5 sm:pt-7 lg:grid-cols-[0.8fr_1.2fr] lg:gap-8">
           <div className="order-2 space-y-3 lg:order-1">
-            <p className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-primary">
+            <p className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.18em] text-primary">
               <span className="h-px w-5 bg-primary" aria-hidden="true" /> Our Story
             </p>
             <h1 id="about-story-heading" className="text-2xl font-black leading-tight tracking-tight text-[#17123b] sm:text-[28px]">
               More Than Just a Store
             </h1>
-            <p className="max-w-xl text-justify text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
+            <p className="max-w-xl text-justify text-sm leading-6 text-[#5b566b]">
               OurTech started with a simple goal — to make the latest technology accessible to everyone. What began as a small passion project has now grown into a trusted online store for thousands of happy customers across India.
             </p>
-            <p className="max-w-xl text-justify text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
+            <p className="max-w-xl text-justify text-sm leading-6 text-[#5b566b]">
               We bring together the best brands, genuine products, competitive prices and a seamless shopping experience — all in one place.
             </p>
-            <Link to="/shop" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-4 py-2 text-[11px] font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg">
+            <Link to="/shop" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-4 py-2 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg">
               Our Journey <ArrowRight size={14} aria-hidden="true" />
             </Link>
           </div>
@@ -159,9 +159,9 @@ function AboutUs() {
                 <PackageCheck size={22} aria-hidden="true" />
               </span>
               <span>
-                <span className="block text-[10px] font-semibold text-[#514a61]">Trusted by</span>
+                <span className="block text-sm font-semibold text-[#514a61]">Trusted by</span>
                 <span className="block text-sm font-black leading-tight text-primary sm:text-base">50,000+</span>
-                <span className="block text-[10px] text-[#615a70]">Happy Customers</span>
+                <span className="block text-sm text-[#615a70]">Happy Customers</span>
               </span>
             </div>
           </div>
@@ -169,12 +169,12 @@ function AboutUs() {
 
         <section aria-labelledby="values-heading" className="mt-7 grid items-stretch gap-3 sm:mt-9 lg:grid-cols-[1fr_1.7fr_0.85fr] lg:gap-4">
           <div className="flex flex-col justify-center py-1 lg:pr-2">
-            <p className="flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.16em] text-primary sm:text-xs"><span className="h-px w-5 bg-primary" aria-hidden="true" /> Our Core Values</p>
+            <p className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.16em] text-primary"><span className="h-px w-5 bg-primary" aria-hidden="true" /> Our Core Values</p>
             <h2 id="values-heading" className="mt-1 text-2xl font-black leading-tight text-[#17123b] sm:text-3xl">What Drives Us</h2>
-            <p className="mt-2 max-w-sm text-justify text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
+            <p className="mt-2 max-w-sm text-justify text-sm leading-6 text-[#5b566b]">
               Our values guide everything we do — from the products we select to the support we provide. They shape how we bring genuine technology to our customers, create a dependable shopping experience and offer helpful guidance at every step. We believe great technology should be accessible, reliable and useful in everyday life.
             </p>
-            <Link to="/contactus" className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-4 py-2.5 text-xs font-bold text-white transition hover:shadow-md">
+            <Link to="/contactus" className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-4 py-2.5 text-sm font-bold text-white transition hover:shadow-md">
               Learn More <ArrowRight size={15} aria-hidden="true" />
             </Link>
           </div>
@@ -184,8 +184,8 @@ function AboutUs() {
                 <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[#eadbff] text-primary shadow-sm transition-colors group-hover:bg-primary group-hover:text-white sm:h-11 sm:w-11">
                   <Icon size={22} strokeWidth={2} aria-hidden="true" />
                 </span>
-                <h3 className="text-xs font-extrabold text-[#28134d] sm:text-[13px]">{title}</h3>
-                <p className="mt-1 text-[10px] leading-[1.45] text-[#625b70] sm:text-[11px]">{detail}</p>
+                <h3 className="text-sm font-extrabold text-[#28134d]">{title}</h3>
+                <p className="mt-1 text-sm leading-5 text-[#625b70]">{detail}</p>
               </article>
             ))}
           </div>
@@ -209,11 +209,11 @@ function AboutUs() {
             </span>
             <div className="max-w-sm">
               <h2 className="text-base font-extrabold sm:text-lg">Our Mission</h2>
-              <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-fuchsia-200">Driven by purpose</p>
-              <p className="mt-3 text-[11px] leading-[1.55] text-white/85 sm:text-xs">
+              <p className="mt-0.5 text-sm font-bold uppercase tracking-[0.14em] text-fuchsia-200">Driven by purpose</p>
+              <p className="mt-3 text-sm leading-6 text-white/85">
                 To make the latest technology easily accessible to everyone by offering a wide range of genuine products, competitive prices and exceptional customer service.
               </p>
-              <Link to="/shop" className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#9d24ed] to-[#640dd0] px-3.5 py-2 text-[10px] font-bold text-white shadow-md transition hover:brightness-110">
+              <Link to="/shop" className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#9d24ed] to-[#640dd0] px-3.5 py-2 text-sm font-bold text-white shadow-md transition hover:brightness-110">
                 Explore Our Products <ArrowRight size={13} aria-hidden="true" />
               </Link>
             </div>
@@ -228,8 +228,8 @@ function AboutUs() {
               </span>
               <div className="max-w-[65%]">
                 <h2 className="text-base font-extrabold text-[#17123b] sm:text-lg">Our Vision</h2>
-                <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-primary/70">A brighter tomorrow</p>
-                <p className="mt-3 text-[11px] leading-[1.55] text-[#5b566b] sm:text-xs">
+                <p className="mt-0.5 text-sm font-bold uppercase tracking-[0.14em] text-primary/70">A brighter tomorrow</p>
+                <p className="mt-3 text-sm leading-6 text-[#5b566b]">
                   To be a leading and most trusted tech e-commerce destination, known for innovation, customer satisfaction and long-term value.
                 </p>
               </div>
@@ -251,7 +251,7 @@ function AboutUs() {
           ].map(({ value, label, Icon }) => (
             <div key={label} className="flex items-center justify-center gap-3 px-2 py-5 sm:py-6">
               <Icon size={25} strokeWidth={1.8} className="shrink-0 text-primary sm:h-7 sm:w-7" aria-hidden="true" />
-              <span><span className="block text-sm font-black text-primary sm:text-base">{value}</span><span className="block text-[9px] text-[#615a70] sm:text-[10px]">{label}</span></span>
+              <span><span className="block text-base font-black text-primary">{value}</span><span className="block text-sm text-[#615a70]">{label}</span></span>
             </div>
           ))}
         </section>
@@ -261,8 +261,8 @@ function AboutUs() {
         <section aria-labelledby="journey-heading" className="relative mt-7 overflow-hidden rounded-2xl border border-[#eee3f8] bg-gradient-to-r from-[#faf7ff] via-white to-[#f4efff] px-4 py-5 sm:mt-9 sm:px-6 sm:py-6">
           <div className="absolute -right-10 top-0 h-40 w-40 rounded-full bg-violet-100/60 blur-3xl" aria-hidden="true" />
           <div className="relative mb-5">
-            <h2 id="journey-heading" className="text-base font-black text-[#17123b] sm:text-lg">Our Journey</h2>
-            <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#625b70] sm:text-[10px]">
+            <h2 id="journey-heading" className="text-lg font-black text-[#17123b]">Our Journey</h2>
+            <p className="mt-1 text-sm font-semibold uppercase tracking-[0.08em] text-[#625b70]">
               A quick look at how OurTech has grown over the years.
             </p>
           </div>
@@ -277,9 +277,9 @@ function AboutUs() {
                 <span className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#8d13e8] to-[#4b00c8] text-white shadow-[0_4px_12px_rgba(75,0,200,0.2)] ring-4 ring-[#f2eaff] lg:ml-0">
                   <Icon size={18} strokeWidth={2} aria-hidden="true" />
                 </span>
-                <p className="mt-1.5 text-xs font-black text-primary">{year}</p>
-                <h3 className="mt-0.5 text-[10px] font-extrabold leading-tight text-[#211936] sm:text-[11px]">{title}</h3>
-                <p className="mt-1 max-w-[145px] text-[9px] leading-[1.45] text-[#625b70]">{detail}</p>
+                <p className="mt-1.5 text-sm font-black text-primary">{year}</p>
+                <h3 className="mt-0.5 text-sm font-extrabold leading-tight text-[#211936]">{title}</h3>
+                <p className="mt-1 max-w-[145px] text-sm leading-5 text-[#625b70]">{detail}</p>
               </article>
             ))}
           </div>
@@ -288,9 +288,9 @@ function AboutUs() {
         <section aria-label="Shop categories and our promise" className="mt-7 grid gap-3 sm:mt-9 lg:grid-cols-[2.4fr_1fr]">
           <div className="grid overflow-hidden rounded-2xl border border-[#eee3f8] bg-[#f4eaff] sm:grid-cols-[0.9fr_2.6fr]">
             <div className="flex flex-col justify-center p-4 sm:p-5">
-              <h2 className="text-base font-black leading-tight text-[#211936]">Explore Our Top Categories</h2>
-              <p className="mt-1.5 text-[10px] leading-4 text-[#625b70]">Discover the latest in tech, from everyday essentials to your next big upgrade.</p>
-              <Link to="/shop" className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-3.5 py-2 text-[10px] font-bold text-white">
+              <h2 className="text-lg font-black leading-tight text-[#211936]">Explore Our Top Categories</h2>
+              <p className="mt-1.5 text-sm leading-5 text-[#625b70]">Discover the latest in tech, from everyday essentials to your next big upgrade.</p>
+              <Link to="/shop" className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-3.5 py-2 text-sm font-bold text-white">
                 Shop Now <ArrowRight size={13} aria-hidden="true" />
               </Link>
             </div>
@@ -298,7 +298,7 @@ function AboutUs() {
               {loadingCategories ? (
                 Array.from({ length: 5 }, (_, index) => <div key={index} className="h-24 animate-pulse rounded-xl bg-white/70" />)
               ) : categoryFailed ? (
-                <p className="col-span-full self-center text-center text-xs text-[#625b70]">Categories could not be loaded. Please try again later.</p>
+                <p className="col-span-full self-center text-center text-sm text-[#625b70]">Categories could not be loaded. Please try again later.</p>
               ) : categories.length ? categories.map((category, index) => {
                 const Icon = categoryIcons[index % categoryIcons.length];
                 const image = getCategoryImage(category.images);
@@ -307,18 +307,18 @@ function AboutUs() {
                     <span className="flex h-12 w-full items-center justify-center">
                       {image ? <img src={image} alt="" loading="lazy" className="h-full max-w-full object-contain" /> : <Icon size={31} className="text-primary" aria-hidden="true" />}
                     </span>
-                    <span className="max-w-full truncate text-[10px] font-bold text-[#211936] group-hover:text-primary">{category.name}</span>
+                    <span className="max-w-full truncate text-sm font-bold text-[#211936] group-hover:text-primary">{category.name}</span>
                   </Link>
                 );
               }) : (
-                <p className="col-span-full self-center text-center text-xs text-[#625b70]">No categories are available right now.</p>
+                <p className="col-span-full self-center text-center text-sm text-[#625b70]">No categories are available right now.</p>
               )}
             </div>
           </div>
           <aside className="relative isolate flex min-h-40 flex-col justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#200644] via-[#5100a8] to-[#9300cf] p-5 text-white">
             <div className="absolute -bottom-8 -right-5 -z-10 text-white/10"><ShieldCheck size={128} strokeWidth={1} aria-hidden="true" /></div>
-            <h2 className="text-base font-extrabold">Why Shop with OurTech?</h2>
-            <ul className="mt-3 space-y-2 text-[10px] font-medium text-white/90">
+            <h2 className="text-lg font-extrabold">Why Shop with OurTech?</h2>
+            <ul className="mt-3 space-y-2 text-sm font-medium text-white/90">
               <li className="flex items-center gap-2"><PackageCheck size={14} className="text-fuchsia-200" aria-hidden="true" /> Fast &amp; secure delivery</li>
               <li className="flex items-center gap-2"><BadgeCheck size={14} className="text-fuchsia-200" aria-hidden="true" /> Genuine products</li>
               <li className="flex items-center gap-2"><ArrowRight size={14} className="text-fuchsia-200" aria-hidden="true" /> Easy returns</li>
@@ -338,9 +338,9 @@ function AboutUs() {
           <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#220747]/95 via-[#360575]/90 to-[#360575]/35" aria-hidden="true" />
           <div className="max-w-lg">
             <h2 className="text-xl font-black sm:text-2xl">Be a Part of <span className="text-fuchsia-300">OurTech Family</span></h2>
-            <p className="mt-1.5 max-w-md text-[10px] leading-5 text-white/85 sm:text-xs">Explore the latest gadgets, discover helpful technology and find what fits your everyday life.</p>
+            <p className="mt-1.5 max-w-md text-sm leading-6 text-white/85">Explore the latest gadgets, discover helpful technology and find what fits your everyday life.</p>
           </div>
-          <Link to="/shop" className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-[10px] font-extrabold text-primary shadow-lg transition hover:-translate-y-0.5 sm:px-5">
+          <Link to="/shop" className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-4 py-2.5 text-sm font-extrabold text-primary shadow-lg transition hover:-translate-y-0.5 sm:px-5">
             Shop Now <ArrowRight size={13} aria-hidden="true" />
           </Link>
         </section>
