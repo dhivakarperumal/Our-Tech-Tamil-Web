@@ -120,10 +120,10 @@ function AboutUs() {
             <h1 id="about-story-heading" className="text-2xl font-black leading-tight tracking-tight text-[#17123b] sm:text-[28px]">
               More Than Just a Store
             </h1>
-            <p className="max-w-xl text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
+            <p className="max-w-xl text-justify text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
               OurTech started with a simple goal — to make the latest technology accessible to everyone. What began as a small passion project has now grown into a trusted online store for thousands of happy customers across India.
             </p>
-            <p className="max-w-xl text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
+            <p className="max-w-xl text-justify text-xs leading-5 text-[#5b566b] sm:text-sm sm:leading-6">
               We bring together the best brands, genuine products, competitive prices and a seamless shopping experience — all in one place.
             </p>
             <Link to="/shop" className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#4b00c8] to-[#a000d8] px-4 py-2 text-[11px] font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg">
@@ -149,14 +149,14 @@ function AboutUs() {
                 />
               </svg>
             </div>
-            <div className="absolute -bottom-2 right-2.5 z-10 flex items-center gap-2 rounded-xl border border-white/90 bg-white px-2.5 py-2 shadow-[0_10px_24px_rgba(54,22,93,0.24)] sm:-bottom-2.5 sm:right-3 sm:gap-2.5 sm:px-3 sm:py-2.5">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f0e2ff] text-primary sm:h-9 sm:w-9">
-                <PackageCheck size={19} aria-hidden="true" />
+            <div className="absolute -bottom-3 right-2 z-10 flex min-w-40 items-center gap-3 rounded-xl border border-white/90 bg-white px-3 py-2.5 shadow-[0_10px_24px_rgba(54,22,93,0.24)] sm:-bottom-3.5 sm:right-3 sm:min-w-48 sm:gap-3.5 sm:px-4 sm:py-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#f0e2ff] text-primary sm:h-11 sm:w-11">
+                <PackageCheck size={22} aria-hidden="true" />
               </span>
               <span>
-                <span className="block text-[9px] font-semibold text-[#514a61]">Trusted by</span>
-                <span className="block text-xs font-black leading-tight text-primary sm:text-sm">50,000+</span>
-                <span className="block text-[9px] text-[#615a70]">Happy Customers</span>
+                <span className="block text-[10px] font-semibold text-[#514a61]">Trusted by</span>
+                <span className="block text-sm font-black leading-tight text-primary sm:text-base">50,000+</span>
+                <span className="block text-[10px] text-[#615a70]">Happy Customers</span>
               </span>
             </div>
           </div>
