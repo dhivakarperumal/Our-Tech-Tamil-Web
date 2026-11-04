@@ -336,35 +336,45 @@ function ComboProductDetail() {
                     </div>
                   </div>
                   {combo.warranty && <p className="mt-4 flex items-center gap-2 text-sm text-text-secondary"><ShieldCheck size={17} className="text-primary" />{combo.warranty}</p>}
-                </div>
-              </section>
 
-              <section className="mt-8 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
-                <div className="border-b border-slate-100 px-5 py-4 sm:px-6">
-                  <h2 className="text-lg font-black text-slate-900">Products included in this combo</h2>
-                  <p className="mt-1 text-sm text-slate-500">Everything you get in this bundle.</p>
+                  <section className="mt-6 border-t border-border pt-5" aria-labelledby="combo-included-products-heading">
+                    <h2 id="combo-included-products-heading" className="text-base font-bold text-text-primary">
+                      Products included in this combo
+                    </h2>
+                    <p className="mt-1 text-xs text-text-secondary">Everything you get in this bundle.</p>
+                    {products.length ? (
+                      <div className="mt-3 divide-y divide-border">
+                        {products.map((product) => {
+                          const productImage = imageUrl(parseList(product.images)[0]);
+                          return (
+                            <div key={product.id} className="flex items-center gap-3 py-3">
+                              {productImage ? (
+                                <img
+                                  src={productImage}
+                                  alt={product.name || ""}
+                                  className="h-14 w-14 shrink-0 rounded-lg border border-border bg-[#faf8ff] object-contain p-1"
+                                />
+                              ) : (
+                                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg bg-violet-50 text-violet-300">
+                                  <Package size={22} />
+                                </div>
+                              )}
+                              <div className="min-w-0 flex-1">
+                                <p className="line-clamp-2 text-sm font-semibold text-text-primary">{product.name}</p>
+                                <p className="mt-1 text-xs text-text-secondary">Quantity: {product.quantity}</p>
+                              </div>
+                              <p className="shrink-0 text-right text-sm font-bold text-text-primary">
+                                {currency(product.offer_price ?? product.mrp)}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm text-text-secondary">Product details are currently unavailable.</p>
+                    )}
+                  </section>
                 </div>
-                {products.length ? (
-                  <div className="divide-y divide-slate-100">
-                    {products.map((product) => {
-                      const productImage = imageUrl(parseList(product.images)[0]);
-                      return (
-                        <div key={product.id} className="flex items-center gap-3 p-4 sm:gap-4 sm:px-6">
-                          {productImage ? <img src={productImage} alt="" className="h-16 w-16 rounded-xl border border-slate-100 bg-slate-50 object-contain p-1" /> : <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-violet-50 text-violet-300"><Package size={24} /></div>}
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-bold text-slate-800 sm:text-base">{product.name}</p>
-                            <p className="mt-0.5 text-xs text-slate-400">{product.product_code || "Product"}{product.category ? ` · ${product.category}` : ""}</p>
-                            <p className="mt-1 text-xs font-semibold text-slate-600">Quantity: {product.quantity}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-bold text-slate-800">{currency(product.offer_price ?? product.mrp)}</p>
-                            {Number(product.mrp) > Number(product.offer_price) && <p className="text-xs text-slate-400 line-through">{currency(product.mrp)}</p>}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : <p className="p-5 text-sm text-slate-500">Product details are currently unavailable.</p>}
               </section>
 
               <section className="mt-8">
