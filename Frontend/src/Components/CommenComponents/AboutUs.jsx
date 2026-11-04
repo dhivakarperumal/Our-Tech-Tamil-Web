@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import api from "../../api";
 import PageContainer from "./PageContainer";
+import PageHeader from "./PageHeader";
 
 const milestones = [
   { year: "2020", title: "The Beginning", detail: "Launched with a vision to make great technology more accessible.", Icon: Rocket },
@@ -111,6 +112,7 @@ function AboutUs() {
 
   return (
     <main className="overflow-hidden bg-[#fbf9ff] pb-10">
+      <PageHeader title="About Us" />
       <PageContainer className="!px-4 sm:!px-6 lg:!px-[3%]">
         <section aria-labelledby="about-story-heading" className="grid items-center gap-5 pt-5 sm:pt-7 lg:grid-cols-[0.8fr_1.2fr] lg:gap-8">
           <div className="order-2 space-y-3 lg:order-1">
@@ -176,27 +178,43 @@ function AboutUs() {
           ))}
         </section>
 
-        <section aria-label="Our mission and vision" className="mt-4 grid overflow-hidden rounded-2xl border border-[#eee2f9] shadow-sm md:grid-cols-2">
-          <article className="relative isolate overflow-hidden bg-gradient-to-br from-[#21064b] via-[#3c0871] to-[#170333] p-5 text-white sm:p-7">
-            <div className="absolute -right-8 -top-10 -z-10 h-40 w-40 rounded-full border-[24px] border-white/5" aria-hidden="true" />
-            <Target size={27} className="mb-3 text-fuchsia-300" aria-hidden="true" />
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-fuchsia-200">Driven by purpose</p>
-            <h2 className="mt-1 text-lg font-extrabold">Our Mission</h2>
-            <p className="mt-2 max-w-md text-xs leading-5 text-white/80">
-              To make the latest technology easily accessible by bringing together genuine products, thoughtful recommendations and dependable customer service.
-            </p>
-            <Link to="/shop" className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-fuchsia-600 to-violet-600 px-3.5 py-2 text-[10px] font-bold text-white transition hover:brightness-110">
-              Explore Our Products <ArrowRight size={13} aria-hidden="true" />
-            </Link>
+        <section aria-label="Our mission and vision" className="relative mt-4 overflow-hidden rounded-2xl border border-[#e6d9f4] bg-gradient-to-br from-[#f5edff] via-white to-[#f7f1ff] shadow-sm md:grid md:min-h-[270px] md:grid-cols-2">
+          <article className="relative isolate z-10 flex items-start gap-4 overflow-hidden bg-gradient-to-br from-[#21064b] via-[#3c0871] to-[#170333] px-5 py-6 text-white sm:px-7 md:col-start-1 md:row-start-1 md:min-h-[270px] md:w-[112%] md:gap-4 md:py-8 md:pr-[19%] md:[clip-path:polygon(0_0,78%_0,100%_100%,0_100%)]">
+            <div className="absolute -left-12 -bottom-16 -z-10 h-44 w-44 rounded-full border-[25px] border-white/5" aria-hidden="true" />
+            <span className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 text-fuchsia-200 ring-1 ring-white/10 sm:h-14 sm:w-14">
+              <Target size={29} aria-hidden="true" />
+            </span>
+            <div className="max-w-sm">
+              <h2 className="text-base font-extrabold sm:text-lg">Our Mission</h2>
+              <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-fuchsia-200">Driven by purpose</p>
+              <p className="mt-3 text-[11px] leading-[1.55] text-white/85 sm:text-xs">
+                To make the latest technology easily accessible to everyone by offering a wide range of genuine products, competitive prices and exceptional customer service.
+              </p>
+              <Link to="/shop" className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-[#9d24ed] to-[#640dd0] px-3.5 py-2 text-[10px] font-bold text-white shadow-md transition hover:brightness-110">
+                Explore Our Products <ArrowRight size={13} aria-hidden="true" />
+              </Link>
+            </div>
           </article>
-          <article className="relative isolate overflow-hidden bg-gradient-to-br from-[#f2e7ff] via-[#fff] to-[#f7f0ff] p-5 sm:p-7">
-            <div className="absolute -bottom-12 -right-8 -z-10 h-40 w-40 rounded-full bg-fuchsia-100/70 blur-2xl" aria-hidden="true" />
-            <Eye size={27} className="mb-3 text-primary" aria-hidden="true" />
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-primary">A brighter tomorrow</p>
-            <h2 className="mt-1 text-lg font-extrabold text-[#17123b]">Our Vision</h2>
-            <p className="mt-2 max-w-md text-xs leading-5 text-[#5b566b]">
-              To be a trusted technology destination, helping more people discover useful innovation and enjoy a confident, seamless shopping experience.
-            </p>
+          <article className="relative isolate min-h-[210px] overflow-hidden px-5 py-6 sm:px-7 md:col-start-2 md:row-start-1 md:-ml-[12%] md:min-h-[270px] md:pl-[18%] md:pr-5 md:py-8">
+            <div className="absolute inset-0 -z-20 bg-gradient-to-br from-[#f2e7ff] via-white to-[#f7f0ff]" aria-hidden="true" />
+            <div className="absolute -right-10 -top-10 -z-10 h-44 w-44 rounded-full bg-fuchsia-100/70 blur-3xl" aria-hidden="true" />
+            <img src="/images/loginimage.png" alt="" className="pointer-events-none absolute bottom-0 right-0 z-0 h-[88%] w-[47%] object-contain object-bottom opacity-90" />
+            <div className="relative z-10 flex items-start gap-3 sm:gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#eadbff] text-primary sm:h-14 sm:w-14">
+                <Eye size={29} aria-hidden="true" />
+              </span>
+              <div className="max-w-[65%]">
+                <h2 className="text-base font-extrabold text-[#17123b] sm:text-lg">Our Vision</h2>
+                <p className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.14em] text-primary/70">A brighter tomorrow</p>
+                <p className="mt-3 text-[11px] leading-[1.55] text-[#5b566b] sm:text-xs">
+                  To be a leading and most trusted tech e-commerce destination, known for innovation, customer satisfaction and long-term value.
+                </p>
+              </div>
+            </div>
+            <div className="pointer-events-none absolute right-[39%] top-5 flex gap-2 text-fuchsia-300/70" aria-hidden="true">
+              <span className="h-2 w-2 rounded-full bg-current" />
+              <span className="mt-3 h-1.5 w-1.5 rounded-full bg-current" />
+            </div>
           </article>
         </section>
 
