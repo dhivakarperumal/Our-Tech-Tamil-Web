@@ -130,7 +130,7 @@ function AboutUs() {
               Our Journey <ArrowRight size={14} aria-hidden="true" />
             </Link>
           </div>
-          <div className="relative order-1 overflow-hidden rounded-2xl border border-[#eee2f9] bg-[#200745] shadow-[0_12px_30px_rgba(47,12,86,0.16)] lg:order-2">
+          <div className="relative order-1 overflow-hidden rounded-2xl border border-[#eee2f9] bg-[#200745] shadow-[0_12px_30px_rgba(47,12,86,0.16)] lg:order-2 lg:rounded-l-none lg:rounded-r-2xl lg:[clip-path:polygon(5%_0,100%_0,100%_96%,98%_100%,0_100%)]">
             <img src="/images/loginbanner.png" alt="OurTech collection of laptops, phones, headphones and smart devices" className="aspect-[2.15/1] w-full object-cover object-[62%_center]" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#210747]/35 via-transparent to-transparent" aria-hidden="true" />
             <div className="absolute bottom-2.5 right-2.5 flex items-center gap-2 rounded-xl border border-white/80 bg-white/95 px-2.5 py-2 shadow-[0_8px_24px_rgba(38,8,76,0.16)] sm:bottom-3 sm:right-3 sm:gap-2.5 sm:px-3 sm:py-2.5">
