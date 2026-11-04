@@ -88,10 +88,11 @@ function ComboProductDetail() {
   const gallery = parseList(combo?.gallery_images).map(imageUrl).filter(Boolean);
   const products = parseList(combo?.products);
   const specifications = parseList(combo?.specifications);
-  const relatedCombos = combo?.category
+  const comboCategoryType = String(combo?.category_type || "").trim().toLowerCase();
+  const relatedCombos = comboCategoryType
     ? relatedState.combos.filter((relatedCombo) =>
       Number(relatedCombo.id) !== Number(combo.id) &&
-      String(relatedCombo.category || "").trim().toLowerCase() === String(combo.category).trim().toLowerCase()
+      String(relatedCombo.category_type || "").trim().toLowerCase() === comboCategoryType
     ).slice(0, 4)
     : [];
   const activeImage = selectedImage.id === id && selectedImage.image
@@ -369,7 +370,9 @@ function ComboProductDetail() {
               <section className="mt-8">
                 <div className="mb-4">
                   <h2 className="text-xl font-black text-slate-900">Related combos</h2>
-                  <p className="mt-1 text-sm text-slate-500">More bundles from {combo.category}.</p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    More bundles from the {combo.category_type} category type.
+                  </p>
                 </div>
                 {relatedState.loading ? (
                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-5">
