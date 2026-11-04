@@ -467,26 +467,41 @@ const CreateOrder = () => {
             <Toaster position="top-right" />
 
             {/* Header */}
-            <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white/80 p-4 shadow-sm sm:p-5">
-                <button
-                    onClick={() => navigate(-1)}
-                    aria-label="Go back"
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-violet-200 hover:text-[#4b0b78] active:scale-95"
-                >
-                    <FiArrowLeft size={20} />
-                </button>
-                <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#4b0b78]">Order Management</p>
-                    <h1 className="mt-1 text-xl font-black tracking-tight text-slate-800 sm:text-2xl">Create New Shop Order</h1>
-                    <p className="mt-1 text-sm font-medium text-slate-500">Create a showroom order for an in-store customer.</p>
-                </div>
-                <div className="hidden items-center gap-2 sm:flex">
-                    {[{ number: 1, title: "Products" }, { number: 2, title: "Customer details" }].map(({ number, title }) => (
-                        <div key={number} className={`flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold ${step === number ? "bg-violet-100 text-violet-800" : step > number ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-400"}`}>
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px]">{number}</span>
-                            {title}
+            <div className="overflow-hidden rounded-3xl bg-gradient-to-r from-[#2e1065] via-[#4c1d95] to-[#86198f] text-white shadow-lg shadow-violet-950/10">
+                <div className="flex flex-col gap-5 p-5 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="flex min-w-0 items-center gap-4">
+                        <button
+                            onClick={() => navigate(-1)}
+                            aria-label="Go back"
+                            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-white/20 bg-white/10 text-white transition hover:bg-white/20 active:scale-95"
+                        >
+                            <FiArrowLeft size={20} />
+                        </button>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-200">Order management</p>
+                            <h1 className="mt-1 text-xl font-black tracking-tight sm:text-2xl">Create New Shop Order</h1>
+                            <p className="mt-1 text-sm text-violet-100/80">Create a showroom order for an in-store customer.</p>
                         </div>
-                    ))}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 lg:justify-end">
+                        {[{ number: 1, title: "Products" }, { number: 2, title: "Customer details" }].map(({ number, title }) => (
+                            <div
+                                key={number}
+                                className={`flex items-center gap-2 rounded-full px-3 py-2 text-xs font-bold ${
+                                    step === number
+                                        ? "bg-white text-violet-800"
+                                        : step > number
+                                            ? "bg-emerald-400/20 text-emerald-100"
+                                            : "bg-white/10 text-violet-200"
+                                }`}
+                            >
+                                <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
+                                    step === number ? "bg-violet-100 text-violet-800" : "bg-white/15 text-white"
+                                }`}>{number}</span>
+                                {title}
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
 
