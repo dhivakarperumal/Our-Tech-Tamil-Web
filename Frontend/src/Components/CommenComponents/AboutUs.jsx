@@ -2,21 +2,24 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
+  Award,
   BadgeCheck,
   Box,
+  CalendarDays,
   ChevronDown,
   Eye,
+  Flag,
   Headphones,
   HeartHandshake,
   Laptop,
   Leaf,
   PackageCheck,
-  Rocket,
   ShieldCheck,
   ShoppingBag,
   Smartphone,
   Star,
   Target,
+  Trophy,
   UsersRound,
   Watch,
   Zap,
@@ -26,11 +29,12 @@ import PageContainer from "./PageContainer";
 import PageHeader from "./PageHeader";
 
 const milestones = [
-  { year: "2020", title: "The Beginning", detail: "Launched with a vision to make great technology more accessible.", Icon: Rocket },
+  { year: "2020", title: "The Beginning", detail: "Launched OurTech with a vision to make tech more accessible.", Icon: Flag },
   { year: "2021", title: "Expanded Catalog", detail: "Added a wider range of gadgets and accessories.", Icon: Box },
-  { year: "2022", title: "Experience Store", detail: "Opened our first experience store.", Icon: Star },
-  { year: "2023", title: "Growing Community", detail: "Welcomed more customers into the OurTech community.", Icon: UsersRound },
-  { year: "2025", title: "Bigger & Better", detail: "Continuing to expand with more products and better service.", Icon: BadgeCheck },
+  { year: "2022", title: "Experience Store", detail: "Opened our first experience store for hands-on tech.", Icon: CalendarDays },
+  { year: "2023", title: "Growing Community", detail: "Reached 25,000+ happy customers across India.", Icon: UsersRound },
+  { year: "2024", title: "Trusted by More", detail: "Crossed 50,000+ customers with 100+ leading brands.", Icon: Trophy },
+  { year: "2025", title: "Bigger & Better", detail: "Continuing to expand with more products, services and innovations.", Icon: Award },
 ];
 
 const values = [
@@ -251,21 +255,28 @@ function AboutUs() {
           </aside>
         </section>
 
-        <section aria-labelledby="journey-heading" className="relative mt-7 overflow-hidden rounded-2xl border border-[#eee3f8] bg-gradient-to-r from-[#faf6ff] via-white to-[#f3eaff] px-4 py-5 sm:px-6 sm:py-6">
+        <section aria-labelledby="journey-heading" className="relative mt-7 overflow-hidden rounded-2xl border border-[#eee3f8] bg-gradient-to-r from-[#faf7ff] via-white to-[#f4efff] px-4 py-5 sm:px-6 sm:py-6">
           <div className="absolute -right-10 top-0 h-40 w-40 rounded-full bg-violet-100/60 blur-3xl" aria-hidden="true" />
-          <div className="relative mb-5 text-center">
-            <p className="text-[9px] font-extrabold uppercase tracking-[0.16em] text-primary">— Our Journey —</p>
-            <h2 id="journey-heading" className="mt-1 text-lg font-black text-[#17123b] sm:text-xl">A Journey of Growth &amp; Innovation</h2>
-            <p className="mt-1 text-[10px] text-[#625b70]">A quick look at how OurTech has grown over the years.</p>
+          <div className="relative mb-5">
+            <h2 id="journey-heading" className="text-base font-black text-[#17123b] sm:text-lg">Our Journey</h2>
+            <p className="mt-1 text-[9px] font-semibold uppercase tracking-[0.08em] text-[#625b70] sm:text-[10px]">
+              A quick look at how OurTech has grown over the years.
+            </p>
           </div>
-          <div className="relative grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-5 sm:gap-3">
-            <div className="absolute left-[10%] right-[10%] top-5 hidden h-px bg-gradient-to-r from-fuchsia-400 via-primary to-fuchsia-400 sm:block" aria-hidden="true" />
-            {milestones.map(({ year, title, detail, Icon }) => (
-              <article key={year} className="relative flex flex-col items-center text-center">
-                <span className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white text-primary shadow-[0_2px_12px_rgba(75,0,200,0.15)] ring-1 ring-[#eaddf7]"><Icon size={18} aria-hidden="true" /></span>
+          <div className="relative grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-6 lg:gap-3">
+            {milestones.map(({ year, title, detail, Icon }, index) => (
+              <article key={year} className="relative flex min-w-0 flex-col items-center text-center lg:items-start lg:text-left">
+                {index < milestones.length - 1 && (
+                  <span className="absolute left-[calc(50%+25px)] top-5 hidden h-px w-[calc(100%-50px)] bg-[#d7c2ef] lg:block" aria-hidden="true">
+                    <ArrowRight size={13} className="absolute -right-1.5 -top-[6px] text-primary" />
+                  </span>
+                )}
+                <span className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#8d13e8] to-[#4b00c8] text-white shadow-[0_4px_12px_rgba(75,0,200,0.2)] ring-4 ring-[#f2eaff] lg:ml-0">
+                  <Icon size={18} strokeWidth={2} aria-hidden="true" />
+                </span>
                 <p className="mt-1.5 text-xs font-black text-primary">{year}</p>
-                <h3 className="mt-0.5 text-[10px] font-extrabold text-[#211936]">{title}</h3>
-                <p className="mt-1 max-w-[150px] text-[9px] leading-4 text-[#625b70]">{detail}</p>
+                <h3 className="mt-0.5 text-[10px] font-extrabold leading-tight text-[#211936] sm:text-[11px]">{title}</h3>
+                <p className="mt-1 max-w-[145px] text-[9px] leading-[1.45] text-[#625b70]">{detail}</p>
               </article>
             ))}
           </div>
