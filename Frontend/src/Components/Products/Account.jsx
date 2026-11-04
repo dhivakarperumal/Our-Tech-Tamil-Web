@@ -5,6 +5,7 @@ import {
   CalendarDays,
   Check,
   ChevronDown,
+  ChevronRight,
   CreditCard,
   FileText,
   KeyRound,
@@ -143,7 +144,7 @@ function PersonalDetails({ user, setUser }) {
   );
 }
 
-function MyOrders({ user, trackingMode = false }) {
+function MyOrders({ user, trackingMode = false, onTrackOrder }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
@@ -225,9 +226,9 @@ function MyOrders({ user, trackingMode = false }) {
 
   return (
     <div className="rounded-2xl border border-[#e9def5] bg-white p-4 shadow-sm sm:p-6">
-      <div className="flex items-center gap-3 border-b border-[#f0e8ff] pb-4">
+      <div className="flex items-center justify-between gap-3 border-b border-[#f0e8ff] pb-4">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#f2e3ff] text-[#8509c9]"><Package size={20} /></span>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <div>
             <h2 className="text-lg font-extrabold text-[#1a0745]">{trackingMode ? "Track Order" : "My Orders"}</h2>
             <p className="text-xs text-gray-500">
@@ -235,6 +236,15 @@ function MyOrders({ user, trackingMode = false }) {
             </p>
           </div>
         </div>
+        {!trackingMode && (
+          <button
+            type="button"
+            onClick={onTrackOrder}
+            className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-gradient-middle px-3 py-2.5 text-xs font-bold text-white shadow-sm transition hover:brightness-110 sm:px-4 sm:text-sm"
+          >
+            <Truck size={16} aria-hidden="true" />Track Order
+          </button>
+        )}
       </div>
 
       {trackingMode ? (
@@ -351,7 +361,7 @@ function MyOrders({ user, trackingMode = false }) {
                         <button
                           type="button"
                           onClick={function(){ setSelectedOrder(order); }}
-                          aria-label={"Track order " + (order.order_id || order.id)}
+                          aria-label={"View details for order " + (order.order_id || order.id)}
                           className="block max-w-full truncate text-left text-xs font-extrabold text-[#211044] transition hover:text-primary hover:underline"
                         >#{order.order_id || order.id}</button>
                         <p className="mt-0.5 flex items-center gap-1 text-[9px] font-medium text-slate-500"><CalendarDays size={10} /> {formatDate(order.created_at)}</p>
@@ -370,10 +380,10 @@ function MyOrders({ user, trackingMode = false }) {
                     <button
                       type="button"
                       onClick={function(){ setSelectedOrder(order); }}
-                      aria-label={"Track order " + (order.order_id || order.id)}
+                      aria-label={"View details for order " + (order.order_id || order.id)}
                       className="col-start-2 row-start-2 flex cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-[#7900bd] bg-gradient-to-r from-[#8c12c6] to-[#6500a9] px-3 py-2 text-[10px] font-extrabold text-white transition hover:bg-none hover:from-white hover:to-white hover:text-[#7900bd] sm:col-auto sm:row-auto sm:min-w-[98px]"
                     >
-                      <Truck size={13} />Track Order
+                      View Details <ChevronRight size={13} />
                     </button>
                   </article>
                 );
@@ -1020,7 +1030,7 @@ function Account() {
 
             <div className="min-w-0 flex-1 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1">
               {activeTab === "personal" && <PersonalDetails user={user} setUser={setUser} />}
-              {activeTab === "orders"   && <MyOrders user={user} />}
+              {activeTab === "orders"   && <MyOrders user={user} onTrackOrder={function(){ setActiveTab("tracking"); }} />}
               {activeTab === "tracking" && <MyOrders user={user} trackingMode />}
               {activeTab === "address"  && <MyAddresses key={user.user_id} user={user} />}
               {activeTab === "password" && <ChangePassword />}
