@@ -167,7 +167,7 @@ function AboutUs() {
           </div>
         </section>
 
-        <section aria-labelledby="values-heading" className="mt-10 grid items-stretch gap-3 sm:mt-12 lg:grid-cols-[1fr_1.7fr_0.85fr] lg:gap-4">
+        <section aria-labelledby="values-heading" className="mt-16 grid items-stretch gap-3 sm:mt-20 lg:grid-cols-[1fr_1.7fr_0.85fr] lg:gap-4">
           <div className="flex flex-col justify-center py-1 lg:pr-2">
             <p className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-[0.16em] text-primary"><span className="h-px w-5 bg-primary" aria-hidden="true" /> Our Core Values</p>
             <h2 id="values-heading" className="mt-1 text-2xl font-black leading-tight text-[#17123b] sm:text-3xl">What Drives Us</h2>
@@ -201,7 +201,7 @@ function AboutUs() {
         </section>
 
 
-        <section aria-label="Our mission and vision" className="relative mt-10 overflow-hidden rounded-2xl border border-[#e6d9f4] bg-gradient-to-br from-[#f5edff] via-white to-[#f7f1ff] shadow-sm sm:mt-12 md:grid md:min-h-[270px] md:grid-cols-2">
+        <section aria-label="Our mission and vision" className="relative mt-16 overflow-hidden rounded-2xl border border-[#e6d9f4] bg-gradient-to-br from-[#f5edff] via-white to-[#f7f1ff] shadow-sm sm:mt-20 md:grid md:min-h-[270px] md:grid-cols-2">
           <article className="relative isolate z-10 flex items-start gap-4 overflow-hidden bg-gradient-to-br from-[#21064b] via-[#3c0871] to-[#170333] px-5 py-6 text-white sm:px-7 md:col-start-1 md:row-start-1 md:min-h-[270px] md:w-[112%] md:gap-4 md:py-8 md:pr-[19%] md:[clip-path:polygon(0_0,78%_0,100%_100%,0_100%)]">
             <div className="absolute -left-12 -bottom-16 -z-10 h-44 w-44 rounded-full border-[25px] border-white/5" aria-hidden="true" />
             <span className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/10 text-fuchsia-200 ring-1 ring-white/10 sm:h-14 sm:w-14">
@@ -242,7 +242,7 @@ function AboutUs() {
         </section>
 
 
-        <section aria-label="OurTech at a glance" className="mt-10 grid grid-cols-2 divide-x divide-y divide-[#d9c7ee] overflow-hidden rounded-2xl border border-[#eee2f9] bg-[#f4efff] sm:mt-12 sm:grid-cols-4 sm:divide-y-0">
+        <section aria-label="OurTech at a glance" className="mt-16 grid grid-cols-2 divide-x divide-y divide-[#d9c7ee] overflow-hidden rounded-2xl border border-[#eee2f9] bg-[#f4efff] sm:mt-20 sm:grid-cols-4 sm:divide-y-0">
           {[
             { value: "50,000+", label: "Happy Customers", Icon: UsersRound },
             { value: "10,000+", label: "Products", Icon: Box },
@@ -258,7 +258,7 @@ function AboutUs() {
 
 
 
-        <section aria-labelledby="journey-heading" className="relative mt-10 overflow-hidden rounded-2xl border border-[#eee3f8] bg-gradient-to-r from-[#faf7ff] via-white to-[#f4efff] px-4 py-5 sm:mt-12 sm:px-6 sm:py-6">
+        <section aria-labelledby="journey-heading" className="relative mt-16 overflow-hidden rounded-2xl border border-[#eee3f8] bg-gradient-to-r from-[#faf7ff] via-white to-[#f4efff] px-4 py-5 sm:mt-20 sm:px-6 sm:py-6">
           <div className="absolute -right-10 top-0 h-40 w-40 rounded-full bg-violet-100/60 blur-3xl" aria-hidden="true" />
           <div className="relative mb-5">
             <h2 id="journey-heading" className="text-lg font-black text-[#17123b]">Our Journey</h2>
@@ -285,7 +285,7 @@ function AboutUs() {
           </div>
         </section>
 
-        <section aria-label="Shop categories and our promise" className="mt-10 grid gap-3 sm:mt-12 lg:grid-cols-[2.4fr_1fr]">
+        <section aria-label="Shop categories and our promise" className="mt-16 grid gap-3 sm:mt-20 lg:grid-cols-[2.4fr_1fr]">
           <div className="grid overflow-hidden rounded-2xl border border-[#eee3f8] bg-[#f4eaff] sm:grid-cols-[0.9fr_2.6fr]">
             <div className="flex flex-col justify-center p-4 sm:p-5">
               <h2 className="text-lg font-black leading-tight text-[#211936]">Explore Our Top Categories</h2>
@@ -327,7 +327,7 @@ function AboutUs() {
           </aside>
         </section>
 
-        <div className="mt-5 sm:mt-4">
+        <div className="mt-16 sm:mt-20">
           <HomeReviews
             reviews={reviews}
             loading={loadingReviews}
@@ -335,7 +335,7 @@ function AboutUs() {
           />
         </div>
 
-        <section aria-label="Shop with OurTech" className="relative isolate mt-10 flex min-h-36 items-center overflow-hidden rounded-2xl bg-[#1d0645] px-5 py-6 text-white sm:mt-12 sm:min-h-40 sm:px-8">
+        <section aria-label="Shop with OurTech" className="relative isolate mt-16 flex min-h-36 items-center overflow-hidden rounded-2xl bg-[#1d0645] px-5 py-6 text-white sm:mt-20 sm:min-h-40 sm:px-8">
           <img src="/images/pageheader.png" alt="" className="absolute inset-0 -z-20 h-full w-full object-cover object-[70%_center]" />
           <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#220747]/95 via-[#360575]/90 to-[#360575]/35" aria-hidden="true" />
           <div className="max-w-lg">
