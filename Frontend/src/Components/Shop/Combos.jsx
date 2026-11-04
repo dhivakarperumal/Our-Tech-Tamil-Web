@@ -1,5 +1,5 @@
-import { useContext, useEffect, useState } from "react";
-import { Boxes, Heart, Search, ShoppingCart, Star, Zap } from "lucide-react";
+import { useContext, useEffect, useMemo, useState } from "react";
+import { Boxes, ChevronDown, Heart, Search, ShoppingCart, Star, X, Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import api from "../../api";
 import { StoreContext } from "../../PrivateRouter/StoreContext";
@@ -20,12 +20,35 @@ function Combos() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const filteredCombos = combos.filter((combo) => {
+  const [sortBy, setSortBy] = useState("popular");
+  const filteredCombos = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    return !query || [combo.name, combo.category, combo.category_type, combo.description]
-      .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(query));
-  });
+    const matching = combos.filter((combo) => {
+      const matchesSearch = !query || [combo.name, combo.category, combo.category_type, combo.description]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query));
+      return matchesSearch;
+    });
+
+    switch (sortBy) {
+      case "price-low":
+        return [...matching].sort((a, b) => Number(a.final_price ?? a.offer_price ?? 0) - Number(b.final_price ?? b.offer_price ?? 0));
+      case "price-high":
+        return [...matching].sort((a, b) => Number(b.final_price ?? b.offer_price ?? 0) - Number(a.final_price ?? a.offer_price ?? 0));
+      case "rating":
+        return [...matching].sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+      default:
+        return [...matching].sort((a, b) => {
+          const discountA = Number(a.mrp ?? 0) > Number(a.final_price ?? a.offer_price ?? 0)
+            ? Math.round(((Number(a.mrp ?? 0) - Number(a.final_price ?? a.offer_price ?? 0)) / Number(a.mrp ?? 1)) * 100)
+            : 0;
+          const discountB = Number(b.mrp ?? 0) > Number(b.final_price ?? b.offer_price ?? 0)
+            ? Math.round(((Number(b.mrp ?? 0) - Number(b.final_price ?? b.offer_price ?? 0)) / Number(b.mrp ?? 1)) * 100)
+            : 0;
+          return (Number(b.rating) || 0) + discountB - ((Number(a.rating) || 0) + discountA);
+        });
+    }
+  }, [combos, searchQuery, sortBy]);
 
   const buyNow = async (combo) => {
     const quantity = Math.max(1, Number(combo.minimum_order_quantity) || 1);
@@ -49,31 +72,63 @@ function Combos() {
   }, []);
 
   return (
-    <main className="min-h-[60vh] bg-[#faf8fc]">
-      <div data-aos="fade-up">
-        <PageHeader title="Combo Offers" />
-      </div>
-      <PageContainer className="!max-w-[1700px] px-3 py-5 sm:px-5 sm:py-7 lg:px-6">
-        <section>
-          <div className="mb-5 flex flex-col items-center justify-center gap-2 text-center">
+    <>
+      <PageHeader title="Combo Offers" />
+      <main className="min-h-[60vh] bg-[#faf8fc]">
+        <PageContainer className="!max-w-[1700px] px-3 py-5 sm:px-5 sm:py-7 lg:px-6">
+          <section>
+          <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-700">Shop our bundles</p>
-              <h2 className="mt-1 text-xl font-black text-slate-900 sm:text-2xl">Featured combos</h2>
+              <h1 className="text-3xl font-black tracking-[-0.06em] text-slate-900 sm:text-4xl">Shop All Products</h1>
+              <p className="mt-2 text-sm text-slate-500">Showing {filteredCombos.length} of {combos.length} items</p>
             </div>
-          </div>
 
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <label className="relative block w-full sm:max-w-sm">
-              <Search size={17} aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Search combos..."
-                aria-label="Search combos"
-                className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-              />
-            </label>
+            <div className="flex w-full max-w-[760px] flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+              <label className="relative block w-full sm:max-w-[440px]">
+                <Search size={17} aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 text-violet-500" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search in this category..."
+                  aria-label="Search in this category"
+                  className="w-full rounded-[18px] border border-violet-200 bg-white py-3 pl-10 pr-10 text-sm text-slate-800 shadow-[0_0_0_1px_rgba(124,58,237,0.02)] outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    aria-label="Clear search"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-500 transition hover:bg-violet-50 hover:text-violet-700"
+                  >
+                    <X size={15} aria-hidden="true" />
+                  </button>
+                )}
+              </label>
+
+              <div className="flex items-center gap-2 sm:gap-3">
+                <label className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(event) => setSortBy(event.target.value)}
+                    aria-label="Sort combos"
+                    className="appearance-none rounded-[18px] border border-violet-300 bg-white px-4 py-3 pr-10 text-sm font-bold text-slate-800 shadow-[0_0_0_1px_rgba(124,58,237,0.06)] outline-none transition hover:border-violet-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
+                    style={{
+                      backgroundImage: 'none',
+                      WebkitAppearance: 'none',
+                      MozAppearance: 'none',
+                    }}
+                  >
+                    <option value="popular">Popular</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                    <option value="rating">Top Rated</option>
+                  </select>
+                  <ChevronDown size={15} aria-hidden="true" className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-violet-700" />
+                </label>
+
+              </div>
+            </div>
           </div>
 
           {loading ? (
