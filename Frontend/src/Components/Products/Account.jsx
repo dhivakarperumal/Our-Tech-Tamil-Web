@@ -150,6 +150,8 @@ function MyOrders({ user, trackingMode = false }) {
   const [failed, setFailed] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [trackingOrderId, setTrackingOrderId] = useState("");
+  const [trackingMessage, setTrackingMessage] = useState("");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const backendUrl = (import.meta.env.VITE_BACKEND_URL || "http://localhost:5000").replace(/\/$/, "");
 
@@ -180,6 +182,25 @@ function MyOrders({ user, trackingMode = false }) {
       .some(function(v){ return String(v || "").toLowerCase().includes(q); });
     return matchesSearch && (statusFilter === "All" || o.status === statusFilter);
   });
+
+  function trackOrder(event) {
+    event.preventDefault();
+    const enteredId = trackingOrderId.trim().replace(/^#/, "").toLowerCase();
+    if (!enteredId) {
+      setTrackingMessage("Enter an order ID to search.");
+      return;
+    }
+    const order = orders.find(function(item) {
+      return String(item.order_id || item.id).trim().toLowerCase() === enteredId;
+    });
+    if (!order) {
+      setSelectedOrder(null);
+      setTrackingMessage("No order found with that ID.");
+      return;
+    }
+    setTrackingMessage("");
+    setSelectedOrder(order);
+  }
 
   function imgSrc(img) {
     if (!img) return "";
@@ -217,7 +238,39 @@ function MyOrders({ user, trackingMode = false }) {
         </div>
       </div>
 
-      {loading ? (
+      {trackingMode ? (
+        <div className="mt-6">
+          <form onSubmit={trackOrder} className="flex flex-col gap-3 sm:flex-row">
+            <label htmlFor="track-order-id" className="sr-only">Order ID</label>
+            <InputBox
+              icon={Search}
+              id="track-order-id"
+              type="text"
+              value={trackingOrderId}
+              onChange={function(event) {
+                setTrackingOrderId(event.target.value);
+                setTrackingMessage("");
+              }}
+              placeholder="Enter your order ID"
+              autoComplete="off"
+              required
+            />
+            <button
+              type="submit"
+              disabled={loading || failed}
+              className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-gradient-middle px-6 py-2.5 text-sm font-bold text-white shadow transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Search size={16} aria-hidden="true" />Search
+            </button>
+          </form>
+          {loading && <p className="mt-3 text-sm text-gray-500">Loading your orders...</p>}
+          {failed && <p className="mt-3 text-sm text-rose-600">Could not load your orders. Please refresh the page and try again.</p>}
+          {!loading && !failed && orders.length === 0 && (
+            <p className="mt-3 text-sm text-gray-500">No orders are available to track yet.</p>
+          )}
+          {trackingMessage && <p className="mt-3 text-sm text-rose-600" role="status">{trackingMessage}</p>}
+        </div>
+      ) : loading ? (
         <div className="mt-6 space-y-3">{[1,2,3].map(function(i){ return <div key={i} className="h-20 animate-pulse rounded-xl bg-[#f3eaff]/60" />; })}</div>
       ) : failed ? (
         <p className="mt-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-600">Could not load your orders. Please refresh the page and try again.</p>
