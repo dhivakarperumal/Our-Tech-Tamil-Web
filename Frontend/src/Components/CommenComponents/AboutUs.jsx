@@ -227,12 +227,14 @@ function AboutUs() {
               Learn More <ArrowRight size={13} aria-hidden="true" />
             </Link>
           </div>
-          <div className="grid content-center gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid content-center gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
             {values.map(({ title, detail, Icon }) => (
-              <article key={title} className="min-h-[92px] rounded-xl border border-[#f0e9fa] bg-gradient-to-br from-[#faf7ff] to-[#f3ecff] p-3">
-                <span className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-[#eadbff] text-primary"><Icon size={16} aria-hidden="true" /></span>
-                <h3 className="text-[10px] font-extrabold text-[#28134d]">{title}</h3>
-                <p className="mt-0.5 text-[9px] leading-4 text-[#625b70]">{detail}</p>
+              <article key={title} className="group min-h-[116px] rounded-2xl border border-[#e9def5] bg-gradient-to-br from-white via-[#fcfaff] to-[#f2eaff] p-3.5 shadow-[0_3px_12px_rgba(54,22,93,0.06)] transition duration-200 hover:-translate-y-1 hover:border-[#d3b8f1] hover:shadow-[0_10px_22px_rgba(75,0,200,0.12)] sm:min-h-[126px] sm:p-4">
+                <span className="mb-2 flex h-10 w-10 items-center justify-center rounded-xl bg-[#eadbff] text-primary shadow-sm transition-colors group-hover:bg-primary group-hover:text-white sm:h-11 sm:w-11">
+                  <Icon size={22} strokeWidth={2} aria-hidden="true" />
+                </span>
+                <h3 className="text-xs font-extrabold text-[#28134d] sm:text-[13px]">{title}</h3>
+                <p className="mt-1 text-[10px] leading-[1.45] text-[#625b70] sm:text-[11px]">{detail}</p>
               </article>
             ))}
           </div>
