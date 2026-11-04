@@ -153,6 +153,23 @@ async function initializeDatabase(pool) {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS offers (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(160) NOT NULL,
+      offer_percentage DECIMAL(5, 2) NOT NULL,
+      description TEXT NULL,
+      icon VARCHAR(32) NOT NULL DEFAULT 'Tag',
+      status ENUM('active', 'inactive') NOT NULL DEFAULT 'active',
+      start_date DATE NOT NULL,
+      end_date DATE NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      KEY offers_status_dates_idx (status, start_date, end_date),
+      KEY offers_created_at_idx (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS combos (
       id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
       name VARCHAR(191) NOT NULL,
