@@ -218,8 +218,8 @@ function AboutUs() {
           </article>
         </section>
 
-        <section aria-labelledby="values-heading" className="mt-6 grid items-stretch gap-4 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="flex flex-col justify-center py-1">
+        <section aria-labelledby="values-heading" className="mt-6 grid items-stretch gap-3 lg:grid-cols-[0.85fr_1.7fr_0.85fr] lg:gap-4">
+          <div className="flex flex-col justify-center py-1 lg:pr-2">
             <p className="flex items-center gap-2 text-[9px] font-extrabold uppercase tracking-[0.16em] text-primary"><span className="h-px w-5 bg-primary" aria-hidden="true" /> Our Core Values</p>
             <h2 id="values-heading" className="mt-1 text-xl font-black text-[#17123b]">What Drives Us</h2>
             <p className="mt-2 max-w-sm text-xs leading-5 text-[#5b566b]">Our values guide everything we do — from the products we select to the support we provide.</p>
@@ -227,14 +227,24 @@ function AboutUs() {
               Learn More <ArrowRight size={13} aria-hidden="true" />
             </Link>
           </div>
-          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid content-center gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {values.map(({ title, detail, Icon }) => (
-              <article key={title} className="flex items-start gap-2.5 rounded-xl border border-[#eee6f6] bg-white p-3 shadow-sm">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#f2e8ff] text-primary"><Icon size={17} aria-hidden="true" /></span>
-                <span><h3 className="text-[11px] font-extrabold text-[#211936]">{title}</h3><p className="mt-0.5 text-[9px] leading-4 text-[#625b70]">{detail}</p></span>
+              <article key={title} className="min-h-[92px] rounded-xl border border-[#f0e9fa] bg-gradient-to-br from-[#faf7ff] to-[#f3ecff] p-3">
+                <span className="mb-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-[#eadbff] text-primary"><Icon size={16} aria-hidden="true" /></span>
+                <h3 className="text-[10px] font-extrabold text-[#28134d]">{title}</h3>
+                <p className="mt-0.5 text-[9px] leading-4 text-[#625b70]">{detail}</p>
               </article>
             ))}
           </div>
+          <aside aria-label="Better tech, better life" className="relative isolate min-h-[190px] overflow-hidden rounded-2xl bg-[#31065f] shadow-[0_8px_24px_rgba(54,22,93,0.16)] sm:min-h-[220px] lg:min-h-0">
+            <img src="/images/loginbanner.png" alt="" className="absolute inset-0 -z-20 h-full w-full object-cover object-[82%_center]" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-[#370768]/45 via-[#3b0872]/55 to-[#32065f]/80" aria-hidden="true" />
+            <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-[#3b0872]/50 to-transparent" aria-hidden="true" />
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-right text-white drop-shadow-lg sm:right-6">
+              <p className="text-xl font-black leading-[1.05] tracking-tight sm:text-2xl">Better<br />Tech<br />Better<br />Life</p>
+              <span className="ml-auto mt-2 block h-0.5 w-10 rounded-full bg-fuchsia-300" aria-hidden="true" />
+            </div>
+          </aside>
         </section>
 
         <section aria-labelledby="journey-heading" className="relative mt-7 overflow-hidden rounded-2xl border border-[#eee3f8] bg-gradient-to-r from-[#faf6ff] via-white to-[#f3eaff] px-4 py-5 sm:px-6 sm:py-6">
