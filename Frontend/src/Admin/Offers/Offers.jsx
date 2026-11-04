@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  CalendarDays,
   Check,
   CircleAlert,
   Eye,
   Gift,
   Heart,
+  LayoutGrid,
+  List,
   Pencil,
   Plus,
   Search,
@@ -88,6 +89,8 @@ const Offers = () => {
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("table");
+  const [headerOnly, setHeaderOnly] = useState(false);
   const [dialog, setDialog] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
@@ -187,94 +190,97 @@ const Offers = () => {
   const activeCount = offers.filter((offer) => getEffectiveStatus(offer) === "Active").length;
   const scheduledCount = offers.filter((offer) => getEffectiveStatus(offer) === "Upcoming").length;
   const expiredCount = offers.filter((offer) => getEffectiveStatus(offer) === "Expired").length;
-  const metricColors = {
-    violet: "bg-violet-50 text-violet-700",
-    emerald: "bg-emerald-50 text-emerald-700",
-    amber: "bg-amber-50 text-amber-700",
-    rose: "bg-rose-50 text-rose-700",
-  };
+  const offerStats = [
+    { label: "Total offers", value: offers.length, sub: "All promotions", icon: Tag, gradient: "from-violet-800 to-fuchsia-700" },
+    { label: "Live now", value: activeCount, sub: "Currently active", icon: Check, gradient: "from-emerald-400 to-teal-500" },
+    { label: "Scheduled", value: scheduledCount, sub: "Starting soon", icon: ShoppingBag, gradient: "from-orange-400 to-amber-500" },
+    { label: "Expired", value: expiredCount, sub: "Past end date", icon: CircleAlert, gradient: "from-rose-400 to-pink-500" },
+  ];
 
   return (
-    <div className="min-h-full space-y-6 pb-10 text-slate-900">
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#241044] via-[#3c176b] to-[#54228a] px-6 py-7 text-white shadow-xl shadow-violet-950/10 sm:px-8 sm:py-9">
-        <div className="pointer-events-none absolute -right-10 -top-20 h-64 w-64 rounded-full border-[36px] border-white/[0.06]" />
-        <div className="relative flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div className="max-w-2xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold tracking-wide text-violet-100">
-              <Sparkles size={14} /> MARKETING MANAGEMENT
+    <div className="mx-auto max-w-7xl space-y-6 pb-10 text-slate-900">
+      <section aria-label="Offer summary">
+        <div className="mb-3 flex justify-end">
+          <label className="inline-flex cursor-pointer items-center gap-2.5 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-semibold text-violet-800 shadow-sm transition hover:border-violet-400 hover:bg-violet-50">
+            <input
+              type="checkbox"
+              checked={headerOnly}
+              onChange={(event) => setHeaderOnly(event.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 accent-violet-700 focus:ring-2 focus:ring-violet-500"
+            />
+            Show only the top header
+          </label>
+        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {offerStats.map(({ label, value, sub, icon: Icon, gradient }) => (
+            <div key={label} className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition hover:shadow-md">
+              <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg`}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-slate-400">{label}</p>
+                <p className="my-0.5 text-3xl font-black leading-none text-slate-800">{value}</p>
+                <p className="mt-1 text-[10px] text-slate-400">{sub}</p>
+              </div>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Offers & promotions</h1>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-violet-100/80">
-              Create and manage the limited-time deals that bring customers back.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => openForm()}
-            className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-300 px-5 py-3 text-sm font-bold text-violet-950 shadow-lg shadow-black/10 transition hover:bg-amber-200"
-          >
-            <Plus size={18} /> Create offer
-          </button>
+          ))}
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { label: "Total offers", value: offers.length, icon: Tag, color: "violet" },
-          { label: "Live now", value: activeCount, icon: Check, color: "emerald" },
-          { label: "Scheduled", value: scheduledCount, icon: CalendarDays, color: "amber" },
-          { label: "Expired", value: expiredCount, icon: CircleAlert, color: "rose" },
-        ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${metricColors[color]}`}>
-              <Icon size={21} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p>
-              <p className="mt-1 text-2xl font-bold tracking-tight text-slate-900">{value}</p>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">Offer library</h2>
-            <p className="mt-1 text-xs text-slate-500">{filteredOffers.length} {filteredOffers.length === 1 ? "offer" : "offers"} shown</p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <label className="relative min-w-0 sm:w-64">
-              <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      {!headerOnly && (
+      <>
+      <section aria-label="Search and filter offers" className="flex flex-wrap items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+        <label className="relative w-full min-w-[180px] flex-1 sm:max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input
                 type="search"
-                placeholder="Search title or ID"
+                placeholder="Search by title or offer ID..."
+                aria-label="Search offers by title or ID"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm outline-none transition focus:border-violet-400 focus:bg-white focus:ring-4 focus:ring-violet-100"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-10 pr-4 text-sm font-medium text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-violet-500 focus:bg-white"
               />
-            </label>
-            <select
+        </label>
+        <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value)}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-              aria-label="Filter by offer status"
+              aria-label="Filter offers by status"
+              className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600 outline-none transition hover:border-violet-400 focus:border-violet-500 sm:ml-auto"
             >
               <option value="all">All statuses</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-            </select>
-            <button
-              type="button"
-              onClick={fetchOffers}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
-              aria-label="Refresh offers"
-            >
-              <RefreshCw size={15} /> <span className="sm:hidden">Refresh</span>
-            </button>
-          </div>
+        </select>
+        <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-100 p-1" role="group" aria-label="Offer view">
+          <button
+            type="button"
+            onClick={() => setViewMode("table")}
+            aria-label="Table view"
+            aria-pressed={viewMode === "table"}
+            className={`rounded-lg p-2 transition ${viewMode === "table" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+          >
+            <List className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("cards")}
+            aria-label="Card view"
+            aria-pressed={viewMode === "cards"}
+            className={`rounded-lg p-2 transition ${viewMode === "cards" ? "bg-white text-violet-700 shadow-sm" : "text-slate-400 hover:text-slate-700"}`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </button>
         </div>
+        <button
+          type="button"
+          onClick={() => openForm()}
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-violet-800 to-fuchsia-700 px-4 py-3 text-sm font-bold text-white shadow-md transition hover:brightness-110"
+        >
+          <Plus className="h-4 w-4" /> Add offer
+        </button>
+      </section>
 
+      <section className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm">
         {filteredOffers.length === 0 ? (
           <div className="flex flex-col items-center px-6 py-16 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-50 text-violet-600"><Tag size={24} /></div>
@@ -290,30 +296,33 @@ const Offers = () => {
           </div>
         ) : (
           <>
-            <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[850px] text-left">
-                <thead className="bg-[#2e1451] text-violet-100">
+            {viewMode === "table" ? (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[760px] text-left">
+                <thead className="admin-table-header text-xs uppercase tracking-wide text-yellow-300">
                   <tr>
-                    {["Offer", "Discount", "Validity", "Status", "Actions"].map((heading) => (
-                      <th key={heading} className="px-5 py-3.5 text-[11px] font-bold uppercase tracking-wider">{heading}</th>
+                    {["S No.", "Offer", "ID", "Discount", "Validity", "Status", "Actions"].map((heading) => (
+                      <th key={heading} className="px-5 py-4 font-bold">{heading}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {filteredOffers.map((offer) => {
+                  {filteredOffers.map((offer, index) => {
                     const Icon = OFFER_ICONS[offer.icon] || Tag;
                     const status = getEffectiveStatus(offer);
                     return (
                       <tr key={offer.id} className="transition hover:bg-violet-50/30">
+                        <td className="px-5 py-4 text-sm font-semibold text-slate-500">{index + 1}</td>
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">
                             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700"><Icon size={20} /></span>
                             <div className="min-w-0">
                               <p className="max-w-xs truncate text-sm font-bold text-slate-900">{offer.title}</p>
-                              <p className="mt-1 text-xs font-medium text-slate-400">ID #{offer.id}</p>
+                              <p className="mt-1 max-w-xs truncate text-xs text-slate-400">{offer.description}</p>
                             </div>
                           </div>
                         </td>
+                        <td className="px-5 py-4 text-sm font-semibold text-slate-600">#{offer.id}</td>
                         <td className="px-5 py-4"><span className="inline-flex rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-extrabold text-amber-800">{Number(offer.offer_percentage)}% OFF</span></td>
                         <td className="px-5 py-4 text-xs leading-5 text-slate-600">
                           <div>{formatDate(offer.start_date)}</div><div className="text-slate-400">to {formatDate(offer.end_date)}</div>
@@ -332,38 +341,42 @@ const Offers = () => {
                 </tbody>
               </table>
             </div>
-            <div className="divide-y divide-slate-100 md:hidden">
+            ) : (
+            <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
               {filteredOffers.map((offer) => {
                 const Icon = OFFER_ICONS[offer.icon] || Tag;
                 const status = getEffectiveStatus(offer);
                 return (
-                  <article key={offer.id} className="p-4">
+                  <article key={offer.id} className="rounded-2xl border border-slate-100 p-5 shadow-sm transition hover:shadow-md">
                     <div className="flex items-start gap-3">
-                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700"><Icon size={20} /></span>
+                      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-violet-50 text-violet-700"><Icon size={21} /></span>
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <h3 className="truncate text-sm font-bold text-slate-900">{offer.title}</h3>
-                          <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset ${statusStyles[status]}`}>{status}</span>
-                        </div>
-                        <p className="mt-1 text-xs text-slate-400">ID #{offer.id}</p>
-                        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                          <span className="rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-extrabold text-amber-800">{Number(offer.offer_percentage)}% OFF</span>
-                          <span className="text-right text-xs leading-5 text-slate-500">{formatDate(offer.start_date)} – {formatDate(offer.end_date)}</span>
-                        </div>
-                        <div className="mt-3 flex justify-end gap-1 border-t border-slate-100 pt-2">
-                          <button type="button" onClick={() => setDialog({ mode: "view", offer })} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="View offer"><Eye size={16} /></button>
-                          <button type="button" onClick={() => openForm(offer)} className="rounded-lg p-2 text-slate-500 hover:bg-violet-50 hover:text-violet-700" aria-label="Edit offer"><Pencil size={16} /></button>
-                          <button type="button" onClick={() => deleteOffer(offer)} className="rounded-lg p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600" aria-label="Delete offer"><Trash2 size={16} /></button>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0"><h3 className="truncate font-bold text-slate-900">{offer.title}</h3><p className="mt-1 text-xs text-slate-400">Offer ID #{offer.id}</p></div>
+                          <span className={`inline-flex shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset ${statusStyles[status]}`}>{status}</span>
                         </div>
                       </div>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between gap-3">
+                      <span className="rounded-lg bg-amber-100 px-3 py-1.5 text-sm font-extrabold text-amber-800">{Number(offer.offer_percentage)}% OFF</span>
+                      <span className="text-right text-xs leading-5 text-slate-500">{formatDate(offer.start_date)} – {formatDate(offer.end_date)}</span>
+                    </div>
+                    <p className="mt-3 line-clamp-2 min-h-10 text-sm leading-5 text-slate-500">{offer.description || "No description provided."}</p>
+                    <div className="mt-3 flex justify-end gap-1 border-t border-slate-100 pt-2">
+                      <button type="button" onClick={() => setDialog({ mode: "view", offer })} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" aria-label="View offer"><Eye size={16} /></button>
+                      <button type="button" onClick={() => openForm(offer)} className="rounded-lg p-2 text-slate-500 hover:bg-violet-50 hover:text-violet-700" aria-label="Edit offer"><Pencil size={16} /></button>
+                      <button type="button" onClick={() => deleteOffer(offer)} className="rounded-lg p-2 text-slate-500 hover:bg-rose-50 hover:text-rose-600" aria-label="Delete offer"><Trash2 size={16} /></button>
                     </div>
                   </article>
                 );
               })}
             </div>
+            )}
           </>
         )}
       </section>
+      </>
+      )}
 
       {dialog && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-950/50 p-0 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={(event) => { if (event.target === event.currentTarget) closeDialog(); }}>
