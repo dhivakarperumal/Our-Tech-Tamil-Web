@@ -27,6 +27,10 @@ function getCategory(product) {
   return [product.cat_type, product.category].filter(Boolean).join(" · ") || "Other";
 }
 
+function getCategoryName(item) {
+  return String(item.category || "").trim() || "Other";
+}
+
 function getPrice(product) {
   return Number(product.offer_price ?? product.mrp) || 0;
 }
@@ -282,16 +286,14 @@ function Shop() {
   const categories = useMemo(() => {
     const counts = new Map();
     [...products, ...combos].forEach((item) => {
-      const category = item.category_type
-        ? [item.category_type, item.category].filter(Boolean).join(" · ")
-        : getCategory(item);
+      const category = getCategoryName(item);
       counts.set(category, (counts.get(category) || 0) + 1);
     });
     return [...counts.entries()].sort((first, second) => first[0].localeCompare(second[0]));
   }, [products, combos]);
 
   const hasProductsForSelectedSubcategory = !urlSubcategory || products.some((product) => {
-    const categoryValues = [getCategory(product), product.category, product.subcategory]
+    const categoryValues = [getCategory(product), getCategoryName(product), product.subcategory]
       .filter(Boolean)
       .map((value) => String(value).trim().toLowerCase());
     const matchesSelectedCategory = !selectedCategories.length || selectedCategories.some(
@@ -308,7 +310,7 @@ function Shop() {
       const rating = Number(product.rating) || 0;
       const available = Number(product.total_stock) > 0
         || String(product.stock_status || "").toLowerCase() === "in stock";
-      const productCategoryValues = [category, product.category, product.subcategory]
+      const productCategoryValues = [category, getCategoryName(product), product.subcategory]
         .filter(Boolean)
         .map((value) => String(value).trim().toLowerCase());
       const matchesSearch = !effectiveSearchQuery
@@ -365,7 +367,7 @@ function Shop() {
       const available = Number(combo.track_inventory) !== 1
         || Number(combo.allow_backorders) === 1
         || Number(combo.available_stock) >= Math.max(1, Number(combo.minimum_order_quantity) || 1);
-      const categoryValues = [combo.category_type, combo.category, combo.subcategory]
+      const categoryValues = [combo.category_type, getCategoryName(combo), combo.subcategory]
         .filter(Boolean)
         .map((value) => String(value).trim().toLowerCase());
       const matchesSearch = !query || [combo.name, combo.code, combo.category_type, combo.category, combo.subcategory, combo.description]
