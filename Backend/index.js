@@ -85,22 +85,32 @@ app.use((error, request, response, next) => {
   });
 });
 
-async function start() {
-  try {
-    await initializeDatabase(pool);
+function start() {
+  const server = app.listen(port, () => {
+    console.log(`OURTECHX API listening on port ${port}`);
+  });
 
-    app.listen(port, () => {
-      console.log(`Backend listening on http://localhost:${port} (database connected)`);
+  server.on("error", (error) => {
+    console.error("HTTP server failed to start:", error);
+  });
+
+  initializeDatabase(pool)
+    .then(() => {
+      databaseStatus = "connected";
+      console.log("MySQL database initialized successfully.");
+    })
+    .catch((error) => {
+      databaseStatus = "unavailable";
+      console.error("MySQL database initialization failed:", error);
+      // Keep Passenger alive so the root URL can still pass its availability check.
     });
-  } catch (error) {
-    console.error("Could not initialize the configured MySQL database:", error);
-    await pool.end();
-    process.exitCode = 1;
-  }
+
+  return server;
 }
 
-if (require.main === module) {
-  start();
-}
+// Passenger/cPanel loads this file as the application entry point; do not rely on
+// require.main === module, which can be false under a Passenger loader.
+const server = start();
 
-module.exports = { app, start };
+module.exports = { app, start, server };
+

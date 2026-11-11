@@ -249,7 +249,9 @@ function Combos() {
           </section>
       </PageContainer>
     </main>
+  </>
   );
 }
+
 
 export default Combos;
