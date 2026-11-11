@@ -69,6 +69,7 @@ const Navbar = () => {
   const categoryRef = useRef(null);
   const pagesRef = useRef(null);
   const searchInputRef = useRef(null);
+  const mobileSearchInputRef = useRef(null);
   const suggestionQuery = search.trim();
   const currentSuggestions = suggestions.query === suggestionQuery ? suggestions : null;
   const normalizeCategoryValue = (value) => String(value || "").trim().toLowerCase();
@@ -111,8 +112,10 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    if (searchOpen) searchInputRef.current?.focus();
-  }, [searchOpen]);
+    if (!searchOpen) return;
+    if (mobileMenu) mobileSearchInputRef.current?.focus();
+    else searchInputRef.current?.focus();
+  }, [searchOpen, mobileMenu]);
 
   useEffect(() => {
     if (!searchOpen || suggestionQuery.length < 2) return undefined;
@@ -477,7 +480,7 @@ const Navbar = () => {
           <span className="hidden h-12 w-px shrink-0 bg-[#d8cce4] xl:block" aria-hidden="true" />
 
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <div className="relative" data-navbar-search>
+            <div className="relative hidden sm:block" data-navbar-search>
               <button
                 type="button"
                 onClick={() => setSearchOpen((open) => !open)}
@@ -509,7 +512,7 @@ const Navbar = () => {
               <ShoppingCart size={20} aria-hidden="true" />
               {cart.length > 0 && <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-fuchsia-700 px-1 text-[9px] font-bold text-white">{cart.length > 9 ? "9+" : cart.length}</span>}
             </button>
-            <div className="hidden sm:block">{renderUserMenu()}</div>
+            {renderUserMenu()}
             <button
               type="button"
               onClick={() => setMobileMenu((open) => !open)}
@@ -528,7 +531,7 @@ const Navbar = () => {
             onSubmit={submitSearch}
             role="search"
             data-navbar-search
-            className="relative mx-auto w-full max-w-[900px] pb-2 pt-1"
+            className="relative mx-auto hidden w-full max-w-[900px] pb-2 pt-1 sm:block"
           >
             <label htmlFor="navbar-product-search-input" className="sr-only">Search products</label>
             <div className="flex items-center overflow-hidden rounded-full border border-[#e7dff0] bg-white shadow-inner focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/10">
@@ -563,6 +566,52 @@ const Navbar = () => {
         <div className="absolute inset-x-0 top-full z-[55] max-h-[calc(100dvh-5rem)] overflow-y-auto border-t border-[#eee7f5] bg-gradient-to-b from-white to-[#faf8ff] shadow-[0_18px_35px_rgba(38,13,66,0.14)] xl:hidden">
           {!mobileCategory && !mobilePages ? (
             <div className="space-y-2.5 p-4">
+              <div className="sm:hidden" data-navbar-search>
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen((open) => !open)}
+                  aria-expanded={searchOpen}
+                  aria-controls="mobile-navbar-product-search"
+                  className="flex min-h-14 w-full items-center gap-3 rounded-2xl border border-[#eee7f5] bg-white px-4 py-3 text-left text-sm font-semibold text-gray-800 transition hover:border-violet-200 hover:bg-violet-50"
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><Search size={18} aria-hidden="true" /></span>
+                  Search products
+                </button>
+                {searchOpen && (
+                  <form
+                    id="mobile-navbar-product-search"
+                    onSubmit={submitSearch}
+                    role="search"
+                    data-navbar-search
+                    className="relative mt-2 w-full"
+                  >
+                    <label htmlFor="mobile-navbar-product-search-input" className="sr-only">Search products</label>
+                    <div className="flex items-center overflow-hidden rounded-xl border border-[#e7dff0] bg-white shadow-inner focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/10">
+                      <Search size={18} className="ml-3 shrink-0 text-[#4c3b64]" aria-hidden="true" />
+                      <input
+                        ref={mobileSearchInputRef}
+                        id="mobile-navbar-product-search-input"
+                        value={search}
+                        onChange={handleSearchChange}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") setSearchOpen(false);
+                        }}
+                        placeholder="Search products..."
+                        aria-autocomplete="list"
+                        aria-controls="mobile-navbar-product-suggestions"
+                        className="min-w-0 flex-1 bg-transparent px-3 py-3 text-sm text-gray-800 outline-none placeholder:text-gray-500"
+                      />
+                      <button
+                        type="submit"
+                        className="bg-gradient-to-r from-[#9d1db9] to-[#4b00c8] px-4 py-3 text-sm font-semibold text-white transition hover:brightness-110"
+                      >
+                        Search
+                      </button>
+                    </div>
+                    {renderSearchSuggestions("mobile-navbar-product-suggestions")}
+                  </form>
+                )}
+              </div>
               <NavLink to="/" end onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><House size={18} /></span>Home</NavLink>
               <NavLink to="/shop" onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${(isActive || isProductDetailsRoute) ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><ShoppingBag size={18} /></span>Shop</NavLink>
               <NavLink to="/combos" onClick={() => setMobileMenu(false)} className={({ isActive }) => `flex min-h-14 items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition ${isActive ? "border-violet-200 bg-violet-50 text-primary" : "border-[#eee7f5] bg-white text-gray-800 hover:border-violet-200 hover:bg-violet-50"}`}><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-primary"><Boxes size={18} /></span>Combo Offers</NavLink>
