@@ -104,12 +104,6 @@ function Login() {
       />
       <section className="relative z-10 flex h-full min-h-0 items-center justify-center px-4 py-3 sm:px-8 sm:py-4 lg:justify-start lg:px-0 lg:py-0">
         <div data-aos="fade-up" className="max-h-[calc(100dvh-24px)] w-full max-w-[460px] overflow-y-auto rounded-[30px] border border-surface/80 bg-surface/95 px-6 py-5 shadow-[0_24px_80px_rgba(40,0,120,0.2)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-10 sm:py-7 lg:ml-[5.7vw] lg:h-[min(680px,calc(100dvh-24px))] lg:px-9 lg:py-6">
-          <div className="mb-2 flex justify-start">
-            <Link to="/" className="inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-sm font-semibold text-primary transition hover:bg-primary/5 hover:text-primary-light">
-              <House size={16} aria-hidden="true" />
-              Go to Home
-            </Link>
-          </div>
           <div className="mb-5 text-center lg:mb-6">
             <img
               src="/images/logo.jpeg"
@@ -251,6 +245,12 @@ function Login() {
               </Link>
             </p>
           </form>
+          <div className="mt-3 flex justify-center">
+            <Link to="/" className="inline-flex items-center gap-1.5 rounded-full px-3 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5 hover:text-primary-light">
+              <House size={16} aria-hidden="true" />
+              Go to Home
+            </Link>
+          </div>
         </div>
       </section>
 
